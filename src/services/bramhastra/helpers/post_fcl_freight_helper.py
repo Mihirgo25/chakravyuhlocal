@@ -310,7 +310,7 @@ class Rate:
         ):
             if parent := self.get_feedback_details():
                 freight.update(parent)
-            self.increment_keys.add("dislikes_rate_reverted_count")
+                self.increment_keys.add("dislikes_rate_reverted_count")
 
         for validity in self.freight.validities:
             param = freight.copy()
