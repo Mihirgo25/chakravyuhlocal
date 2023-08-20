@@ -1289,8 +1289,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 print('Money Exchange Error:')
                                 print(total_price,'\n')
                                 total_price = None
-                                breakpoint()
-
 
                         rate_id = row[0]
                         validity_id = row[1]
