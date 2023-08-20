@@ -1340,10 +1340,13 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 'updated_at':row[28],
                                 'standard_total_price':total_price,
                             })
-                    ShipmentFclFreightRateStatistic.insert_many(row_data).execute()
-                    cur.execute(sql, (BATCH_SIZE, OFFSET))
-                    result = cur.fetchall()
-                    set_of_shipment_ids = set()
+                    try:
+                        ShipmentFclFreightRateStatistic.insert_many(row_data).execute()
+                        cur.execute(sql, (BATCH_SIZE, OFFSET))
+                        result = cur.fetchall()
+                        set_of_shipment_ids = set()
+                    except Exception:
+                        pass
 
         except Exception as e:
             print('Exception:',e)
