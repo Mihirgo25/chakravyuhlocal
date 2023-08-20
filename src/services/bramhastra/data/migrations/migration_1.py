@@ -842,8 +842,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 elif shipment_state == "confirmed_by_importer_exporter":
                     setattr(
                         statistic,
-                        "shipment_confirmed_by_service_provider_countb",
-                        statistic.shipment_confirmed_by_service_provider_countb + 1,
+                        "shipment_confirmed_by_service_provider_count",
+                        statistic.shipment_confirmed_by_service_provider_count + 1,
                     )
                 elif shipment_state == "cancelled":
                     setattr(
@@ -903,7 +903,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             print("! Exception occured while populating shipment stats:", e)
 
     def populate_checkout_fcl_freight_statistics(
-        self, checkout_stats, rate_id, validity_id
+        self, checkout_stats, rate_id, validity_id,id
     ):
         try:
             params = {
@@ -916,6 +916,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 "spot_search_id": checkout_stats[7],
                 "rate_id": rate_id,
                 "validity_id": validity_id,
+                "fcl_freight_rate_statistic_id": id
             }
 
             if params["shipment_id"]:
@@ -998,7 +999,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 )
                             else:
                                 self.populate_checkout_fcl_freight_statistics(
-                                    row, rate_card["rate_id"], rate_card["validity_id"]
+                                    row, rate_card["rate_id"], rate_card["validity_id"],statistics.id
                                 )
 
                 cur.close()
