@@ -842,7 +842,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 elif shipment_state == "confirmed_by_importer_exporter":
                     setattr(
                         statistic,
-                        "shipment_confirmed_by_service_provider_count",
+                        "shipment_confirmed_by_importer_exporter_count",
                         statistic.shipment_confirmed_by_service_provider_count + 1,
                     )
                 elif shipment_state == "cancelled":
@@ -903,17 +903,19 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             print("! Exception occured while populating shipment stats:", e)
 
     def populate_checkout_fcl_freight_statistics(
-        self, checkout_stats, rate_id, validity_id,id
+        self, checkout_stats, rate_id, validity_id, id
     ):
         try:
             params = {
-                "checkout_fcl_freight_rate_services_id": checkout_stats[0],
+                "checkout_fcl_freight_service_id": checkout_stats[0],
                 "checkout_id": checkout_stats[2],
                 "created_at": checkout_stats[3],
                 "updated_at": checkout_stats[4],
                 "status": checkout_stats[5],
                 "shipment_id": checkout_stats[6],
-                "spot_search_id": checkout_stats[7],
+                "source_id": checkout_stats[7],
+                "source": checkout_stats[8],
+                "importer_exporter_id": checkout_stats[9],
                 "rate_id": rate_id,
                 "validity_id": validity_id,
                 "fcl_freight_rate_statistic_id": id
@@ -926,11 +928,14 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     )
                     quotation_ids = [None, None]
                     with self.cogoback_connection.cursor() as cur:
-                        sql = f"SELECT id FROM shipment_buy_quotations where shipment_id = '{params['shipment_id']}'"
+                        sql = f"SELECT id, total_price, currency FROM shipment_buy_quotations where shipment_id = '{params['shipment_id']}'"
                         cur.execute(sql)
                         result = cur.fetchone()
                         if result:
                             params["buy_quotation_id"] = result[0]
+                            params["total_buy_price"] = result[1]
+                            params["currency"] = result[2]
+                            
                             quotation_ids[0] = result[0]
                         
                         sql = f"SELECT id FROM shipment_sell_quotations where shipment_id = '{params['shipment_id']}'"
@@ -955,7 +960,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             with self.cogoback_connection.cursor() as cur:
                 sql = """SELECT 
                         cs.id, cs.rate, cs.checkout_id, cs.created_at, cs.updated_at, cs.status,
-                        co.shipment_id, co.source_id
+                        co.shipment_id, co.source_id, co.source, co.importer_exporter_id
                         FROM checkout_fcl_freight_services AS cs
                         LEFT JOIN checkouts AS co 
                         ON cs.checkout_id = co.id
@@ -999,7 +1004,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 )
                             else:
                                 self.populate_checkout_fcl_freight_statistics(
-                                    row, rate_card["rate_id"], rate_card["validity_id"],statistics.id
+                                    row, rate_card["rate_id"], rate_card["validity_id"], statistics.id
                                 )
 
                 cur.close()
@@ -1287,6 +1292,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 breakpoint()
 
 
+                        rate_id = row[0]
                         validity_id = row[1]
                         identifier = self.get_identifier(rate_id,validity_id)
                         stats_obj = self.find_statistics_object(identifier)
@@ -1298,6 +1304,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         ):
                             rate_id = None
                             validity_id = None
+                            continue
 
                         set_of_shipment_ids.add(shipment_id)
                         last_shipment_id = shipment_id
