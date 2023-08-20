@@ -19,9 +19,9 @@ def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
   if filters:
     if type(filters) != dict:
       filters = json.loads(filters)
-      if not filters.get('rate_type'):
+      if not filters.get('id') and not filters.get('rate_type'):
         filters['rate_type'] = [rate for rate in RATE_TYPES if rate != 'cogo_assured']
-      elif filters['rate_type'] == 'all':
+      elif filters.get('rate_type') == 'all':
         filters.pop('rate_type')
       
     direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
