@@ -900,7 +900,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 cur.close()
 
         except Exception as e:
-            print("! Exception occured while populating shipment stats:", e)
+            # print("! Exception occured while populating shipment stats:", e)
+            pass
 
     def populate_checkout_fcl_freight_statistics(
         self, checkout_stats, rate_id, validity_id, id
