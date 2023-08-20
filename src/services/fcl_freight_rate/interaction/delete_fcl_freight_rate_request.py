@@ -12,6 +12,7 @@ def delete_fcl_freight_rate_request(request):
 
 def execute_transaction_code(request):
     from celery_worker import send_closed_notifications_to_sales_agent_function,send_closed_notifications_to_user_request
+    from services.bramhastra.celery import send_delete_request_stats_in_delay
     objects = find_objects(request)
 
     if not objects:
@@ -38,7 +39,6 @@ def execute_transaction_code(request):
         else:
             send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='critical')
     
-        from services.bramhastra.celery import send_delete_request_stats_in_delay
         send_delete_request_stats_in_delay.apply_async(kwargs = {'obj':obj},queue = 'statistics')
 
     return {'fcl_freight_rate_request_ids' : request['fcl_freight_rate_request_ids']}
