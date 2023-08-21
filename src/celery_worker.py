@@ -477,7 +477,7 @@ def update_contract_service_task_delay(self, object):
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
 def update_spot_negotiation_locals_rate_task_delay(self,object):
     try: 
-       common.update_spot_negotiation_locals_rate(object)
+       spot_search.update_spot_negotiation_locals_rate(object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
