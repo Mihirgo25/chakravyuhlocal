@@ -97,6 +97,7 @@ if APP_ENV != "production":
 def startup():
     if db.is_closed():
         db.connect()
+    from services.envision.helpers.air_freight_rate_prediction_training import air_freight_rate_prediction_training
     # insert_wagon_type()
     # insert_dbcargo_rates()
     # insert_france_germany_rates()
@@ -110,7 +111,7 @@ def startup():
     # fcl_local_
     # migration()
     # free_day()
-
+    # air_freight_rate_prediction_training()
 
 @app.on_event("shutdown")
 def shutdown():

@@ -37,7 +37,6 @@ def get_air_freight_rate_prediction(request):
     results = []
     for param in params:
         try:
-            param['date'] = datetime.now()
             result = predict_air_freight_rate(param)
             results.append(result)
         except Exception as e:
@@ -58,16 +57,24 @@ def get_air_freight_rate_prediction(request):
     cogo_envision_id = DEFAULT_USER_ID
             
     for result in results:
-        price = result.get('predicted_price')
+        predicted_price = result.get('predicted_price')
         if currency != 'USD':
             price = get_money_exchange_for_fcl_fallback('USD',currency,price)['price']
 
         if currency == 'INR' and price < 100:
             price = price + 100
 
+        slab_number = 2
         for weight_slab in weight_slabs:
+            if slab_number == 0:
+                price = predicted_price
+            elif slab_number > 0:
+                price = predicted_price/(change_factor**slab_number)
+            else:
+                price = predicted_price *(change_factor**abs(slab_number))
             weight_slab['tariff_price'] = price
-            price *= change_factor
+            slab_number =- 1
+
         try:
             create_air_freight_rate_data({
                 'origin_airport_id' : request['origin_airport_id'],
@@ -147,9 +154,11 @@ def get_params_for_model(currency,request):
         same_parameter = {
             "origin_airport_id": request["origin_airport_id"],
             "destination_airport_id": request["destination_airport_id"],
-            "weight": request["weight"],
-            "volume": request["volume"],
-            "packages_count": request["packages_count"],
+            "length": request["length"],
+            "breadth": request["breadth"],
+            'height':request["height"],
+            'shipment_type':request['shipment_type'],
+            'stacking_type':request['stacking_type'],
             "airline_id": id,
             "currency": currency
         }

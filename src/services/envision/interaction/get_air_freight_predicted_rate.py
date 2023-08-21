@@ -1,46 +1,53 @@
-from libs.get_distance import get_distance
+from libs.get_distance import get_air_distance
 from configs.definitions import ROOT_DIR
 import os
 import joblib, pickle
 from configs.ftl_freight_rate_constants import *
 from micro_services.client import maps
+from datetime import datetime
 
 def predict_air_freight_rate(request):
     if type(request) == dict:
         result = request
     else:
         result = request.__dict__
-    weight = result['weight']
-    packages_count = result['packages_count']
-    volume = result['volume']
-    airline_id = result['airline_id']
-    origin_airport_id = result['origin_airport_id']
-    destination_airport_id = result['destination_airport_id']
-    date = result['date']
 
     airline_path = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models")
     airline_ranks = pickle.load(open(os.path.join(airline_path,"airline_ranks.pkl"), 'rb'))
 
-    ranks = airline_ranks[airline_id]
+    rank = airline_ranks.get(result['airline_id'])
+    if not rank:
+        rank = 1
 
-    input = {"filters":{"id":[origin_airport_id, destination_airport_id]}}
+    input = {"filters":{"id":[result['origin_airport_id'], result['destination_airport_id']]}}
     data = maps.list_locations(input)
     if data:
         data = data["list"]
     for d in data:
-        if d["id"] == origin_airport_id:
+        if d["id"] == result['origin_airport_id']:
             origin_location = (d["latitude"], d["longitude"])
-        if d["id"] == destination_airport_id:
+        if d["id"] == result['destination_airport_id']:
             destination_location = (d["latitude"], d["longitude"])
     try:
-        Distance = get_distance(origin_location,destination_location)
+        Distance = get_air_distance(origin_location[0],origin_location[1], destination_location[0], destination_location[1])
     except:
         Distance = 250
 
-
     MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "air_freight_prediction_model.pkl")
     model = pickle.load(open(MODEL_PATH, 'rb'))
-    data = [weight, packages_count, volume, ranks, Distance]
-    model_result = model.predict([data])
-    result["predicted_price"] = round(model_result[0])
+    input_params = [{
+        'length':result['length'],
+        'breadth':result['breadth'],
+        'height':result['height'],
+        'airline_ranks':rank,
+        'air_distance':Distance,
+        'commodity':result['commodity'],
+        'shipment_type':result['shipment_type'],
+        'stacking_type':result['stacking_type'],
+        'month_name': datetime.now().strftime('%B'),
+        'day_name':datetime.now().strftime('%A')
+    }]
+
+    model_result = model.predict(input_params)
+    result["predicted_price"] = round(model_result[0], 2)
     return result

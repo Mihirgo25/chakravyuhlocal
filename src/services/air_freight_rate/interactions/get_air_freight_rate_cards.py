@@ -445,9 +445,7 @@ def post_discard_less_relevant_rates(freight_rates):
 
 
 def get_air_freight_rate_cards(requirements):
-
     try:
-
         if requirements['commodity'] =='general':
             if requirements.get('commodity_subtype'):
                 requirements['commodity_subtype'] = requirements['commodity_subtype']
