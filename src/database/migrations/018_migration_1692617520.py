@@ -1,15 +1,8 @@
-import datetime as dt
 import peewee as pw
 from peewee_migrate import Migrator
-from decimal import ROUND_HALF_EVEN
 from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
 from peewee import UUIDField,CharField
 from database.create_clicks import Clicks
-
-try:
-    import playhouse.postgres_ext as pw_pext
-except ImportError:
-    pass
 
 SQL = pw.SQL
 
