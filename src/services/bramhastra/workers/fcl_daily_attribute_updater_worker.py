@@ -6,7 +6,7 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 )
 
 
-class FclExtendObjectWorker:
+class FclDailyAttributeUpdaterWorker:
     def __init__(self) -> None:
         self.clickhouse = ClickHouse()
 
@@ -15,6 +15,8 @@ class FclExtendObjectWorker:
             FclFreightRateAudit.select(
                 FclFreightRateAudit.object_id.alias("rate_id"),
                 FclFreightRateAudit.extended_from_object_id.alias("parent_rate_id"),
+                FclFreightRateAudit.rate_sheet_id,
+                FclFreightRateAudit.bulk_operation_id
             )
             .where(
                 FclFreightRateAudit.created_at

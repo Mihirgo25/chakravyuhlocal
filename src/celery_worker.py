@@ -147,18 +147,18 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     },
-    'brahmastra_in_delay':{
+    'brahmastra':{
         'task': 'services.bramhastra.celery.brahmastra_in_delay',
         'schedule': crontab(minute=0, hour='*/2'),
         'options': {'queue': 'statistics'}
     },
-    'cache_data_worker_in_delay':{
+    'cache_data_worker':{
         'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
         'schedule': crontab(hour=12, minute=0),
         'options': {'queue': 'low'}
     },
-    'fcl_extended_object_worker_in_delay':{
-        'task': 'services.bramhastra.celery.fcl_extended_object_worker_in_delay',
+    'fcl_daily_attribute_updater':{
+        'task': 'services.bramhastra.celery.fcl_daily_attribute_updater_worker',
         'schedule': crontab(hour=12, minute=0),
         'options': {'queue': 'statistics'}
     }
