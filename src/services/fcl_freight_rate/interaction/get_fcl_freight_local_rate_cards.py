@@ -57,7 +57,8 @@ def initialize_local_query(request):
         FclFreightRateLocal.trade_type == request['trade_type'],
         ~ FclFreightRateLocal.is_line_items_error_messages_present,
         FclFreightRateLocal.service_provider_id.in_(service_provider_ids),
-        FclFreightRateLocal.rate_type != 'cogo_assured')
+        FclFreightRateLocal.rate_type != 'cogo_assured',
+        (FclFreightRateLocal.terminal_id == request['terminal_id']) | (FclFreightRateLocal.terminal_id == None))
 
     if request['commodity'] in HAZ_CLASSES:
         query = query.where(FclFreightRateLocal.commodity == request['commodity'])

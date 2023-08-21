@@ -434,6 +434,7 @@ def get_fcl_freight_local_data(
 def get_fcl_freight_local_rate_cards_data(
     trade_type: str,
     port_id: str,
+    terminal_id: str,
     country_id: str,
     container_size: str,
     container_type: str,
@@ -460,6 +461,7 @@ def get_fcl_freight_local_rate_cards_data(
     request = {
         'trade_type':trade_type,
         'port_id':port_id,
+        'terminal_id': terminal_id,
         'country_id':country_id,
         'container_size' : container_size,
         'container_type' : container_type,
@@ -504,6 +506,7 @@ def get_fcl_freight_rate_cards_data(
     commodity: str = None,
     shipping_line_id: str = None,
     service_provider_id: str = None,
+    terminal_id: str = None,
     include_confirmed_inventory_rates: bool =False,
     additional_services: str = None,
     ignore_omp_dmp_sl_sps: str = None,
@@ -546,6 +549,7 @@ def get_fcl_freight_rate_cards_data(
         'trade_type' : trade_type,
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id,
+        'terminal_id': terminal_id,
         'validity_start' : validity_start,
         'validity_end' : validity_end,
         'include_origin_local' : include_origin_local,
