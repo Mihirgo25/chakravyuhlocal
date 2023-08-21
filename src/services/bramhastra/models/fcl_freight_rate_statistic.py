@@ -115,6 +115,10 @@ class FclFreightRateStatistic(BaseModel):
     parent_mode = CharField(null = True)
     source = CharField(null=True)
     source_id = UUIDField(null=True)
+    performed_by_id = UUIDField(null=True)
+    performed_by_type = CharField(null=True)
+    rate_sheet_id = UUIDField(null=True)
+    bulk_operation_id = UUIDField(null=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.utcnow()
