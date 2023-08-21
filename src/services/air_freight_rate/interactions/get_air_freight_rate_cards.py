@@ -46,7 +46,6 @@ def initialize_freight_query(requirements,prediction_required=False):
     AirFreightRate.shipment_type == requirements.get('packing_type'),
     AirFreightRate.stacking_type == requirements.get('handling_type'),
     ((AirFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (AirFreightRate.importer_exporter_id.is_null(True)))
-
     )
     rate_constant_mapping_key = requirements.get('cogo_entity_id')
 
@@ -61,8 +60,6 @@ def initialize_freight_query(requirements,prediction_required=False):
         freight_query.commodity_sub_type == requirements.get('commodity_subtype_code')
 
     freight_query = freight_query.where(AirFreightRate.last_rate_available_date >= requirements['validity_start'])
-
-
     if not prediction_required:
         freight_query  = freight_query.where(AirFreightRate.source != 'predicted')
 
@@ -91,7 +88,8 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
         'source': source,
         'rate_id': freight_rate['id'],
         'importer_exporter_id': freight_rate['importer_exporter_id'],
-        'cogo_entity_id': freight_rate['cogo_entity_id']
+        'cogo_entity_id': freight_rate['cogo_entity_id'],
+        'rate_type': freight_rate.get('rate_type')
     }
     
     freight_object = add_freight_objects(freight_rate,response_object,requirements)

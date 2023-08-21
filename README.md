@@ -1,10 +1,10 @@
 
-# Welcome to Dynamic Pricing Engine 
+# Welcome to Dynamic Pricing Engine
 ![ChakraVyuh Image](https://cogoport-production.sgp1.digitaloceanspaces.com/cf149142fb2b3b0a5c94b59cfe2a6513/chakravyuh-min.png)
 
 
 
-To manually create a virtualenv on MacOS and Linux:
+To manually create a virtualenv on MacOS and Linux: 
 
 ```
 $ python3 -m venv .venv
@@ -20,7 +20,7 @@ $ source .venv/bin/activate
 If you are a Windows platform, you would activate the virtualenv like this:
 
 ```
-% .venv\Scripts\activate.bat
+% .venv\Scripts\activate.bat 
 ```
 
 ### Using Envision CLI
@@ -104,6 +104,7 @@ command.
 
 ## Useful commands
 
+
  * `cdk ls`          list all stacks in the app
  * `cdk synth`       emits the synthesized CloudFormation template
  * `cdk deploy`      deploy this stack to your default AWS account/region
@@ -116,7 +117,7 @@ Enjoy!
 ## Start Celery
 
 ```
-$ celery -A celery_worker.celery worker -B --loglevel=info -Q communication,critical,low,fcl_freight_rate,bulk_operations
+$ celery -A celery_worker.celery worker -B --loglevel=info -Q communication,critical,low,fcl_freight_rate,bulk_operations,statistics
 
 ```
 
