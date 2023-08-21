@@ -300,6 +300,8 @@ def get_fcl_freight_port_pair_count_api(
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
         
     try:
+        if not pairs:
+            return dict(port_pair_rate_count = [])
         response = get_fcl_freight_port_pair_count(pairs)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
