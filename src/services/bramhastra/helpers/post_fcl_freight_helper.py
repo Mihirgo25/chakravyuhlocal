@@ -310,7 +310,7 @@ class Rate:
         ):
             if parent := self.get_feedback_details():
                 freight.update(parent)
-            self.increment_keys.add("dislikes_rate_reverted_count")
+                self.increment_keys.add("dislikes_rate_reverted_count")
 
         for validity in self.freight.validities:
             param = freight.copy()
@@ -426,23 +426,32 @@ class SpotSearch:
 
 class Feedback:
     def __init__(self, action, params) -> None:
-        if action == FeedbackAction.create.value:
-            self.params = params.dict(exclude={"likes_count", "dislikes_count"})
-            self.rate_id = params.rate_id
-            self.validity_id = params.validity_id
-        else:
-            self.params = params.dict(exclude_none=True)
+        self.increment_keys = set()
+        self.decrement_keys = set()
+            
+        self.params = params.dict(exclude={"likes_count", "dislikes_count"})
+        
+        self.rate_stats_update_params = dict()
+        
+        if getattr(params,"likes_count") == 1:
+            self.increment_keys.add('likes_count')
+        elif getattr(params,"dislikes_count") == 1:
+            self.increment_keys.add('dislikes_count')
+            
+        self.rate_id = params.rate_id
+        self.validity_id = params.validity_id
+            
+        if action == FeedbackAction.update.value:
+            if getattr(params,"likes_count") == -1:
+                self.decrement_keys.add('likes_count')
+            elif getattr(params,"dislikes_count") == -1:
+                self.decrement_keys.add('dislikes_count')    
+          
         self.exclude_update_params = {"feedback_id"}
 
         self.feedback_id = params.feedback_id
 
-        self.rate_stats_update_params = params.dict(
-            include={
-                "likes_count",
-                "dislikes_count",
-            }
-        )
-        if self.params.get("currency") != "USD":
+        if self.params.get("currency") and self.params.get("currency") != "USD":
             self.rate_stats_update_params[
                 "last_indicative_rate"
             ] = common.get_money_exchange_for_fcl(
@@ -454,14 +463,14 @@ class Feedback:
             )[
                 "price"
             ]
-        else:
-            self.rate_stats_update_params["last_indicative_rate"] = self.params.get(
-                "preferred_freight_rate"
-            )
-        self.increment_keys = {}
+        self.rate_stats_update_params["last_indicative_rate"] = (
+            self.params.get("preferred_freight_rate") or 0
+        )
         self.clickhouse_client = None
 
     def set_format_and_existing_rate_stats(self):
+        if not self.increment_keys or not self.decrement_keys or not self.rate_stats_update_params:
+            return
         fcl_freight_validity = FclFreightValidity(
             rate_id=self.rate_id, validity_id=self.validity_id
         )
@@ -518,12 +527,16 @@ class Feedback:
         if isinstance(row, Model):
             for key in self.increment_keys:
                 setattr(row, key, getattr(row, key) + 1)
+            for key in self.decrement_keys:
+                setattr(row, key, max(getattr(row, key) - 1,0))
             for key, value in self.rate_stats_update_params.items():
                 setattr(row, key, value)
             row.save()
         else:
             for key in self.increment_keys:
                 row[key] += 1
+            for key in self.decrement_keys:
+                row[key] -= 1
             for key, value in self.rate_stats_update_params.items():
                 row[key] = value
             fcl_freight_validity.create_stats(row)
@@ -950,7 +963,8 @@ class Statistics:
                 - self.original_rate_stats_hash.get("average_booking_rate")
             )
             ** 2
-            / self.original_booked_rate.get("booking_rate_count") + 1
+            / self.original_booked_rate.get("booking_rate_count")
+            + 1
         ) ** 0.5
         self.rate_stats_hash[key] = abs(
             self.rate_stats_hash["average_booking_rate"]

@@ -158,7 +158,7 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     source_id: str = None
     serial_id: int = None
     preferred_freight_rate: float = 0
-    currency: str = Field(alias="preferred_freight_rate_currency", default="USD")
+    currency: str = Field(alias="preferred_freight_rate_currency", default = 'USD')
     importer_exporter_id: str = None
     service_provider_id: str = None
     created_at: datetime = datetime.utcnow()
@@ -169,6 +169,19 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     likes_count: int = None
     dislikes_count: int = None
     status: str = "active"
+    
+    @validator("preferred_freight_rate", pre=True)
+    def convert_preferred_freight_rate(cls, v):
+        if not v:
+            v = 0
+        return v
+    
+    @validator("currency", pre=True)
+    def convert_currency(cls, v):
+        if not v:
+            v = 'USD'
+        return v
+
 
 
 class ApplyFeedbackFclFreightRateStatistics(BaseModel):
@@ -178,14 +191,14 @@ class ApplyFeedbackFclFreightRateStatistics(BaseModel):
 
 class FclFreightServices(BaseModel):
     shipment_fcl_freight_service_id: str = Field(alias="id")
-    shipment_id: str
+    shipment_id: str = None
     service_state: str = Field(alias="state", default=None)
     service_is_active: bool = Field(alias="is_active")
     service_cancellation_reason: str = Field(alias="cancellation_reason", default=None)
     service_created_at: datetime = Field(alias="created_at", default=datetime.utcnow())
     service_updated_at: datetime = Field(alias="updated_at", default=datetime.utcnow())
-    shipping_line_id: str
-    service_provider_id: str
+    shipping_line_id: str = None
+    service_provider_id: str = None
 
 
 class BuyQuotation(BaseModel):
