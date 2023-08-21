@@ -42,8 +42,14 @@ class Clicks:
     
     def delete(self):
         for model in self.models:
-            self.click.client.execute(f'drop table brahmastra.{model._meta.table_name}')
-            self.click.client.execute(f'drop table brahmastra.stale_{model._meta.table_name}')
+            try:
+                self.click.client.execute(f'drop table brahmastra.{model._meta.table_name}')
+            except:
+                print('Table does not exist:',model._meta.table_name)
+            try:
+                self.click.client.execute(f'drop table brahmastra.stale_{model._meta.table_name}')
+            except:
+                print('Table does not exist:',model._meta.table_name)
         self.click.drop_dictionaries(self.dictionaries)
         
 
