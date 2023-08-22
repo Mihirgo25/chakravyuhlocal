@@ -935,11 +935,10 @@ def get_fcl_freight_rate_cards(requirements):
         }
         
 def get_freight_rates(requirements, freight_rates):
-
     freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
     is_predicted = False
-
     are_all_rates_predicted = all_rates_predicted(freight_rates)
+  
     if len(freight_rates) == 0 or are_all_rates_predicted:
         freight_rates, is_predicted = get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted)
         
@@ -947,5 +946,5 @@ def get_freight_rates(requirements, freight_rates):
     
     if is_predicted and requirements['cogo_entity_id'] == VN_ENTITY_ID:
         return [],False
-
+  
     return  (freight_rates, is_predicted)
