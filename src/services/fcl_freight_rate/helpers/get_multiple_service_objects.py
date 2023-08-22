@@ -60,9 +60,9 @@ def get_multiple_service_objects(freight_object, is_new_rate=True):
             if hasattr(freight_object,'importer_exporter_id') and organization['id']==str(freight_object.importer_exporter_id):
                 freight_object.importer_exporter= organization
             if hasattr(freight_object,'performed_by_org_id') and organization['id']==str(freight_object.performed_by_org_id):
-                try:
+                if hasattr(freight_object,'organization'):
                     freight_object.organization = organization
-                except:
+                elif hasattr(freight_object,'performed_by_org'):
                     freight_object.performed_by_org = organization
 
     # if hasattr(freight_object,'rate_sheet_id'):
