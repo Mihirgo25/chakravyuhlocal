@@ -36,7 +36,7 @@ def get_fcl_freight_rate_charts(filters):
 
 def get_accuracy(filters, where):
     if is_json_needed(filters):
-        if url:= get_link():
+        if url := get_link():
             return url
 
     clickhouse = ClickHouse()
@@ -60,7 +60,16 @@ def get_accuracy(filters, where):
 def get_deviation(filters, where):
     clickhouse = ClickHouse()
     queries = [
-        """SELECT CASE
+        """WITH deviation AS (SELECT AVG(rate_deviation_from_booking_rate) AS rate_deviation_from_booking_rate FROM brahmastra.fcl_freight_rate_statistics"""
+    ]
+    if where:
+        queries.append(" WHERE ")
+        queries.append(where)
+
+    queries.append("GROUP BY rate_id")
+
+    queries.append(
+        """) SELECT CASE
                 WHEN rate_deviation_from_booking_rate BETWEEN -100 AND -80 THEN -80
                 WHEN rate_deviation_from_booking_rate BETWEEN -79 AND -60 THEN -60
                 WHEN rate_deviation_from_booking_rate BETWEEN -59 AND -40 THEN -40
@@ -73,12 +82,8 @@ def get_deviation(filters, where):
                 WHEN rate_deviation_from_booking_rate BETWEEN 81 AND 100 THEN 100
             END AS range,
             COUNT(1) AS count
-            FROM brahmastra.fcl_freight_rate_statistics"""
-    ]
-
-    if where:
-        queries.append(" WHERE ")
-        queries.append(where)
+            FROM deviation"""
+    )
 
     queries.append("GROUP BY range ORDER BY range WITH FILL FROM -80 TO 100 STEP 20;")
 
@@ -110,7 +115,7 @@ def get_rate_count_with_deviation_more_than_30(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT count(id) as rate_count_with_deviation_more_than_30 from brahmastra.fcl_freight_rate_statistics WHERE rate_deviation_from_booking_rate > 30"""
+        """SELECT count(DISTINCT rate_id) as rate_count_with_deviation_more_than_30 from brahmastra.fcl_freight_rate_statistics WHERE ABS(rate_deviation_from_booking_rate) > 30"""
     ]
 
     if where:
