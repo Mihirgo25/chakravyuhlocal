@@ -91,6 +91,9 @@ def add_pagination_data(clickhouse, queries, filters, page, page_limit):
 
 
 def add_location_objects(statistics):
+    if not statistics:
+        return
+    
     location_ids = list(
         {
             v
