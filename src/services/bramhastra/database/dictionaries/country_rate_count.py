@@ -12,6 +12,7 @@ class CountryRateCount:
     def __init__(self) -> None:
         self.lifetime = 60
         self.client = ClickHouse().client
+        self.name = 'country_rate_count'
 
         self.query = f"""
             CREATE DICTIONARY brahmastra.country_rate_count
@@ -44,3 +45,6 @@ class CountryRateCount:
                 DATABASE_PASSWORD=DATABASE_PASSWORD,
             ),
         )
+        
+    def drop(self):
+        self.client.execute(f'drop dictionary brahmastra.{self.name}')

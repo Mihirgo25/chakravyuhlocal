@@ -397,6 +397,7 @@ class CreateFclFreightRateFeedback(BaseModel):
     service_provider_id: str = None
     attachment_file_urls: List[str] = []
     commodity_description: str = None
+    rate_type: str = None
 
 
 class CreateFclFreightRateNotAvailable(BaseModel):
@@ -480,6 +481,7 @@ class CreateFclFreightRateTask(BaseModel):
     shipment_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+    spot_negotiation_rate_id: str = None
     rate: LocalData = None
 
 
@@ -938,6 +940,7 @@ class UpdateFclFreightRateTask(BaseModel):
     status: str = None
     closing_remarks: str = None
     validate_closing_remarks: str = None
+    add_rate_in_rms: bool = True
 
 
 class UpdateRateProperties(BaseModel):

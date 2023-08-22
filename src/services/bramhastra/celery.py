@@ -30,8 +30,8 @@ def cache_data_worker_in_delay(self):
 def fcl_extended_object_worker_in_delay(self):
     try:
         # this sets parent_rate_id for rates created via extensions
-        from services.bramhastra.workers.fcl_extended_object_worker import FclExtendObjectWorker
-        FclExtendObjectWorker().execute()
+        from services.bramhastra.workers.fcl_daily_attribute_updater_worker import FclDailyAttributeUpdaterWorker
+        FclDailyAttributeUpdaterWorker().execute()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

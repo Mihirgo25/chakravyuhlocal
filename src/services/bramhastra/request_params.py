@@ -63,6 +63,8 @@ class FclFreight(BaseModel):
     validities: list[FclValidities]
     rate_created_at: datetime = Field(alias="created_at")
     rate_updated_at: datetime = Field(alias="updated_at")
+    performed_by_id: str = None
+    performed_by_type: str = None
 
     @validator("containers_count", pre=True)
     def convert_invalid_container_count(cls, v):

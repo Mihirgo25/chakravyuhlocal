@@ -59,6 +59,7 @@ from services.chakravyuh.producer_vyuhs.air_freight import AirFreightVyuh as Air
 from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreightVyuhSetter
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreightVyuhSetter
+from playhouse.postgres_ext import ServerSide
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -97,11 +98,11 @@ celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
 
 celery.conf.update(**CELERY_CONFIG)
 celery.conf.beat_schedule = {
-    # 'fcl_freigh_rates_to_cogo_assured': {
-    #     'task': 'celery_worker.fcl_freight_rates_to_cogo_assured',
-    #     'schedule': crontab(minute=00,hour=00),
-    #     'options': {'queue' : 'fcl_freight_rate'}
-    #     },
+    'fcl_freigh_rates_to_cogo_assured': {
+        'task': 'celery_worker.fcl_freight_rates_to_cogo_assured',
+        'schedule': crontab(minute=00,hour=00),
+        'options': {'queue' : 'fcl_freight_rate'}
+        },
     # 'update_cogo_assured_fcl_freight_rates': {
     #     'task': 'celery_worker.update_cogo_assured_fcl_freight_rates',
     #     'schedule': crontab(minute=30, hour=18),
@@ -147,18 +148,18 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     },
-    'brahmastra_in_delay':{
+    'brahmastra':{
         'task': 'services.bramhastra.celery.brahmastra_in_delay',
         'schedule': crontab(minute=0, hour='*/2'),
         'options': {'queue': 'statistics'}
     },
-    'cache_data_worker_in_delay':{
+    'cache_data_worker':{
         'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
         'schedule': crontab(hour=12, minute=0),
         'options': {'queue': 'low'}
     },
-    'fcl_extended_object_worker_in_delay':{
-        'task': 'services.bramhastra.celery.fcl_extended_object_worker_in_delay',
+    'fcl_daily_attribute_updater':{
+        'task': 'services.bramhastra.celery.fcl_daily_attribute_updater_worker',
         'schedule': crontab(hour=12, minute=0),
         'options': {'queue': 'statistics'}
     }
@@ -439,16 +440,11 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_freight_rates_to_cogo_assured(self):
     try:
-        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.last_rate_available_date.cast('date') > datetime.now().date(), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE).order_by(FclFreightRate.updated_at.desc())
+        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.updated_at.cast('date') >= datetime.now().date()-timedelta(days = 1), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE)
         
-        count = query.count()
         grouped_set = set()
-        limit_size = 5000
-        
-        for offset in range(0, count, limit_size):
-            batched_rates = query.limit(limit_size).offset(offset)
-            for rate in batched_rates.execute():
-                grouped_set.add(f'{str(rate.origin_port_id)}:{str(rate.origin_main_port_id or "")}:{str(rate.destination_port_id)}:{str(rate.destination_main_port_id or "")}:{str(rate.container_size)}:{str(rate.container_type)}:{str(rate.commodity)}')
+        for rate in ServerSide(query):
+            grouped_set.add(f'{str(rate.origin_port_id)}:{str(rate.origin_main_port_id or "")}:{str(rate.destination_port_id)}:{str(rate.destination_main_port_id or "")}:{str(rate.container_size)}:{str(rate.container_type)}:{str(rate.commodity)}')
 
         with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
             futures = [executor.submit(execute_update_fcl_rates_to_cogo_assured, key) for key in grouped_set]
@@ -472,6 +468,16 @@ def execute_update_fcl_rates_to_cogo_assured(key):
 def update_contract_service_task_delay(self, object):
     try:
         common.update_contract_service_task(object)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def update_spot_negotiation_locals_rate_task_delay(self,object):
+    try: 
+       common.update_spot_negotiation_locals_rate(object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

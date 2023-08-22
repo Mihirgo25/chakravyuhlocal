@@ -94,7 +94,11 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
     total_priority Float32 DEFAULT 0,
     parent_mode FixedString(255),
     source String,
-    source_id UUID
+    source_id UUID,
+    performed_by_id UUID,
+    performed_by_type FixedString(256),
+    rate_sheet_id UUID,
+    bulk_operation_id UUID
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,rate_id,validity_id)
@@ -196,6 +200,10 @@ CREATE TABLE brahmastra.stale_fcl_freight_rate_statistics
     total_priority Float32 DEFAULT 0,
     parent_mode FixedString(255),
     source String,
-    source_id UUID
+    source_id UUID,
+    performed_by_id UUID,
+    performed_by_type FixedString(256),
+    rate_sheet_id UUID,
+    bulk_operation_id UUID
 )
 ENGINE = File(CSV);

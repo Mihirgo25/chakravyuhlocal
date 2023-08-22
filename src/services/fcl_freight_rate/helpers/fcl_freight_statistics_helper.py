@@ -66,7 +66,7 @@ def send_rate_stats(action, request, freight):
             pass
 
         for k, v in request.items():
-            if k in {"source_id", "source"}:
+            if k in {"source_id", "source","performed_by_id","performed_by_type"}:
                 object[k] = v
                 
         apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(action = action,params = {'freight': object}))

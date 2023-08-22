@@ -8,6 +8,7 @@ import peewee
 class Click:
     def __init__(self) -> None:
         self.root_path = f"{ROOT_DIR}/services/bramhastra/database/tables"
+        self.client = ClickHouse()
 
     def create(self, model: peewee.Model):
         sql_file_path = f"{self.root_path}/{model._meta.table_name}.sql"
@@ -17,8 +18,6 @@ class Click:
             print(f"The file {sql_file_path} does not exist.")
 
         self.validate(sql_file_path, model)
-
-        clickhouse = ClickHouse()
 
         with open(sql_file_path, "r") as sql_file:
             sql_script = sql_file.read()
@@ -31,7 +30,7 @@ class Click:
                 continue
 
             try:
-                response = clickhouse.execute(statement)
+                response = self.client.execute(statement)
                 print(response)
             except Exception as e:
                 print(e)
@@ -73,3 +72,7 @@ class Click:
     def create_dictionaries(self, dictionaries):
         for dictionary in dictionaries:
             dictionary().create()
+            
+    def drop_dictionaries(self,dictionaries):
+        for dictionary in dictionaries:
+            dictionary().drop()
