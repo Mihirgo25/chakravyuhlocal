@@ -58,46 +58,44 @@ def execute_transaction_code(request):
     if request['add_rate_in_rms']:
         result = create_fcl_freight_local_rate(task,request) 
     
-    update_shipment_local_charges(task,request)
+    if task.source == "rfq" and task.status == 'completed':
+        rate = task.completion_data['rate']
+        formatted_line_items = []
+        for line_item in rate['line_items']:
+            new_object={}
+            new_object['code'] = line_item['code']
+            new_object['unit'] = line_item['unit']
+            new_object['currency'] = line_item['currency']
+            new_object['price'] = line_item['price']
+            formatted_line_items.append(new_object)
+        
+        formatted_detention = rate.get('detention')
+        formatted_demurrage = rate.get('demurrage')
+        formatted_plugin = rate.get('plugin')
+        if formatted_demurrage:
+            del formatted_demurrage['remarks']
+            formatted_demurrage['unit'] = 'per_container'
+        if formatted_detention:
+            del formatted_detention['remarks']
+            formatted_detention['unit'] = 'per_container'
+        if formatted_plugin:
+            del formatted_plugin['remarks']
+            formatted_plugin['unit'] = 'per_container'
+
+        audit_obj = FclServiceAudit.select().where(FclServiceAudit.object_id==task.id, FclServiceAudit.object_type=='FclFreightRateTask').first()
+            
+        rfq_object = {
+            'spot_negotiation_rate_id': str(task.spot_negotiation_rate_id),
+            'local_rate_data': {'destination_local': { 'line_items': formatted_line_items}, 'destination_detention': formatted_detention, 'destination_demmurage':formatted_demurrage,'destination_plugin':formatted_plugin},
+            'main_freight_reverted_by_id': str(audit_obj.performed_by_id)
+        }
+        update_spot_negotiation_locals_rate_task_delay.apply_async(kwargs = {"object": rfq_object}, queue='low')
+    else:
+        update_shipment_local_charges(task,request)
+        
+    update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
     
     create_audit(request)
-    
-    update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
-
-    rate = task.completion_data['rate']
-    formatted_line_items = []
-    for line_item in rate['line_items']:
-        new_object={}
-        new_object['code'] = line_item['code']
-        new_object['unit'] = line_item['unit']
-        new_object['currency'] = line_item['currency']
-        new_object['price'] = line_item['price']
-        formatted_line_items.append(new_object)
-    
-    formatted_detention = rate.get('detention')
-    formatted_demurrage = rate.get('demurrage')
-    formatted_plugin = rate.get('plugin')
-    if formatted_demurrage:
-        del formatted_demurrage['remarks']
-        formatted_demurrage['unit'] = 'per_container'
-    if formatted_detention:
-        del formatted_detention['remarks']
-        formatted_detention['unit'] = 'per_container'
-    if formatted_plugin:
-        del formatted_plugin['remarks']
-        formatted_plugin['unit'] = 'per_container'
-
-    audit_obj = FclServiceAudit.select().where(FclServiceAudit.object_id==task.id,
-                                                FclServiceAudit.object_type=='FclFreightRateTask').first()
-        
-    rfq_object = {
-        'spot_negotiation_rate_id': str(task.spot_negotiation_rate_id),
-        'local_rate_data': {'destination_local': { 'line_items': formatted_line_items}, 'destination_detention': formatted_detention, 'destination_demmurage':formatted_demurrage,'destination_plugin':formatted_plugin},
-        'main_freight_reverted_by_id': str(audit_obj.performed_by_id)
-    }
-
-    if task.source == "rfq" and task.status == 'completed':
-        update_spot_negotiation_locals_rate_task_delay.apply_async(kwargs = {"object": rfq_object}, queue='low')
     
     return {'id': str(task.id)}
 
