@@ -45,11 +45,11 @@ class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
         self.models = models or [
             FclFreightRateStatistic,
-            # FeedbackFclFreightRateStatistic,
-            # ShipmentFclFreightRateStatistic,
-            # SpotSearchFclFreightRateStatistic,
-            # FclFreightRateRequestStatistic,
-            # CheckoutFclFreightRateStatistic,
+            FeedbackFclFreightRateStatistic,
+            ShipmentFclFreightRateStatistic,
+            SpotSearchFclFreightRateStatistic,
+            FclFreightRateRequestStatistic,
+            CheckoutFclFreightRateStatistic,
         ]
         self.__clickhouse = ClickHouse()
 
