@@ -43,12 +43,12 @@ If `arjun` is not the user, old duplicate entries won't be cleared. We recommend
 class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
         self.models = models or [
-            # FclFreightRateStatistic,
-            FeedbackFclFreightRateStatistic,
-            ShipmentFclFreightRateStatistic,
-            SpotSearchFclFreightRateStatistic,
-            FclFreightRateRequestStatistic,
-            CheckoutFclFreightRateStatistic,
+            FclFreightRateStatistic,
+            # FeedbackFclFreightRateStatistic,
+            # ShipmentFclFreightRateStatistic,
+            # SpotSearchFclFreightRateStatistic,
+            # FclFreightRateRequestStatistic,
+            # CheckoutFclFreightRateStatistic,
         ]
         self.__clickhouse = ClickHouse()
 
@@ -72,10 +72,10 @@ class Brahmastra:
         print(f'Startin With Table: {model._meta.table_name}')
         fields = ",".join([key for key in model._meta.fields.keys()])
         self.__clickhouse.execute(
-            f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
+            f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE rate_type != 'cogo_assured'"
         )
         
-        model.delete().execute()
+        model.delete().where(model.rate_type!='cogo_assured').execute()
         print(f'Done With Table: {model._meta.table_name}')
 
     def used_by(self, arjun: bool) -> None:
