@@ -13,6 +13,7 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.add_fields(FclFreightRateStatistic, performed_by_type = CharField(null=True))
     migrator.add_fields(FclFreightRateStatistic, rate_sheet_id= UUIDField(null=True))
     migrator.add_fields(FclFreightRateStatistic, bulk_operation_id = UUIDField(null=True))
+    print('efrgtrhyu')
 
 
 
