@@ -42,7 +42,7 @@ async def add_service_objects(statistics):
     shipping_lines = await get_shipping_lines(shipping_line_ids)
 
     locations = await get_locations(location_ids)
-
+    
     for statistic in statistics:
         update_statistic = dict()
         for k, v in statistic.items():
@@ -60,6 +60,8 @@ async def add_service_objects(statistics):
 
 
 async def get_shipping_lines(ids):
+    if not ids:
+        return dict()
     return {
         shipping_line["id"]: shipping_line
         for shipping_line in maps.list_operators(
@@ -72,6 +74,8 @@ async def get_shipping_lines(ids):
 
 
 async def get_locations(ids):
+    if not ids:
+        return dict()
     return {
         location["id"]: location
         for location in maps.list_locations(

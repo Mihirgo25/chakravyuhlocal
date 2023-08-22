@@ -5,7 +5,7 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 import math
 
 
-def get_fcl_freight_rate_distribution(filters):
+async def get_fcl_freight_rate_distribution(filters):
     clickhouse = ClickHouse()
 
     queries = [
@@ -18,7 +18,9 @@ def get_fcl_freight_rate_distribution(filters):
     if where := get_direct_indirect_filters(filters):
         queries.append(" WHERE ")
         queries.append(where)
-
+        
+    total_rate_count = await get_total_rate_count(filters,where)
+        
     queries.append(
         """), mode_count as (SELECT mode,count(mode) as value,
         sum(bookings_created) as bookings_created,
@@ -37,19 +39,31 @@ def get_fcl_freight_rate_distribution(filters):
     )
 
     response = clickhouse.execute(" ".join(queries), filters)
+    
+    distribution = {}
 
-    return format_distribution(response)
+    format_distribution(response,distribution)
+    
+    distribution['total_rate_count'] = total_rate_count
+    
+    return distribution
 
 
-def format_distribution(response):
-    distribution = dict()
-    total_rates = 0
+def format_distribution(response,distribution):
     for data in response:
         for k, v in data.items():
             if not isinstance(v, str) and math.isnan(v):
                 data[k] = 0
-        total_rates += data["value"]
         distribution[data["mode"]] = data
         del data["mode"]
-    distribution["total_rates"] = total_rates
-    return distribution
+
+
+async def get_total_rate_count(filters,where):
+    queries = ["SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.fcl_freight_rate_statistics"]
+    if where:
+        queries.append('WHERE')
+        queries.append(where)
+    
+    clickhouse = ClickHouse()
+    if result := clickhouse.execute(" ".join(queries), filters):
+        return result[0]["count"]
