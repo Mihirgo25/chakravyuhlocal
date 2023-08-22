@@ -95,7 +95,6 @@ def shell(ipython_args):
     config.TerminalInteractiveShell.autoindent = True
     config.InteractiveShellApp.exec_lines = ["%load_ext autoreload","%autoreload 2"]
     config.TerminalInteractiveShell.autoformatter = 'black'
-    config.InteractiveShell.pdb = True
     VerboseTB._tb_highlight = "bg:#4C5656"
     config.InteractiveShell.ast_node_interactivity = "all"
     config.InteractiveShell.debug = True
