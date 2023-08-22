@@ -72,10 +72,10 @@ class Brahmastra:
         print(f'Startin With Table: {model._meta.table_name}')
         fields = ",".join([key for key in model._meta.fields.keys()])
         self.__clickhouse.execute(
-            f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE rate_type != 'cogo_assured'"
+            f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
         )
         
-        model.delete().where(model.rate_type!='cogo_assured').execute()
+        model.delete().execute()
         print(f'Done With Table: {model._meta.table_name}')
 
     def used_by(self, arjun: bool) -> None:
