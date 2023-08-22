@@ -61,14 +61,14 @@ def get_organization(id=None, short_name=None,account_type = 'importer_exporter'
         with conn:
             with conn.cursor() as cur:
                 if short_name:
-                    sql = 'select organizations.id, organizations.business_name, organizations.short_name,organizations.category_types, organizations.account_type, organizations.kyc_status, organizations.status from organizations where organizations.short_name = %s and status = %s and account_type = %s'
+                    sql = 'select organizations.id, organizations.business_name, organizations.short_name,organizations.category_types, organizations.account_type, organizations.kyc_status, organizations.status, organizations.tags from organizations where organizations.short_name = %s and status = %s and account_type = %s'
                     cur.execute(sql, (short_name,'active',account_type,))
                 else:
                     if not isinstance(id, list):
                         id = (id,)
                     else:
                         id = tuple(id)
-                    sql = 'select organizations.id, organizations.business_name, organizations.short_name,organizations.category_types, organizations.account_type, organizations.kyc_status, organizations.status from organizations where organizations.id in %s'
+                    sql = 'select organizations.id, organizations.business_name, organizations.short_name,organizations.category_types, organizations.account_type, organizations.kyc_status, organizations.status, organizations.tags from organizations where organizations.id in %s'
                     cur.execute(sql, (id,))
 
                 result = cur.fetchall()
@@ -82,7 +82,8 @@ def get_organization(id=None, short_name=None,account_type = 'importer_exporter'
                             "category_types":res[3],
                             "account_type":res[4],
                             "kyc_status" : res[5],
-                            "status":res[6]
+                            "status":res[6],
+                            "tags":res[7]
                         }
                     )
                 cur.close()
