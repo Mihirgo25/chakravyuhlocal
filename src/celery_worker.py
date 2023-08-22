@@ -100,7 +100,7 @@ celery.conf.update(**CELERY_CONFIG)
 celery.conf.beat_schedule = {
     'fcl_freigh_rates_to_cogo_assured': {
         'task': 'celery_worker.fcl_freight_rates_to_cogo_assured',
-        'schedule': crontab(minute=00,hour=00),
+        'schedule': crontab(minute=30,hour=18),
         'options': {'queue' : 'fcl_freight_rate'}
         },
     # 'update_cogo_assured_fcl_freight_rates': {
@@ -130,17 +130,17 @@ celery.conf.beat_schedule = {
     # },
     'send_near_expiry_air_freight_rate_notification':{
         'task': 'celery_worker.send_near_expiry_air_freight_rate_notification_in_delay',
-        'schedule': crontab(minute=30,hour=5),
+        'schedule': crontab(minute=00,hour=20),
         'options': {'queue' : 'low'}
     },
     'send_expired_air_freight_rate_notification':{
         'task': 'celery_worker.send_expired_air_freight_rate_notification_in_delay',
-        'schedule': crontab(minute=30,hour=5),
+        'schedule': crontab(minute=30,hour=20),
         'options': {'queue' : 'low'}
     },
     'send_air_freight_local_charges_update_reminder_notification':{
         'task': 'celery_worker.send_air_freight_local_charges_update_reminder_notification_in_delay',
-        'schedule': crontab(minute=30,hour=5,day_of_month = '1'),
+        'schedule': crontab(minute=00,hour=21,day_of_month = '1'),
         'options': {'queue': 'low'}
     },
     'adjust_air_freight_rate_airline_factors':{
@@ -155,12 +155,12 @@ celery.conf.beat_schedule = {
     },
     'cache_data_worker':{
         'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
-        'schedule': crontab(hour=20, minute=00),
+        'schedule': crontab(hour=16, minute=00),
         'options': {'queue': 'low'}
     },
     'fcl_daily_attribute_updater':{
         'task': 'services.bramhastra.celery.fcl_daily_attribute_updater_worker',
-        'schedule': crontab(hour=20, minute=30),
+        'schedule': crontab(hour=22, minute=30),
         'options': {'queue': 'statistics'}
     }
 }
