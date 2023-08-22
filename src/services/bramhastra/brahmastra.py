@@ -43,7 +43,7 @@ If `arjun` is not the user, old duplicate entries won't be cleared. We recommend
 class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
         self.models = models or [
-            FclFreightRateStatistic,
+            # FclFreightRateStatistic,
             FeedbackFclFreightRateStatistic,
             ShipmentFclFreightRateStatistic,
             SpotSearchFclFreightRateStatistic,
@@ -74,9 +74,9 @@ class Brahmastra:
         self.__clickhouse.execute(
             f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
         )
-        print(f'Done With Table: {model._meta.table_name}')
+        
         model.delete().execute()
-        print(f'Deleted With Table: {model._meta.table_name}')
+        print(f'Done With Table: {model._meta.table_name}')
 
     def used_by(self, arjun: bool) -> None:
         for model in self.models:
