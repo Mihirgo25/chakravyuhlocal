@@ -24,7 +24,7 @@ def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, p
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},floor(abs(AVG(accuracy)),2) as accuracy,count(rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
+        f'SELECT {",".join(grouping)},floor(abs(AVG(accuracy)),2) as accuracy,count(DISTINCT rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
     ]
 
     if where := get_direct_indirect_filters(filters):
