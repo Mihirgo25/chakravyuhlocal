@@ -173,3 +173,11 @@ RATE_ENTITY_MAPPING = {
 }
 
 SERVICE_PROVIDER_FF='36cee6fb-eeaf-4643-9db5-397544339635'
+
+VALUE_PROPS_TAG_MAPPING = {
+    'confirmed_space_and_inventory': 'Confirmed space & inventory',
+    'standard_local_charges': 'Standard Local Charges',
+    'competitive_price': 'Competitive Price',
+    'fixed_exchange_rate': 'Fixed Exchange Rate',
+    'priority_booking': 'Priority Booking'
+  }
