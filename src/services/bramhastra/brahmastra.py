@@ -25,6 +25,7 @@ from configs.env import (
     DATABASE_PORT,
     DATABASE_USER,
 )
+from services.bramhastra.constants import INDIAN_LOCATION_ID
 
 
 """
@@ -72,10 +73,10 @@ class Brahmastra:
         print(f'Startin With Table: {model._meta.table_name}')
         fields = ",".join([key for key in model._meta.fields.keys()])
         self.__clickhouse.execute(
-            f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
+            f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') where origin_country_id = '{INDIAN_LOCATION_ID}'"
         )
         
-        model.delete().execute()
+        model.delete().where(model.origin_country_id == INDIAN_LOCATION_ID).execute()
         print(f'Done With Table: {model._meta.table_name}')
 
     def used_by(self, arjun: bool) -> None:
