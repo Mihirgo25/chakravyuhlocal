@@ -15,8 +15,6 @@ from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
 import traceback
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
-from services.fcl_freight_rate.interaction.get_near_expire_rates import get_near_expired_rates
-from rms_utils.filter_predicted_or_extension_rates import filter_predicted_or_extension_rates
 
 def initialize_freight_query(requirements, prediction_required = False, get_cogo_assured=False):
     freight_query = FclFreightRate.select(
@@ -70,11 +68,7 @@ def initialize_freight_query(requirements, prediction_required = False, get_cogo
     if allow_entity_ids:
         freight_query = freight_query.where(((FclFreightRate.cogo_entity_id << allow_entity_ids) | (FclFreightRate.cogo_entity_id.is_null(True))))
 
-    if near_expired_rates:
-        freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= (requirements['validity_start']  - timedelta(days=7)))
-        freight_query = freight_query.where(~FclFreightRate.mode << ['expired_extension','predicted'])
-    else:
-        freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= requirements['validity_start'])
+    freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= requirements['validity_start'])
 
     if requirements['ignore_omp_dmp_sl_sps']:
         freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != requirements['ignore_omp_dmp_sl_sps'])
@@ -720,18 +714,6 @@ def post_discard_noneligible_rates(freight_rates, requirements):
 
 def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted):
     try:
-        get_near_expired_rates(requirements)
-        initial_query = initialize_freight_query(requirements)
-        near_expired_rates = jsonable_encoder(list(initial_query.dicts()))
-        near_expired_rates = pre_discard_noneligible_rates(near_expired_rates, requirements)
-        if near_expired_rates:
-            freight_rates = near_expired_rates
-        if len(freight_rates)!=0:
-            return freight_rates ,is_predicted
-    except:
-        pass
-    
-    try:
         get_fcl_freight_rates_from_clusters(requirements)
     except:
         pass
@@ -744,7 +726,7 @@ def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted):
     
     if len(freight_rates) == 0:
         get_fcl_freight_predicted_rate(requirements)
-        initial_query = initialize_freight_query(requirements,  True)
+        initial_query = initialize_freight_query(requirements, True)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
         is_predicted = True
         
