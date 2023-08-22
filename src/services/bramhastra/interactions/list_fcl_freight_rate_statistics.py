@@ -112,8 +112,9 @@ async def list_fcl_freight_rate_statistics(filters, page_limit, page):
     )
 
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
-
-    await add_service_objects(statistics)
+    
+    if statistics:
+        await add_service_objects(statistics)
 
     return dict(
         list=statistics,

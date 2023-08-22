@@ -39,7 +39,8 @@ def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, p
 
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
-    add_location_objects(statistics)
+    if statistics:
+        add_location_objects(statistics)
 
     return dict(
         list=statistics,
@@ -91,9 +92,6 @@ def add_pagination_data(clickhouse, queries, filters, page, page_limit):
 
 
 def add_location_objects(statistics):
-    if not statistics:
-        return
-    
     location_ids = list(
         {
             v
