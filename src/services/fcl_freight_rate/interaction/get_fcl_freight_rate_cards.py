@@ -3,7 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID, DEFAULT_SERVICE_PROVIDER_ID, VN_ENTITY_ID, DEFAULT_EXPORT_DESTINATION_DETENTION , DEFAULT_IMPORT_DESTINATION_DETENTION , DEFAULT_EXPORT_DESTINATION_DEMURRAGE , DEFAULT_IMPORT_DESTINATION_DEMURRAGE 
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
-from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
+from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT, VALUE_PROPS_TAG_MAPPING
 from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
 from datetime import datetime, timedelta
 import concurrent.futures
@@ -626,7 +626,7 @@ def build_response_object(freight_query_result, request):
       'service_provider_id': freight_query_result['service_provider_id'],
       'importer_exporter_id': freight_query_result['importer_exporter_id'],
       'source': source,
-      'tags': [],
+      'tags': freight_query_result['tags'] if freight_query_result['rate_type'] == 'cogo_assured' else [],
       'rate_id': freight_query_result['id'],
       'rate_type': freight_query_result['rate_type']
     }
@@ -893,7 +893,6 @@ def get_fcl_freight_rate_cards(requirements):
                 rates_without_cogo_assured.append(rate)
         
         freight_rates, is_predicted = get_freight_rates(requirements, rates_without_cogo_assured)
-        cogo_assured_rates = add_rate_properties(cogo_assured_rates)
         freight_rates += cogo_assured_rates  
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
@@ -920,6 +919,7 @@ def get_fcl_freight_rate_cards(requirements):
             fcl_freight_vyuh = FclFreightVyuh(rates_without_cogo_assured, requirements)
             freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
         
+        cogo_assured_rates = add_rate_properties(cogo_assured_rates)
         freight_rates+= cogo_assured_rates
         freight_rates = build_response_list(freight_rates, requirements)
         return {
@@ -956,17 +956,16 @@ def add_rate_properties(cogo_assured_rates):
     query = FclFreightRateProperties.select(
     FclFreightRateProperties.value_props,
     FclFreightRateProperties.t_n_c,
-    FclFreightRateProperties.available_inventory,
-    FclFreightRateProperties.used_inventory,
-    FclFreightRateProperties.shipment_count,
-    FclFreightRateProperties.volume_count,
     FclFreightRateProperties.rate_id,
     ).where(FclFreightRateProperties.rate_id << rate_ids)
     
     properties = {property['rate_id']: property for property in jsonable_encoder(list(query.dicts()))}
-    
+
     for rate in cogo_assured_rates:
-        rate.update(properties.get(rate['id'], {}))
-        rate.pop('rate_id')
+        value_props = properties.get(rate['id'], {}).get('value_props', [])
+        tags = [VALUE_PROPS_TAG_MAPPING[prop['name']] for prop in value_props]
+        
+        rate['terms_and_conditions'] = properties.get(rate['id'], {}).get('t_n_c', [])
+        rate['tags'] = tags
 
     return cogo_assured_rates
