@@ -238,12 +238,12 @@ def get_fcl_freight_map_view_statistics_api(
 @bramhastra.get(
     "/get_fcl_freight_rate_world", response_model=FclFreightRateWorldResponse
 )
-def get_fcl_freight_rate_world_api(auth_response: dict = Depends(authorize_token)):
+async def get_fcl_freight_rate_world_api(auth_response: dict = Depends(authorize_token)):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
 
     try:
-        response = get_fcl_freight_rate_world()
+        response = await get_fcl_freight_rate_world()
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
