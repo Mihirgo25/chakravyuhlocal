@@ -71,7 +71,7 @@ class Brahmastra:
     def __build_query_and_insert_to_clickhouse(self, model: peewee.Model):
         fields = ",".join([key for key in model._meta.fields.keys()])
         self.__clickhouse.execute(
-            f"INSERT INTO brahmastra.{model._meta.table_name} SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
+            f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') ORDER BY "
         )
         model.delete().execute()
 
