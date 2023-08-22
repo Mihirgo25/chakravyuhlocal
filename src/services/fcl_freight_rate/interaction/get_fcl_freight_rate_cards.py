@@ -15,9 +15,10 @@ from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
 import traceback
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
-import concurrent.futures
 
-def initialize_freight_query(requirements, prediction_required = False, get_cogo_assured=False):
+
+
+def initialize_freight_query(requirements, prediction_required = False):
     freight_query = FclFreightRate.select(
     FclFreightRate.id,
     FclFreightRate.origin_continent_id,
@@ -54,11 +55,6 @@ def initialize_freight_query(requirements, prediction_required = False, get_cogo
     ~FclFreightRate.rate_not_available_entry,
     ((FclFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (FclFreightRate.importer_exporter_id == None))
     )
-
-    if get_cogo_assured:
-        freight_query = freight_query.where(FclFreightRate.rate_type == 'cogo_assured')
-    else:
-        freight_query = freight_query.where(FclFreightRate.rate_type != 'cogo_assured')
         
     rate_constant_mapping_key = requirements['cogo_entity_id']
 
@@ -887,13 +883,19 @@ def get_fcl_freight_rate_cards(requirements):
         }]
     """
     try:
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future_freight_rates = executor.submit(get_freight_rates, requirements)
-            future_cogo_assured_rates = executor.submit(get_cogo_assured_rates, requirements) 
-        freight_rates, is_predicted = future_freight_rates.result() 
-        cogo_assured_rates = future_cogo_assured_rates.result()
+        initial_query = initialize_freight_query(requirements)
+        freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        rates_without_cogo_assured = []
+        cogo_assured_rates = []
+        for rate in freight_rates:
+            if rate.get('rate_type') == 'cogo_assured':
+                cogo_assured_rates.append(rate)
+            else:
+                rates_without_cogo_assured.append(rate)
+        
+        freight_rates, is_predicted = get_freight_rates(requirements, rates_without_cogo_assured)
 
-        freight_rates+= cogo_assured_rates    
+        freight_rates += cogo_assured_rates  
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
@@ -932,9 +934,7 @@ def get_fcl_freight_rate_cards(requirements):
             "list": []
         }
         
-def get_freight_rates(requirements):
-    initial_query = initialize_freight_query(requirements)
-    freight_rates = jsonable_encoder(list(initial_query.dicts()))
+def get_freight_rates(requirements, freight_rates):
 
     freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
     is_predicted = False
@@ -949,8 +949,3 @@ def get_freight_rates(requirements):
         return [],False
 
     return  (freight_rates, is_predicted)
-
-def get_cogo_assured_rates(requirements):
-    initial_query = initialize_freight_query(requirements=requirements, get_cogo_assured=True)
-    cogo_assured_rates = jsonable_encoder(list(initial_query.dicts()))
-    return cogo_assured_rates
