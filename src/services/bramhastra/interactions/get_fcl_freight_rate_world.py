@@ -6,37 +6,25 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 )
 
 
-def get_fcl_freight_rate_world():
-    statistics = get_past_count()
+async def get_fcl_freight_rate_world():
+    statistics = await get_past_count()
+
+    count = await get_total_count()
 
     return {
-        "total_rates": sum(statistic["rate_count"] for statistic in statistics),
+        "total_rates": count,
         "statistics": statistics,
     }
 
 
-def add_location_objects(statistics):
-    location_ids = [statistic["country_id"] for statistic in statistics]
-
-    if not location_ids:
-        return
-
-    locations = {
-        location["id"]: location
-        for location in maps.list_locations(
-            dict(
-                filters=dict(id=location_ids),
-                includes=dict(id=True, name=True),
-                page_limit=len(location_ids),
-            )
-        )["list"]
-    }
-
-    for statistic in statistics:
-        statistic["country_name"] = locations[statistic["country_id"]]["name"]
+async def get_total_count():
+    query = "SELECT count(id) as count FROM brahmastra.fcl_freight_rate_statistics"
+    clickhouse = ClickHouse()
+    if result := clickhouse.execute(query):
+        return result[0]["count"]
 
 
-def get_past_count():
+async def get_past_count():
     clickhouse = ClickHouse()
 
     query = f"""
