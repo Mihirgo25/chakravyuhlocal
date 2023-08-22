@@ -12,6 +12,7 @@ from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl
 from database.rails_db import get_operators, get_eligible_orgs
 from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
+from services.fcl_freight_rate.models.fcl_freight_rate_properties import FclFreightRateProperties
 import sentry_sdk
 import traceback
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
@@ -892,7 +893,7 @@ def get_fcl_freight_rate_cards(requirements):
                 rates_without_cogo_assured.append(rate)
         
         freight_rates, is_predicted = get_freight_rates(requirements, rates_without_cogo_assured)
-
+        cogo_assured_rates = add_rate_properties(cogo_assured_rates)
         freight_rates += cogo_assured_rates  
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
@@ -946,3 +947,26 @@ def get_freight_rates(requirements, freight_rates):
         return [],False
   
     return  (freight_rates, is_predicted)
+
+def add_rate_properties(cogo_assured_rates):
+    if not cogo_assured_rates:
+        return []
+    rate_ids = [rate['id'] for rate in cogo_assured_rates]
+    
+    query = FclFreightRateProperties.select(
+    FclFreightRateProperties.value_props,
+    FclFreightRateProperties.t_n_c,
+    FclFreightRateProperties.available_inventory,
+    FclFreightRateProperties.used_inventory,
+    FclFreightRateProperties.shipment_count,
+    FclFreightRateProperties.volume_count,
+    FclFreightRateProperties.rate_id,
+    ).where(FclFreightRateProperties.rate_id << rate_ids)
+    
+    properties = {property['rate_id']: property for property in jsonable_encoder(list(query.dicts()))}
+    
+    for rate in cogo_assured_rates:
+        rate.update(properties.get(rate['id'], {}))
+        rate.pop('rate_id')
+
+    return cogo_assured_rates
