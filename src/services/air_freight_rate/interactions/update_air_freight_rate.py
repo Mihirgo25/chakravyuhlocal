@@ -9,6 +9,8 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from services.air_freight_rate.models.air_freight_rate_validity import AirFreightRateValidity
 from fastapi.encoders import jsonable_encoder
+from configs.global_constants import SERVICE_PROVIDER_FF
+
 def update_air_freight_rate(request):
       with db.atomic():
         return execute(request)
@@ -20,9 +22,10 @@ def execute(request):
         raise HTTPException(status_code=400,detail="id is invalid")
     
     validities=object.validities
-
+    validity_object = {}
     for validity in validities:
         if validity['id']==request.get('validity_id'):
+            validity_object = validity
 
             if request.get('validity_start') and request.get('validity_end'):
 
@@ -76,9 +79,48 @@ def execute(request):
         print("Exception in saving freight rate", e)
 
     create_audit(request, object.id)
+
+    if str(object.service_provider_id)== SERVICE_PROVIDER_FF and not request.get('extension_not_required'):
+        extend_rate_fun(object,request,validity_object)
+
     return {
         'id':object.id
     }
+
+def extend_rate_fun(object,request,validity_object):
+    from celery_worker import extend_air_freight_rates_in_delay
+    rate = request | {
+        'origin_airport_id':str(object.origin_airport_id),
+        'destination_airport_id':str(object.destination_airport_id),
+        'commodity':object.commodity,
+        'commodity_type':object.commodity_type,
+        'commodity_sub_type':object.commodity_sub_type,
+        'airline_id':str(object.airline_id),
+        'operation_type':str(object.operation_type),
+        'currency':object.currency,
+        'price_type':object.price_type,
+        'min_price':object.min_price,
+        'service_provider_id':str(object.service_provider_id),
+        'cogo_entity_id':str(object.cogo_entity_id),
+        'length':object.length,
+        'breadth':object.breadth,
+        'height': object.height,
+        'shipment_type':object.shipment_type,
+        'stacking_type':object.stacking_type,
+        'rate_type':object.rate_type,
+        'source':object.source,
+        'maximum_weight':object.maximum_weight,
+        'density_category':validity_object['density_category'],
+        'density_ratio':"1:{}".format(validity_object['min_density_weight']),
+        'initial_volume':validity_object['initial_volume'],
+        'initial_gross_weight':validity_object['initial_gross_weight'],
+        'available_volume':validity_object['available_volume'],
+        'available_gross_weight':validity_object['available_gross_weight'],
+        'validity_start': datetime.combine(request['validity_start'],datetime.min.time()),
+        'validity_end':datetime.combine(request['validity_end'],datetime.min.time())
+    }
+    extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': rate,'base_to_base':True }, queue='fcl_freight_rate')
+
 
 def create_audit(request,object_id):
     update_data={key:value for key,value in request.items() if key not in ['performed_by_id','id','bulk_operation_id']}
