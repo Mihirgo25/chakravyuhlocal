@@ -36,7 +36,8 @@ def get_fcl_freight_rate_charts(filters):
 
 def get_accuracy(filters, where):
     if is_json_needed(filters):
-        return get_link()
+        if url:= get_link():
+            return url
 
     clickhouse = ClickHouse()
     queries = [
