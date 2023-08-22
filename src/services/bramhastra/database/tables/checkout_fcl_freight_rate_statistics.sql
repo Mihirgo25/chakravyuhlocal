@@ -1,7 +1,7 @@
 CREATE TABLE brahmastra.checkout_fcl_freight_rate_statistics
 (
     id UInt256,
-    fcl_freight_rate_statistic_id Int8,
+    fcl_freight_rate_statistic_id Int256,
     source FixedString(256),
     source_id UUID,
     checkout_id UUID,
@@ -30,7 +30,7 @@ ORDER BY (rate_id,validity_id,checkout_id,id);
 CREATE TABLE brahmastra.stale_checkout_fcl_freight_rate_statistics
 (
     id UInt256,
-    fcl_freight_rate_statistic_id Int8,
+    fcl_freight_rate_statistic_id Int256,
     source FixedString(256),
     source_id UUID,
     checkout_id UUID,
