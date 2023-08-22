@@ -10,14 +10,21 @@ async def get_fcl_freight_rate_distribution(filters):
 
     queries = [
         """WITH rate_distribution as 
-               (SELECT parent_mode as mode,shipment_cancelled_count,shipment_completed_count,shipment_confirmed_by_importer_exporter_count,bookings_created,
-               shipment_aborted_count,shipment_received_count,shipment_in_progress_count
+               (SELECT parent_mode as mode,SUM(shipment_cancelled_count) AS shipment_cancelled_count,
+               SUM(shipment_completed_count) as shipment_completed_count,
+               SUM(shipment_confirmed_by_importer_exporter_count) AS shipment_confirmed_by_importer_exporter_count,
+               SUM(bookings_created) AS bookings_created,
+               SUM(shipment_aborted_count) AS shipment_aborted_count, 
+               SUM(shipment_received_count) AS shipment_received_count,
+               SUM(shipment_in_progress_count) AS shipment_in_progress_count
                from brahmastra.fcl_freight_rate_statistics"""
     ]
 
     if where := get_direct_indirect_filters(filters):
         queries.append(" WHERE ")
         queries.append(where)
+    
+    queries.append("GROUP BY parent_mode,rate_id")
         
     total_rate_count = await get_total_rate_count(filters,where)
         
