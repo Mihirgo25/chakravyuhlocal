@@ -47,6 +47,7 @@ def get_accuracy(filters, where):
     if where:
         queries.append(" WHERE ")
         queries.append(where)
+        queries.append("AND accuracy != -1")
 
     queries.append(
         """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day HAVING sum(sign)>0 ORDER BY day,mode;"""

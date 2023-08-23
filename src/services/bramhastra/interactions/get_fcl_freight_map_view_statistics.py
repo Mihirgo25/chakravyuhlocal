@@ -18,18 +18,21 @@ LOCATION_KEYS = {
 
 def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, page):
     clickhouse = ClickHouse()
+    
+    sort_by = filter_sort(sort_by)
 
     grouping = set()
 
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},FLOOR(ABS(AVG(accuracy)),2) as accuracy,count(DISTINCT rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
+        f'SELECT {",".join(grouping)},FLOOR(ABS(AVG(accuracy)),2) as total_accuracy,count(DISTINCT rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
     ]
 
     if where := get_direct_indirect_filters(filters):
         queries.append(" WHERE ")
         queries.append(where)
+        queries.append("AND accuracy != -1 and accuracy != 0")
 
     get_add_group_and_order_by(queries, grouping,sort_by,sort_type)
     
@@ -131,3 +134,8 @@ def add_location_objects(statistics):
                     update_statistic[f"{k[:12]}{key}"] = value
         statistic.pop(remove)
         statistic.update(update_statistic)
+        
+    
+def filter_sort(sort_by):
+    return 'total_accuracy' if sort_by == 'accuracy' else sort_by
+    
