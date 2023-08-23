@@ -74,7 +74,7 @@ def alter_filters_for_map_view(filters, grouping):
             ]["id"]
             filters.pop("destination")
         else:
-            grouping.add(f"destination_{filters['origin']['type']}_id")
+            grouping.add(f"destination_{HEIRARCHY[1]}_id")
         filters.pop("origin")
 
 
