@@ -38,7 +38,8 @@ def execute_transaction_code(request):
         'shipping_line_id': request.get("shipping_line_id"),
         'source': request.get("source"),
         'task_type': request.get('task_type'),
-        'status': 'pending'
+        'status': 'pending',
+        'spot_negotiation_rate_id': request.get('spot_negotiation_rate_id')
     }
 
     commodity = None

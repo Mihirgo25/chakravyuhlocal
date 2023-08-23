@@ -73,31 +73,43 @@ async def get_fcl_freight_rate_lifecycle(filters):
             {
                 "action_type": "checkout",
                 "rates_count": search_to_book_statistics["checkout"],
-                "drop": search_to_book_statistics["checkout_percentage"],
+                "drop": 0
+                if math.isnan(search_to_book_statistics["checkout_percentage"])
+                else search_to_book_statistics["checkout_percentage"],
             },
             {
                 "action_type": "booking_confirm",
                 "rates_count": search_to_book_statistics[
                     "shipment_confirmed_by_importer_exporter"
                 ],
-                "drop": search_to_book_statistics["confirmed_booking_percentage"],
+                "drop": 0
+                if math.isnan(search_to_book_statistics["confirmed_booking_percentage"])
+                else search_to_book_statistics["confirmed_booking_percentage"],
             },
             {
                 "action_type": "revenue_desk",
                 "rates_count": search_to_book_statistics["revenue_desk_visit"],
-                "drop": search_to_book_statistics["revenue_desk_visit_percentage"],
+                "drop": 0
+                if math.isnan(
+                    search_to_book_statistics["revenue_desk_visit_percentage"]
+                )
+                else search_to_book_statistics["revenue_desk_visit_percentage"],
             },
             {
                 "action_type": "so1",
                 "rates_count": search_to_book_statistics["so1_visit"],
-                "drop": search_to_book_statistics["so1_visit_percentage"],
+                "drop": 0
+                if math.isnan(search_to_book_statistics["so1_visit_percentage"])
+                else search_to_book_statistics["so1_visit_percentage"],
             },
         ],
         [
             {
                 "action_type": "missing_rates",
                 "rates_count": missing_rates_statistics["missing_rates"],
-                "drop": missing_rates_statistics["missing_rates_percentage"],
+                "drop": 0
+                if math.isnan(missing_rates_statistics["missing_rates_percentage"])
+                else missing_rates_statistics["missing_rates_percentage"],
             },
             {
                 "action_type": "rates_triggered",
@@ -111,17 +123,25 @@ async def get_fcl_freight_rate_lifecycle(filters):
             {
                 "action_type": "disliked_rates",
                 "rates_count": search_to_book_statistics["dislikes"],
-                "drop": search_to_book_statistics["dislikes_percentage"],
+                "drop": 0
+                if math.isnan(search_to_book_statistics["dislikes_percentage"])
+                else search_to_book_statistics["dislikes_percentage"],
             },
             {
                 "action_type": "feedback_received",
                 "rates_count": search_to_book_statistics["feedback_recieved"],
-                "drop": search_to_book_statistics["feedback_recieved_percentage"],
+                "drop": 0
+                if math.isnan(search_to_book_statistics["feedback_recieved_percentage"])
+                else search_to_book_statistics["feedback_recieved_percentage"],
             },
             {
                 "action_type": "rates_reverted",
                 "rates_count": search_to_book_statistics["dislikes_rate_reverted"],
-                "drop": search_to_book_statistics["dislikes_rate_reverted_percentage"],
+                "drop": 0
+                if math.isnan(
+                    search_to_book_statistics["dislikes_rate_reverted_percentage"]
+                )
+                else search_to_book_statistics["dislikes_rate_reverted_percentage"],
             },
         ],
         [

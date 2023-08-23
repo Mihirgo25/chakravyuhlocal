@@ -15,7 +15,6 @@ from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
 import traceback
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
-import concurrent.futures
 
 def initialize_freight_query(requirements, prediction_required = False, get_cogo_assured=False):
     freight_query = FclFreightRate.select(
@@ -946,7 +945,7 @@ def get_freight_rates(requirements):
     freight_rates, is_predicted = filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted)
     
     if is_predicted and requirements['cogo_entity_id'] == VN_ENTITY_ID:
-        return [],False
+        return ([],False)
 
     return  (freight_rates, is_predicted)
 

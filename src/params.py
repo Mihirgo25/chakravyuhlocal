@@ -481,6 +481,7 @@ class CreateFclFreightRateTask(BaseModel):
     shipment_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+    spot_negotiation_rate_id: str = None
     rate: LocalData = None
 
 
@@ -939,6 +940,7 @@ class UpdateFclFreightRateTask(BaseModel):
     status: str = None
     closing_remarks: str = None
     validate_closing_remarks: str = None
+    add_rate_in_rms: bool = True
 
 
 class UpdateRateProperties(BaseModel):
