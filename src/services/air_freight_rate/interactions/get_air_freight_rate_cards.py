@@ -10,8 +10,11 @@ from configs.global_constants import RATE_ENTITY_MAPPING
 from configs.definitions import AIR_FREIGHT_SURCHARGES,AIR_FREIGHT_CHARGES
 from services.air_freight_rate.interactions.get_air_freight_rate_prediction import get_air_freight_rate_prediction
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_density_wise_rate_card
+from micro_services.client import *
 import sentry_sdk
 import traceback
+from services.air_freight_rate.interactions.get_air_freight_rates_from_clusters import get_air_freight_rates_from_clusters
+from rms_utils.filter_predicted_or_extension_rates import filter_predicted_or_extension_rates
 
 def initialize_freight_query(requirements,prediction_required=False):
     freight_query = AirFreightRate.select(
@@ -440,6 +443,42 @@ def post_discard_less_relevant_rates(freight_rates):
 
     return all_freight_rates
 
+def get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted):
+    if len(freight_rates) == 0:
+        try:
+            cluster_rates_present = get_air_freight_rates_from_clusters(requirements)
+        except:
+            pass
+        if cluster_rates_present:
+            freight_rates = initialize_freight_query(requirements)
+            freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+
+    if len(freight_rates) ==0:
+        get_air_freight_rate_prediction(requirements)
+        is_predicted = True
+        freight_rates = initialize_freight_query(requirements,True)
+        freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+    return freight_rates,is_predicted
+
+def valid_weight_slabs(freight_rates, requirements):
+    valid_rates = []
+    required_weight = get_chargeable_weight(requirements)
+    for freight_rate in freight_rates:
+        validities = freight_rate['validities']
+        valid_validities = []
+        for freight_validity in validities:
+            weight_slabs = freight_validity['weight_slabs']
+            required_slab = None
+            for weight_slab in weight_slabs:
+                if required_weight >= int(weight_slab['lower_limit']) and required_weight <= weight_slab['upper_limit']:
+                    required_slab = weight_slab
+                    break
+            if required_slab:
+                valid_validities.append(freight_validity)
+        if valid_validities:
+            freight_rate['validities'] = valid_validities
+            valid_rates.append(freight_rate)
+    return valid_rates
 
 
 def get_air_freight_rate_cards(requirements):
@@ -461,12 +500,11 @@ def get_air_freight_rate_cards(requirements):
         freight_rates = pre_discard_noneligible_rates(freight_rates)
         freight_rates = remove_cogoxpress_service_provider(freight_rates)
 
+        freight_rates = valid_weight_slabs(freight_rates,requirements)
+        freight_rates = filter_predicted_or_extension_rates(freight_rates)
+
         is_predicted = False
-        if len(freight_rates) == 0:
-            get_air_freight_rate_prediction(requirements)
-            is_predicted = True
-            freight_rates = initialize_freight_query(requirements,True)
-            freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+        freight_rates,is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
         
         freight_rates = post_discard_less_relevant_rates(freight_rates)
         missing_surcharge = get_missing_surcharges(freight_rates)

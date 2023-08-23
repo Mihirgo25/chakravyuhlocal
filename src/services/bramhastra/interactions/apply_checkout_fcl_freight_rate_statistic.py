@@ -1,6 +1,7 @@
 from services.bramhastra.helpers.post_fcl_freight_helper import Checkout
 from services.bramhastra.enums import CheckoutAction
 
+
 def apply_checkout_fcl_freight_rate_statistic(request):
     checkout = Checkout(request.params)
     if request.action == CheckoutAction.create.value:

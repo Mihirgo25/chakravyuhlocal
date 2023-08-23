@@ -1,5 +1,7 @@
 from services.bramhastra.client import ClickHouse
-from services.bramhastra.helpers.fcl_freight_filter_helper import get_direct_indirect_filters
+from services.bramhastra.helpers.fcl_freight_filter_helper import (
+    get_direct_indirect_filters,
+)
 from fastapi.encoders import jsonable_encoder
 from math import ceil
 from micro_services.client import maps
@@ -13,7 +15,8 @@ LOCATION_KEYS = {
     "destination_region_id",
 }
 
-def get_fcl_freight_map_view_statistics(filters, page_limit, page):
+
+def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, page):
     clickhouse = ClickHouse()
 
     grouping = set()
@@ -21,25 +24,25 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},floor(abs(AVG(accuracy)),2) as accuracy,count(rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
+        f'SELECT {",".join(grouping)},FLOOR(ABS(AVG(accuracy)),2) as accuracy,count(DISTINCT rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
     ]
 
     if where := get_direct_indirect_filters(filters):
         queries.append(" WHERE ")
         queries.append(where)
 
-    get_add_group_and_order_by(filters, queries, grouping)
-
+    get_add_group_and_order_by(queries, grouping,sort_by,sort_type)
+    
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
     )
-    
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
-    
-    add_location_objects(statistics)
+
+    if statistics:
+        add_location_objects(statistics)
 
     return dict(
-        list = statistics,
+        list=statistics,
         page=page,
         page_limit=page_limit,
         total_pages=total_pages,
@@ -47,10 +50,12 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
     )
 
 
-def get_add_group_and_order_by(filters ,queries, grouping):
+def get_add_group_and_order_by(queries, grouping,sort_by,sort_type):
     queries.append("GROUP BY")
     queries.append(",".join(grouping))
-    queries.append(f"HAVING sum(sign) > 0 ORDER BY {filters.get('sort_by')} {filters.get('sort_type')}")
+    queries.append(
+        f"ORDER BY {sort_by} {sort_type}"
+    )
 
 
 def alter_filters_for_map_view(filters, grouping):
@@ -86,18 +91,26 @@ def add_pagination_data(clickhouse, queries, filters, page, page_limit):
 
 
 def add_location_objects(statistics):
-    
-    location_ids = list({v for statistic in statistics for k, v in statistic.items() if k in LOCATION_KEYS})
-    
+    location_ids = list(
+        {
+            v
+            for statistic in statistics
+            for k, v in statistic.items()
+            if k in LOCATION_KEYS
+        }
+    )
+
     if not location_ids:
         return
-    
+
     locations = {
         location["id"]: location
         for location in maps.list_locations(
             dict(
                 filters=dict(id=location_ids),
-                includes=dict(id=True, name=True,type = True,latitude = True,longitude = True),
+                includes=dict(
+                    id=True, name=True, type=True, latitude=True, longitude=True
+                ),
                 page_limit=len(location_ids),
             )
         )["list"]
@@ -106,11 +119,15 @@ def add_location_objects(statistics):
     for statistic in statistics:
         update_statistic = dict()
         remove = None
+        if not statistic:
+            continue
         for k, v in statistic.items():
             if k in LOCATION_KEYS:
                 remove = k
                 location = locations.get(v)
-                for key,value in location.items():
+                if location is None:
+                    continue
+                for key, value in location.items():
                     update_statistic[f"{k[:12]}{key}"] = value
         statistic.pop(remove)
         statistic.update(update_statistic)

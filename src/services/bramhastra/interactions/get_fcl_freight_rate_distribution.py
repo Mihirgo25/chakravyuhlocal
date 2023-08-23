@@ -1,21 +1,33 @@
 from services.bramhastra.client import ClickHouse
-from services.bramhastra.helpers.fcl_freight_filter_helper import get_direct_indirect_filters
+from services.bramhastra.helpers.fcl_freight_filter_helper import (
+    get_direct_indirect_filters,
+)
+import math
 
 
-def get_fcl_freight_rate_distribution(filters):
+async def get_fcl_freight_rate_distribution(filters):
     clickhouse = ClickHouse()
 
     queries = [
         """WITH rate_distribution as 
-               (SELECT parent_mode as mode,shipment_cancelled_count,shipment_completed_count,shipment_confirmed_by_importer_exporter_count,bookings_created,
-               shipment_aborted_count,shipment_received_count,shipment_in_progress_count
+               (SELECT parent_mode as mode,SUM(shipment_cancelled_count) AS shipment_cancelled_count,
+               SUM(shipment_completed_count) as shipment_completed_count,
+               SUM(shipment_confirmed_by_importer_exporter_count) AS shipment_confirmed_by_importer_exporter_count,
+               SUM(bookings_created) AS bookings_created,
+               SUM(shipment_aborted_count) AS shipment_aborted_count, 
+               SUM(shipment_received_count) AS shipment_received_count,
+               SUM(shipment_in_progress_count) AS shipment_in_progress_count
                from brahmastra.fcl_freight_rate_statistics"""
     ]
 
     if where := get_direct_indirect_filters(filters):
         queries.append(" WHERE ")
         queries.append(where)
-
+    
+    queries.append("GROUP BY parent_mode,rate_id")
+        
+    total_rate_count = await get_total_rate_count(filters,where)
+        
     queries.append(
         """), mode_count as (SELECT mode,count(mode) as value,
         sum(bookings_created) as bookings_created,
@@ -32,18 +44,33 @@ def get_fcl_freight_rate_distribution(filters):
         from rate_distribution group by mode)
            SELECT * from mode_count"""
     )
-    
+
     response = clickhouse.execute(" ".join(queries), filters)
     
-    return format_distribution(response)
+    distribution = {}
 
-def format_distribution(response):
-    distribution  = dict()
-    total_rates = 0
-    for data in response:
-        total_rates+=data['value']
-        distribution[data['mode']] = data
-        del data['mode']
-    distribution['total_rates'] = total_rates
-    return distribution
+    format_distribution(response,distribution)
     
+    distribution['total_rate_count'] = total_rate_count
+    
+    return distribution
+
+
+def format_distribution(response,distribution):
+    for data in response:
+        for k, v in data.items():
+            if not isinstance(v, str) and math.isnan(v):
+                data[k] = 0
+        distribution[data["mode"]] = data
+        del data["mode"]
+
+
+async def get_total_rate_count(filters,where):
+    queries = ["SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.fcl_freight_rate_statistics"]
+    if where:
+        queries.append('WHERE')
+        queries.append(where)
+    
+    clickhouse = ClickHouse()
+    if result := clickhouse.execute(" ".join(queries), filters):
+        return result[0]["count"]
