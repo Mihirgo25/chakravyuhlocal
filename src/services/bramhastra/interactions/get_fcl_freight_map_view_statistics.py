@@ -79,7 +79,6 @@ def alter_filters_for_map_view(filters, grouping):
 
 
 def add_pagination_data(clickhouse, queries, filters, page, page_limit):
-    print(' '.join(queries))
     total_count = clickhouse.execute(
         f"SELECT COUNT() as count FROM ({' '.join(queries)})", filters
     )[0]["count"]
