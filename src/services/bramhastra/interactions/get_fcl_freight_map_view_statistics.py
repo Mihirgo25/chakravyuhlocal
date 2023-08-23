@@ -126,7 +126,7 @@ def add_location_objects(statistics):
             if k in LOCATION_KEYS:
                 remove = k
                 location = locations.get(v)
-                if not location:
+                if location is None:
                     continue
                 for key, value in location.items():
                     update_statistic[f"{k[:12]}{key}"] = value
