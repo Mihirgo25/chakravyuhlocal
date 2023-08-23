@@ -120,6 +120,8 @@ def add_location_objects(statistics):
     for statistic in statistics:
         update_statistic = dict()
         remove = None
+        if not statistic:
+            continue
         for k, v in statistic.items():
             if k in LOCATION_KEYS:
                 remove = k
