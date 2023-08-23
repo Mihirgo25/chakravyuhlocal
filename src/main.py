@@ -26,8 +26,8 @@ from services.fcl_cfs_rate.fcl_cfs_router import fcl_cfs_router
 from services.air_freight_rate.air_freight_rate_router import air_freight_router
 from services.bramhastra.router import bramhastra
 from micro_services.client import *
-from fastapi.openapi.utils import get_openapi
 from database.db_support import get_db
+from fastapi.openapi.utils import get_openapi
 
 
 sentry_sdk.init(
