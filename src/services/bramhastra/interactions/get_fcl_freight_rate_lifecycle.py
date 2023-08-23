@@ -159,7 +159,7 @@ async def get_stale_rate_statistics(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT count(id) as stale_rates FROM brahmastra.fcl_freight_rate_statistics WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""
+        """SELECT count(DISTINCT rate_id) as stale_rates FROM brahmastra.fcl_freight_rate_statistics WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""
     ]
 
     if where:
@@ -211,7 +211,7 @@ async def get_search_to_book_and_feedback_statistics(filters, where):
         SUM(shipment_confirmed_by_importer_exporter_count) AS shipment_confirmed_by_importer_exporter,
         FLOOR((1-SUM(shipment_confirmed_by_importer_exporter_count)/checkout),2)*100 AS confirmed_booking_percentage,
         SUM(revenue_desk_visit_count) AS revenue_desk_visit,
-        FLOOR((1-SUM(revenue_desk_visit_count)/SUM(shipment_confirmed_by_importer_exporter_count)),2)*100 AS revenue_desk_visit_percentage,
+        FLOOR((1-SUM(revenue_desk_visit_count)/SUM(bookings_created)),2)*100 AS revenue_desk_visit_percentage,
         SUM(so1_visit_count) AS so1_visit,
         FLOOR((1-SUM(so1_visit_count)/revenue_desk_visit),2)*100 AS so1_visit_percentage,
         SUM(dislikes_count) as dislikes,
