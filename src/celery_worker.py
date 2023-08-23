@@ -164,11 +164,6 @@ celery.conf.beat_schedule = {
     #     'schedule': crontab(hour=12, minute=0),
     #     'options': {'queue': 'statistics'}
     # }
-    },
-    'air_freight_rate_prediction_training':{
-        'task':'celery_worker.air_freight_rate_prediction_training_in_delay',
-        'schedule':crontab(hour=5, minute=30, day_of_month = '1'),
-        'options':{'queue':'low'}
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)

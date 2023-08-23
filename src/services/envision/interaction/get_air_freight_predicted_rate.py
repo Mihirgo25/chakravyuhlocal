@@ -1,6 +1,6 @@
 from libs.get_distance import get_air_distance
 from configs.definitions import ROOT_DIR
-import os
+import os, pandas as pd
 import joblib, pickle
 from configs.ftl_freight_rate_constants import *
 from micro_services.client import maps
@@ -34,20 +34,18 @@ def predict_air_freight_rate(request):
         Distance = 250
 
     MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "air_freight_prediction_model.pkl")
-    model = pickle.load(open(MODEL_PATH, 'rb'))
+    model = joblib.load(open(MODEL_PATH, 'rb'))
     input_params = [{
-        'length':result['length'],
-        'breadth':result['breadth'],
-        'height':result['height'],
         'airline_ranks':rank,
         'air_distance':Distance,
         'commodity':result['commodity'],
         'shipment_type':result['shipment_type'],
         'stacking_type':result['stacking_type'],
-        'month_name': datetime.now().strftime('%B'),
-        'day_name':datetime.now().strftime('%A')
+        'day_name':datetime.now().strftime('%A'),
+        'volume':result['volume']
     }]
 
-    model_result = model.predict(input_params)
+    input_df = pd.DataFrame(input_params)
+    model_result = model.predict(input_df)
     result["predicted_price"] = round(model_result[0], 2)
     return result

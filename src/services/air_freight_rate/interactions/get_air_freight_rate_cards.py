@@ -485,18 +485,3 @@ def get_air_freight_rate_cards(requirements):
         return {
             "list": []
         }
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    
-
