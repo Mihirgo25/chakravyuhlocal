@@ -1436,8 +1436,8 @@ class FclFreightRateBulkOperation(BaseModel):
                             local['data']['line_items'] = local_line_items
                             
                         if not "Default_{}".format(code) in line_items_seperation and code in line_items_seperation:
-                            matching_line_items = [t for t in local['data']['line_items'] if t['code'] in line_items_codes and t['conditions']]
-                            local_line_items = [item for item in local_line_items if item not in matching_line_items]
+                            matching_conditions_line_items = [t for t in local['data']['line_items'] if t['code'] == code and t['conditions']]
+                            local_line_items = [item for item in local_line_items if item not in matching_conditions_line_items]
                             for t in line_items_seperation[code]:
                                 local_line_items.append(t)
                             local['data']['line_items'] = local_line_items
