@@ -1385,25 +1385,30 @@ class FclFreightRateBulkOperation(BaseModel):
                 continue
 
             line_items = data['line_items']
+            local_line_items = local['data']['line_items']
+            local_line_items_codes = []
+            for local_line_item in local_line_items:
+                local_line_items_codes.append(local_line_item['code'])
+
             line_items_codes = []
             line_items_seperation = {}
+            new_line_items = []
             for line_item in line_items:
                 code = line_item["code"]
-                line_items_codes.append(code)
-                if not line_item["conditions"]:
-                    key = "Default_{}".format(code)
+                if code in local_line_items_codes:
+                    line_items_codes.append(code)
+                    if not line_item["conditions"]:
+                        key = "Default_{}".format(code)
+                    else:
+                        key = code
+                    if key not in line_items_seperation:
+                        line_items_seperation[key] = []
+                    line_items_seperation[key].append(line_item)
                 else:
-                    key = code
-                if key not in line_items_seperation:
-                    line_items_seperation[key] = []
-                line_items_seperation[key].append(line_item)
-
+                    new_line_items.append({key: value for key, value in line_item.items() if key in ['code', 'unit', 'price', 'currency', 'conditions']})
 
             matching_line_items = [t for t in local['data']['line_items'] if t['code'] in line_items_codes]
-            if not matching_line_items:
-                for line_item in line_items:
-                    local['data']['line_items'].append({key: value for key, value in line_item.items() if key in ['code', 'units', 'price', 'currency', 'conditions']})
-            else:
+            if  matching_line_items:
                 completed_codes = []
                 for line_item in line_items:
                     local_line_items = local['data']['line_items']
@@ -1432,8 +1437,11 @@ class FclFreightRateBulkOperation(BaseModel):
                             local['data']['line_items'] = local_line_items
                     
                     completed_codes.append(code)
-
-
+            
+            if new_line_items:
+                for items in new_line_items:
+                    local['data']['line_items'].append(items)
+                    
             update_fcl_freight_rate_local({
                 'id': local['id'],
                 'performed_by_id': self.performed_by_id,
