@@ -38,6 +38,7 @@ SQL = pw.SQL
 
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.add_fields(FclFreightRateLocal, terminal_id = UUIDField(index=True,null=True)) 
+    migrator.add_fields(FclFreightRateLocal, terminal = BinaryJSONField(null=True)) 
 
 
 def rollback(migrator: Migrator, database, fake=False, **kwargs):

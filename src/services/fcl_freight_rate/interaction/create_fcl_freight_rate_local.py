@@ -120,6 +120,7 @@ def execute_transaction_code(request):
         fcl_freight_local.rate_not_available_entry = False
     fcl_freight_local.update_freight_objects()
     create_free_days(fcl_freight_local, request)
+    fcl_freight_local.set_terminal()
 
     try:
       fcl_freight_local.save()
