@@ -298,7 +298,7 @@ class MigrationHelpers:
                             sh.created_at
                     '''
                     
-                    cur.execute(sql, ('fcl_freight_service',True,'2023-07-1 00:00:00.695285','rate_id', 'validity_id','completed','fcl_freight','rate_id', 'rate_id', 'null'))
+                    cur.execute(sql, ('fcl_freight_service',True,'2023-08-1 00:00:00.695285','rate_id', 'validity_id','completed','fcl_freight','rate_id', 'rate_id', 'null'))
                     result = cur.fetchall()
                     for res in result:
                         all_result.append( {'shipment_id' : res[0],'rate_id': res[1], 'validity_id': res[2], 'total_price': res[3], 'currency': res[4]})
@@ -378,7 +378,7 @@ class MigrationHelpers:
                             ORDER BY 
                                 sh.created_at
                     '''
-                    cur.execute(sql, ('fcl_freight_service',True,'2023-07-1 00:00:00.695285','completed',exclude_shipment_ids, 'fcl_freight'))
+                    cur.execute(sql, ('fcl_freight_service',True,'2023-08-1 00:00:00.695285','completed',exclude_shipment_ids, 'fcl_freight'))
                     result = cur.fetchall()
                     for res in result:
                         all_result.append({
@@ -450,8 +450,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
         self.cogoback_connection = get_connection()
 
-    def populate_from_active_rates(self):        
-        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.updated_at >= datetime.strptime('2023-08-15', '%Y-%m-%d')))
+    def populate_from_active_rates(self):    
+        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.updated_at >= datetime.strptime('2023-08-01', '%Y-%m-%d')))
         
         print('formed query')
         
@@ -483,8 +483,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             for validity in rate.validities:
                 
                 identifier = self.get_identifier(str(rate.id), validity["id"])
-                
-                fcl = FclFreightRateStatistic.select(FclFreightRateStatistic.id).where(FclFreightRateStatistic.rate_id == str(rate.id),FclFreightRateStatistic.validity_id == str(validity['id'])).first()
 
                 rate_params = {
                     key: getattr(rate, key) for key in RATE_PARAMS
@@ -511,12 +509,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     or validity.get("price"),
                     "validity_id": validity.get("id"),
                 }
-                if fcl:
-                    print(f'found rate {str(rate.id)}')
-                    for m,n in row.items():
-                        setattr(fcl,m,n)
-                    fcl.save()
-                    continue
                 
                 row_data.append(row)
                 count += 1
@@ -548,7 +540,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 ),
                 FclFreightRateFeedback.booking_params["rate_card"]["validity_id"].is_null(
                     False
-                )
+                ),
+                FclFreightRateFeedback.created_at > datetime.strptime('2023-08-01', '%Y-%m-%d')
             )
         ).order_by(FclFreightRateFeedback.created_at.desc())
 
@@ -641,7 +634,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             
         
     def populate_feedback_fcl_freight_rate_statistic(self):
-        query = FclFreightRateFeedback.select(FclFreightRateFeedback.feedback_type, FclFreightRateFeedback.id, FclFreightRateFeedback.validity_id, FclFreightRateFeedback.fcl_freight_rate_id, FclFreightRateFeedback.source, FclFreightRateFeedback.source_id, FclFreightRateFeedback.performed_by_id, FclFreightRateFeedback.performed_by_org_id, FclFreightRateFeedback.created_at, FclFreightRateFeedback.updated_at, FclFreightRateFeedback.service_provider_id, FclFreightRateFeedback.closed_by_id, FclFreightRateFeedback.serial_id)
+        query = FclFreightRateFeedback.select(FclFreightRateFeedback.feedback_type, FclFreightRateFeedback.id, FclFreightRateFeedback.validity_id, FclFreightRateFeedback.fcl_freight_rate_id, FclFreightRateFeedback.source, FclFreightRateFeedback.source_id, FclFreightRateFeedback.performed_by_id, FclFreightRateFeedback.performed_by_org_id, FclFreightRateFeedback.created_at, FclFreightRateFeedback.updated_at, FclFreightRateFeedback.service_provider_id, FclFreightRateFeedback.closed_by_id, FclFreightRateFeedback.serial_id).where(FclFreightRateFeedback.created_at > datetime.strptime('2023-08-01', '%Y-%m-%d'))
         total_count = query.count()
         print(total_count , 'total_count...')
         count = 0
@@ -849,8 +842,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 elif shipment_state == "confirmed_by_importer_exporter":
                     setattr(
                         statistic,
-                        "shipment_confirmed_by_service_provider_countb",
-                        statistic.shipment_confirmed_by_service_provider_countb + 1,
+                        "shipment_confirmed_by_importer_exporter_count",
+                        statistic.shipment_confirmed_by_service_provider_count + 1,
                     )
                 elif shipment_state == "cancelled":
                     setattr(
@@ -863,12 +856,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     if self.cancellation_reason_matching(
                         stem_words, CANCELLATION_REASON_CHEAPER_RATE
                     ):
-                        setattr(
-                            statistic,
-                            "shipment_cancellation_reason_got_a_cheaper_rate_from_my_service_provider_count",
-                            statistic.shipment_cancellation_reason_got_a_cheaper_rate_from_my_service_provider_count
-                            + 1,
-                        )
+                        pass
                     elif self.cancellation_reason_matching(
                         stem_words, CANCELLATION_REASON_LOW_RATE
                     ):
@@ -912,22 +900,26 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 cur.close()
 
         except Exception as e:
-            print("! Exception occured while populating shipment stats:", e)
+            # print("! Exception occured while populating shipment stats:", e)
+            pass
 
     def populate_checkout_fcl_freight_statistics(
-        self, checkout_stats, rate_id, validity_id
+        self, checkout_stats, rate_id, validity_id, id
     ):
         try:
             params = {
-                "checkout_fcl_freight_rate_services_id": checkout_stats[0],
+                "checkout_fcl_freight_service_id": checkout_stats[0],
                 "checkout_id": checkout_stats[2],
                 "created_at": checkout_stats[3],
                 "updated_at": checkout_stats[4],
                 "status": checkout_stats[5],
                 "shipment_id": checkout_stats[6],
-                "spot_search_id": checkout_stats[7],
+                "source_id": checkout_stats[7],
+                "source": checkout_stats[8],
+                "importer_exporter_id": checkout_stats[9],
                 "rate_id": rate_id,
                 "validity_id": validity_id,
+                "fcl_freight_rate_statistic_id": id
             }
 
             if params["shipment_id"]:
@@ -937,11 +929,14 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     )
                     quotation_ids = [None, None]
                     with self.cogoback_connection.cursor() as cur:
-                        sql = f"SELECT id FROM shipment_buy_quotations where shipment_id = '{params['shipment_id']}'"
+                        sql = f"SELECT id, total_price, currency FROM shipment_buy_quotations where shipment_id = '{params['shipment_id']}'"
                         cur.execute(sql)
                         result = cur.fetchone()
                         if result:
                             params["buy_quotation_id"] = result[0]
+                            params["total_buy_price"] = result[1]
+                            params["currency"] = result[2]
+                            
                             quotation_ids[0] = result[0]
                         
                         sql = f"SELECT id FROM shipment_sell_quotations where shipment_id = '{params['shipment_id']}'"
@@ -966,11 +961,11 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             with self.cogoback_connection.cursor() as cur:
                 sql = """SELECT 
                         cs.id, cs.rate, cs.checkout_id, cs.created_at, cs.updated_at, cs.status,
-                        co.shipment_id, co.source_id
+                        co.shipment_id, co.source_id, co.source, co.importer_exporter_id
                         FROM checkout_fcl_freight_services AS cs
                         LEFT JOIN checkouts AS co 
                         ON cs.checkout_id = co.id
-                        WHERE cs.rate ? 'rate_id' and co.updated_at >= '2023-06-01'
+                        WHERE cs.rate ? 'rate_id' and co.created_at >= '2023-08-01'
                     """
                 cur.execute(sql)
 
@@ -1010,7 +1005,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 )
                             else:
                                 self.populate_checkout_fcl_freight_statistics(
-                                    row, rate_card["rate_id"], rate_card["validity_id"]
+                                    row, rate_card["rate_id"], rate_card["validity_id"], statistics.id
                                 )
 
                 cur.close()
@@ -1047,7 +1042,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                             "rate_id",
                             "service_type",
                             "fcl_freight",
-                            '2023-07-1 00:00:00.695285',
+                            '2023-08-1 00:00:00.695285',
                             limit,
                             offset,
                             "spot_search",
@@ -1111,7 +1106,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
     def populate_fcl_request_statistics(self):
         try:
-            rate_stats = FclFreightRateRequest.select()
+            rate_stats = FclFreightRateRequest.select().where(FclFreightRateRequest.updated_at > datetime.strptime('2023-08-01', '%Y-%m-%d'))
             
             REGION_MAPPING = {}
             with urllib.request.urlopen(REGION_MAPPING_URL) as url:
@@ -1260,7 +1255,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                     
                                 WHERE checkout_fcl_freight_services.rate ? 'rate_id' and checkout_fcl_freight_services.rate ? 'validity_id' 
                                     and checkout_fcl_freight_services.rate ->> 'rate_id' is not null
-                                    and checkout_fcl_freight_services.rate ->> 'validity_id' is not null
+                                    and checkout_fcl_freight_services.rate ->> 'validity_id' is not null and checkouts.created_at > '2023-08-01'
                                 
                                 ORDER BY checkouts.shipment_id
                             
@@ -1295,8 +1290,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 print('Money Exchange Error:')
                                 print(total_price,'\n')
                                 total_price = None
-                                breakpoint()
-
 
                         rate_id = row[0]
                         validity_id = row[1]
@@ -1310,6 +1303,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         ):
                             rate_id = None
                             validity_id = None
+                            continue
 
                         set_of_shipment_ids.add(shipment_id)
                         last_shipment_id = shipment_id
@@ -1347,10 +1341,13 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 'updated_at':row[28],
                                 'standard_total_price':total_price,
                             })
-                    ShipmentFclFreightRateStatistic.insert_many(row_data).execute()
-                    cur.execute(sql, (BATCH_SIZE, OFFSET))
-                    result = cur.fetchall()
-                    set_of_shipment_ids = set()
+                    try:
+                        ShipmentFclFreightRateStatistic.insert_many(row_data).execute()
+                        cur.execute(sql, (BATCH_SIZE, OFFSET))
+                        result = cur.fetchall()
+                        set_of_shipment_ids = set()
+                    except Exception:
+                        pass
 
         except Exception as e:
             print('Exception:',e)
@@ -1482,6 +1479,14 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         for key,value in FCL_MODE_MAPPINGS.items():
             FclFreightRateStatistic.update(parent_mode = value).where(FclFreightRateStatistic.mode == key).execute()
             print(f'done with {key}')
+            
+    def hard_reset(self):
+        from services.bramhastra.client import ClickHouse
+        query = 'drop database brahmastra'
+        ClickHouse().execute(query)
+        
+        for model in [FclFreightRateRequestStatistic,CheckoutFclFreightRateStatistic,ShipmentFclFreightRateStatistic,SpotSearchFclFreightRateStatistic,FeedbackFclFreightRateStatistic,FclFreightRateStatistic]:
+            db.execute_sql(f'drop table {model._meta.table_name}')
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
@@ -1500,15 +1505,16 @@ def main():
     print('#shipment_statistics data population')
     # populate_from_rates.populate_shipment_statistics() 
     print('# update accuracy, deviation from shipment_buy_quotation')
-    populate_from_rates.update_accuracy() 
+    # populate_from_rates.update_accuracy() 
     print('# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count')
     # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() 
     print('# update map_zone_ids for main_statistics and missing_requests')
-    # populate_from_rates.update_pricing_map_zone_ids() 
+    populate_from_rates.update_pricing_map_zone_ids() 
+    print('parent modes') 
+    populate_from_rates.update_parent_mode()
     print('#update parent_rate_id and validity_id for reverted rates from feedback')
     # populate_from_rates.update_parent_rates()
-    print('parent modes') 
-    # populate_from_rates.update_parent_mode()
+    print('done')
 
 if __name__ == "__main__":
     main()

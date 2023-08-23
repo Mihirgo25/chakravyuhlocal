@@ -25,6 +25,7 @@ from configs.env import (
     DATABASE_PORT,
     DATABASE_USER,
 )
+from services.bramhastra.constants import INDIAN_LOCATION_ID
 
 
 """
@@ -36,7 +37,7 @@ Brahmastra(models).used_by(arjun=True)
 
 Options:
 If models are not send it will run for all available models present in the clickhouse system
-If `arjun` is not used, old duplicate entries won't be cleared. We recommend using `arjun` to clear these entries once in a while for better performance.
+If `arjun` is not the user, old duplicate entries won't be cleared. We recommend using `arjun` as user to clear these entries once in a while for better performance.
 """
 
 
@@ -69,10 +70,14 @@ class Brahmastra:
         self.__clickhouse.execute(f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}")
 
     def __build_query_and_insert_to_clickhouse(self, model: peewee.Model):
+        print(f'Startin With Table: {model._meta.table_name}')
+        fields = ",".join([key for key in model._meta.fields.keys()])
         self.__clickhouse.execute(
-            f"INSERT INTO brahmastra.{model._meta.table_name} SELECT * FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
+            f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
         )
+        
         model.delete().execute()
+        print(f'Done With Table: {model._meta.table_name}')
 
     def used_by(self, arjun: bool) -> None:
         for model in self.models:

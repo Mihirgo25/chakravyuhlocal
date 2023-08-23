@@ -8,7 +8,7 @@ from celery_worker import send_create_notifications_to_supply_agents_function, s
 from celery_worker import update_multiple_service_objects
 from fastapi import HTTPException
 from micro_services.client import *
-# from services.bramhastra.celery import send_feedback_statistics_in_delay
+from services.bramhastra.celery import send_feedback_statistics_in_delay
 
 
 
@@ -75,7 +75,7 @@ def execute_transaction_code(request):
     if request['feedback_type'] == 'disliked':
         set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
         
-    # send_feedback_statistics_in_delay.apply_async(kwargs = {'action': action,'feedback': feedback, 'request': request},queue = 'statistics')
+    send_feedback_statistics_in_delay.apply_async(kwargs = {'action': action,'feedback': feedback, 'request': request},queue = 'statistics')
 
     return {'id': request['rate_id']}
 
@@ -119,7 +119,8 @@ def get_create_params(request):
         'container_type': request.get('container_type'),
         'service_provider_id': request.get('service_provider_id'),
         'attachment_file_urls':request.get('attachment_file_urls'),
-        'commodity_description':request.get('commodity_description')
+        'commodity_description':request.get('commodity_description'),
+        'rate_type':request.get('rate_type') or request.get('booking_params', {}).get('rate_card', {}).get('rate_type')
     }
     loc_ids = []
 
