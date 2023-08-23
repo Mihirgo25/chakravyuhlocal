@@ -855,4 +855,4 @@ def air_freight_airline_factors_in_delay(self):
         if type(exc).__name__ == 'HTTPException':
             pass
         else:
-            raise self.retry(exc= exc)
+            raise self.retry(exc= exc) 
