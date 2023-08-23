@@ -4,7 +4,7 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
 import json
-from services.air_freight_rate.constants.air_freight_rate_constants import KOLKATA, EAMS_AIRLINES
+
 
 possible_direct_filters = ['id','origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'service_provider_id', 'airline_id', 'is_line_items_info_messages_present', 'commodity', 'is_line_items_error_messages_present', 'operation_type','procured_by_id']
 possible_indirect_filters = ['location_ids']
@@ -27,21 +27,8 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
     pagination_data = get_pagination_data(query,page, page_limit, pagination_data_required)
     query = query.paginate(page, page_limit)
     data = json_encoder(list(query.dicts()))
-    data = get_eligible_charge_codes(data)
-    return { 'list': data } | (pagination_data)
 
-def get_eligible_charge_codes(surcharges):
-    not_required_charge_codes = ['EAMS','EHAMS','HAMS']
-    for surcharge in surcharges:
-        if surcharge['origin_airport_id'] == KOLKATA and surcharge['airline_id'] in EAMS_AIRLINES:
-            not_required_charge_codes = ['AMS','EHAMS','HAMS']
-        new_line_items = []
-        for line_item in surcharge['line_items']:
-            if line_item['code'] in not_required_charge_codes:
-                continue
-            new_line_items.append(line_item)
-        surcharge['line_items'] = new_line_items
-    return surcharges
+    return { 'list': data } | (pagination_data)
 
 def get_query(sort_by,sort_type, includes):
     if includes:

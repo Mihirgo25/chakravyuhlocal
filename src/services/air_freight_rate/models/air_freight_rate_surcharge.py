@@ -61,15 +61,7 @@ class AirFreightRateSurcharge(BaseModel):
     def detail(self):
         air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES
         new_line_items = []
-        kolkata = False
-        if str(self.origin_airport_id) == KOLKATA:
-            kolkata = True
-        not_required_charges = ['EAMS','EHAMS','HAMS']
-        if kolkata and str(self.airline_id) in EAMS_AIRLINES:
-            not_required_charges = ['AMS','EHAMS','HAMS']
         for line_item in self.line_items:
-            if line_item['code'] in not_required_charges:
-                continue
             code_config = air_freight_surcharges_dict.get(line_item['code'])
             if not code_config:
                 new_line_items.append(line_item)

@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from datetime import datetime
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
-from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES, COGOXPRESS, KOLKATA, EAMS_AIRLINES
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES, COGOXPRESS
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_operators
 from database.rails_db import get_eligible_orgs
@@ -63,8 +63,6 @@ def initialize_freight_query(requirements,prediction_required=False):
         freight_query.commodity_sub_type == requirements.get('commodity_subtype_code')
 
     freight_query = freight_query.where(AirFreightRate.last_rate_available_date >= requirements['validity_start'])
-
-
     if not prediction_required:
         freight_query  = freight_query.where(AirFreightRate.source != 'predicted')
 
@@ -122,19 +120,16 @@ def add_surcharge_object(freight_rate,response_object,requirements,chargeable_we
     line_items = freight_rate['freight_surcharge']['line_items'] or []
 
     for line_item in line_items:
-        line_item = build_surcharge_line_item_object(line_item,requirements,chargeable_weight,freight_rate)
+        line_item = build_surcharge_line_item_object(line_item,requirements,chargeable_weight)
         if not line_item:
             continue 
         response_object['surcharge']['line_items'].append(line_item)
     
     return True
 
-def build_surcharge_line_item_object(line_item,requirements,chargeable_weight,freight_rate):
+def build_surcharge_line_item_object(line_item,requirements,chargeable_weight):
     surcharge_charges = AIR_FREIGHT_SURCHARGES.get(line_item['code'])
-    not_required_charges = ['EAMS','EHAMS','HAMS']
-    if requirements.get('origin_airport_id') == KOLKATA and freight_rate['airline_id'] in EAMS_AIRLINES:
-        not_required_charges = ['AMS','EHAMS','HAMS']
-    if not surcharge_charges or line_item['code'] in not_required_charges:
+    if not surcharge_charges or line_item['code'] in ['EAMS','EHAMS','HAMS']:
         return
 
     line_item = {key:val for key,val in line_item.items() if key in ['code','price','min_price','currency','remarks','unit']}
@@ -452,11 +447,11 @@ def get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted):
     if len(freight_rates) == 0:
         try:
             cluster_rates_present = get_air_freight_rates_from_clusters(requirements)
-            if cluster_rates_present:
-                freight_rates = initialize_freight_query(requirements)
-                freight_rates = jsonable_encoder(list(freight_rates.dicts()))
         except:
             pass
+        if cluster_rates_present:
+            freight_rates = initialize_freight_query(requirements)
+            freight_rates = jsonable_encoder(list(freight_rates.dicts()))
 
     if len(freight_rates) ==0:
         get_air_freight_rate_prediction(requirements)
