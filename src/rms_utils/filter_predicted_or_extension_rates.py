@@ -14,4 +14,4 @@ def filter_predicted_or_extension_rates(freight_rates,service):
     
     if len(supply_rates)!=0:
         return supply_rates
-    return freight_rate
+    return freight_rates

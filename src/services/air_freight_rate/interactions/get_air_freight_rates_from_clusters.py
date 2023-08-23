@@ -110,7 +110,7 @@ def create_params(request,origin_base_airport_id,destination_base_airport_id):
                         'height': 300,
                         'source' : 'rate_extension',
                         'rate_type': critical_rate.rate_type,
-                        'importer_exporter_id':str(critical_rate.importer_exporter_id)
+                        'importer_exporter_id':str(critical_rate.importer_exporter_id) if critical_rate.importer_exporter_id else None
                         }
 
                     create_params.append(params)
