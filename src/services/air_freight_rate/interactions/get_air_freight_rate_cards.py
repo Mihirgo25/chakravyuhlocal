@@ -10,7 +10,6 @@ from configs.global_constants import RATE_ENTITY_MAPPING
 from configs.definitions import AIR_FREIGHT_SURCHARGES,AIR_FREIGHT_CHARGES
 from services.air_freight_rate.interactions.get_air_freight_rate_prediction import get_air_freight_rate_prediction
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_density_wise_rate_card
-from micro_services.client import *
 import sentry_sdk
 import traceback
 from services.air_freight_rate.interactions.get_air_freight_rates_from_clusters import get_air_freight_rates_from_clusters
@@ -446,12 +445,16 @@ def post_discard_less_relevant_rates(freight_rates):
 def get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted):
     if len(freight_rates) == 0:
         try:
-            cluster_rates_present = get_air_freight_rates_from_clusters(requirements)
+            get_air_freight_rates_from_clusters(requirements)
         except:
             pass
-        if cluster_rates_present:
-            freight_rates = initialize_freight_query(requirements)
-            freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+        
+        cluster_query = initialize_freight_query(requirements)
+        cluster_rates = jsonable_encoder(list(cluster_query.dicts()))
+        if cluster_rates:
+            freight_rates = cluster_rates
+            freight_rates = pre_discard_noneligible_rates(freight_rates)
+            freight_rates = remove_cogoxpress_service_provider(freight_rates)
 
     if len(freight_rates) ==0:
         get_air_freight_rate_prediction(requirements)
