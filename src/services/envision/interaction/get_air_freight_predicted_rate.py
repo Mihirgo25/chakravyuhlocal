@@ -32,7 +32,7 @@ def predict_air_freight_rate(request):
     try:
         Distance = get_air_distance(origin_location[0],origin_location[1], destination_location[0], destination_location[1])
     except:
-        Distance = 250
+        Distance = 2500
 
     input_params = [{
         'airline_ranks':rank,
