@@ -96,7 +96,7 @@ def get_spot_search_to_checkout_count(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT FLOOR(AVG(1 - checkout_count/spot_search_count),2)*100 as spot_search_to_checkout_count from brahmastra.fcl_freight_rate_statistics"""
+        """SELECT FLOOR((1 - SUM(checkout_count)/SUM(spot_search_count)),2)*100 as spot_search_to_checkout_count from brahmastra.fcl_freight_rate_statistics"""
     ]
 
     if where:
