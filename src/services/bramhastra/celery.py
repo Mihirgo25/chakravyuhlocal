@@ -30,8 +30,8 @@ def cache_data_worker_in_delay(self):
 def fcl_extended_object_worker_in_delay(self):
     try:
         # this sets parent_rate_id for rates created via extensions
-        from services.bramhastra.workers.fcl_extended_object_worker import FclExtendObjectWorker
-        FclExtendObjectWorker().execute()
+        from services.bramhastra.workers.fcl_daily_attribute_updater_worker import FclDailyAttributeUpdaterWorker
+        FclDailyAttributeUpdaterWorker().execute()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -50,10 +50,10 @@ def send_rate_stats_in_delay(self,action,request,freight):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
-def send_feedback_delete_stats_in_delay(self,action,params):
+def send_feedback_delete_stats_in_delay(self,obj):
     from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_feedback_delete_stats
     try:
-        send_feedback_delete_stats(action = action,params = params)
+        send_feedback_delete_stats(obj)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

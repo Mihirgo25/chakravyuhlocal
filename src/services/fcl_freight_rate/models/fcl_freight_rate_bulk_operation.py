@@ -645,6 +645,8 @@ class FclFreightRateBulkOperation(BaseModel):
                     'validity_start': validity_object['validity_start'],
                     'validity_end': validity_object['validity_end'],
                     'line_items': validity_object['line_items'],
+                    'schedule_type': validity_object['schedule_type'],
+                    'payment_term': validity_object['payment_term'],
                     'source': 'bulk_operation',
                     'mode':freight['mode'],
                     'rate_type': freight['rate_type'],
@@ -946,6 +948,8 @@ class FclFreightRateBulkOperation(BaseModel):
                         'validity_start': validity_object['validity_start'],
                         'validity_end': validity_object['validity_end'],
                         'line_items': validity_object['line_items'],
+                        'schedule_type': validity_object['schedule_type'],
+                        'payment_term': validity_object['payment_term'],
                         'rate_type': freight['rate_type'],
                         'source': 'bulk_operation',
                         'mode': freight['mode']
@@ -1132,6 +1136,8 @@ class FclFreightRateBulkOperation(BaseModel):
                 create_params['validity_start'] = validity_object['validity_start']
                 create_params['validity_end'] = validity_object['validity_end']
                 create_params['line_items'] = validity_object['line_items']
+                create_params['schedule_type']: validity_object['schedule_type']
+                create_params['payment_term']: validity_object['payment_term']
 
                 line_item = [t for t in validity_object['line_items'] if t['code'] == data['line_item_code']][0]
                 if not line_item:
