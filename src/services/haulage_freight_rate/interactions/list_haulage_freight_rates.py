@@ -128,11 +128,11 @@ def filter_preferences(filters):
 def add_pagination_data(
     response, page, total_count, page_limit, final_data, pagination_data_required
 ):
-    # if pagination_data_required:
-    #     response["page"] = page
-    #     response["total"] = math.ceil(total_count / page_limit)
-    #     response["total_count"] = total_count
-    #     response["page_limit"] = page_limit
+    if pagination_data_required:
+        response["page"] = page
+        response["total"] = math.ceil(total_count / page_limit)
+        response["total_count"] = total_count
+        response["page_limit"] = page_limit
     response["success"] = True
     response["list"] = final_data
     return response
