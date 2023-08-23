@@ -527,6 +527,7 @@ def get_air_freight_rate_cards_api(
     price_type: str = None,
     cogo_entity_id: str = None,
     additional_services: str = None,
+    importer_exporter_id: str = None,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
@@ -551,6 +552,7 @@ def get_air_freight_rate_cards_api(
         "trade_type": trade_type,
         "packing_type": packing_type,
         "handling_type": handling_type,
+        "importer_exporter_id": importer_exporter_id
     }
 
     try:

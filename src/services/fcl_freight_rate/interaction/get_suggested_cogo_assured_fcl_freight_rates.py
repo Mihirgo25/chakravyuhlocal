@@ -3,6 +3,7 @@ from math import ceil
 from micro_services.client import common
 import random
 from configs.cogo_assured_rate_constants import *
+from configs.fcl_freight_rate_constants import DEFAULT_PAYMENT_TERM, DEFAULT_SCHEDULE_TYPES
 
 def get_suggested_cogo_assured_fcl_freight_rates(rate_param):
     data = add_suggested_validities(rate_param)
@@ -15,6 +16,8 @@ def add_suggested_validities(rate_param):
         'validity_end': datetime.now().date() + timedelta(days=(6 - datetime.now().weekday())),
         'price': rate_param['price'],
         'currency': rate_param['currency'],
+        'payment_term': DEFAULT_PAYMENT_TERM,
+        'schedule_type': DEFAULT_SCHEDULE_TYPES,
         'line_items': [{
             'code': 'BAS',
             'unit': 'per_container',

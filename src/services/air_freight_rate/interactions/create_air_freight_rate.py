@@ -4,6 +4,7 @@ from database.db_session import db
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from configs.global_constants import SERVICE_PROVIDER_FF
 
 def create_audit(request, freight_id,validity_id):
     request = { key: value for key, value in request.items() if value }
@@ -86,10 +87,11 @@ def create_air_freight_rate_data(request):
         "accuracy":request.get("accuracy", 100),
         "cogo_entity_id":request.get("cogo_entity_id"),
         "rate_type":request.get("rate_type", DEFAULT_RATE_TYPE),
-        "price_type":price_type
+        "price_type":price_type,
+        "importer_exporter_id":request.get("importer_exporter_id")
     }
 
-    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}:{str(row["source"])}'
+    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}:{str(row["source"])}:{str(row["importer_exporter_id"] or "")}'
 
     freight = (AirFreightRate.select().where(AirFreightRate.init_key == init_key).first())
    
@@ -152,8 +154,8 @@ def create_air_freight_rate_data(request):
 
     if request.get('air_freight_rate_request_id'):
         update_air_freight_rate_details_delay.apply_async(kwargs={ 'request':request }, queue='fcl_freight_rate')
-    # if not request.get('extension_not_required'):
-    #     extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': request }, queue='low')
+    if request.get('service_provider_id')== SERVICE_PROVIDER_FF and not request.get('extension_not_required'):
+        extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': request,'base_to_base':True }, queue='fcl_freight_rate')
 
     freight_object = {
         "id": freight.id,
