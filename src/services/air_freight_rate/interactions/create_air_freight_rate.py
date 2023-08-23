@@ -4,6 +4,7 @@ from database.db_session import db
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from configs.global_constants import SERVICE_PROVIDER_FF
 
 def create_audit(request, freight_id,validity_id):
     request = { key: value for key, value in request.items() if value }
@@ -153,8 +154,8 @@ def create_air_freight_rate_data(request):
 
     if request.get('air_freight_rate_request_id'):
         update_air_freight_rate_details_delay.apply_async(kwargs={ 'request':request }, queue='fcl_freight_rate')
-    # if not request.get('extension_not_required'):
-    #     extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': request }, queue='low')
+    if request.get('service_provider_id')== SERVICE_PROVIDER_FF and not request.get('extension_not_required'):
+        extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': request,'base_to_base':True }, queue='fcl_freight_rate')
 
     freight_object = {
         "id": freight.id,
