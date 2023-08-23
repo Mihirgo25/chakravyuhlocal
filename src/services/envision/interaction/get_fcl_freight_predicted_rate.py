@@ -8,6 +8,7 @@ from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
 from libs.get_distance import get_distance
 from services.chakravyuh.interaction.get_shipping_lines_for_prediction import get_shipping_lines_for_prediction
+from configs.definitions import FCL_PREDICTION_MODEL
     
 def insert_rates_to_rms(create_params):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data    
@@ -97,10 +98,7 @@ def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request
     validity_start = datetime.now().date().isoformat()
     validity_end = (datetime.now() + timedelta(days = 7)).date().isoformat()
 
-    MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "fcl_freight_forecasting_model.pkl")
     shipping_line_dict = pickle.load(open(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models","shipping_line.pkl"), 'rb'))
-    model = joblib.load(open(MODEL_PATH, "rb"))
-
     if request['origin_country_id'] == request['destination_country_id']:
         countries_distance = 1
     else:
@@ -116,7 +114,7 @@ def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request
     df['Country_Distance'] = [countries_distance]
     df['ds'] = validity_start
 
-    model_request = model.predict(df)['yhat']
+    model_request = FCL_PREDICTION_MODEL.predict(df)['yhat']
     price =  round(np.exp(model_request[0]))
 
     creation_param = {

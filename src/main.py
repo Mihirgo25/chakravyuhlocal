@@ -121,6 +121,7 @@ def startup():
     # migration()
     # free_day()
 
+
 @app.on_event("shutdown")
 def shutdown():
     if not db.is_closed():

@@ -5,6 +5,7 @@ import joblib, pickle
 from configs.ftl_freight_rate_constants import *
 from micro_services.client import maps
 from datetime import datetime
+from configs.definitions import AIR_PREDICTION_MODEL
 
 def predict_air_freight_rate(request):
     if type(request) == dict:
@@ -33,8 +34,6 @@ def predict_air_freight_rate(request):
     except:
         Distance = 250
 
-    MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "air_freight_prediction_model.pkl")
-    model = joblib.load(open(MODEL_PATH, 'rb'))
     input_params = [{
         'airline_ranks':rank,
         'air_distance':Distance,
@@ -46,6 +45,6 @@ def predict_air_freight_rate(request):
     }]
 
     input_df = pd.DataFrame(input_params)
-    model_result = model.predict(input_df)
+    model_result = AIR_PREDICTION_MODEL.predict(input_df)
     result["predicted_price"] = round(model_result[0], 2)
     return result
