@@ -126,8 +126,8 @@ class FclFreightRateLocal(BaseModel):
         if not self.validate_commodity():
             raise HTTPException(status_code=400, detail='commodity is not valid')
 
-        if not self.local_data_instance.validate_duplicate_charge_codes():
-            raise HTTPException(status_code=400, detail='duplicate line items present')
+        # if not self.local_data_instance.validate_duplicate_charge_codes():
+        #     raise HTTPException(status_code=400, detail='duplicate line items present')
 
         invalid_charge_codes = []
         if not self.rate_not_available_entry:
