@@ -126,9 +126,10 @@ def filter_preferences(filters):
     return filters
 
 def add_pagination_data(
-    response, page, total_count, page_limit, final_data, pagination_data_required
+    response, page, page_limit, final_data, pagination_data_required, query
 ):
     if pagination_data_required:
+        total_count = query.count()
         response["page"] = page
         response["total"] = math.ceil(total_count / page_limit)
         response["total_count"] = total_count
@@ -185,7 +186,7 @@ def get_query(sort_by, sort_type, includes):
     return query
 
 def list_haulage_freight_rates(
-    filters={}, includes = {}, page_limit=10, page=1, sort_by= 'updated_at', sort_type = 'desc',  pagination_data_required=True, return_query = False
+    filters={}, includes = {}, page_limit=10, page=1, sort_by= 'updated_at', sort_type = 'desc',  pagination_data_required=False, return_query = False
 ):
     response = {"success": False, "status_code": 200}
 
@@ -210,9 +211,6 @@ def list_haulage_freight_rates(
     if page_limit:
         query = query.paginate(page, page_limit)
 
-    if pagination_data_required:
-        total_count = query.count()
-
     # get final data
     final_data = get_final_data(query)
 
@@ -224,7 +222,7 @@ def list_haulage_freight_rates(
 
     # add pagination data
     response = add_pagination_data(
-        response, page, total_count, page_limit, final_data, pagination_data_required
+        response, page, page_limit, final_data, pagination_data_required, query
     )
 
     return response
