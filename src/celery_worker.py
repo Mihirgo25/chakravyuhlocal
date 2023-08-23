@@ -48,7 +48,6 @@ from services.air_freight_rate.workers.send_expired_air_freight_rate_notificatio
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
 from services.extensions.interactions.create_freight_look_surcharge_rates import create_surcharge_rate_api
-from services.envision.helpers.air_freight_rate_prediction_training import air_freight_rate_prediction_training
 from services.air_freight_rate.estimators.relate_airlines import RelateAirline
 # Rate Producers
 
@@ -857,13 +856,3 @@ def air_freight_airline_factors_in_delay(self):
             pass
         else:
             raise self.retry(exc= exc)
-
-@celery.task(bind = True,retry_backoff=True,max_retries=3)
-def air_freight_rate_prediction_training_in_delay(self):
-    try:
-        air_freight_rate_prediction_training()
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc) 

@@ -120,7 +120,6 @@ def startup():
     # fcl_local_
     # migration()
     # free_day()
-    # air_freight_rate_prediction_training()
 
 @app.on_event("shutdown")
 def shutdown():
