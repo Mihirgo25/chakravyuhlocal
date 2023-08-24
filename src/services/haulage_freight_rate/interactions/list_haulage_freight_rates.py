@@ -144,7 +144,6 @@ def add_service_objects(data):
         object["total_price_currency"] = 'INR'
         total_price = 0
         for line_item in object["line_items"]:
-            print(line_item)
             price = common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": line_item['currency'], "to_currency": object['total_price_currency'] })['price']
             total_price += price
             line_item['price'] = math.ceil(price)
