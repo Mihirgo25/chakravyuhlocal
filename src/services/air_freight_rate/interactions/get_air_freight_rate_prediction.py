@@ -72,7 +72,7 @@ def get_air_freight_rate_prediction(request):
             else:
                 price = predicted_price *(change_factor**abs(slab_number))
             weight_slab['tariff_price'] = price
-            slab_number =- 1
+            slab_number = slab_number - 1
 
         try:
             min_price = round(get_money_exchange_for_fcl_fallback('USD', currency, result['predicted_price'])['price'], 2)
