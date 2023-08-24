@@ -47,6 +47,7 @@ def get_accuracy(filters, where):
     if where:
         queries.append(" WHERE ")
         queries.append(where)
+        queries.append("AND accuracy != -1")
 
     queries.append(
         """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day HAVING sum(sign)>0 ORDER BY day,mode;"""
@@ -96,7 +97,7 @@ def get_spot_search_to_checkout_count(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT FLOOR(AVG(1 - checkout_count/spot_search_count),2)*100 as spot_search_to_checkout_count from brahmastra.fcl_freight_rate_statistics"""
+        """SELECT FLOOR((1 - SUM(checkout_count)/SUM(spot_search_count)),2)*100 as spot_search_to_checkout_count from brahmastra.fcl_freight_rate_statistics"""
     ]
 
     if where:
