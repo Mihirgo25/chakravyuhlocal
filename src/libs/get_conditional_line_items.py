@@ -27,12 +27,13 @@ def get_filtered_line_items(rate:dict, line_items:list):
                 
     for key,data in item_conditions_mapping.items():
         sorted_data = sorted(data, key=lambda x: (x[2], x[1]), reverse=True)
-        best_line_item = sorted_data[0][0]
-        index = find_charge_code_index(new_line_items,key)
-        if index is not None:
-            new_line_items[index]=best_line_item
-        else:
-            new_line_items.append(best_line_item)
+        if sorted_data:
+            best_line_item = sorted_data[0][0]
+            index = find_charge_code_index(new_line_items,key)
+            if index is not None:
+                new_line_items[index]=best_line_item
+            else:
+                new_line_items.append(best_line_item)
 
     return new_line_items
 
@@ -64,9 +65,9 @@ def evaluate_conditions(rate, operator, values):
 
 
 def check_condition(rate, condition):
-    key = condition[0]
-    operator = condition[1].lower()
-    operand = condition[2]
+    key = condition['condition_key']
+    operator = condition['operator'].lower()
+    operand = condition['condition_value']
     if operator == "in":
         if rate.get(key) in operand:
             return True
