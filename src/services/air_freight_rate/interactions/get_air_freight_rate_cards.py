@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from datetime import datetime
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
-from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES, COGOXPRESS,KOLKATA, EAMS_AIRLINES
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES, COGOXPRESS,SURCHARGE_ELIGIBLE_LINE_ITEM_MAPPINGS
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_operators
 from database.rails_db import get_eligible_orgs
@@ -130,7 +130,7 @@ def build_surcharge_line_item_object(line_item,requirements,chargeable_weight,fr
     surcharge_charges = AIR_FREIGHT_SURCHARGES.get(line_item['code'])
     not_required_charges = ['EAMS','EHAMS','HAMS']
     
-    if requirements.get('origin_airport_id') == KOLKATA and freight_rate['airline_id'] in EAMS_AIRLINES:
+    if requirements['origin_airport_id'] in SURCHARGE_ELIGIBLE_LINE_ITEM_MAPPINGS and freight_rate['airline_id'] in SURCHARGE_ELIGIBLE_LINE_ITEM_MAPPINGS.get(requirements['origin_airport_id']):
         not_required_charges = ['AMS','EHAMS','HAMS']
     if not surcharge_charges or line_item['code'] in not_required_charges:
         return
