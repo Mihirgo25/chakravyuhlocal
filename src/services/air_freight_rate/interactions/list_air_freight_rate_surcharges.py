@@ -32,8 +32,8 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
     return { 'list': data } | (pagination_data)
 
 def get_eligible_charge_codes(surcharges):
-    not_required_charge_codes = ['EAMS','EHAMS','HAMS']
     for surcharge in surcharges:
+        not_required_charge_codes = ['EAMS','EHAMS','HAMS']
         if surcharge['origin_airport_id'] == KOLKATA and surcharge['airline_id'] in EAMS_AIRLINES:
             not_required_charge_codes = ['AMS','EHAMS','HAMS']
         new_line_items = []
