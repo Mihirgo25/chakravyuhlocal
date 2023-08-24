@@ -20,7 +20,6 @@ POSSIBLE_DIRECT_FILTERS = {
     "shipping_line_id",
     "importer_exporter_id",
     "container_size",
-    "container_type",
     "commodity",
     "origin_main_port_id",
     "destination_main_port_id",
