@@ -73,75 +73,71 @@ async def get_fcl_freight_rate_lifecycle(filters):
             {
                 "action_type": "checkout",
                 "rates_count": search_to_book_statistics["checkout"],
-                "drop": 0
-                if math.isnan(search_to_book_statistics["checkout_percentage"])
-                else search_to_book_statistics["checkout_percentage"],
+                "drop": filter_out_of_range_value(
+                    search_to_book_statistics["checkout_percentage"]
+                ),
             },
             {
                 "action_type": "booking_confirm",
                 "rates_count": search_to_book_statistics[
                     "shipment_confirmed_by_importer_exporter"
                 ],
-                "drop": 0
-                if math.isnan(search_to_book_statistics["confirmed_booking_percentage"])
-                else search_to_book_statistics["confirmed_booking_percentage"],
+                "drop": filter_out_of_range_value(
+                    search_to_book_statistics["confirmed_booking_percentage"]
+                ),
             },
             {
                 "action_type": "revenue_desk",
                 "rates_count": search_to_book_statistics["revenue_desk_visit"],
-                "drop": 0
-                if math.isnan(
+                "drop": filter_out_of_range_value(
                     search_to_book_statistics["revenue_desk_visit_percentage"]
-                )
-                else search_to_book_statistics["revenue_desk_visit_percentage"],
+                ),
             },
             {
                 "action_type": "so1",
                 "rates_count": search_to_book_statistics["so1_visit"],
-                "drop": 0
-                if math.isnan(search_to_book_statistics["so1_visit_percentage"])
-                else search_to_book_statistics["so1_visit_percentage"],
+                "drop": filter_out_of_range_value(
+                    search_to_book_statistics["so1_visit_percentage"]
+                ),
             },
         ],
         [
             {
                 "action_type": "missing_rates",
                 "rates_count": missing_rates_statistics["missing_rates"],
-                "drop": 0
-                if math.isnan(missing_rates_statistics["missing_rates_percentage"])
-                else missing_rates_statistics["missing_rates_percentage"],
+                "drop": filter_out_of_range_value(
+                    missing_rates_statistics["missing_rates_percentage"]
+                ),
             },
             {
                 "action_type": "rates_triggered",
                 "rates_count": missing_rates_statistics["rate_reverted"],
-                "drop": 0
-                if math.isnan(missing_rates_statistics["rate_reverted_percentage"])
-                else missing_rates_statistics["rate_reverted_percentage"],
+                "drop": filter_out_of_range_value(
+                    missing_rates_statistics["rate_reverted_percentage"]
+                ),
             },
         ],
         [
             {
                 "action_type": "disliked_rates",
                 "rates_count": search_to_book_statistics["dislikes"],
-                "drop": 0
-                if math.isnan(search_to_book_statistics["dislikes_percentage"])
-                else search_to_book_statistics["dislikes_percentage"],
+                "drop": filter_out_of_range_value(
+                    search_to_book_statistics["dislikes_percentage"]
+                ),
             },
             {
                 "action_type": "feedback_received",
                 "rates_count": search_to_book_statistics["feedback_recieved"],
-                "drop": 0
-                if math.isnan(search_to_book_statistics["feedback_recieved_percentage"])
-                else search_to_book_statistics["feedback_recieved_percentage"],
+                "drop": filter_out_of_range_value(
+                    search_to_book_statistics["feedback_recieved_percentage"]
+                ),
             },
             {
                 "action_type": "rates_reverted",
                 "rates_count": search_to_book_statistics["dislikes_rate_reverted"],
-                "drop": 0
-                if math.isnan(
+                "drop": filter_out_of_range_value(
                     search_to_book_statistics["dislikes_rate_reverted_percentage"]
-                )
-                else search_to_book_statistics["dislikes_rate_reverted_percentage"],
+                ),
             },
         ],
         [
@@ -230,3 +226,9 @@ async def get_search_to_book_and_feedback_statistics(filters, where):
 
     if charts := jsonable_encoder(clickhouse.execute(" ".join(queries), filters)):
         return charts[0]
+
+
+def filter_out_of_range_value(val):
+    if math.isinf(val) or math.isnan(val):
+        return 0
+    return val
