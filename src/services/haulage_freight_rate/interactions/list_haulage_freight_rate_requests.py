@@ -216,6 +216,8 @@ def get_stats(filters, is_stats_required, performed_by_id, transport_mode):
 def get_data(query, transport_mode):
     spot_search_hash = {}
     data = list(query.dicts())
+    if not data:
+        return data
     haulage_freight_rate_ids = []
     for rate in data:
         if rate.get('reverted_rate_id'):

@@ -6,34 +6,25 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 )
 
 
-def get_fcl_freight_rate_world():
-    statistics = get_past_count()  
-    
-    return {"total_rates": sum(statistic["rate_count"] for statistic in statistics), "statistics": statistics}
+async def get_fcl_freight_rate_world():
+    statistics = await get_past_count()
 
+    count = await get_total_count()
 
-def add_location_objects(statistics):
-    location_ids = [statistic["country_id"] for statistic in statistics]
-
-    if not location_ids:
-        return
-
-    locations = {
-        location["id"]: location
-        for location in maps.list_locations(
-            dict(
-                filters=dict(id=location_ids),
-                includes=dict(id=True, name=True),
-                page_limit=len(location_ids),
-            )
-        )["list"]
+    return {
+        "total_rates": count,
+        "statistics": statistics,
     }
 
-    for statistic in statistics:
-        statistic["country_name"] = locations[statistic["country_id"]]["name"]
+
+async def get_total_count():
+    query = "SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.fcl_freight_rate_statistics WHERE validity_end >= toDate(now())"
+    clickhouse = ClickHouse()
+    if result := clickhouse.execute(query):
+        return result[0]["count"]
 
 
-def get_past_count():
+async def get_past_count():
     clickhouse = ClickHouse()
 
     query = f"""
@@ -42,15 +33,14 @@ def get_past_count():
                 SELECT
                     origin_country_id,
                     destination_country_id,
-                    id,
+                    rate_id,
                     sum(sign)
-                FROM brahmastra.{FclFreightRateStatistic._meta.table_name}
+                FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE validity_end >= toDate(now())
                 GROUP BY
-                    id,
+                    rate_id,
                     origin_country_id,
                     destination_country_id
                 HAVING sum(sign) > 0
-                ORDER BY id ASC
             )
         SELECT
             country_id,
@@ -66,5 +56,3 @@ def get_past_count():
         GROUP BY country_id"""
 
     return jsonable_encoder(clickhouse.execute(query))
-
-

@@ -100,7 +100,7 @@ celery.conf.update(**CELERY_CONFIG)
 celery.conf.beat_schedule = {
     'fcl_freigh_rates_to_cogo_assured': {
         'task': 'celery_worker.fcl_freight_rates_to_cogo_assured',
-        'schedule': crontab(minute=00,hour=00),
+        'schedule': crontab(minute=30,hour=18),
         'options': {'queue' : 'fcl_freight_rate'}
         },
     # 'update_cogo_assured_fcl_freight_rates': {
@@ -130,17 +130,17 @@ celery.conf.beat_schedule = {
     # },
     'send_near_expiry_air_freight_rate_notification':{
         'task': 'celery_worker.send_near_expiry_air_freight_rate_notification_in_delay',
-        'schedule': crontab(minute=30,hour=5),
+        'schedule': crontab(minute=00,hour=20),
         'options': {'queue' : 'low'}
     },
     'send_expired_air_freight_rate_notification':{
         'task': 'celery_worker.send_expired_air_freight_rate_notification_in_delay',
-        'schedule': crontab(minute=30,hour=5),
+        'schedule': crontab(minute=30,hour=20),
         'options': {'queue' : 'low'}
     },
     'send_air_freight_local_charges_update_reminder_notification':{
         'task': 'celery_worker.send_air_freight_local_charges_update_reminder_notification_in_delay',
-        'schedule': crontab(minute=30,hour=5,day_of_month = '1'),
+        'schedule': crontab(minute=00,hour=21,day_of_month = '1'),
         'options': {'queue': 'low'}
     },
     'adjust_air_freight_rate_airline_factors':{
@@ -148,21 +148,21 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     },
-    # 'brahmastra_in_delay':{
-    #     'task': 'services.bramhastra.celery.brahmastra_in_delay',
-    #     'schedule': crontab(minute=0, hour='*/2'),
-    #     'options': {'queue': 'statistics'}
-    # },
-    # 'cache_data_worker_in_delay':{
-    #     'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
-    #     'schedule': crontab(hour=12, minute=0),
-    #     'options': {'queue': 'low'}
-    # },
-    # 'fcl_extended_object_worker_in_delay':{
-    #     'task': 'services.bramhastra.celery.fcl_extended_object_worker_in_delay',
-    #     'schedule': crontab(hour=12, minute=0),
-    #     'options': {'queue': 'statistics'}
-    # }
+    'brahmastra':{
+        'task': 'services.bramhastra.celery.brahmastra_in_delay',
+        'schedule': crontab(minute=0, hour='*/2'),
+        'options': {'queue': 'statistics'}
+    },
+    'cache_data_worker':{
+        'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
+        'schedule': crontab(hour=16, minute=00),
+        'options': {'queue': 'low'}
+    },
+    'fcl_daily_attribute_updater':{
+        'task': 'services.bramhastra.celery.fcl_daily_attribute_updater_worker',
+        'schedule': crontab(hour=22, minute=30),
+        'options': {'queue': 'statistics'}
+    }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
@@ -468,6 +468,16 @@ def execute_update_fcl_rates_to_cogo_assured(key):
 def update_contract_service_task_delay(self, object):
     try:
         common.update_contract_service_task(object)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def update_spot_negotiation_locals_rate_task_delay(self,object):
+    try: 
+       common.update_spot_negotiation_locals_rate(object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -836,10 +846,10 @@ def process_freight_look_surcharge_rate_in_delay(self,rate, locations,commodity)
             raise self.retry(exc= exc)
 
 @celery.task(bind = True,retry_backoff=True,max_retries=3)
-def extend_air_freight_rates_in_delay(self, rate):
+def extend_air_freight_rates_in_delay(self, rate,base_to_base=False):
     try:
         air_freight_vyuh = AirFreightVyuhProducer(rate=rate)
-        air_freight_vyuh.extend_rate()
+        air_freight_vyuh.extend_rate(base_to_base)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
