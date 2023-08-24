@@ -459,6 +459,8 @@ def get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted):
             freight_rates = cluster_rates
             freight_rates = pre_discard_noneligible_rates(freight_rates)
             freight_rates = remove_cogoxpress_service_provider(freight_rates)
+            freight_rates = valid_weight_slabs(freight_rates,requirements)
+
 
     if len(freight_rates) ==0:
         get_air_freight_rate_prediction(requirements)
