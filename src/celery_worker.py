@@ -846,10 +846,10 @@ def process_freight_look_surcharge_rate_in_delay(self,rate, locations,commodity)
             raise self.retry(exc= exc)
 
 @celery.task(bind = True,retry_backoff=True,max_retries=3)
-def extend_air_freight_rates_in_delay(self, rate):
+def extend_air_freight_rates_in_delay(self, rate,base_to_base=False):
     try:
         air_freight_vyuh = AirFreightVyuhProducer(rate=rate)
-        air_freight_vyuh.extend_rate()
+        air_freight_vyuh.extend_rate(base_to_base)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
