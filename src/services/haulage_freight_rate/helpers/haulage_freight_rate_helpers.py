@@ -97,6 +97,7 @@ def build_line_item(
 ):
     origin_is_icd = ""
     destination_is_icd = ""
+    base_price = ceil(base_price)
     for data in locations_data:
         if data["id"] == origin_location_id:
             origin_is_icd = data["is_icd"]
@@ -112,11 +113,11 @@ def build_line_item(
         {
             "code": line_item_code,
             "unit": "per_container",
-            "price": ceil(base_price),
+            "price": base_price,
             "remarks": [],
             "slabs": [
                 {
-                    "price": ceil(base_price),
+                    "price": base_price,
                     "lower_limit": 0,
                     "upper_limit": upper_limit,
                     "currency": currency,
