@@ -463,6 +463,7 @@ def list_air_freight_rate_surcharges_api(
     return_query: bool = False,
     includes: str = None,
     resp: dict = Depends(authorize_token),
+    rd_request: bool = False
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -473,7 +474,7 @@ def list_air_freight_rate_surcharges_api(
                                                 page=page, 
                                                 pagination_data_required=pagination_data_required,
                                                 return_query=return_query, 
-                                                includes=includes)
+                                                includes=includes,rd_request=rd_request)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
