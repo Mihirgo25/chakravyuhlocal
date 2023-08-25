@@ -631,7 +631,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 freight_rate_object['validities'] = new_validities
                 freight_rate_object['weight_limit'] = freight['weight_limit']
                 id =create_fcl_freight_rate_data(freight_rate_object)
-                breakpoint()
+               
                 
             else:      
                 for validity_object in new_validities:
