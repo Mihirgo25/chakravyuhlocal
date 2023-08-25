@@ -70,7 +70,6 @@ def execute_transaction_code(request):
         'commodity' : request.get('commodity'),
         'shipping_line_id' : request.get('shipping_line_id'),
         'service_provider_id' : request.get('service_provider_id'),
-        "rate_not_available_entry": request.get("rate_not_available_entry"),
         'rate_type':request.get('rate_type') or DEFAULT_RATE_TYPE
     }
 
