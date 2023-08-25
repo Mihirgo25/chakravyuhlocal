@@ -476,6 +476,10 @@ def valid_weight_slabs(freight_rates, requirements):
         validities = freight_rate['validities']
         valid_validities = []
         for freight_validity in validities:
+            validity_start = datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date()
+            validity_end = datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date()
+            if validity_start > requirements.get('validity_end').date() or validity_end < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < validity_start or requirements.get('cargo_clearance_date') > validity_end:
+                continue
             weight_slabs = freight_validity['weight_slabs']
             required_slab = None
             for weight_slab in weight_slabs:
@@ -508,10 +512,8 @@ def get_air_freight_rate_cards(requirements):
         freight_rates = jsonable_encoder(list(freight_query.dicts()))
         freight_rates = pre_discard_noneligible_rates(freight_rates)
         freight_rates = remove_cogoxpress_service_provider(freight_rates)
-
         freight_rates = valid_weight_slabs(freight_rates,requirements)
         freight_rates = filter_predicted_or_extension_rates(freight_rates)
-
         is_predicted = False
         freight_rates,is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
         
