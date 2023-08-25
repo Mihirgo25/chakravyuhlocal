@@ -16,7 +16,8 @@ def execute_transaction_code(request):
         ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True))),
         FclCustomsRate.is_customs_line_items_error_messages_present == request.get('is_customs_line_items_error_messages_present'),
         FclCustomsRate.is_cfs_line_items_error_messages_present == request.get('is_cfs_line_items_error_messages_present'),
-        FclCustomsRate.rate_type == DEFAULT_RATE_TYPE
+        FclCustomsRate.rate_type == DEFAULT_RATE_TYPE,
+        FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')
     ).execute()
 
     for result in query_result:

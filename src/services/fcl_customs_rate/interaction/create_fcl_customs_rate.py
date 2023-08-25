@@ -21,10 +21,12 @@ def execute_transaction_code(request):
         FclCustomsRate.commodity == request.get('commodity'),
         FclCustomsRate.service_provider_id==request.get('service_provider_id'),
         FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id'),
-        FclCustomsRate.rate_type == request.get('rate_type')).first()
+        FclCustomsRate.rate_type == request.get('rate_type'))
 
   if request.get('cargo_handling_type'):
      customs_rate = customs_rate.where(FclCustomsRate.cargo_handling_type == request['cargo_handling_type'])
+
+  customs_rate = customs_rate.first()
 
   if not customs_rate:
     customs_rate = FclCustomsRate(**params)
@@ -70,7 +72,8 @@ def get_create_object_params(request):
       'importer_exporter_id' : request.get('importer_exporter_id'),
       'accuracy': request.get('accuracy', 100),
       'mode' : request.get('mode','manual'),
-      "rate_type" : request.get('rate_type', DEFAULT_RATE_TYPE)
+      "rate_type" : request.get('rate_type', DEFAULT_RATE_TYPE),
+      "cargo_handling_type":request.get('cargo_handling_type')
     }
 
 def create_audit(request, customs_rate_id):
