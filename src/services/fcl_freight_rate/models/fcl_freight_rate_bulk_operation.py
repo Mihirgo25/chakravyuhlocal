@@ -626,12 +626,11 @@ class FclFreightRateBulkOperation(BaseModel):
                 new_validities.append(validity_object)
            
             if freight['rate_type']=='cogo_assured' and new_validities:
-                print(new_validities, 'new_validities')
                 freight_rate_object =self.get_common_create_params(sourced_by_id, procured_by_id,freight,validity_start,validity_end)
                 freight_rate_object['validities'] = new_validities
                 freight_rate_object['weight_limit'] = freight['weight_limit']
+                
                 id =create_fcl_freight_rate_data(freight_rate_object)
-                breakpoint()
                 
             else:      
                 for validity_object in new_validities:
