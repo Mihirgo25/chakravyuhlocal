@@ -19,7 +19,6 @@ POSSIBLE_DIRECT_FILTERS = [
     "container_type",
     "commodity",
     "haulage_type",
-    "shipping_line_id",
     "service_provider_id",
     "importer_exporter_id",
     "shipping_line_id",
@@ -173,6 +172,10 @@ def get_final_data(query):
 def apply_is_rate_available_filter(query, val, filters):
     query = query.where(HaulageFreightRate.rate_not_available_entry == False)
     return query
+
+def apply_is_rate_available_filter(query, filters):
+  query = query.where(HaulageFreightRate.validity_end.cast('date') >= datetime.now().date())
+  return query 
 
 
 def get_query(sort_by, sort_type, includes):

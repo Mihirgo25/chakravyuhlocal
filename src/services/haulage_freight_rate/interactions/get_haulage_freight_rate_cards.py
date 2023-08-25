@@ -115,8 +115,8 @@ def initialize_query(requirements, query):
             == requirements.get("transport_mode")
         )
     freight_query = freight_query.where(
-        HaulageFreightRate.validity_start <= datetime.now()
-        and HaulageFreightRate.validity_end >= datetime.now()
+        HaulageFreightRate.validity_start.cast('date') <= datetime.now().date()
+        and HaulageFreightRate.validity_end.cast('date') >= datetime.now().date()
     )
 
     return freight_query
