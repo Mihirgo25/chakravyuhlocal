@@ -61,7 +61,13 @@ class AirFreightRateSurcharge(BaseModel):
     def detail(self):
         air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES
         new_line_items = []
+        not_required_charges = DEFAULT_NOT_APPLICABLE_LINE_ITEMS
+        origin_airport_id = str(self.origin_airport_id)
+        if origin_airport_id in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS and str(self.airline_id) in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS.get(origin_airport_id)['airlines']:
+            not_required_charges = SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS[origin_airport_id]['not_eligible_line_items']
         for line_item in self.line_items:
+            if line_item['code'] in not_required_charges:
+                continue
             code_config = air_freight_surcharges_dict.get(line_item['code'])
             if not code_config:
                 new_line_items.append(line_item)
