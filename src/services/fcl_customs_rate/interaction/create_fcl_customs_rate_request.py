@@ -118,7 +118,8 @@ def get_create_params(request):
       'port_id': request.get('port_id'),
       'container_type': request.get('container_type'),
       'trade_type': request.get('trade_type'),
-      'status': 'active'
+      'status': 'active',
+      'cargo_handling_type':request.get('cargo_handling_type')
     }
 
     return params

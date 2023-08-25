@@ -27,6 +27,7 @@ class CreateFclCustomsRate(BaseModel):
   performed_by_type: str = None
   mode: str = None
   rate_type: str = 'market_place'
+  cargo_handling_type: str = None
 
 class DeleteRate(BaseModel):
   filters:dict={}
@@ -76,6 +77,7 @@ class CreateFclCustomsRateRequest(BaseModel):
   port_id: str
   container_type: str
   trade_type: str = None
+  cargo_handling_type: str = None
 
 class CreateFclCustomsRateFeedback(BaseModel):
   source: str
@@ -98,6 +100,7 @@ class CreateFclCustomsRateFeedback(BaseModel):
   trade_id: str = None
   commodity: str = None
   service_provider_id: str = None
+  cargo_handling_type: str = None
 
 class UpdateFclCustomsRatePlatformPrices(BaseModel):
   location_id: str
@@ -134,6 +137,7 @@ class UpdateFclCustomsRate(BaseModel):
   customs_line_items: list[FclCustomsLineItems] = None
   cfs_line_items: list[FclCustomsLineItems] = None
   rate_type: str = 'market_place'
+  cargo_handling_type: str = None
 
 class DeleteFclCustomsRate(BaseModel):
   id: str

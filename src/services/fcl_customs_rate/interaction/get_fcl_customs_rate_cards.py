@@ -47,6 +47,7 @@ def initialize_customs_query(request):
       FclCustomsRate.rate_not_available_entry == False,
       FclCustomsRate.location_id << location_ids,
       ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True))),
+      ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True)))
     )
 
     if request.get('country_id'):
