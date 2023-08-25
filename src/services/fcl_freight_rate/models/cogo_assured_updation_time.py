@@ -7,12 +7,12 @@ class BaseModel(Model):
     class Meta:
         database = db
     
-class Timestamp(BaseModel):
+class CogoAssuredUpdationTime(BaseModel):
     last_updated_at=datetime.utcnow()
 
     def save(self,*args, **kwargs):
         self.last_updated_at = datetime.utcnow()
-        return super(Timestamp, self).save(*args, **kwargs)
+        return super(CogoAssuredUpdationTime, self).save(*args, **kwargs)
     
     class Meta:
-        table_name = 'timestamp'
+        table_name = 'cogo_assured_updation_time'
