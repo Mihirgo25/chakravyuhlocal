@@ -54,7 +54,6 @@ from services.bramhastra.response_models import (
     FclFreightRateLifeCycleResponse,
     DefaultList,
     FclFreightRateWorldResponse,
-    PortPairRateCount,
 )
 from fastapi.responses import JSONResponse
 from services.bramhastra.constants import INDIAN_LOCATION_ID
@@ -344,9 +343,9 @@ def list_fcl_freight_rate_request_statistics_api(
         )
 
 
-@bramhastra.get("/get_fcl_freight_port_pair_count", response_model=PortPairRateCount)
+@bramhastra.get("/get_fcl_freight_port_pair_count")
 def get_fcl_freight_port_pair_count_api(
-    pairs: Json = Query(None), auth_response: dict = Depends(authorize_token)
+    filters: Json = Query(None), auth_response: dict = Depends(authorize_token)
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(
@@ -354,9 +353,9 @@ def get_fcl_freight_port_pair_count_api(
         )
 
     try:
-        if not pairs:
+        if not filters:
             return dict(port_pair_rate_count=[])
-        response = get_fcl_freight_port_pair_count(pairs)
+        response = get_fcl_freight_port_pair_count(filters)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
