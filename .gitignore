@@ -3,6 +3,7 @@ package-lock.json
 __pycache__
 .pytest_cache
 .venv
+.superset
 *.egg-info
 .env
 .env.prod
