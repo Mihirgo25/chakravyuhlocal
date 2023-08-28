@@ -19,7 +19,7 @@ def get_fcl_customs_rate_cards(request):
         rate_cards = build_response_list(request, customs_rates)
 
         return {'list':rate_cards}
-       
+
     except Exception as e:
         traceback.print_exc()
         sentry_sdk.capture_exception(e)
@@ -27,7 +27,7 @@ def get_fcl_customs_rate_cards(request):
         return {
             "list": []
         }
- 
+
 def initialize_customs_query(request):
     location_ids = list(filter(None, [request.get('port_id'), request.get('country_id')]))
     query = FclCustomsRate.select(
@@ -51,7 +51,7 @@ def initialize_customs_query(request):
     )
 
     if request.get('country_id'):
-        query = query.where(FclCustomsRate.country_id == request.get('country_id')) 
+        query = query.where(FclCustomsRate.country_id == request.get('country_id'))
 
     return query
 
@@ -81,7 +81,7 @@ def build_response_list(request, customs_rates):
         list.append(response_object) 
     return list
 
-    
+
 def build_response_object(result, request):
     source = 'spot_rates'
     if result.get('mode') == 'predicted':
@@ -113,8 +113,8 @@ def add_customs_clearance(result, response_object, request):
       custom_line_item = build_line_item_object(line_item, request)
 
       if custom_line_item:
-        response_object['line_items'].append(custom_line_item) 
-    
+        response_object['line_items'].append(custom_line_item)
+
     return True
 
 def build_line_item_object(line_item, request):
