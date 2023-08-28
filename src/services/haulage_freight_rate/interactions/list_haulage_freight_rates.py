@@ -207,12 +207,12 @@ def list_haulage_freight_rates(
         )
         query = apply_direct_filters(query, direct_filters)
         query = apply_indirect_filters(query, indirect_filters)
-    # pagination
 
+    # pagination
+    total_count = query.count() if pagination_data_required else None
     if page_limit:
         query = query.paginate(page, page_limit)
 
-    total_count = query.count() if pagination_data_required else None
 
     # get final data
     final_data = get_final_data(query)
