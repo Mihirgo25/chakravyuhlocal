@@ -1,4 +1,5 @@
 import datetime as dt
+import peewee as pw
 from peewee import *
 from peewee_migrate import Migrator
 from decimal import ROUND_HALF_EVEN
