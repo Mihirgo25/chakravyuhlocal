@@ -47,7 +47,7 @@ def select_fields():
     return freight_query
 
 
-def initialize_query(requirements, query):
+def initialize_query(requirements, query, prediction_required = False):
     if requirements.get("origin_location_id") and requirements.get("destination_location_id"):
         origin_location = maps.list_locations({'filters': {'id': requirements.get("origin_location_id")}, "includes": {"default_params_required": 1, "city_id": 1}})['list'][0]
         destination_location = maps.list_locations({'filters': {'id': requirements.get("destination_location_id")},  "includes": {"default_params_required": 1, "city_id": 1}})['list'][0]
