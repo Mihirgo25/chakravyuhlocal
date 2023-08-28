@@ -17,7 +17,7 @@ def execute_transaction_code(request):
         FclCustomsRate.is_customs_line_items_error_messages_present == request.get('is_customs_line_items_error_messages_present'),
         FclCustomsRate.is_cfs_line_items_error_messages_present == request.get('is_cfs_line_items_error_messages_present'),
         FclCustomsRate.rate_type == DEFAULT_RATE_TYPE,
-        FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')
+        ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True)))
     ).execute()
 
     for result in query_result:
