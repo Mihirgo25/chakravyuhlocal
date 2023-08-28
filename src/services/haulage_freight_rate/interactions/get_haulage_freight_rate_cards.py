@@ -47,7 +47,7 @@ def select_fields():
     return freight_query
 
 
-def initialize_query(requirements, query, prediction_required = False):
+def initialize_query(requirements, query):
     if requirements.get("origin_location_id") and requirements.get("destination_location_id"):
         origin_location = maps.list_locations({'filters': {'id': requirements.get("origin_location_id")}, "includes": {"default_params_required": 1, "city_id": 1}})['list'][0]
         destination_location = maps.list_locations({'filters': {'id': requirements.get("destination_location_id")},  "includes": {"default_params_required": 1, "city_id": 1}})['list'][0]
@@ -102,7 +102,7 @@ def initialize_query(requirements, query, prediction_required = False):
         freight_query = freight_query.where(
             HaulageFreightRate.destination_location_id << destination_location_ids
         )
-    if requirements.get("shipping_line_id"):
+    if requirements.get("transport_mode") != 'trailer' and requirements.get("shipping_line_id"):
         freight_query = freight_query.where(
             HaulageFreightRate.shipping_line_id == requirements.get("shipping_line_id")
         )
@@ -118,7 +118,7 @@ def initialize_query(requirements, query, prediction_required = False):
         HaulageFreightRate.validity_start.cast('date') <= datetime.now().date()
         and HaulageFreightRate.validity_end.cast('date') >= datetime.now().date()
     )
-
+    
     return freight_query
 
 
@@ -428,6 +428,7 @@ def get_haulage_freight_rate_cards(requirements):
 
     try:
         # select default required columns
+
         query = select_fields()
 
         # initialize query with required conditions

@@ -125,10 +125,9 @@ def filter_preferences(filters):
     return filters
 
 def add_pagination_data(
-    response, page, page_limit, final_data, pagination_data_required, query
+    response, page, page_limit, final_data, pagination_data_required, total_count
 ):
     if pagination_data_required:
-        total_count = query.count()
         response["page"] = page
         response["total"] = math.ceil(total_count / page_limit)
         response["total_count"] = total_count
@@ -170,12 +169,8 @@ def get_final_data(query):
 
 
 def apply_is_rate_available_filter(query, val, filters):
-    query = query.where(HaulageFreightRate.rate_not_available_entry == False)
+    query = query.where(HaulageFreightRate.rate_not_available_entry == False, HaulageFreightRate.validity_end.cast('date') >= datetime.now().date())
     return query
-
-def apply_is_rate_available_filter(query, filters):
-  query = query.where(HaulageFreightRate.validity_end.cast('date') >= datetime.now().date())
-  return query 
 
 
 def get_query(sort_by, sort_type, includes):
@@ -217,6 +212,8 @@ def list_haulage_freight_rates(
     if page_limit:
         query = query.paginate(page, page_limit)
 
+    total_count = query.count() if pagination_data_required else None
+
     # get final data
     final_data = get_final_data(query)
 
@@ -228,7 +225,7 @@ def list_haulage_freight_rates(
 
     # add pagination data
     response = add_pagination_data(
-        response, page, page_limit, final_data, pagination_data_required, query
+        response, page, page_limit, final_data, pagination_data_required, total_count
     )
 
     return response
