@@ -29,8 +29,8 @@ def update_cogo_assured_fcl_freight_rate_validities(rate):
     cogo_assured_rate = rate
     before_modification_prices = {}
     for validity in cogo_assured_rate['validities']:
-        validity_start = validity["validity_start"]
-        validity_end = validity["validity_end"]
+        validity_start = datetime.fromisoformat(validity["validity_start"]).date()
+        validity_end = datetime.fromisoformat(validity["validity_end"]).date()
         current_date = datetime.now().date()
         
         if validity_end >= current_date:
@@ -39,8 +39,11 @@ def update_cogo_assured_fcl_freight_rate_validities(rate):
             existing_system_rates =  get_system_rates(request=cogo_assured_rate)
             key = cogo_assured_rate["container_size"] + cogo_assured_rate["container_type"] + cogo_assured_rate["commodity"]
             before_modification_prices[key] = validity["price"]
-            
             initial_first_week_price = get_initial_first_week_price(existing_system_rates, validity["price"], cogo_assured_rate, cogo_assured_rate["container_size"], cogo_assured_rate["container_type"], cogo_assured_rate["commodity"], before_modification_prices)
+            
+            if not initial_first_week_price:
+                break
+            
             week_1_rate = set_week_rate(initial_first_week_price, initial_first_week_price, 1)
             second_week_price = get_second_week_price(existing_system_rates, validity["price"], week_1_rate)
             week_2_rate = set_week_rate(second_week_price, week_1_rate, 2)
@@ -49,25 +52,26 @@ def update_cogo_assured_fcl_freight_rate_validities(rate):
             week_5_rate = set_week_rate(week_4_rate, week_1_rate, 5)
             new_validities = get_new_validities(week_1_rate, week_2_rate, week_3_rate, week_4_rate, week_5_rate, validity_start, validity_end, currency)
             validity_end = new_validities[-1]["validity_end"]
-            FclFreightRate.update(validities = new_validities, last_rate_available_date = validity_end, update_at = datetime.now()).where(FclFreightRate.id == cogo_assured_rate['id']).execute()
+            new_validities = jsonable_encoder(new_validities)
+            FclFreightRate.update(validities = new_validities, last_rate_available_date = validity_end, updated_at = datetime.now()).where(FclFreightRate.id == cogo_assured_rate['id']).execute()
             break
 
 def get_initial_first_week_price(existing_system_rates, current_price, cogo_assured_rate, container_size, container_type, commodity, before_modification_prices):
+    relevant_rates = []
     if existing_system_rates:
-        relevant_rates = []
         for rate in existing_system_rates:
           validities = rate['validities']
           for t in validities:
-              validity_start = t['validity_start']
-              validity_end = t['validity_end']
+              validity_start = datetime.fromisoformat(t['validity_start']).date()
+              validity_end = datetime.fromisoformat(t['validity_end']).date()
               current_date = datetime.now().date()
-              if validity_start <=current_date and validity_end >= current_price:
-                  relevant_rates << t['price']
+              if validity_start <=current_date and validity_end >= current_date:
+                  relevant_rates.append(t['price'])
                   break
         if len(relevant_rates):
             return min(relevant_rates)
 
-    if container_size == '40':
+    if container_size in ['40', '40HC']:
         key = "20{}{}".format(container_type, commodity)
         twenty_feet_price = None
         if key in before_modification_prices and before_modification_prices[key]:
@@ -75,11 +79,11 @@ def get_initial_first_week_price(existing_system_rates, current_price, cogo_assu
         twenty_feet_rate = cogo_assured_rate
         if not twenty_feet_price and twenty_feet_rate:
             for t in twenty_feet_rate['validities']:
-                validity_start = t['validity_start']
-                validity_end = t['validity_end']
+                validity_start = datetime.fromisoformat(t['validity_start']).date()
+                validity_end = datetime.fromisoformat(t['validity_end']).date()
                 current_date = datetime.now().date()
-                if validity_start <=current_date and validity_end >= current_price:
-                  relevant_rates << t['price']
+                if validity_start <=current_date and validity_end >= current_date:
+                  relevant_rates.append(t['price'])
                   break
         if twenty_feet_price and current_price * 1.01 < twenty_feet_price:
             return twenty_feet_price + [0.5, current_price / twenty_feet_price].max * twenty_feet_price
@@ -90,8 +94,8 @@ def get_second_week_price(existing_system_rates, current_price, week_1_rate):
         relevant_rates = []
         for rate in existing_system_rates:
             for t in rate['validities']:
-                validity_start = t['validity_start']
-                validity_end = t['validity_end']
+                validity_start = datetime.fromisoformat(t['validity_start']).date()
+                validity_end = datetime.fromisoformat(t['validity_end']).date()
                 next_week_date = (datetime.now() + timedelta(days=7)).date()
                 if validity_start <= next_week_date and validity_end >= next_week_date:
                     relevant_rates.append(t['price'])
@@ -112,10 +116,10 @@ def set_week_rate(previous_week_rate, week_1_rate, curr_week):
 def get_new_validities(week_1_rate, week_2_rate, week_3_rate, week_4_rate, week_5_rate, validity_start, validity_end, currency):
     new_validities = []
 
-    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_1_rate or 0), 'currency': currency, 'validity_start': validity_start, 'valdity_end': validity_start + timedelta(days=6)  })
-    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_2_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=7),  'validity_end': validity_start + timedelta(days=13) })
-    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_3_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=14), 'validity_end': validity_start + timedelta(days=20) })
-    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_4_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=21), 'validity_end': validity_start + timedelta(days=27) })
-    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_5_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=28), 'validity_end': validity_start + timedelta(days=34) })
+    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_1_rate or 0), 'currency': currency, 'validity_start': validity_start, 'validity_end': validity_start + timedelta(days=6), 'line_items': [{ 'code': 'BAS', 'unit': 'per_container', 'price': int(week_1_rate or 0), 'currency': currency }] })
+    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_2_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=7),  'validity_end': validity_start + timedelta(days=13), 'line_items': [{ 'code': 'BAS', 'unit': 'per_container', 'price': int(week_2_rate or 0), 'currency': currency }] })
+    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_3_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=14), 'validity_end': validity_start + timedelta(days=20), 'line_items': [{ 'code': 'BAS', 'unit': 'per_container', 'price': int(week_3_rate or 0), 'currency': currency }] })
+    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_4_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=21), 'validity_end': validity_start + timedelta(days=27), 'line_items': [{ 'code': 'BAS', 'unit': 'per_container', 'price': int(week_4_rate or 0), 'currency': currency }] })
+    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_5_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=28), 'validity_end': validity_start + timedelta(days=34), 'line_items': [{ 'code': 'BAS', 'unit': 'per_container', 'price': int(week_5_rate or 0), 'currency': currency }] })
 
     return new_validities

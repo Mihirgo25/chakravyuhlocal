@@ -319,7 +319,7 @@ def list_haulage_freight_rates_api(
     page: int = 1,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
-    pagination_data_required: bool = True,
+    pagination_data_required: bool = False,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:

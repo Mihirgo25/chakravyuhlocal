@@ -2,6 +2,8 @@ from celery_worker import celery
 from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import adding_multiple_service_object
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate_request import update_haulage_freight_rate_request
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate import create_haulage_freight_rate
+from services.haulage_freight_rate.interactions.update_haulage_freight_rate_platform_prices import update_haulage_freight_rate_platform_prices
+
 
 
 @celery.task(bind = True, max_retries=3, retry_backoff = True)    
@@ -46,3 +48,14 @@ def create_haulage_freight_rate_delay(self, request):
         else:
             raise self.retry(exc= e)
 
+
+
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
+def update_haulage_rate_platform_prices_delay(self, request):
+    try:
+        update_haulage_freight_rate_platform_prices(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)

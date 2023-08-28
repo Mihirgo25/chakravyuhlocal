@@ -126,9 +126,10 @@ def filter_preferences(filters):
     return filters
 
 def add_pagination_data(
-    response, page, total_count, page_limit, final_data, pagination_data_required
+    response, page, page_limit, final_data, pagination_data_required, query
 ):
     if pagination_data_required:
+        total_count = query.count()
         response["page"] = page
         response["total"] = math.ceil(total_count / page_limit)
         response["total_count"] = total_count
@@ -141,15 +142,19 @@ def add_pagination_data(
 def add_service_objects(data):
     for object in data:
         object["total_price_currency"] = 'INR'
+        total_price = 0
+        for line_item in object["line_items"]:
+            total_price += common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": line_item['currency'], "to_currency": object['total_price_currency'] })['price']
+            line_item['price'] = math.ceil(float(line_item['price']))
+        if not object["line_items"]:
+            object["total_price"] = None
+        else:
+            object["total_price"] = math.ceil(total_price)
         try:
             object['is_rate_about_to_expire'] = (datetime.strptime(object['validity_end'],'%Y-%m-%dT%H:%M:%S.%fZ') >= datetime.now()) & (datetime.strptime(object['validity_end'],'%Y-%m-%dT%H:%M:%S.%fZ') < (datetime.now() + timedelta(days = SEARCH_START_DATE_OFFSET)))
             object['is_rate_expired'] = datetime.strptime(object['validity_end'],'%Y-%m-%dT%H:%M:%S.%fZ') < datetime.now()
         except:
             continue
-        total_price = 0
-        for line_item in object["line_items"]:
-            total_price += common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": line_item['currency'], "to_currency": object['total_price_currency'] })['price']
-        object["total_price"] = total_price
         try:
             if 'display_name' not in object['destination_location']:
                 object['destination_location']['display_name'] = object['destination_location']['name']
@@ -184,7 +189,7 @@ def get_query(sort_by, sort_type, includes):
     return query
 
 def list_haulage_freight_rates(
-    filters={}, includes = {}, page_limit=10, page=1, sort_by= 'updated_at', sort_type = 'desc',  pagination_data_required=True, return_query = False
+    filters={}, includes = {}, page_limit=10, page=1, sort_by= 'updated_at', sort_type = 'desc',  pagination_data_required=False, return_query = False
 ):
     response = {"success": False, "status_code": 200}
 
@@ -205,7 +210,9 @@ def list_haulage_freight_rates(
         query = apply_direct_filters(query, direct_filters)
         query = apply_indirect_filters(query, indirect_filters)
     # pagination
-    query, total_count = apply_pagination(query, page, page_limit)
+
+    if page_limit:
+        query = query.paginate(page, page_limit)
 
     # get final data
     final_data = get_final_data(query)
@@ -218,7 +225,7 @@ def list_haulage_freight_rates(
 
     # add pagination data
     response = add_pagination_data(
-        response, page, total_count, page_limit, final_data, pagination_data_required
+        response, page, page_limit, final_data, pagination_data_required, query
     )
 
     return response

@@ -20,9 +20,14 @@ def get_fcl_freight_rate_local(request):
 def find_object(request):
   if request.get('id'):
      object = FclFreightRateLocal.get_by_id(request['id'])
-
+  elif request.get('rate_type') == 'cogo_assured':
+      object = FclFreightRateLocal.select().where(
+      FclFreightRateLocal.port_id == request.get("port_id"),
+      FclFreightRateLocal.trade_type == request.get("trade_type"),
+      FclFreightRateLocal.rate_type == 'cogo_assured'
+      ).first()
   else:
-    object = FclFreightRateLocal.select().where(
+      object = FclFreightRateLocal.select().where(
       FclFreightRateLocal.port_id == request.get("port_id"),
       FclFreightRateLocal.main_port_id == request.get("main_port_id"),
       FclFreightRateLocal.trade_type == request.get("trade_type"),
@@ -36,6 +41,6 @@ def find_object(request):
   return object
 
 def all_fields_present(object_params):
-    if ((object_params['port_id'] is not None) and (object_params['trade_type'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None)) or (object_params['id'] is not None):
+    if  (object_params.get('rate_type') == 'cogo_assured' and object_params.get('port_id') is not None and object_params.get('trade_type') is not None) or ((object_params['port_id'] is not None) and (object_params['trade_type'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None) and (object_params.get('rate_type') is not None)) or (object_params['id'] is not None):
         return True
     return False

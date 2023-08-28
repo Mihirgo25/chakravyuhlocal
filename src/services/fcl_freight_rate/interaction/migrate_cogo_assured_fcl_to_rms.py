@@ -5,7 +5,7 @@ import json
 import os
 from micro_services.client import maps
 from uuid import UUID
-from configs.fcl_freight_rate_constants import DEFAULT_PAYMENT_TERM, DEFAULT_SCHEDULE_TYPES
+from configs.fcl_freight_rate_constants import DEFAULT_PAYMENT_TERM, DEFAULT_SCHEDULE_TYPES, DEFAULT_SOURCED_BY_ID
 from services.fcl_freight_rate.models.fcl_freight_rate_properties import FclFreightRateProperties
 from database.rails_db import get_connection
 import sentry_sdk
@@ -13,6 +13,12 @@ import datetime
 from configs.env import DEFAULT_USER_ID
 from fastapi.encoders import jsonable_encoder
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from datetime import datetime, timedelta
+from services.fcl_freight_rate.interaction.update_fcl_rates_to_cogo_assured import update_fcl_rates_to_cogo_assured
+from configs.fcl_freight_rate_constants import *
+import concurrent.futures
+from playhouse.postgres_ext import ServerSide
+
 
 
 shipping_line = {
@@ -40,6 +46,13 @@ user = {
     'mobile_number_eformat': '919649665944'
 }
 
+source_by  = {
+    "id": "7f6f97fd-c17b-4760-a09f-d70b6ad963e8", 
+    "name": "Rishi Agarwal", 
+    "email": "rishi@cogoport.com", 
+    "mobile_number_eformat": "918007029068"
+}
+
 def cogo_assured_fcl_freight_migration():
     fcl_audits_path = os.path.join(ROOT_DIR,"cogo_assured_rate_lists.pkl")
     fcl_rates = pickle.load(open(fcl_audits_path, 'rb'))
@@ -57,6 +70,12 @@ def cogo_assured_fcl_freight_migration():
             validity['scehdule_type'] = DEFAULT_SCHEDULE_TYPES
             validity["likes_count"] = 0
             validity["dislikes_count"] = 0
+            validity["line_items"] = [{
+                'code': 'BAS',
+                'unit': 'per_container',
+                'price': validity['price'],
+                'currency': validity['currency']
+            }]
         rate['weight_limit'] = json.loads(rate.get('weight_limit')) if rate.get('weight_limit') else None
         rate['origin_local'] = json.loads(rate.get('origin_local')) if rate.get('origin_local') else None
         rate['destination_local'] = json.loads(rate.get('destination_local')) if rate.get('destination_local') else None
@@ -79,6 +98,36 @@ def cogo_assured_fcl_freight_migration():
             print('Inserted', total_inserted)
     FclFreightRate.insert_many(rates_to_insert).execute()
     print('Done')
+    
+def fcl_freight_rates_to_cogo_assured():
+    try:
+        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.last_rate_available_date.cast('date') > datetime.now().date(), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE)
+        
+        count = query.count()
+        grouped_set = set()
+        limit_size = 5000
+        print(count)
+        for rate in ServerSide(query):
+            grouped_set.add(f'{str(rate.origin_port_id)}:{str(rate.origin_main_port_id or "")}:{str(rate.destination_port_id)}:{str(rate.destination_main_port_id or "")}:{str(rate.container_size)}:{str(rate.container_type)}:{str(rate.commodity)}')
+        print(len(grouped_set))
+        with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+            result = [executor.submit(execute_update_fcl_rates_to_cogo_assured,key) for key in grouped_set]
+        print("Done")
+    except Exception as exc:
+        print(str(exc))
+
+def execute_update_fcl_rates_to_cogo_assured(key):
+    origin_port_id, origin_main_port_id, destination_port_id, destination_main_port_id, container_size, container_type, commodity = key.split(":")
+    param = {
+        "origin_port_id": origin_port_id,
+        "origin_main_port_id": None if not origin_main_port_id else origin_main_port_id,
+        "destination_port_id":destination_port_id,
+        "destination_main_port_id": None if not destination_main_port_id else destination_main_port_id,
+        "container_size": container_size,
+        "container_type": container_type,
+        "commodity": commodity
+    }
+    update_fcl_rates_to_cogo_assured(param)
     
 def migrate_rate_properties():
     cogo_assured_ids = (FclFreightRate.select(FclFreightRate.id).where(FclFreightRate.rate_type == 'cogo_assured'))
@@ -116,11 +165,11 @@ def cogo_assured_fcl_freight_local_migration():
                         "remarks": [],
                         "location_id": None 
                     }]
-
+                    location_ids = [UUID(rate[9]), UUID(rate[11]), UUID(rate[12]), UUID(rate[13])]
                     result = {
                         'container_size' : rate[0],
                         'container_type' : rate[1],
-                        'commodity' : rate[2],
+                        'commodity' : None,
                         'service_provider_id' : service_provider['id'],
                         'service_provider': service_provider,
                         'shipping_line_id' : shipping_line['id'],
@@ -131,21 +180,31 @@ def cogo_assured_fcl_freight_local_migration():
                         'trade_id' : rate[12],
                         'continent_id' : rate[13],
                         'trade_type' : rate[14],
+                        'location_ids':location_ids,
                         'rate_type':'cogo_assured',
                         'procured_by_id': DEFAULT_USER_ID,
                         'sourced_by_id': DEFAULT_USER_ID,
                         'sourced_by': user,
                         'procured_by': user,
                         'data': data,
-                        'line_items': data['line_items']
+                        'line_items': data['line_items'],
+                        'rate_not_available_entry': False,
+                        'is_line_items_error_messages_present': False,
                     }
                     if not rate[9] in distinct_port_ids:
                         distinct_port_ids.append(rate[9])
                     if not rate[10] in distinct_port_ids:
                         distinct_port_ids.append(rate[10])
+                        
                     row_data.append(result)
+                    
+                    if result['container_size'] == '40':
+                        new_result = result.copy()
+                        new_result['container_size'] = '40HC'
+                        row_data.append(new_result)
                 cur.close()
                 FclFreightRateLocal.insert_many(row_data).execute()
+                print('updating locations')
                 update_locations(distinct_port_ids)
         conn.close()
         return {"message": "Created rates in fcl with tag cogo_assured"}
@@ -172,4 +231,5 @@ def update_locations(distinct_port_ids):
     
 
 if __name__ == "__main__":
+    # cogo_assured_fcl_freight_migration()
     cogo_assured_fcl_freight_local_migration()

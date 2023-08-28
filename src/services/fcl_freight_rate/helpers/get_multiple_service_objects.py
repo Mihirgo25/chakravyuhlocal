@@ -10,7 +10,7 @@ def get_multiple_service_objects(freight_object, is_new_rate=True, required_colu
             except:
                 freight_object.shipping_line_detail = shipping_line[0]
 
-    if (not required_columns or 'airline_id' in required_columns) and is_new_rate and hasattr(freight_object,'airline_id') and freight_object.airline_id:
+    if is_new_rate and hasattr(freight_object,'airline_id') and freight_object.airline_id and (hasattr(freight_object,'airline') and not freight_object.airline) :
         airline = get_operators(id=str(freight_object.airline_id))
         if len(airline or []) > 0:
             try:
@@ -47,9 +47,9 @@ def get_multiple_service_objects(freight_object, is_new_rate=True, required_colu
                 freight_object.completed_by = user
 
     organization_list=[]
-    if (not required_columns or 'importer_exporter_id' in required_columns) and hasattr(freight_object,'importer_exporter_id') and freight_object.importer_exporter_id:
+    if hasattr(freight_object,'importer_exporter_id') and freight_object.importer_exporter_id :
         organization_list.append(freight_object.importer_exporter_id)
-    if (not required_columns or 'service_provider_id' in required_columns) and is_new_rate and hasattr(freight_object,'service_provider_id') and freight_object.service_provider_id:
+    if is_new_rate and hasattr(freight_object,'service_provider_id') and freight_object.service_provider_id and (hasattr(freight_object,'service_provider') and not freight_object.service_provider):
         organization_list.append(freight_object.service_provider_id)
     if (not required_columns or 'performed_by_org_id' in required_columns) and hasattr(freight_object,'performed_by_org_id') and freight_object.performed_by_org_id:
         organization_list.append(freight_object.performed_by_org_id)
@@ -57,14 +57,14 @@ def get_multiple_service_objects(freight_object, is_new_rate=True, required_colu
     if organization_list:
         organization_data = get_organization(id=organization_list)
         for organization in organization_data:
-            if is_new_rate and hasattr(freight_object,'service_provider_id') and organization['id']==str(freight_object.service_provider_id):
+            if is_new_rate and hasattr(freight_object,'service_provider_id') and (hasattr(freight_object,'service_provider') and not freight_object.service_provider) and organization['id']==str(freight_object.service_provider_id):
                 freight_object.service_provider = organization
             if hasattr(freight_object,'importer_exporter_id') and organization['id']==str(freight_object.importer_exporter_id):
                 freight_object.importer_exporter= organization
             if hasattr(freight_object,'performed_by_org_id') and organization['id']==str(freight_object.performed_by_org_id):
-                try:
+                if hasattr(freight_object,'organization'):
                     freight_object.organization = organization
-                except:
+                elif hasattr(freight_object,'performed_by_org'):
                     freight_object.performed_by_org = organization
 
     # if hasattr(freight_object,'rate_sheet_id'):
