@@ -24,8 +24,6 @@ class AirCustomsRate(BaseModel):
     continent_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     commodity = CharField(null=True, index=True)
-    commodity_type = CharField(index=True)
-    commodity_sub_type = CharField(index=True)
     service_provider_id = UUIDField(index=True, default = DEFAULT_SERVICE_PROVIDER_ID)
     importer_exporter_id = UUIDField(null=True)
     line_items = BinaryJSONField(null=True)
