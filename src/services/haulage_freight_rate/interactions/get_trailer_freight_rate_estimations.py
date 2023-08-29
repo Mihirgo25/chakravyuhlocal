@@ -88,6 +88,7 @@ def get_trailer_freight_rate_estimation(request):
             'detention_free_time': detention_free_time,
             'validity_start': validity_start,
             'validity_end': validity_end,
+            'commodity': None,
             'source': 'predicted'
         }
 
