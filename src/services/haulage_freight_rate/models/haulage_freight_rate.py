@@ -278,7 +278,10 @@ class HaulageFreightRate(BaseModel):
             mandatory_line_items = [line_item for line_item in rates.get('line_items') if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
 
             for prices in mandatory_line_items:
+                if prices['currency']!=currency:
                     sum = sum + int(common.get_money_exchange_for_fcl({'price': prices["price"], 'from_currency': prices['currency'], 'to_currency':currency})['price'])
+                else:
+                    sum = sum + int(prices["price"])
 
             if sum and result > sum:
                 result = sum
@@ -303,7 +306,10 @@ class HaulageFreightRate(BaseModel):
         result = 0
 
         for line_item in line_items:
-            result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
+            if line_item['currency']!= currency:
+                result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
+            else:
+                result = result + int(line_item["price"])
         return result
     
     def update_platform_prices_for_other_service_providers(self):
