@@ -226,7 +226,7 @@ def build_response_object(result, requirements):
     # modifying line items
     for line_item in result["line_items"]:
         if line_item["code"] == "FSC" and line_item["unit"] == "percentage_of_freight":
-            for required_line_item in line_item:
+            for required_line_item in result["line_items"]:
                 if required_line_item["code"] != "BAS":
                     continue
                 line_item["total_price"] = (
