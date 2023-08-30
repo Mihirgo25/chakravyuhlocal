@@ -27,7 +27,7 @@ LOCATION_KEYS = {
 }
 
 
-def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, page):
+def get_fcl_freight_deviation(filters,sort_by,sort_type, page_limit, page):
     clickhouse = ClickHouse()
 
     grouping = set()
