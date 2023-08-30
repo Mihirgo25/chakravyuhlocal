@@ -34,7 +34,7 @@ class RevenueDesk:
             fcl_freight_rate_request_statistic = FclFreightRateStatistic.select().where(
                 FclFreightRateStatistic.identifier
                 == get_identifier(request.rate_id, validity_id)
-            )
+            ).first()
 
             self.increment_keys = {"revenue_desk_visit_count"}
 
@@ -47,7 +47,7 @@ class RevenueDesk:
             == get_identifier(
                 request.selected_for_preference.rate_id,
                 request.selected_for_preference.validity_id,
-            )
+            ).first()
         )
 
         self.increment_keys = {"so1_visit_count"}

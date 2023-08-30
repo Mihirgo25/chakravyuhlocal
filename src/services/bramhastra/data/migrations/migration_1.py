@@ -1724,7 +1724,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             print(f"done with {key}")
 
     def hard_reset(self):
-        ClickHouse().execute("drop database brahmastra")
+        ClickHouse().execute("drop database if exists brahmastra")
 
         for model in [
             FclFreightRateRequestStatistic,
@@ -1779,6 +1779,9 @@ def main():
     )
     populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
     print("done")
+    
+    from services.bramhastra.brahmastra import Brahmastra
+    Brahmastra().used_by(arjun = True,on_startup = True)
 
 
 if __name__ == "__main__":

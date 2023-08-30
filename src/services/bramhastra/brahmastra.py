@@ -1,7 +1,7 @@
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
-from services.bramhastra.client import ClickHouse
+from services.bramhastra.client import ClickHouse,json_encoder_for_clickhouse
 import peewee
 from configs.env import (
     DATABASE_HOST,
@@ -22,6 +22,7 @@ from services.bramhastra.constants import BRAHMASTRA_CSV_FILE_PATH
 from services.bramhastra.enums import ImportTypes, AppEnv, BrahmastraTrackStatus
 from services.bramhastra.models.brahmastra_track import BrahmastraTrack
 import sentry_sdk
+import numpy as np
 
 """
 Info:
@@ -68,34 +69,34 @@ class Brahmastra:
         params = dict()
         where = []
         for key in model.CLICK_KEYS:
-            if not getattr(row, key):
+            if getattr(row, key):
                 params[key] = str(getattr(row, key))
             else:
                 params[key] = DEFAULT_UUID
-            where.append(f"%({key})s")
+            where.append(f"{key} = %({key})s")
 
         query = (
-            f"SELECT * from brahmastra.{model._meta.table_name} WHERE {','.join(where)}"
+            f"SELECT * from brahmastra.{model._meta.table_name} WHERE {' AND '.join(where)}"
         )
+        
+        self.__clickhouse.execute(query, params)
+            
+        if old_row := self.__clickhouse.execute(query, params)[0]:
+            old_row["sign"] = -1
 
-        if row := self.__clickhouse.execute(query, params)[0]:
-            row["version"] += 1
-            row["sign"] = -1
-
-            return row
+            return old_row
 
     def __create_brahmastra_track(
         self, model, status, started_at, last_updated_at=None, ended_at=None
     ):
-        return BrahmastraTrack.create(
-            **{
+        params = {
                 "table_name": model._meta.table_name,
                 "last_updated_at": last_updated_at,
                 "started_at": started_at,
                 "status": status,
                 "ended_at": ended_at,
             }
-        )
+        return BrahmastraTrack.create(**params)
 
     def __build_query_and_insert_to_clickhouse(self, model: peewee.Model):
         columns = [field for field in model._meta.fields.keys()]
@@ -115,8 +116,6 @@ class Brahmastra:
             ).id
 
         if model.IMPORT_TYPE == ImportTypes.csv.value:
-            dataframe = pd.DataFrame(columns=columns)
-
             last_updated_at = self.get_last_updated_at(model)
 
             brahmastra_track = self.__create_brahmastra_track(
@@ -132,28 +131,35 @@ class Brahmastra:
                     .first()
                     .updated_at
                 )
+                rows = [{k: None for k in columns}]
                 for row in ServerSide(
-                    model.select(model.id).where(model.updated_at >= last_updated_at)
+                    model.select().where(model.updated_at >= last_updated_at)
                 ):
-                    data = jsonable_encoder(
+                    data = json_encoder_for_clickhouse(
                         {field: getattr(row, field) for field in columns}
                     )
 
                     if old_data := self.__get_clickhouse_row(model, row):
                         data["version"] = old_data["version"] + 1
-                        dataframe = dataframe.append(data, ignore_index=True)
+                        rows.append(data)
                         model.update(version=data["version"]).where(
                             model.id == data.get("id")
                         ).execute()
 
-                    dataframe = dataframe.append(old_data, ignore_index=True)
+                    rows.append(json_encoder_for_clickhouse(old_data))
+                    
+                dataframe = pd.DataFrame(data = rows,columns=columns)
+                
+                file_path = f"BRAHMASTRA_CSV_FILE_PATH_{model._meta.table_name}"
 
-                dataframe.to_csv(BRAHMASTRA_CSV_FILE_PATH)
-                url = upload_media_file(BRAHMASTRA_CSV_FILE_PATH)
+                dataframe.to_csv(file_path,index=False,header = False)
+                
+                url = upload_media_file(file_path)
+                
+                query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT * FROM s3('{url}','CSVWithNames')"
+                
+                self.__clickhouse.execute(query)
 
-                self.__clickhouse.execute(
-                    f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}','CSV')"
-                )
                 status = BrahmastraTrackStatus.completed.value
             except Exception as e:
                 print(e)
@@ -176,7 +182,7 @@ class Brahmastra:
         )
 
     def used_by(self, arjun: bool, on_startup: bool = False) -> None:
-        if APP_ENV == AppEnv.production.value:
+        # if APP_ENV == AppEnv.production.value:
             self.on_startup = on_startup
 
             for model in self.models:
@@ -196,7 +202,7 @@ class Brahmastra:
                 BrahmastraTrack.status == BrahmastraTrackStatus.completed.value,
                 BrahmastraTrack.table_name == model._meta.table_name,
             )
-            .order_by(FclFreightRateStatistic.created_at.desc())
+            .order_by(BrahmastraTrack.ended_at.desc())
             .limit(1)
             .first()
         ):

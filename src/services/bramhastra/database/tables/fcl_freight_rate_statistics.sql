@@ -98,7 +98,9 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
     performed_by_id UUID,
     performed_by_type FixedString(256),
     rate_sheet_id UUID,
-    bulk_operation_id UUID
+    bulk_operation_id UUID,
+    operation_created_at DateTime,
+    operation_updated_at DateTime
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,origin_country_id,origin_port_id,rate_id,validity_id)
@@ -204,6 +206,8 @@ CREATE TABLE brahmastra.stale_fcl_freight_rate_statistics
     performed_by_id UUID,
     performed_by_type FixedString(256),
     rate_sheet_id UUID,
-    bulk_operation_id UUID
+    bulk_operation_id UUID,
+    operation_created_at DateTime,
+    operation_updated_at DateTime
 )
 ENGINE = File(CSV);
