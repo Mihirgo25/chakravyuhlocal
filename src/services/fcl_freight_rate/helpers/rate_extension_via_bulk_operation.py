@@ -1,6 +1,7 @@
 from configs.env import DEFAULT_USER_ID
 ACTION_NAMES_FOR_SOURCES = {
-    "flash_booking": "extend_freight_rate"
+    "flash_booking": "extend_freight_rate",
+    "cluster_extension_worker": "add_freight_rate",
 }
 
 def rate_extension_via_bulk_operation(request):
@@ -29,6 +30,29 @@ def get_extend_freight_rate_params(request):
     data["markup_type"] = "absolute"
     data["markup"] = [val["price"] for val in request.get("line_items") if val["code"] == "BAS"][0]
     data["extend_for_flash_booking"] = True
+    
+    params = {}
+    params["performed_by_type"] = "agent"
+    params["performed_by_id"] = DEFAULT_USER_ID
+    params["procured_by_id"] = DEFAULT_USER_ID
+    params["sourced_by_id"] = DEFAULT_USER_ID
+    params["extend_freight_rate"] = data
+    
+    return params
+
+def get_add_freight_rate_params(request):
+    data = {}
+    data["filters"] = {
+        "origin_main_port_id": request.get("origin_port_id"),
+        "destination_main_port_id": request.get("destination_port_id"),
+        "container_size": request.get("container_size"),
+        "commodity": "general"
+    }
+    data["line_item_code"] = "BAS"
+    data["markup_type"] = "percentage"
+    data["markup"] = request.get("markup")
+    data["max_markup_amount"] = request.get("max_markup_amount")
+    data["min_markup_amount"] = request.get("min_markup_amount")
     
     params = {}
     params["performed_by_type"] = "agent"
