@@ -136,7 +136,7 @@ class FclFreightRateStatistic(BaseModel):
     
     CLICK_KEYS = ["origin_continent_id","origin_country_id","origin_port_id","rate_id","validity_id"]
     
-    IMPORT_TYPE = ImportTypes.parquet.value
+    IMPORT_TYPE = ImportTypes.csv.value
     
     class Meta:
         table_name = "fcl_freight_rate_statistics"

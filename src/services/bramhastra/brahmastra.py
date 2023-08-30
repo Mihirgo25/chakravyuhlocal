@@ -80,19 +80,18 @@ class Brahmastra:
             return row
 
     def __build_query_and_insert_to_clickhouse(self, model: peewee.Model):
-        columns = [field.name for field in model._meta.fields.keys()]
-
+        columns = [field for field in model._meta.fields.keys()]
+        fields = ",".join(columns)
         if self.on_startup:
-            return self.insert_directly_via_postgres(model, columns)
-
+            return self.insert_directly_via_postgres(model, fields)
         if model.IMPORT_TYPE == ImportTypes.csv.value:
             dataframe = pd.DataFrame(columns=columns)
 
             current_updated_at = datetime.utcnow()
 
-            last_updated_at = self.get_last_updated_at() or current_updated_at
+            last_updated_at = self.get_last_updated_at(model) or current_updated_at
 
-            self.set_last_updated_at(current_updated_at)
+            self.set_last_updated_at(model, current_updated_at)
 
             for row in ServerSide(
                 model.select(model.id).where(model.updated_at >= last_updated_at)
@@ -111,24 +110,22 @@ class Brahmastra:
                 dataframe = dataframe.append(old_data, ignore_index=True)
 
             dataframe.to_csv(BRAHMASTRA_CSV_FILE_PATH)
-
             url = upload_media_file(BRAHMASTRA_CSV_FILE_PATH)
 
             self.__clickhouse.execute(
-                f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3({url},'CSV')"
+                f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}','CSV')"
             )
 
         elif model.IMPORT_TYPE == ImportTypes.postgres.value:
-            self.insert_directly_via_postgres(model, columns)
+            self.insert_directly_via_postgres(model, fields)
 
-    def insert_directly_via_postgres(self, model, columns):
-        fields = ",".join(columns)
+    def insert_directly_via_postgres(self, model, fields):
         self.__clickhouse.execute(
             f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
         )
 
     def used_by(self, arjun: bool, on_startup: bool = False) -> None:
-        if APP_ENV == AppEnv.production.value:
+        if True:
             self.on_startup = on_startup
 
             for model in self.models:
@@ -139,7 +136,11 @@ class Brahmastra:
                 print(f"done with {model._meta.table_name}")
 
     def set_last_updated_at(self, model, updated_at):
+        updated_at = updated_at.isoformat()
         rd.set(f"{model}_last_updated_at", updated_at)
 
     def get_last_updated_at(self, model):
         rd.get(f"{model}_last_updated_at")
+
+
+Brahmastra().used_by(True)
