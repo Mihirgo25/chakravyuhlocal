@@ -98,6 +98,8 @@ class Shipment:
                 fcl_freight_rate_statistic.save()
         elif self.action == ShipmentAction.update.value:
             self.create_or_update(fcl_freight_rate_statistic)
+            
+        fcl_freight_rate_statistic.save()
 
         rate_update_hash = dict()
 
@@ -185,17 +187,12 @@ class Shipment:
             raise ValueError(
                 f"""shipment with id: { update_params.get("shipment_id")} not found"""
             )
-
         old_state = shipment_fcl_freight_rate_statistics.first().state
         new_state = update_params.get("state")
 
-        rate = self.get_rate_details_from_statistics_id(
-            shipment_fcl_freight_rate_statistics.first().fcl_freight_rate_statistic_id
-        )
-
         fcl_freight_rate_statistic = (
             FclFreightRateStatistic.select()
-            .where(FclFreightRateStatistic.identifier == get_identifier(**rate))
+            .where(FclFreightRateStatistic.id == shipment_fcl_freight_rate_statistics.first().fcl_freight_rate_statistic_id)
             .first()
         )
 
@@ -212,7 +209,7 @@ class Shipment:
                 if new_state != "shipment_received"
                 else "shipment_received_count"
             )
-            rate_update_params[new_key] = getattr(fcl_freight_rate_statistic, new_key)
+            rate_update_params[new_key] = getattr(fcl_freight_rate_statistic, new_key) + 1
             rate_update_params[old_key] = (
                 getattr(fcl_freight_rate_statistic, old_key) - 1
             )
