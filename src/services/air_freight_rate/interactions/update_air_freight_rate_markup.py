@@ -40,7 +40,7 @@ def execute_transaction_code(request):
                 t.get('currency'),
                 t.get("weight_slabs"),
                 False,
-                request.get("validity_id"),
+                None,
                 t.get("density_category"),
                 t.get('density_ratio'),
                 t.get('initial_volume'),

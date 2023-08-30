@@ -95,6 +95,12 @@ class DeleteAirFreightRateParams(BaseModel):
     bulk_operation_id: str = None
     sourced_by_id: str = None
     procured_by_id: str = None
+    validity_start:datetime
+    validity_end:datetime
+    density_category:str
+    density_ratio:str
+    min_price:float
+    weight_slabs: list[WeightSlab]
 
 
 class UpdateAirFreightRateParams(BaseModel):
@@ -103,7 +109,7 @@ class UpdateAirFreightRateParams(BaseModel):
     validity_start: date = None
     validity_end: date = None
     currency: str = None
-    min_price: float
+    min_price: float = None
     performed_by_id: str = None
     performed_by_type: str = None
     bulk_operation_id: str = None
@@ -353,7 +359,13 @@ class AddFreightRateMarkupParams(BaseModel):
 
 class DeleteFreightRateParams(BaseModel):
     filters:dict = {}
-    weight_slabs: List[BulkOperationSlabs]
+    weight_slabs: List[BulkOperationSlabs] = []
+    validity_start: datetime
+    validity_end: datetime
+    rate_sheet_serial_id: int = None
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
     
 class UpdateFreightRateParams(BaseModel):
     filters:dict = {}
