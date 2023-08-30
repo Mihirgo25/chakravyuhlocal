@@ -1,6 +1,4 @@
-from services.bramhastra.helpers.post_air_freight_helper import Rate
-# from playhouse.shortcuts import model_to_dict
-
+from services.bramhastra.helpers.air_freight_rate_statistic import Rate
 
 def apply_air_freight_rate_statistic(request):
     if request.create_params:

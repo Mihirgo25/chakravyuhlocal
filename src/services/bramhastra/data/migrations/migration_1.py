@@ -1487,6 +1487,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         
         for model in [FclFreightRateRequestStatistic,CheckoutFclFreightRateStatistic,ShipmentFclFreightRateStatistic,SpotSearchFclFreightRateStatistic,FeedbackFclFreightRateStatistic,FclFreightRateStatistic]:
             db.execute_sql(f'drop table {model._meta.table_name}')
+        
+        ClickHouse().execute('create database brahmastra')
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()

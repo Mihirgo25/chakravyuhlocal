@@ -1,21 +1,6 @@
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
-from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
-    FeedbackFclFreightRateStatistic,
-)
-from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
-    ShipmentFclFreightRateStatistic,
-)
-from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import (
-    SpotSearchFclFreightRateStatistic,
-)
-from services.bramhastra.models.fcl_freight_rate_request_statistics import (
-    FclFreightRateRequestStatistic,
-)
-from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
-    CheckoutFclFreightRateStatistic,
-)
 from services.bramhastra.client import ClickHouse
 import peewee
 from configs.env import (
@@ -24,8 +9,17 @@ from configs.env import (
     DATABASE_PASSWORD,
     DATABASE_PORT,
     DATABASE_USER,
+    APP_ENV,
 )
-from services.bramhastra.constants import INDIAN_LOCATION_ID
+from datetime import datetime
+from database.db_session import rd
+from playhouse.postgres_ext import ServerSide
+import pandas as pd
+from services.bramhastra.constants import DEFAULT_UUID
+from fastapi.encoders import jsonable_encoder
+from services.rate_sheet.interactions.upload_file import upload_media_file
+from services.bramhastra.constants import BRAHMASTRA_CSV_FILE_PATH
+from services.bramhastra.enums import ImportTypes, AppEnv
 
 
 """
@@ -43,46 +37,109 @@ If `arjun` is not the user, old duplicate entries won't be cleared. We recommend
 
 class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
-        self.models = models or [
-            FclFreightRateStatistic,
-            FeedbackFclFreightRateStatistic,
-            ShipmentFclFreightRateStatistic,
-            SpotSearchFclFreightRateStatistic,
-            FclFreightRateRequestStatistic,
-            CheckoutFclFreightRateStatistic,
-        ]
+        self.models = models or [FclFreightRateStatistic]
         self.__clickhouse = ClickHouse()
+        self.on_startup = None
 
     def __optimize_and_send_data_to_stale_tables(self, model: peewee.Model):
+        if self.on_startup:
+            return
         query = f"""
         INSERT INTO brahmastra.stale_{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 
         WITH LatestVersions AS (
             SELECT id,version,
-            ROW_NUMBER() OVER (PARTITION BY id ORDER BY version DESC) AS row_num
+            id,max(version)
             FROM
             brahmastra.{model._meta.table_name}
+            GROUP BY id
         )
         SELECT * FROM brahmastra.{model._meta.table_name} WHERE (id, version) NOT IN (
         SELECT id,version
-        FROM LatestVersions
-        WHERE row_num = 1)"""
+        FROM LatestVersions)"""
         self.__clickhouse.execute(query)
         self.__clickhouse.execute(f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}")
 
+    def __get_clickhouse_row(self, model, row):
+        params = dict()
+        where = []
+        for key in model.CLICK_KEYS:
+            if not getattr(row, key):
+                params[key] = str(getattr(row, key))
+            else:
+                params[key] = DEFAULT_UUID
+            where.append(f"%({key})s")
+
+        query = (
+            f"SELECT * from brahmastra.{model._meta.table_name} WHERE {','.join(where)}"
+        )
+
+        if row := self.__clickhouse.execute(query, params)[0]:
+            row["version"] += 1
+            row["sign"] = -1
+
+            return row
+
     def __build_query_and_insert_to_clickhouse(self, model: peewee.Model):
-        print(f'Startin With Table: {model._meta.table_name}')
-        fields = ",".join([key for key in model._meta.fields.keys()])
+        columns = [field.name for field in model._meta.fields.keys()]
+
+        if self.on_startup:
+            return self.insert_directly_via_postgres(model, columns)
+
+        if model.IMPORT_TYPE == ImportTypes.csv.value:
+            dataframe = pd.DataFrame(columns=columns)
+
+            current_updated_at = datetime.utcnow()
+
+            last_updated_at = self.get_last_updated_at() or current_updated_at
+
+            self.set_last_updated_at(current_updated_at)
+
+            for row in ServerSide(
+                model.select(model.id).where(model.updated_at >= last_updated_at)
+            ):
+                data = jsonable_encoder(
+                    {field: getattr(row, field) for field in columns}
+                )
+
+                if old_data := self.__get_clickhouse_row(model, row):
+                    data["version"] = old_data["version"] + 1
+                    dataframe = dataframe.append(data, ignore_index=True)
+                    model.update(version=data["version"]).where(
+                        model.id == data.get("id")
+                    ).execute()
+
+                dataframe = dataframe.append(old_data, ignore_index=True)
+
+            dataframe.to_csv(BRAHMASTRA_CSV_FILE_PATH)
+
+            url = upload_media_file(BRAHMASTRA_CSV_FILE_PATH)
+
+            self.__clickhouse.execute(
+                f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3({url},'CSV')"
+            )
+
+        elif model.IMPORT_TYPE == ImportTypes.postgres.value:
+            self.insert_directly_via_postgres(model, columns)
+
+    def insert_directly_via_postgres(self, model, columns):
+        fields = ",".join(columns)
         self.__clickhouse.execute(
             f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
         )
-        
-        model.delete().execute()
-        print(f'Done With Table: {model._meta.table_name}')
 
-    def used_by(self, arjun: bool) -> None:
-        for model in self.models:
-            self.__build_query_and_insert_to_clickhouse(model)
-            if arjun:
-                self.__optimize_and_send_data_to_stale_tables(model)
+    def used_by(self, arjun: bool, on_startup: bool = False) -> None:
+        if APP_ENV == AppEnv.production.value:
+            self.on_startup = on_startup
 
-            print(f"Done with {model._meta.table_name}")
+            for model in self.models:
+                self.__build_query_and_insert_to_clickhouse(model)
+                if arjun:
+                    self.__optimize_and_send_data_to_stale_tables(model)
+
+                print(f"done with {model._meta.table_name}")
+
+    def set_last_updated_at(self, model, updated_at):
+        rd.set(f"{model}_last_updated_at", updated_at)
+
+    def get_last_updated_at(self, model):
+        rd.get(f"{model}_last_updated_at")

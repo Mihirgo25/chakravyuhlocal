@@ -11,6 +11,7 @@ from peewee import (
 from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField
+from services.bramhastra.enums import ImportTypes
 
 
 class BaseModel(Model):
@@ -132,6 +133,10 @@ class FclFreightRateStatistic(BaseModel):
 
     def refresh(self):
         return type(self).get(self._pk_expr())
-
+    
+    CLICK_KEYS = ["origin_continent_id","origin_country_id","origin_region_id","origin_port_id","rate_id","validity_id"]
+    
+    IMPORT_TYPE = ImportTypes.parquet.value
+    
     class Meta:
         table_name = "fcl_freight_rate_statistics"
