@@ -22,7 +22,7 @@ from services.air_freight_rate.interactions.delete_air_freight_rate_surcharge im
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from fastapi.encoders import jsonable_encoder
 from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_rate_sheet_id
-
+from services.air_freight_rate.interactions.update_air_freight_rate_surcharge import update_air_freight_rate_surcharge
 BATCH_SIZE = 1000
 
 ACTION_NAMES = [
@@ -397,6 +397,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
     def perform_bacth_wise_delete_freight_rate_surcharge_action(self,count,batch_query,total_count):
         freights = jsonable_encoder(list(batch_query.dicts()))
+        line_item_codes = self.data['line_item_codes']
         for freight in freights:
             count += 1
 
@@ -412,13 +413,23 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.save()
                 continue
 
-            delete_air_freight_rate_surcharge(
-                {
-                    "id": freight["id"],
-                    "performed_by_id": self.performed_by_id,
-                    "bulk_operation_id": self.id,
-                }
-            )
+            if line_item_codes:
+                line_items = [line_item for line_item in line_items if line_item['code'] in line_item_codes]
+                update_air_freight_rate_surcharge(
+                        {
+                        'id': freight['id'],
+                        'bulk_operation_id': str(self.id),
+                        'line_items': line_items
+                        }
+                )
+            else:
+                delete_air_freight_rate_surcharge(
+                    {
+                        "id": freight["id"],
+                        "performed_by_id": self.performed_by_id,
+                        "bulk_operation_id": str(self.id),
+                    }
+                )
             self.progress = (count * 100.0) / int(total_count)
             self.save()
         return count
@@ -426,6 +437,15 @@ class AirFreightRateBulkOperation(BaseModel):
     def perform_delete_freight_rate_surcharge_action(self):
         data = self.data
         filters = data['filters']
+        rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
+        rate_ids = []
+        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id)
+        if rate_ids:
+            if isinstance(filters.get('id'), list):
+                rate_ids += filters['id']
+            elif filters.get('id'):
+                rate_ids += [filters['id']]
+            filters['id'] = rate_ids
         query = list_air_freight_rate_surcharges(filters=filters,return_query=True)['list']
         total_count = query.count()
         if total_count == 0:
@@ -443,6 +463,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
     def perform_bacth_wise_delete_freight_rate_local_action(self,count,batch_query,total_count):
         freights = jsonable_encoder(list(batch_query.dicts()))
+        line_item_codes = self.data['line_item_codes']
         for freight in freights:
             count += 1
 
@@ -458,14 +479,24 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.progress = (count * 100.0) / int(total_count)
                 self.save()
                 continue
-
-            delete_air_freight_rate_local(
-                {
-                    "id": freight["id"],
-                    "performed_by_id": self.performed_by_id,
-                    "bulk_operation_id": self.id,
-                }
-            )
+            
+            if line_item_codes:
+                line_items = [line_item for line_item in line_items if line_item['code'] in line_item_codes]
+                update_air_freight_rate_local(
+                        {
+                        'id': freight['id'],
+                        'bulk_operation_id': str(self.id),
+                        'line_items': line_items
+                        }
+                )
+            else:
+                delete_air_freight_rate_local(
+                    {
+                        "id": freight["id"],
+                        "performed_by_id": self.performed_by_id,
+                        "bulk_operation_id": str(self.id),
+                    }
+                )
             self.progress = (count * 100.0) / int(total_count)
             self.save()
         return count
@@ -473,6 +504,15 @@ class AirFreightRateBulkOperation(BaseModel):
     def perform_delete_freight_rate_local_action(self):
         data = self.data
         filters = data['filters']
+        rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
+        rate_ids = []
+        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id)
+        if rate_ids:
+            if isinstance(filters.get('id'), list):
+                rate_ids += filters['id']
+            elif filters.get('id'):
+                rate_ids += [filters['id']]
+            filters['id'] = rate_ids
         query = list_air_freight_rate_locals(filters=filters,return_query=True)['list']
         total_count = query.count()
         if total_count == 0:
@@ -484,6 +524,61 @@ class AirFreightRateBulkOperation(BaseModel):
         while count < total_count:
             batch_query = query.offset(offset).limit(BATCH_SIZE)
             count = self.perform_bacth_wise_delete_freight_rate_local_action(count,batch_query,total_count)
+            offset = offset + BATCH_SIZE
+        self.progress = (count * 100.0) / int(total_count)
+        self.save()
+
+    def perform_bacth_wise_update_freight_rate_local_action(self,count,batch_query,total_count):
+        freights = jsonable_encoder(list(batch_query.dicts()))
+        local_line_item = self.data['line_item']
+        for freight in freights:
+            count += 1
+
+            object = (
+                AirServiceAudit.select()
+                .where(
+                    AirServiceAudit.object_id == freight["id"],
+                    AirServiceAudit.bulk_operation_id == self.id
+                )
+                .first()
+            )
+            if object:
+                self.progress = (count * 100.0) / int(total_count)
+                self.save()
+                continue
+            
+            for line_item in freight['line_items']:
+                if line_item['code'] == local_line_item['code']:
+                    line_item['tariff_price'] = local_line_item['tariff_price']
+                    line_item['currency'] = local_line_item['currency']
+                    line_item['min_price'] = local_line_item['min_price']
+            self.progress = (count * 100.0) / int(total_count)
+            self.save()
+        return count
+
+    def perform_update_freight_rate_local(self):
+        data = self.data
+        filters = data['filters']
+        rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
+        rate_ids = []
+        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id)
+        if rate_ids:
+            if isinstance(filters.get('id'), list):
+                rate_ids += filters['id']
+            elif filters.get('id'):
+                rate_ids += [filters['id']]
+            filters['id'] = rate_ids
+        query = list_air_freight_rate_locals(filters=filters,return_query=True)['list']
+        total_count = query.count()
+        if total_count == 0:
+            self.progress = 100
+            self.save()
+            return
+        count = 0
+        offset = 0
+        while count < total_count:
+            batch_query = query.offset(offset).limit(BATCH_SIZE)
+            count = self.perform_bacth_wise_update_freight_rate_local_action(count,batch_query,total_count)
             offset = offset + BATCH_SIZE
         self.progress = (count * 100.0) / int(total_count)
         self.save()
@@ -513,11 +608,14 @@ class AirFreightRateBulkOperation(BaseModel):
 def create_audit(id):
     AirFreightRateAudit.create(bulk_operation_id=id)
 
-def get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id):
+def get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id,freight=True):
     if not rate_sheet_id:
         return []
+    if freight:
+        query = AirFreightRateAudit.select(AirFreightRateAudit.object_id).where((AirFreightRateAudit.rate_sheet_id == rate_sheet_id)) 
+    else:
+        query = AirServiceAudit.select(AirServiceAudit.object_id).where((AirServiceAudit.rate_sheet_id == rate_sheet_id)) 
 
-    query = AirFreightRateAudit.select(AirFreightRateAudit.object_id).where((AirFreightRateAudit.rate_sheet_id == rate_sheet_id)) 
     return [str(result['object_id']) for result in list(query.dicts())]
 
 def get_weight_slabs(freight_validity_weight_slabs,weight_slabs_to_effect,data):
