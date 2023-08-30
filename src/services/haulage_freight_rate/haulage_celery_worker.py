@@ -28,7 +28,7 @@ def update_haulage_freight_rate_request_delay(self, request):
         
 
 @celery.task(bind = True, max_retries=3, retry_backoff = True)
-def delay_haulage_functions(self,haulage_object,request):
+def delay_haulage_functions(self,request):
     try:
        adding_multiple_service_object(request)
     except Exception as exc:
