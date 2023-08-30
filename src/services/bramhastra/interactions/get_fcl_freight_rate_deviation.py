@@ -4,12 +4,11 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 )
 from fastapi.encoders import jsonable_encoder
 from math import ceil
-from micro_services.client import maps
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
 
-SELECT = {
+POSSIBLE_SELECT_KEYS = {
     "origin_port_id",
     "origin_region_id",
     "origin_continent_id",
@@ -33,17 +32,13 @@ LOCATION_KEYS = {
     "destination_trade_id",
 }
 
-DEFAULT_SELECT_KEYS = {"service_provider_id"}
+DEFAULT_SELECT_KEYS = {"origin_port_id", "destination_port_id", "service_provider_id"}
 
 
 def get_fcl_freight_deviation(filters, page_limit, page):
     clickhouse = ClickHouse()
 
-    grouping = set()
-
-    for k in SELECT:
-        if k in filters:
-            grouping.add(k)
+    grouping = {k for k in POSSIBLE_SELECT_KEYS if k in filters}
 
     if not grouping:
         grouping = DEFAULT_SELECT_KEYS.copy()
@@ -85,13 +80,10 @@ def get_fcl_freight_deviation(filters, page_limit, page):
 
 
 def get_add_group_and_order_by(final_query, subquery, queries, grouping):
-    queries.append("GROUP BY")
-    queries.append(",".join(grouping))
-    queries.append(")")
+    queries.append(f"GROUP BY {','.join(grouping)})")
     grouping.remove("service_provider_id")
     if grouping:
-        subquery.append("GROUP BY")
-        subquery.append(",".join(grouping))
+        subquery.append(f"GROUP BY {','.join(grouping)}")
     subquery.append(")")
 
     final_query.append(f"ORDER BY deviation ASC")
