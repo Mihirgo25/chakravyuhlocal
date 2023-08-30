@@ -13,6 +13,8 @@ POSSIBLE_SELECT_KEYS = {
     "origin_region_id",
     "origin_continent_id",
     "origin_trade_id",
+    "origin_country_id",
+    "destination_country_id"
     "destination_port_id",
     "destination_region_id",
     "destination_continent_id",
@@ -68,6 +70,7 @@ def get_fcl_freight_deviation(filters, page_limit, page):
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
     )
+
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     add_rank(statistics)
