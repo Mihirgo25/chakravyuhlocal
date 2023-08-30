@@ -54,7 +54,7 @@ class FclFreightRateJobsMapping(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     source = TextField(index=True, null=True)
     source_id = UUIDField(index=True, null=True)
-    job_id = UUIDField(null=True, index=True)
+    job_id = ForeignKeyField(FclFreightRateJobs,to_field="id")
     created_at = DateField(default=datetime.datetime.now)
     updated_at = DateField(default=datetime.datetime.now)
 
