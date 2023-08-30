@@ -29,7 +29,7 @@ class FclFreightRateJobs(BaseModel):
         container_size = CharField(null=True, index=True)
         container_type = CharField(null=True, index=True)
         commodity = CharField(null=True, index=True)
-        sources = ArrayField(index=True, null=True)
+        sources = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True, index = True)
         assigned_to_id = UUIDField(index=True, null=True)
         assigned_to = BinaryJSONField(null=True)
         created_at = DateTimeField(default=datetime.datetime.now)
@@ -43,6 +43,13 @@ class FclFreightRateJobs(BaseModel):
         rate_type = TextField(null=True)
         service_type = TextField(null=True)
 
+        class Meta:
+            table_name = 'fcl_freight_rate_jobs'
+
+        def save(self, *args, **kwargs):
+            self.updated_at = datetime.datetime.now()
+            return super(FclFreightRateJobs, self).save(*args, **kwargs)
+
 class FclFreightRateJobsMapping(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     source = TextField(index=True, null=True)
@@ -50,5 +57,12 @@ class FclFreightRateJobsMapping(BaseModel):
     job_id = UUIDField(null=True, index=True)
     created_at = DateField(default=datetime.datetime.now)
     updated_at = DateField(default=datetime.datetime.now)
+
+    class Meta:
+            table_name = 'fcl_freight_rate_jobs_mapping'
+
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(FclFreightRateJobs, self).save(*args, **kwargs)
 
 
