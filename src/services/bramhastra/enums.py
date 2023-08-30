@@ -82,3 +82,8 @@ class ImportTypes(Bramhastra):
     
 class AppEnv(Bramhastra):
     production = "production"
+    
+class BrahmastraTrackStatus(Bramhastra):
+    started = "started"
+    failed = "failed"
+    completed = "completed"

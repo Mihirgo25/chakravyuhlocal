@@ -19,8 +19,9 @@ from services.bramhastra.constants import DEFAULT_UUID
 from fastapi.encoders import jsonable_encoder
 from services.rate_sheet.interactions.upload_file import upload_media_file
 from services.bramhastra.constants import BRAHMASTRA_CSV_FILE_PATH
-from services.bramhastra.enums import ImportTypes, AppEnv
-
+from services.bramhastra.enums import ImportTypes, AppEnv, BrahmastraTrackStatus
+from services.bramhastra.models.brahmastra_track import BrahmastraTrack
+import sentry_sdk
 
 """
 Info:
@@ -41,22 +42,26 @@ class Brahmastra:
         self.__clickhouse = ClickHouse()
         self.on_startup = None
 
-    def __optimize_and_send_data_to_stale_tables(self, model: peewee.Model):
+    def __optimize_and_send_data_to_stale_tables(
+        self, model: peewee.Model, pass_to_stale: bool = True
+    ):
         if self.on_startup:
             return
-        query = f"""
-        INSERT INTO brahmastra.stale_{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 
-        WITH LatestVersions AS (
-            SELECT id,version,
-            id,max(version)
-            FROM
-            brahmastra.{model._meta.table_name}
-            GROUP BY id
-        )
-        SELECT * FROM brahmastra.{model._meta.table_name} WHERE (id, version) NOT IN (
-        SELECT id,version
-        FROM LatestVersions)"""
-        self.__clickhouse.execute(query)
+
+        if pass_to_stale:
+            query = f"""
+            INSERT INTO brahmastra.stale_{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 
+            WITH LatestVersions AS (
+                SELECT
+                id,max(version)
+                FROM
+                brahmastra.{model._meta.table_name}
+                GROUP BY id
+            )
+            SELECT * FROM brahmastra.{model._meta.table_name} WHERE (id, version) NOT IN (
+            SELECT id,version
+            FROM LatestVersions)"""
+            self.__clickhouse.execute(query)
         self.__clickhouse.execute(f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}")
 
     def __get_clickhouse_row(self, model, row):
@@ -79,42 +84,88 @@ class Brahmastra:
 
             return row
 
+    def __create_brahmastra_track(
+        self, model, status, started_at, last_updated_at=None, ended_at=None
+    ):
+        return BrahmastraTrack.create(
+            **{
+                "table_name": model._meta.table_name,
+                "last_updated_at": last_updated_at,
+                "started_at": started_at,
+                "status": status,
+                "ended_at": ended_at,
+            }
+        )
+
     def __build_query_and_insert_to_clickhouse(self, model: peewee.Model):
         columns = [field for field in model._meta.fields.keys()]
         fields = ",".join(columns)
+        status = BrahmastraTrackStatus.started.value
+        started_at = datetime.utcnow()
         if self.on_startup:
-            return self.insert_directly_via_postgres(model, fields)
+            try:
+                self.insert_directly_via_postgres(model, fields)
+                status = BrahmastraTrackStatus.completed.value
+            except Exception as e:
+                print(e)
+                sentry_sdk.capture_exception(e)
+                status = BrahmastraTrackStatus.failed.value
+            return self.__create_brahmastra_track(
+                model, status, started_at, datetime.utcnow(), datetime.utcnow()
+            ).id
+
         if model.IMPORT_TYPE == ImportTypes.csv.value:
             dataframe = pd.DataFrame(columns=columns)
 
-            current_updated_at = datetime.utcnow()
+            last_updated_at = self.get_last_updated_at(model)
 
-            last_updated_at = self.get_last_updated_at(model) or current_updated_at
-
-            self.set_last_updated_at(model, current_updated_at)
-
-            for row in ServerSide(
-                model.select(model.id).where(model.updated_at >= last_updated_at)
-            ):
-                data = jsonable_encoder(
-                    {field: getattr(row, field) for field in columns}
-                )
-
-                if old_data := self.__get_clickhouse_row(model, row):
-                    data["version"] = old_data["version"] + 1
-                    dataframe = dataframe.append(data, ignore_index=True)
-                    model.update(version=data["version"]).where(
-                        model.id == data.get("id")
-                    ).execute()
-
-                dataframe = dataframe.append(old_data, ignore_index=True)
-
-            dataframe.to_csv(BRAHMASTRA_CSV_FILE_PATH)
-            url = upload_media_file(BRAHMASTRA_CSV_FILE_PATH)
-
-            self.__clickhouse.execute(
-                f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}','CSV')"
+            brahmastra_track = self.__create_brahmastra_track(
+                model, status, datetime.utcnow()
             )
+
+            try:
+                brahmastra_track.last_updated_at = (
+                    model.select(model.updated_at)
+                    .where(model.updated_at >= last_updated_at)
+                    .order_by(model.updated_at.desc())
+                    .limit(1)
+                    .first()
+                    .updated_at
+                )
+                for row in ServerSide(
+                    model.select(model.id).where(model.updated_at >= last_updated_at)
+                ):
+                    data = jsonable_encoder(
+                        {field: getattr(row, field) for field in columns}
+                    )
+
+                    if old_data := self.__get_clickhouse_row(model, row):
+                        data["version"] = old_data["version"] + 1
+                        dataframe = dataframe.append(data, ignore_index=True)
+                        model.update(version=data["version"]).where(
+                            model.id == data.get("id")
+                        ).execute()
+
+                    dataframe = dataframe.append(old_data, ignore_index=True)
+
+                dataframe.to_csv(BRAHMASTRA_CSV_FILE_PATH)
+                url = upload_media_file(BRAHMASTRA_CSV_FILE_PATH)
+
+                self.__clickhouse.execute(
+                    f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}','CSV')"
+                )
+                status = BrahmastraTrackStatus.completed.value
+            except Exception as e:
+                print(e)
+                sentry_sdk.capture_exception(e)
+                status = BrahmastraTrackStatus.failed.value
+
+            brahmastra_track.status = status
+            brahmastra_track.ended_at = datetime.utcnow()
+
+            brahmastra_track.save()
+
+            return brahmastra_track.id
 
         elif model.IMPORT_TYPE == ImportTypes.postgres.value:
             self.insert_directly_via_postgres(model, fields)
@@ -125,22 +176,28 @@ class Brahmastra:
         )
 
     def used_by(self, arjun: bool, on_startup: bool = False) -> None:
-        if True:
+        if APP_ENV == AppEnv.production.value:
             self.on_startup = on_startup
 
             for model in self.models:
                 self.__build_query_and_insert_to_clickhouse(model)
                 if arjun:
-                    self.__optimize_and_send_data_to_stale_tables(model)
+                    self.__optimize_and_send_data_to_stale_tables(
+                        model, pass_to_stale=False
+                    )
 
                 print(f"done with {model._meta.table_name}")
 
-    def set_last_updated_at(self, model, updated_at):
-        updated_at = updated_at.isoformat()
-        rd.set(f"{model}_last_updated_at", updated_at)
-
     def get_last_updated_at(self, model):
-        rd.get(f"{model}_last_updated_at")
-
-
-Brahmastra().used_by(True)
+        if (
+            track := BrahmastraTrack.select(BrahmastraTrack.last_updated_at)
+            .where(
+                BrahmastraTrack.last_updated_at != None,
+                BrahmastraTrack.status == BrahmastraTrackStatus.completed.value,
+                BrahmastraTrack.table_name == model._meta.table_name,
+            )
+            .order_by(FclFreightRateStatistic.created_at.desc())
+            .limit(1)
+            .first()
+        ):
+            return track.last_updated_at
