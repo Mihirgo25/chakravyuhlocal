@@ -54,9 +54,13 @@ class Shipment:
             self.params.shipment.source_id
         ).values()
 
-        fcl_freight_rate_statistic = FclFreightRateStatistic.select().where(
-            FclFreightRateStatistic.identifier
-            == get_identifier(rate_id=rate_id, validity_id=validity_id)
+        fcl_freight_rate_statistic = (
+            FclFreightRateStatistic.select()
+            .where(
+                FclFreightRateStatistic.identifier
+                == get_identifier(rate_id=rate_id, validity_id=validity_id)
+            )
+            .first()
         )
 
         shipment_services_hash = {
@@ -91,6 +95,7 @@ class Shipment:
                     self.key,
                     getattr(fcl_freight_rate_statistic, self.key) + 1,
                 )
+                fcl_freight_rate_statistic.save()
         elif self.action == ShipmentAction.update.value:
             self.create_or_update(fcl_freight_rate_statistic)
 
@@ -123,7 +128,7 @@ class Shipment:
 
         rate_update_hash["rate_deviation_from_booking_rate"] = (
             (standard_price - rate_update_hash.get("average_booking_rate")) ** 2
-            / booking_rate_count
+            / (booking_rate_count or 1)
         ) ** 0.5
 
         if fcl_freight_rate_statistic:
@@ -136,12 +141,26 @@ class Shipment:
     def create_or_update(self, new_row):
         first_row = False
         for stat in self.stats:
-            if row := self.get_row(stat):
+            if (
+                shipment := ShipmentFclFreightRateStatistic.select()
+                .where(
+                    ShipmentFclFreightRateStatistic.shipment_id
+                    == stat.get("shipment_id"),
+                    ShipmentFclFreightRateStatistic.buy_quotation_id
+                    == stat.get("buy_quotation_id"),
+                    ShipmentFclFreightRateStatistic.shipment_fcl_freight_service_id
+                    == stat.get("shipment_fcl_freight_service_id"),
+                )
+                .first()
+            ):
                 if not first_row:
-                    if self.stats[0]["state"] != row["state"]:
+                    if self.stats[0]["state"] != shipment.state:
                         setattr(new_row, self.key, getattr(new_row, self.key) + 1)
+                        new_row.save()
                         first_row = True
-                self.update(row.get("id"), stat)
+                for k, v in stat.items():
+                    setattr(shipment, k, v)
+                shipment.save()
             else:
                 ShipmentFclFreightRateStatistic.create(**stat)
 
@@ -162,7 +181,7 @@ class Shipment:
             )
         )
 
-        if not shipment_fcl_freight_rate_statistic:
+        if not shipment_fcl_freight_rate_statistics:
             raise ValueError(
                 f"""shipment with id: { update_params.get("shipment_id")} not found"""
             )
@@ -208,37 +227,6 @@ class Shipment:
                     continue
                 setattr(shipment_fcl_freight_rate_statistic, k, v)
             shipment_fcl_freight_rate_statistic.save()
-
-    def update(self, id, stat):
-        if (
-            shipment := ShipmentFclFreightRateStatistic.select()
-            .where(ShipmentFclFreightRateStatistic.id == id)
-            .first()
-        ):
-            for k, v in stat.items():
-                setattr(shipment, k, v)
-            shipment.save()
-            return
-
-    def get_row(self, stat):
-        filt = {
-            k: v
-            for k, v in stat.items()
-            if k
-            in {
-                "shipment_id",
-                "buy_quotation_id",
-                "shipment_fcl_freight_service_id",
-            }
-        }
-        if (
-            shipment := ShipmentFclFreightRateStatistic.select(
-                ShipmentFclFreightRateStatistic.id
-            )
-            .filter(filt)
-            .first()
-        ):
-            return list(shipment.dicts())[0]
 
     def increment_shipment_rate_stats(self, row, update_object, apply_increment=True):
         if apply_increment:

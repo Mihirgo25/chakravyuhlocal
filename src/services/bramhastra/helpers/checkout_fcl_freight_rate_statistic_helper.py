@@ -41,7 +41,7 @@ class Checkout:
                         getattr(fcl_freight_rate_statistic, k) + 1,
                     )
                 
-                fcl_freight_rate_statistic.updated_at = param["updated_at"]
+                fcl_freight_rate_statistic.updated_at = self.params.updated_at
                 
                 fcl_freight_rate_statistic.save()
                 
