@@ -32,7 +32,7 @@ def update_fcl_rates_to_cogo_assured(param):
         FclFreightRate.commodity == param["commodity"],
         FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
         ~ FclFreightRate.rate_not_available_entry,
-        FclFreightRate.updated_at.cast('date') >= datetime.now().date()-timedelta(days = 1)
+        FclFreightRate.last_rate_available_date.cast('date') >= datetime.now().date()
     ).dicts())
     
     all_prices = []

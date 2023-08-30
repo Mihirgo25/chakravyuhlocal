@@ -4,6 +4,7 @@ from libs.get_distance import get_distance
 from database.db_session import rd
 from libs.parse_numeric import parse_numeric
 from micro_services.client import organization
+from math import ceil
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 processed_percent_hash = "process_percent_haulage_operation"
 
@@ -96,6 +97,7 @@ def build_line_item(
 ):
     origin_is_icd = ""
     destination_is_icd = ""
+    base_price = ceil(base_price)
     for data in locations_data:
         if data["id"] == origin_location_id:
             origin_is_icd = data["is_icd"]

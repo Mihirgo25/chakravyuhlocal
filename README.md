@@ -6,7 +6,7 @@
 
 To manually create a virtualenv on MacOS and Linux: 
 
-```
+``` 
 $ python3 -m venv .venv
 ```
 
@@ -16,7 +16,7 @@ step to activate your virtualenv.
 ```
 $ source .venv/bin/activate
 ```
-
+ 
 If you are a Windows platform, you would activate the virtualenv like this:
 
 ```

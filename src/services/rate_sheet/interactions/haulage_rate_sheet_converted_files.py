@@ -227,6 +227,8 @@ def create_haulage_freight_freight_rate(
         if 'code' in data and data['code']:
             keys_to_extract = ['code', 'unit', 'price', 'currency']
             line_item = dict(filter(lambda item: item[0] in keys_to_extract, data.items()))
+            if 'price' in line_item:
+                line_item['price'] = float(line_item['price'])
             line_item['remarks'] = list(set([data["remark1"], data["remark2"], data["remark3"]]))
             line_item["slabs"] = []
             object['line_items'].append(line_item)
