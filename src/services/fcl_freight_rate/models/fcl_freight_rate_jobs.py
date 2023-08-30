@@ -50,19 +50,4 @@ class FclFreightRateJobs(BaseModel):
             self.updated_at = datetime.datetime.now()
             return super(FclFreightRateJobs, self).save(*args, **kwargs)
 
-class FclFreightRateJobsMapping(BaseModel):
-    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    source = TextField(index=True, null=True)
-    source_id = UUIDField(index=True, null=True)
-    job_id = ForeignKeyField(FclFreightRateJobs,to_field="id")
-    created_at = DateField(default=datetime.datetime.now)
-    updated_at = DateField(default=datetime.datetime.now)
-
-    class Meta:
-            table_name = 'fcl_freight_rate_jobs_mapping'
-
-    def save(self, *args, **kwargs):
-        self.updated_at = datetime.datetime.now()
-        return super(FclFreightRateJobs, self).save(*args, **kwargs)
-
 
