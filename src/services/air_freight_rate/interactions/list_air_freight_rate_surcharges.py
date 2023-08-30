@@ -55,7 +55,6 @@ def get_query(sort_by,sort_type, includes, require_eligible_lineitems):
     fields = [getattr(AirFreightRateSurcharge, key) for key in requred_fields] 
     
     query = AirFreightRateSurcharge.select(*fields).where(~(AirFreightRateSurcharge.rate_not_available_entry)).order_by(eval('AirFreightRateSurcharge.{}.{}()'.format(sort_by,sort_type)))
-    print(query)
     return query
 
 def get_pagination_data(query, page, page_limit, pagination_data_required):
