@@ -101,8 +101,8 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
     bulk_operation_id UUID
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (origin_continent_id,origin_country_id,origin_region_id,origin_port_id,rate_id,validity_id)
-ORDER BY (origin_continent_id,origin_country_id,origin_region_id,origin_port_id,rate_id,validity_id,rate_deviation_from_booking_rate);
+PRIMARY KEY (origin_continent_id,origin_country_id,origin_port_id,rate_id,validity_id)
+ORDER BY (origin_continent_id,origin_country_id,origin_port_id,rate_id,validity_id,bookings_created);
 
 CREATE TABLE brahmastra.stale_fcl_freight_rate_statistics
 (

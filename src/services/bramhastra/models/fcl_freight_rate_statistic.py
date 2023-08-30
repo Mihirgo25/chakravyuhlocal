@@ -134,7 +134,7 @@ class FclFreightRateStatistic(BaseModel):
     def refresh(self):
         return type(self).get(self._pk_expr())
     
-    CLICK_KEYS = ["origin_continent_id","origin_country_id","origin_region_id","origin_port_id","rate_id","validity_id"]
+    CLICK_KEYS = ["origin_continent_id","origin_country_id","origin_port_id","rate_id","validity_id"]
     
     IMPORT_TYPE = ImportTypes.parquet.value
     
