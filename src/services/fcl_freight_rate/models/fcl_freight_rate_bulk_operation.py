@@ -137,9 +137,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if data['line_item_code'] not in charge_codes:
             raise HTTPException(status_code=400, detail='line_item_code is invalid')
-        
-        if str(data['markup_type']).lower() == 'percent':
-            return
+
         
         data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
@@ -325,6 +323,11 @@ class FclFreightRateBulkOperation(BaseModel):
                     
                     if data['markup_type'].lower() == 'percent':
                         markup = float(data['markup'] * line_item['price']) / 100 
+                                                
+                        if data.get('min_markup_amount') and data.get('max_markup_amount')and line_item['currency'] != data['markup_currency']:
+                            markup = common.get_money_exchange_for_fcl({'from_currency': line_item['currency'], 'to_currency': data['markup_currency'], 'price': markup}).get('price')
+                            markup = max(data['min_markup_amount'], min(markup, data['max_markup_amount']))
+
                     else:
                         markup = data['markup']
                     
@@ -565,7 +568,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
 
 
-    def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
+    def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id, affect_market_price):
         data = self.data
         fcl_freight_rates = list(batch_query.dicts())
         
@@ -616,7 +619,8 @@ class FclFreightRateBulkOperation(BaseModel):
                     line_item['currency'] = data['markup_currency']
                 else:
                     line_item['price'] = line_item['price'] + markup
-                    line_item['market_price'] = line_item['price'] if not line_item.get('market_price') else line_item['market_price'] + markup
+                    if affect_market_price:
+                        line_item['market_price'] = line_item['price'] if not line_item.get('market_price') else line_item['market_price'] + markup
                     
                 
                 validity_object['line_items'].append(line_item)
@@ -663,7 +667,7 @@ class FclFreightRateBulkOperation(BaseModel):
         
         
         
-    def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
+    def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None, affect_market_price=True):
         total_affected_rates = 0
         data = self.data
                         
@@ -716,11 +720,10 @@ class FclFreightRateBulkOperation(BaseModel):
         total_count = query.count()
         count = 0
         offset = 0
-        
         while(offset < total_count):
             batch_query = query.offset(offset).limit(BATCH_SIZE)
             offset += BATCH_SIZE
-            count, total_affected_rates = self.perform_batch_add_freight_rate_markup_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
+            count, total_affected_rates = self.perform_batch_add_freight_rate_markup_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id, affect_market_price)
         
         data['total_affected_rates'] = total_affected_rates
         self.progress = 100 if count == total_count else  get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)

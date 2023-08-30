@@ -848,6 +848,9 @@ class AddFreightRateMarkup(BaseModel):
     rates_greater_than_price: float = None
     rates_less_than_price: float = None
     tag: str = None
+    affect_market_price:bool=True
+    min_markup_amount: float=None 
+    max_markup_amount: float=None 
 
 
 class AddLocalRateMarkup(BaseModel):
@@ -960,3 +963,15 @@ class FclLocationCluster(BaseModel):
     base_port_id: str
     location_ids: List[str]
     map_zone_id: str
+
+
+class CreateClusterExtensionGriWorker(BaseModel):
+    performed_by_id: str = None
+    performed_by_type: str = None
+    container_type: str
+    origin_port_id: str
+    destination_port_id: str
+    min_range: int
+    max_range: int
+
+    

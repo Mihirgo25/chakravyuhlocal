@@ -66,7 +66,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_seasonal_surchar
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_commodity_surcharge import get_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster import get_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
-# from services.fcl_freight_rate.interaction.create_fcl_freight_rate_task import create_fcl_freight_rate_task_data
+from services.fcl_freight_rate.interaction.create_cluster_extension_gri_worker import create_cluster_extension_gri_worker
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_feedback import delete_fcl_freight_rate_feedback
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local_request import delete_fcl_freight_rate_local_request
@@ -1904,6 +1904,22 @@ def create_fcl_freight_location_cluster_func(request: FclLocationCluster):
     try:
         response =  create_fcl_freight_location_cluster(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.post("/create_cluster_extension_gri_worker")
+def create_cluster_extension_gri_worker_data(request: CreateClusterExtensionGriWorker, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = create_cluster_extension_gri_worker(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
