@@ -70,6 +70,8 @@ def get_fcl_freight_deviation(filters, page_limit, page):
     )
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
+    add_rank(statistics)
+
     return dict(
         list=statistics,
         page=page,
@@ -77,6 +79,11 @@ def get_fcl_freight_deviation(filters, page_limit, page):
         total_pages=total_pages,
         total_count=total_count,
     )
+
+
+def add_rank(statistics):
+    for i, statistic in enumerate(statistics):
+        statistic["rank"] = i + 1
 
 
 def get_add_group_and_order_by(final_query, subquery, queries, grouping):
