@@ -39,6 +39,10 @@ class AirFreightRateJobs(BaseModel):
 
     class Meta:
         table_name = 'air_freight_rate_jobs'
+
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(AirFreightRateJobs, self).save(*args, **kwargs)
     
 
 class AirFreightRateJobsMapping(BaseModel):
@@ -51,3 +55,7 @@ class AirFreightRateJobsMapping(BaseModel):
     
     class Meta:
         table_name = 'air_freight_rate_jobs_mapping'
+
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(AirFreightRateJobsMapping, self).save(*args, **kwargs)
