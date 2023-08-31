@@ -13,11 +13,12 @@ class BaseModel(Model):
 
 class ClusterExtensionGriWorker(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    container_type = CharField(index=True, null=True)
     origin_port_id=UUIDField(index=True,null=True)
     origin_port=BinaryJSONField(null=True)
     destination_port=BinaryJSONField(null=True)
     destination_port_id=UUIDField(index=True,null=True)
+    container_type = CharField(index=True, null=True)
+    container_size = CharField(index=True, null=True)
     performed_by_id=UUIDField(index=True,null=True)
     performed_by=BinaryJSONField(null=True)
     min_range = IntegerField(index=True, null=True)

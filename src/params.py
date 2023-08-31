@@ -969,6 +969,7 @@ class CreateClusterExtensionGriWorker(BaseModel):
     performed_by_id: str = None
     performed_by_type: str = None
     container_type: str
+    container_size: str
     origin_port_id: str
     destination_port_id: str
     min_range: int

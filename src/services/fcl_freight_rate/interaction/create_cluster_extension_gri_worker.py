@@ -10,6 +10,7 @@ def create_or_update_worker(request_data):
  
     worker_data = {
         'container_type': request_data['container_type'],
+        'container_size': request_data['container_size'],
         'origin_port_id': request_data['origin_port_id'],
         'destination_port_id': request_data['destination_port_id'],
         'min_range': request_data['min_range'],
