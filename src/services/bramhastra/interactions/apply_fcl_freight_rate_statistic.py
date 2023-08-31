@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.post_fcl_freight_helper import Rate
+from services.bramhastra.helpers.fcl_freight_rate_statistic_helper import Rate
 from configs.env import APP_ENV
 
 
@@ -10,7 +10,7 @@ def apply_fcl_freight_rate_statistic(request):
 def setting_fcl_freight_rate_statistic(action, params):
     rate = Rate(freight=params.freight)
 
-    rate.set_non_existing_location_details()
+    rate.set_pricing_map_zone_ids()
 
     rate.set_formatted_data()
 

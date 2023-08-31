@@ -1,5 +1,22 @@
 from database.db_session import db
-from services. bramhastra.models.data_migration import DataMigration
+from services.bramhastra.models.fcl_freight_rate_request_statistics import (
+    FclFreightRateRequestStatistic,
+)
+from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import (
+    SpotSearchFclFreightRateStatistic,
+)
+from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
+    FeedbackFclFreightRateStatistic,
+)
+from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
+    ShipmentFclFreightRateStatistic,
+)
+from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
+    CheckoutFclFreightRateStatistic,
+)
+from services.bramhastra.models.brahmastra_track import BrahmastraTrack
+from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
+
 
 
 class Table:
@@ -17,6 +34,14 @@ class Table:
 
 
 if __name__ == "__main__":
-    models = [DataMigration]
+    models = [
+        FclFreightRateRequestStatistic,
+        SpotSearchFclFreightRateStatistic,
+        FeedbackFclFreightRateStatistic,
+        ShipmentFclFreightRateStatistic,
+        CheckoutFclFreightRateStatistic,
+        BrahmastraTrack,
+        AirFreightRateStatistic
+    ]
 
     Table().create_tables(models)

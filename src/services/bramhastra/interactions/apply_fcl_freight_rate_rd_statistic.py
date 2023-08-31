@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.post_fcl_freight_helper import RevenueDesk
+from services.bramhastra.helpers.rd_fcl_freight_rate_statistic_helper import RevenueDesk
 from services.bramhastra.enums import RDAction
 from configs.env import APP_ENV
 
