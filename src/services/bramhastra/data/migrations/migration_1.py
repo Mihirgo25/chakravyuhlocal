@@ -122,6 +122,11 @@ RATE_PARAMS = [
 STANDARD_CURRENCY = "USD"
 
 
+PERFORMED_BY_MAPPING_URL = "https://cogoport-production.sgp1.digitaloceanspaces.com/73f7bad75162a7ed48e36d1fd93d015a/performed_mapping.json"
+
+from configs.env import DEFAULT_USER_ID
+
+
 class MigrationHelpers:
     def get_pricing_map_zone_ids(self, origin_port_id, destination_port_id) -> list:
         query = (
@@ -532,6 +537,10 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             & (FclFreightRate.validities != SQL("'[]'"))
             & (FclFreightRate.updated_at >= datetime.strptime("2023-08-01", "%Y-%m-%d"))
         )
+        
+        with urllib.request.urlopen(PERFORMED_BY_MAPPING_URL) as url:
+            PERFORMED_BY_MAPPING = json.loads(url.read().decode())
+            print('loaded performed by mapping')
 
         print("formed query")
 
@@ -571,6 +580,9 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     or validity.get("price"),
                     "validity_id": validity.get("id"),
                 }
+                
+                row["performed_by_id"] = PERFORMED_BY_MAPPING.get(getattr(rate,'id'), {}).get('performed_by_id', DEFAULT_USER_ID),
+                row["performed_by_type"] = PERFORMED_BY_MAPPING.get(getattr(rate,'id'), {}).get('performed_by_type','agent'),
 
                 row_data.append(row)
                 count += 1
