@@ -73,6 +73,19 @@ class Rate:
 
     def set_new_stats(self) -> int:
         return FclFreightRateStatistic.insert_many(self.params).execute()
+    
+    def delete_latest_stat(self) -> None:
+        params = dict(is_deleted = True)
+        exc_params = UPDATE_EXCLUDE_ITEMS.copy()
+        exc_params.add("validities")
+        
+        params.update(self.freight.dicts(exclude = exc_params))
+            
+        try:
+            FclFreightRateStatistic.update(**params).where(FclFreightRateStatistic.rate_id == str(self.freight.rate_id)).execute()        
+        except Exception as e:
+            raise e
+            
 
     def set_existing_stats(self) -> None:
         for row in self.params:
@@ -80,7 +93,7 @@ class Rate:
                 self.create(row)
             else:
                 self.update(row)
-
+                
     def get_feedback_details(self):
         if row := (
             FclFreightRateFeedback.select(

@@ -158,8 +158,6 @@ class Brahmastra:
 
                     if old_data := self.__get_clickhouse_row(model, row):
                         data["version"] = old_data["version"] + 1
-                        row.version = data["version"]
-                        row.save()
                         rows.append(json_encoder_for_clickhouse(old_data))
 
                     rows.append(data)
