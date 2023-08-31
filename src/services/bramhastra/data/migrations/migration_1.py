@@ -533,8 +533,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
     def populate_from_active_rates(self):
         query = FclFreightRate.select().where(
             (FclFreightRate.validities.is_null(False))
-            & (FclFreightRate.validities != SQL("'[]'"))
-            & (FclFreightRate.updated_at >= datetime.strptime("2023-08-01", "%Y-%m-%d"))
+            & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.last_rate_available_date >= datetime.now())
         )
         
         with urllib.request.urlopen(PERFORMED_BY_MAPPING_URL) as url:

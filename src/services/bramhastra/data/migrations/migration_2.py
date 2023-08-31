@@ -220,7 +220,8 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         self.cogoback_connection = get_connection()
 
     def populate_from_active_rates(self):
-        query = AirFreightRate.select().where(AirFreightRate.validities.is_null(False) and AirFreightRate.validities != '[]')
+        from datetime import datetime
+        query = AirFreightRate.select().where(AirFreightRate.validities.is_null(False) and AirFreightRate.validities != '[]' and AirFreightRate.last_rate_available_date >= datetime.now())
         
         REGION_MAPPING = {}
         PERFORMED_BY_MAPPING = {}
