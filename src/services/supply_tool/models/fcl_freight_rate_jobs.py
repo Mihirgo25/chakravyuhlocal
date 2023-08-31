@@ -42,7 +42,6 @@ class FclFreightRateJobs(BaseModel):
         port_id = UUIDField(null=True) #what logic
         rate_type = TextField(null=True)
         service_type = TextField(null=True)
-        user_id = UUIDField(null=True)
         rate_id = UUIDField(null=True)
 
         class Meta:
