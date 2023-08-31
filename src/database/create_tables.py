@@ -40,7 +40,7 @@ if __name__ == "__main__":
         FeedbackFclFreightRateStatistic,
         ShipmentFclFreightRateStatistic,
         CheckoutFclFreightRateStatistic,
-        BrahmastraTrack,
+        WorkerLog,
         AirFreightRateStatistic
     ]
 
