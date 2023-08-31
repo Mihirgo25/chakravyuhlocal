@@ -5,6 +5,7 @@ from services.supply_tool.models.fcl_freight_rate_jobs import FclFreightRateJobs
 from services.supply_tool.models.fcl_freight_rate_jobs_mapping import FclFreightRateJobsMapping
 from datetime import datetime, timedelta
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from services.supply_tool.helpers.task_distribution_system import task_distribution_system
 
 
 def create_fcl_freight_rate_jobs(request):
@@ -30,14 +31,32 @@ def create_fcl_freight_rate_jobs(request):
             for key in list(params.keys()):
                 setattr(fcl_freight_rate_job, key, params[key])
             
-        if fcl_freight_rate_job.status in ('pending', 'backlog'):
+        if fcl_freight_rate_job.status == 'active':
             updated_ids.append(fcl_freight_rate_job.id)
             continue
-        
-        fcl_freight_rate_job.status = 'pending'
+
+        if fcl_freight_rate_job.status == 'inactive' and fcl_freight_rate_job.updated_at > datetime.now()-timedelta(days=7):
+            continue
+
+        fcl_freight_rate_job.assigned_to_id = task_distribution_system('fcl')
+
+        set_jobs_mapping(fcl_freight_rate_job.id, data)
+
+        fcl_freight_rate_job.status = 'active'
+        fcl_freight_rate_job.set_locations()
         fcl_freight_rate_job.save()
         get_multiple_service_objects(fcl_freight_rate_job)
         updated_ids.append(fcl_freight_rate_job.id)
 
     return {"updated_ids": updated_ids}
+
+def set_jobs_mapping(jobs_id, data):
+    audit_id = FclFreightRateJobsMapping.create(
+        source_id=data.get("rate_id"),
+        job_id= jobs_id,
+        source = 'fcl_freight_rate'
+    )
+    return audit_id
+
+
     
