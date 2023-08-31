@@ -126,8 +126,6 @@ async def use_average_price_filter(
         queries.append(where)
 
     queries.append(f"GROUP BY {select}")
-    
-    breakpoint()
 
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit

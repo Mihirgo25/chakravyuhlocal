@@ -15,6 +15,7 @@ from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
     CheckoutFclFreightRateStatistic,
 )
 from services.bramhastra.models.brahmastra_track import BrahmastraTrack
+from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 
 
 
@@ -39,7 +40,8 @@ if __name__ == "__main__":
         FeedbackFclFreightRateStatistic,
         ShipmentFclFreightRateStatistic,
         CheckoutFclFreightRateStatistic,
-        BrahmastraTrack
+        BrahmastraTrack,
+        AirFreightRateStatistic
     ]
 
     Table().create_tables(models)
