@@ -7,7 +7,7 @@ from libs.json_encoder import json_encoder
 possible_direct_filters = ['origin_port_id','destination_port_id','shipping_line_id','commodity','status']
 possible_indirect_filters = ['updated_at', 'user_id', 'date_range']
 
-def list_fcl_freight_rate_stats(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc'):
+def list_fcl_freight_rate_coverages(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc'):
     query = get_query(sort_by, sort_type)
     if filters:
         if type(filters) != dict:
@@ -28,8 +28,9 @@ def get_data(query):
    
 
 def get_query(sort_by, sort_type):
+  query = FclFreightRateJobs.select()
   if sort_by:
-    query = query.order_by(eval('FclFreightRate.{}.{}()'.format(sort_by,sort_type)))
+    query = query.order_by(eval('FclFreightRateJobs.{}.{}()'.format(sort_by,sort_type)))
 
   return query
 
