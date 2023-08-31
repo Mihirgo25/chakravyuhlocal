@@ -43,7 +43,7 @@ def list_fcl_freight_rate_coverages_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
-    sort_by: str = 'created_at',
+    sort_by: str = 'updated_at',
     sort_type: str = 'desc',
     resp: dict = Depends(authorize_token)
 ):
