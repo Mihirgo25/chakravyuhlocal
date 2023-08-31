@@ -2,10 +2,9 @@ from database.rails_db import get_connection
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
-from services.bramhastra.models.checkout_air_freight_rate_statistic import CheckoutAirFreightRateStatistic
 from services.bramhastra.models.feedback_air_freight_rate_statistic import FeedbackAirFreightRateStatistic
-from services.bramhastra.models.feedback_air_freight_rate_statistic import SpotSearchAirFreightRateStatistic 
-from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
+from services.bramhastra.models.spot_search_air_freight_rate_statistic import SpotSearchAirFreightRateStatistic 
+from services.air_freight_rate.models.air_freight_location_cluster import AirFreightLocationCluster
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from services.bramhastra.models.air_freight_rate_request_statistics import AirFreightRateRequestStatistic
 from services.bramhastra.models.shipment_air_freight_rate_statistic import ShipmentAirFreightRateStatistic
@@ -394,7 +393,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         
     
     def update_pricing_map_zone_ids(self):
-        query  = AirFreightLocationClusters.select(AirFreightLocationClusterMapping.location_id,AirFreightLocationClusters.map_zone_id).join(AirFreightLocationClusterMapping)
+        query  = AirFreightLocationCluster.select(AirFreightLocationClusterMapping.location_id,AirFreightLocationCluster.map_zone_id).join(AirFreightLocationClusterMapping)
         zone_ids = jsonable_encoder(list(query.dicts()))
         zone_ids = {row['location_id']: row['map_zone_id'] for row in zone_ids}
         
@@ -845,18 +844,8 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
             
 def main():
     populate_from_rates = PopulateAirFreightRateStatistics()
-    populate_from_rates.populate_from_active_rates() # active rates from rms to main_statistics
-    #X populate_from_rates.populate_from_feedback() # old rates from data in feedbacks to main_statistics
-    populate_from_rates.populate_from_spot_search_rates() # old rates from spot_search_rates to main_statistics
-    populate_from_rates.update_shipment_stats_in_air_freight_stats() # data from shipment_air_freight_services to main_statistics
-    populate_from_rates.update_air_freight_rate_checkout_count()  # checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs
-    populate_from_rates.populate_air_feedback_freight_rate_statistic() # like dislike count in main_statistics and populate feedback_statistics
-    populate_from_rates.populate_air_request_statistics() # populate request_air_statistics table
-    populate_from_rates.populate_shipment_statistics() # shipment_statistics data population
-    #X populate_from_rates.update_accuracy() # update accuracy, deviation from shipment_buy_quotation
-    #X populate_from_rates.update_air_freight_rate_statistics_spot_search_count() # populate SpotSearchAirFreightRateStatistic table and increase spot_search_count
-    populate_from_rates.update_pricing_map_zone_ids()  # update map_zone_ids for main_statistics and missing_requests
-    pass
+    populate_from_rates.populate_from_active_rates()
+    populate_from_rates.update_pricing_map_zone_ids()
 
 
 if __name__ == "__main__":
