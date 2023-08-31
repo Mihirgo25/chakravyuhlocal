@@ -13,6 +13,7 @@ from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField
 from configs.env import DEFAULT_USER_ID
+from services.bramhastra.enums import ImportTypes
 
 
 class BaseModel(Model):
@@ -129,6 +130,16 @@ class AirFreightRateStatistic(BaseModel):
         for k, v in params.items():
             setattr(self, k, v)
         self.save()
+        
+    CLICK_KEYS = [
+        "origin_continent_id",
+        "origin_country_id",
+        "origin_airport_id",
+        "rate_id",
+        "validity_id",
+    ]
+
+    IMPORT_TYPE = ImportTypes.csv.value
 
     class Meta:
         table_name = "air_freight_rate_statistics"

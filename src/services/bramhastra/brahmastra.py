@@ -15,7 +15,6 @@ from datetime import datetime
 from playhouse.postgres_ext import ServerSide
 import pandas as pd
 from services.bramhastra.constants import DEFAULT_UUID
-from fastapi.encoders import jsonable_encoder
 from services.rate_sheet.interactions.upload_file import upload_media_file
 from services.bramhastra.constants import BRAHMASTRA_CSV_FILE_PATH
 from services.bramhastra.enums import (
@@ -26,6 +25,9 @@ from services.bramhastra.enums import (
 )
 from services.bramhastra.models.worker_log import WorkerLog
 import sentry_sdk
+from services.bramhastra.models.air_freight_rate_statistic import (
+    AirFreightRateStatistic,
+)
 
 """
 Info:
@@ -42,7 +44,7 @@ If `arjun` is not the user, old duplicate entries won't be cleared. We recommend
 
 class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
-        self.models = models or [FclFreightRateStatistic]
+        self.models = models or [FclFreightRateStatistic, AirFreightRateStatistic]
         self.__clickhouse = ClickHouse()
         self.on_startup = None
 

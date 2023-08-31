@@ -102,7 +102,7 @@ ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,rate_id,validity_id)
 ORDER BY (origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,rate_id,validity_id,rate_deviation_from_booking_rate,updated_at);
 
-CREATE TABLE brahmastra.air_freight_rate_statistics
+CREATE TABLE brahmastra.stale_air_freight_rate_statistics
 (
     id UInt256,
     identifier FixedString(256),
