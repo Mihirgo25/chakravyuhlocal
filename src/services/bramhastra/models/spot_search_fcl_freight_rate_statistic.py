@@ -1,7 +1,7 @@
-from peewee import Model, BigIntegerField, UUIDField, CharField, IntegerField
+from peewee import Model, BigIntegerField, UUIDField, IntegerField
 from datetime import datetime
 from database.db_session import db
-from playhouse.postgres_ext import DateTimeTZField, ArrayField
+from playhouse.postgres_ext import DateTimeTZField, BigAutoField
 
 
 class BaseModel(Model):
@@ -10,19 +10,19 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class SpotSearchFclFreightRateStatistic(BaseModel):
-    id = BigIntegerField(sequence = 'spot_search_fcl_freight_rate_statistic_seq')
-    fcl_freight_rate_statistic_id = BigIntegerField()
-    spot_search_id = UUIDField()
-    spot_search_fcl_freight_services_id = UUIDField()
-    checkout_id = UUIDField(null = True)
-    checkout_fcl_freight_rate_services_id = UUIDField(null=True)
-    validity_id = UUIDField(null=True)
-    rate_id = UUIDField(null=True)
+    id = BigAutoField(primary_key = True)
+    fcl_freight_rate_statistic_id = BigIntegerField(index = True)
+    spot_search_id = UUIDField(index = True)
+    spot_search_fcl_freight_services_id = UUIDField(index = True)
+    checkout_id = UUIDField(null = True, index = True)
+    checkout_fcl_freight_rate_services_id = UUIDField(null=True, index = True)
+    validity_id = UUIDField(null=True, index = True)
+    rate_id = UUIDField(null=True, index = True)
     sell_quotation_id = UUIDField(null=True)
     buy_quotation_id = UUIDField(null=True)
-    shipment_id = UUIDField(null=True)
+    shipment_id = UUIDField(null=True, index = True)
     created_at = DateTimeTZField(default = datetime.utcnow())
-    updated_at = DateTimeTZField(default = datetime.utcnow())
+    updated_at = DateTimeTZField(default = datetime.utcnow(), index = True)
     sign = IntegerField(default=1)
     version = IntegerField(default=1)
     operation_created_at = DateTimeTZField(default=datetime.utcnow())

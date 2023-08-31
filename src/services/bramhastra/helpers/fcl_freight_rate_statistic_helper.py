@@ -81,7 +81,7 @@ class Rate:
             elif row["last_action"] == ValidityAction.update.value:
                 self.update(row)
             elif row["last_action"] == ValidityAction.unchanged.value:
-                continue
+                self.update(row)
 
     def get_feedback_details(self):
         if row := (
@@ -108,6 +108,9 @@ class Rate:
             if parent := self.get_feedback_details():
                 freight.update(parent)
                 self.increment_keys.add("dislikes_rate_reverted_count")
+                
+        if freight["source"] == FclModes.missing_rate.value:
+            self.increment_keys.add("reverted_rates_count")
 
         for validity in self.freight.validities:
             param = freight.copy()

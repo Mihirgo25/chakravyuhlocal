@@ -150,7 +150,7 @@ celery.conf.beat_schedule = {
     },
     'brahmastra':{
         'task': 'services.bramhastra.celery.brahmastra_in_delay',
-        'schedule': crontab(minute=0, hour='*/2'),
+        'schedule': crontab(minute=0, hour='*/3'),
         'options': {'queue': 'statistics'}
     },
     'cache_data_worker':{
