@@ -3,6 +3,11 @@ def main():
     from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
     from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
     from services.chakravyuh.models.worker_log import WorkerLog
+    from database.db_migration import run_migration
+    
+    print('running migration')
+    
+    run_migration()
     
     click = ClickHouse()
     
