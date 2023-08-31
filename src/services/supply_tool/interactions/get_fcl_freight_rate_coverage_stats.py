@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from collections import Counter
 
 possible_direct_filters = ['origin_port_id','destination_port_id','shipping_line_id','commodity','status']
-possible_indirect_filters = ['updated_at', 'user_id']
+possible_indirect_filters = ['date_range', 'user_id']
 
 def get_fcl_freight_rate_coverage_stats(filters = {}, page_limit = 10, page = 1, sort_by = 'created_at', sort_type = 'desc'):
     daily_query = get_daily_query(sort_by, sort_type)
@@ -29,6 +29,7 @@ def get_fcl_freight_rate_coverage_stats(filters = {}, page_limit = 10, page = 1,
       'pending': 0,
       'backlog': 0,
       'completed': 0,
+      'completed_percentage':0,
       'spot_search' : 0,
       'critical_port_pair' : 0,
       'expiring_rates' : 0,
@@ -54,6 +55,9 @@ def get_fcl_freight_rate_coverage_stats(filters = {}, page_limit = 10, page = 1,
        return statistics
 
     statistics = get_weekly_details(weekly_query, statistics)
+
+    if statistics['total']:
+      statistics['completed_percentage'] = round((statistics['completed']/statistics['total'])*100)
 
     return statistics
 
@@ -133,9 +137,13 @@ def apply_indirect_filters(query, filters):
     query = eval(f'{apply_filter_function}(query, filters)')
   return query
 
-def apply_updated_at_filter(query, filters):
-  query = query.where(FclFreightRateJobs.updated_at > filters['updated_at'])
+def apply_date_range_filter(query, filters):
+  query = query.where(
+     FclFreightRateJobs.updated_at > filters['date_range']['startDate'],
+     FclFreightRateJobs.updated_at < filters['date_range']['endDate'],
+     )
   return query
 
 def apply_user_id_filter(query, filters):
    query = query.where(FclFreightRateJobs.assigned_to_id == filters['user_id'])
+   return query
