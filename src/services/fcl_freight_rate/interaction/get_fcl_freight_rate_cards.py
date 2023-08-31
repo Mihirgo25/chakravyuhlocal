@@ -909,21 +909,22 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
         
         cogo_assured_rates = []
+        other_rates = []
+        for rate in freight_rates:
+            if rate.get('rate_type') == 'cogo_assured':
+                if (not cogo_assured_rates) and (not is_rate_missing_locals('origin_local', rate) or not is_rate_missing_locals('destination_local', rate)):
+                    cogo_assured_rates.append(rate)
+            else:
+                other_rates.append(rate)   
+                
         if is_predicted:
-            rates_without_cogo_assured = []
-            for rate in freight_rates:
-                if rate.get('rate_type') == 'cogo_assured':
-                    if (not cogo_assured_rates) and (not is_rate_missing_locals('origin_local', rate) or not is_rate_missing_locals('destination_local', rate)):
-                        cogo_assured_rates.append(rate)
-                else:
-                    rates_without_cogo_assured.append(rate)      
-            fcl_freight_vyuh = FclFreightVyuh(rates_without_cogo_assured, requirements)
-            freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
+            fcl_freight_vyuh = FclFreightVyuh(other_rates, requirements)
+            other_rates = fcl_freight_vyuh.apply_dynamic_pricing()
         
-        freight_rates+= cogo_assured_rates
-        freight_rates = build_response_list(freight_rates, requirements)
+        all_rates = cogo_assured_rates + other_rates
+        all_rates = build_response_list(all_rates, requirements)
         return {
-            "list" : freight_rates
+            "list" : all_rates
         }
     except Exception as e:
         traceback.print_exc()
