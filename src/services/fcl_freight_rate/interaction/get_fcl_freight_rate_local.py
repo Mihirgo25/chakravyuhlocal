@@ -1,5 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
+
 def get_fcl_freight_rate_local(request):
     details = {}
 
@@ -35,7 +37,8 @@ def find_object(request):
       FclFreightRateLocal.container_type == request.get('container_type'),
       FclFreightRateLocal.commodity == request.get("commodity"),
       FclFreightRateLocal.shipping_line_id == request.get("shipping_line_id"),
-      FclFreightRateLocal.service_provider_id == request.get("service_provider_id")
+      FclFreightRateLocal.service_provider_id == request.get("service_provider_id"),
+      FclFreightRateLocal.rate_type == DEFAULT_RATE_TYPE
     ).first()
   
   return object
