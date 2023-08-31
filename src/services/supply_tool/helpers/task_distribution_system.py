@@ -21,3 +21,5 @@ def task_distribution_sysytem(service_type):
 
     # Store the next user back to Redis
     rd.set("last_assigned_user", next_user)
+
+    return users[next_user]
