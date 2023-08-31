@@ -82,7 +82,7 @@ def execute_transaction_code(request):
         FclFreightRateLocal.commodity == request.get('commodity'),
         FclFreightRateLocal.shipping_line_id==request.get('shipping_line_id'),
         FclFreightRateLocal.service_provider_id==request.get('service_provider_id'),
-        FclFreightRateLocal.rate_type==request.get('rate_type')).first()
+        FclFreightRateLocal.rate_type==row['rate_type']).first()
 
     if not fcl_freight_local:
         fcl_freight_local = FclFreightRateLocal(**row)
