@@ -108,7 +108,7 @@ class AirFreightRateStatistic(BaseModel):
     parent_validity_id = UUIDField(null=True, index=True)
     height = FloatField(default=0)
     breadth = FloatField(default=0)
-    len = FloatField(default=0)
+    length = FloatField(default=0)
     maximum_weight = FloatField(default=0)
     flight_uuid = UUIDField(index=True, null=True)
     discount_type = CharField(index=True, null=True)
