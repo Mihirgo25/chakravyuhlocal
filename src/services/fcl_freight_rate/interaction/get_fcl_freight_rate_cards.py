@@ -919,7 +919,7 @@ def get_fcl_freight_rate_cards(requirements):
             fcl_freight_vyuh = FclFreightVyuh(rates_without_cogo_assured, requirements)
             freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
         
-        freight_rates+= cogo_assured_rates
+        freight_rates+= cogo_assured_rates[:1] if cogo_assured_rates else []
         freight_rates = build_response_list(freight_rates, requirements)
         return {
             "list" : freight_rates
