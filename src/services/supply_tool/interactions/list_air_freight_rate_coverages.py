@@ -1,10 +1,10 @@
-from services.supply_tool.models.fcl_freight_rate_jobs import FclFreightRateJobs
+from services.supply_tool.models.air_freight_rate_jobs import AirFreightRateJobs
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from libs.json_encoder import json_encoder
 
-possible_direct_filters = ['origin_port_id','destination_port_id','shipping_line_id','commodity','status']
+possible_direct_filters = ['origin_airport_id','destination_airport_id','airline_id','commodity','status']
 possible_indirect_filters = ['updated_at', 'user_id', 'date_range']
 
 def list_fcl_freight_rate_stats(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc'):
@@ -13,7 +13,7 @@ def list_fcl_freight_rate_stats(filters = {}, page_limit = 10, page = 1, sort_by
         if type(filters) != dict:
            filters = json.loads(filters)
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-        query = get_filters(direct_filters, query, FclFreightRateJobs)
+        query = get_filters(direct_filters, query, AirFreightRateJobs)
         query = apply_indirect_filters(query, indirect_filters)
         
     if page_limit:
@@ -40,10 +40,10 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_user_id_filter(query, filters):
-   query = query.where(FclFreightRateJobs.assigned_to_id == filters['user_id'])
+   query = query.where(AirFreightRateJobs.assigned_to_id == filters['user_id'])
 
 def apply_updated_at_filter(query, filters):
-  query = query.where(FclFreightRateJobs.updated_at > filters['updated_at'])
+  query = query.where(AirFreightRateJobs.updated_at > filters['updated_at'])
   return query
 
 def apply_date_range_filter(query, filters):
