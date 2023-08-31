@@ -28,6 +28,7 @@ import sentry_sdk
 from services.bramhastra.models.air_freight_rate_statistic import (
     AirFreightRateStatistic,
 )
+import os
 
 """
 Info:
@@ -170,6 +171,11 @@ class Brahmastra:
                 dataframe.to_csv(file_path, index=False)
 
                 url = upload_media_file(file_path)
+                
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
 
                 query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
 

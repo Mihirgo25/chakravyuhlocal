@@ -539,8 +539,16 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         )
         
         with urllib.request.urlopen(PERFORMED_BY_MAPPING_URL) as url:
-            PERFORMED_BY_MAPPING = json.loads(url.read().decode())
+            mappings = json.loads(url.read().decode())
             print('loaded performed by mapping')
+            
+            PERFORMED_BY_MAPPING = dict()
+            
+            for mapping in mappings:
+                PERFORMED_BY_MAPPING[mapping.get('object_id')] = mapping
+                
+            del mappings
+                
 
         print("formed query")
 
@@ -581,8 +589,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     "validity_id": validity.get("id"),
                 }
                 
-                row["performed_by_id"] = PERFORMED_BY_MAPPING.get(getattr(rate,'id'), {}).get('performed_by_id', DEFAULT_USER_ID),
-                row["performed_by_type"] = PERFORMED_BY_MAPPING.get(getattr(rate,'id'), {}).get('performed_by_type','agent'),
+                row["performed_by_id"] = PERFORMED_BY_MAPPING.get(getattr(rate,'id'), {}).get('performed_by_id', DEFAULT_USER_ID)
+                row["performed_by_type"] = PERFORMED_BY_MAPPING.get(getattr(rate,'id'), {}).get('performed_by_type','agent')
 
                 row_data.append(row)
                 count += 1
@@ -1774,7 +1782,7 @@ def main():
     print("# active rates from rms to main_statistics")
     populate_from_rates.populate_from_active_rates()
     print('#like dislike count in main_statistics and populate feedback_statistics')
-    populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
+    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
     print("#populate request_fcl_statistics table")
     populate_from_rates.populate_fcl_request_statistics()
     print("#shipment_statistics data population")
