@@ -8,7 +8,6 @@ from fastapi.encoders import jsonable_encoder
 from datetime import datetime, timedelta
 from services.bramhastra.client import ClickHouse
 from services.supply_tool.models.fcl_freight_rate_jobs import FclFreightRateJobs
-from services.supply_tool.helpers.add_service_objects import add_service_objects
 from services.supply_tool.interactions.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
 import time 
 
