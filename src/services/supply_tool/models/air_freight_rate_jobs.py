@@ -29,7 +29,7 @@ class AirFreightRateJobs(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
     status = CharField(index=True, null=True)
-    source = TextField(default = 'manual', null = True, index=True)
+    source = TextField(null=True, index=True)
     assigned_to_id = UUIDField(index=True, null=True)
     assigned_to = BinaryJSONField(null=True)
     closed_by_id = UUIDField(null=True, index=True)
