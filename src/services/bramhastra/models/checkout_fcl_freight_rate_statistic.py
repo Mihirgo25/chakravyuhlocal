@@ -37,8 +37,12 @@ class CheckoutFclFreightRateStatistic(BaseModel):
     status = CharField(default="active")
     sign = IntegerField(default=1)
     version = IntegerField(default=1)
-    c_at = DateTimeTZField(default=datetime.utcnow())
-    u_at = DateTimeTZField(default=datetime.utcnow())
+    operation_created_at = DateTimeTZField(default=datetime.utcnow())
+    operation_updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
+
+    def save(self, *args, **kwargs):
+        self.operation_updated_at = datetime.utcnow()
+        return super(CheckoutFclFreightRateStatistic, self).save(*args, **kwargs)
 
     class Meta:
         table_name = "checkout_fcl_freight_rate_statistics"
