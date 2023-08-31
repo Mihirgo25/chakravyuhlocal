@@ -39,7 +39,7 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.add_fields(FclFreightRateStatistic,is_deleted = BooleanField(index = True,default = False))
     migrator.add_fields(AirFreightRateStatistic,operation_created_at = DateTimeTZField(default = datetime.utcnow()))
     migrator.add_fields(AirFreightRateStatistic,operation_updated_at = DateTimeTZField(default = datetime.utcnow()))
-    migrator.add_fields(AirFreightRateStatistic,is_deleted = BooleanField(default = False))
+    migrator.add_fields(AirFreightRateStatistic,is_deleted = BooleanField(index = True,default = False))
 
 
 def rollback(migrator: Migrator, database, fake=False, **kwargs):
