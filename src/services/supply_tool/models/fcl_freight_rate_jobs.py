@@ -41,7 +41,7 @@ class FclFreightRateJobs(BaseModel):
     port = BinaryJSONField(null=True)
     port_id = UUIDField(null=True) #what logic
     rate_type = TextField(null=True)
-    rate_id = UUIDField(null=True)
+    rate_id = UUIDField(null=True, index=True)
 
     class Meta:
         table_name = 'fcl_freight_rate_jobs'
