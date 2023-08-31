@@ -1757,8 +1757,10 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             db.execute_sql(f"drop table {model._meta.table_name}")
 
         ClickHouse().execute("create database brahmastra")
+        
+        from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 
-        models = [FclFreightRateStatistic]
+        models = [FclFreightRateStatistic,AirFreightRateStatistic]
 
         dictionaries = [CountryRateCount]
 
