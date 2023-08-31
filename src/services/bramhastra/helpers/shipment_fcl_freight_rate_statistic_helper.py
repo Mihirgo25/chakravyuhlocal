@@ -81,7 +81,7 @@ class Shipment:
             shipment_copy.update(
                 buy_quotation.dict(exclude={"service_id", "service_type"})
             )
-            shipment_copy.update(shipment_services_hash[buy_quotation.service_id])
+            shipment_copy.update(shipment_services_hash.get(buy_quotation.service_id))
             shipment_copy[
                 "fcl_freight_rate_statistic_id"
             ] = fcl_freight_rate_statistic.id
