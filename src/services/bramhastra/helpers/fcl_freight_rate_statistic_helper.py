@@ -78,9 +78,7 @@ class Rate:
         for row in self.params:
             if row["last_action"] == ValidityAction.create.value:
                 self.create(row)
-            elif row["last_action"] == ValidityAction.update.value:
-                self.update(row)
-            elif row["last_action"] == ValidityAction.unchanged.value:
+            else:
                 self.update(row)
 
     def get_feedback_details(self):
