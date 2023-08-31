@@ -179,6 +179,10 @@ def set_object_parameters(freight, request):
     freight.currency = request.get('currency')
     
 
-def send_stats(action,request,freight):
+def send_stats(action, request, freight):
     from services.bramhastra.celery import send_air_rate_stats_in_delay
-    send_air_rate_stats_in_delay.apply_async(kwargs = {'action':action,'request':request,'freight':freight},queue = 'statistics')
+
+    send_air_rate_stats_in_delay.apply_async(
+        kwargs={"action": action, "request": request, "freight": freight},
+        queue="statistics",
+    )
