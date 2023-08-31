@@ -38,7 +38,7 @@ def find_object(request):
       FclFreightRateLocal.commodity == request.get("commodity"),
       FclFreightRateLocal.shipping_line_id == request.get("shipping_line_id"),
       FclFreightRateLocal.service_provider_id == request.get("service_provider_id"),
-      FclFreightRateLocal.rate_type == DEFAULT_RATE_TYPE,
+      FclFreightRateLocal.rate_type == DEFAULT_RATE_TYPE
     ).first()
   
   return object
