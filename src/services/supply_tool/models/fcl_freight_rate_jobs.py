@@ -29,7 +29,7 @@ class FclFreightRateJobs(BaseModel):
         container_size = CharField(null=True, index=True)
         container_type = CharField(null=True, index=True)
         commodity = CharField(null=True, index=True)
-        sources = TextField(null=True, index = True)
+        source = TextField(null=True, index = True)
         assigned_to_id = UUIDField(index=True, null=True)
         assigned_to = BinaryJSONField(null=True)
         created_at = DateTimeField(default=datetime.datetime.now)
@@ -42,6 +42,7 @@ class FclFreightRateJobs(BaseModel):
         port_id = UUIDField(null=True)
         rate_type = TextField(null=True)
         service_type = TextField(null=True)
+        user_id = UUIDField(null=True)
 
         class Meta:
             table_name = 'fcl_freight_rate_jobs'
