@@ -15,12 +15,9 @@ def spot_search_scheduler():
         if service == 'fcl_freight':
             data = get_spot_data_fcl(data)
             result = create_fcl_freight_rate_jobs(data, 'spot_search')
-            print(result)
         else:
             data = get_spot_data_air(data)
             result = create_air_freight_rate_jobs(data, 'spot_search')
-            print(result)
-
 
 def get_spot_data_air(list_of_spot_search_data):
     list_of_data = []
@@ -29,8 +26,8 @@ def get_spot_data_air(list_of_spot_search_data):
             'origin_airport_id': spot_search_data[0],
             'destination_airport_id': spot_search_data[1],
             'commodity': spot_search_data[2],
-            'selected_airline_id': spot_search_data[3],
-            'selected_service_provider_id': spot_search_data[4]
+            'airline_id': spot_search_data[3],
+            'service_provider_id': spot_search_data[4]
         }
         list_of_data.append(copy.deepcopy(data))
 
@@ -45,8 +42,8 @@ def get_spot_data_fcl(list_of_spot_search_data):
             'container_size': spot_search_data[2],
             'container_type': spot_search_data[3],
             'commodity': spot_search_data[4],
-            'selected_shipping_line_id': spot_search_data[5],
-            'selected_service_provider_id': spot_search_data[6]
+            'shipping_line_id': spot_search_data[5],
+            'service_provider_id': spot_search_data[6]
         }
         list_of_data.append(copy.deepcopy(data))
 

@@ -10,17 +10,23 @@ from database.rails_db import get_user
 
 def create_air_freight_rate_jobs(request, source):
     updated_ids = []
+
     request = jsonable_encoder(request)
     for data in request:
         params = {
             'origin_airport_id' : data.get('origin_airport_id'),
             'destination_airport_id' : data.get('destination_airport_id'),
-            'airline_id' : data.get('selected_airline_id'),
-            'service_provider_id' : data.get('selected_service_provider_id'),
+            'airline_id' : data.get('airline_id'),
+            'service_provider_id' : data.get('service_provider_id'),
             'commodity' : data.get('commodity'),
             'source' : source,
             'rate_type' : data.get('rate_type'),
-            'rate_id' : data.get('rate_id')
+            'rate_id' : data.get('rate_id'),
+            'origin_airport': data.get('origin_airport'),
+            'destination_airport': data.get('destination_airport'),
+            'length': data.get('length'),
+            'breadth': data.get('breadth'),
+            'height': data.get('height')
         }
 
         conditions = [getattr(AirFreightRateJobs, key) == value for key, value in params.items() if value is not None]
