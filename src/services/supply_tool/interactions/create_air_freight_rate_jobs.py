@@ -1,91 +1,53 @@
-from database.rails_db import get_most_searched_predicted_rates_for_fcl_freight_services
-from micro_services.client import partner,maps
-import copy
 from datetime import datetime, timedelta
 from services.supply_tool.models.air_freight_rate_jobs import AirFreightRateJobs
 from services.supply_tool.models.air_freight_rate_jobs_mapping import AirFreightRateJobsMapping
-from database.rails_db import get_most_searched_predicted_rates_for_fcl_freight_services
-import copy
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from services.supply_tool.helpers.task_distribution_system import task_distribution_system
+from fastapi.encoders import jsonable_encoder
 
-MAX_LIMIT = 1
-PAGE_LIMIT = 50
 
-def create_air_freight_rate_jobs(service='air_freight'):
-    list_of_spot_search_data = build_most_spot_searched_data(service)
-
-    for spot_search in list_of_spot_search_data:
-        row = {
-            'origin_airport_id': spot_search.get('origin_airport_id'),
-            'destination_airport_id': spot_search.get('destination_airport_id'),
-            'commodity': spot_search.get('commodity'),
-            'status':'pending'
+def create_air_freight_rate_jobs(request, source):
+    updated_ids = []
+    request = jsonable_encoder(request)
+    for data in request:
+        params = {
+            'origin_airport_id' : data.get('origin_airport_id'),
+            'destination_airport_id' : data.get('destination_airport_id'),
+            'airline_id' : data.get('selected_airline_id'),
+            'service_provider_id' : data.get('selected_service_provider_id'),
+            'commodity' : data.get('commodity'),
+            'source' : source,
+            'rate_type' : data.get('rate_type'),
+            'rate_id' : data.get('rate_id')
         }
-        
-        if not is_job_existing(row):
-            job = AirFreightRateJobs.create(**row)
-            
-            jobs_mapping = {
-                'job_id': job.id
-            }
 
-            AirFreightRateJobsMapping.create(**jobs_mapping)
-        
-        else:
-            print("Job Already Present")
+        conditions = [getattr(AirFreightRateJobs, key) == value for key, value in params.items() if value is not None]
+        air_freight_rate_job = AirFreightRateJobs.select().where(*conditions).first()
+        if not air_freight_rate_job:
+            air_freight_rate_job = AirFreightRateJobs()
+            for key in list(params.keys()):
+                setattr(air_freight_rate_job, key, params[key])
+        if air_freight_rate_job.status == 'active':
+            continue
 
-def is_job_existing(data):
-    existing_job = AirFreightRateJobs.select().where(
-            AirFreightRateJobs.origin_airport_id == data['origin_airport_id'],
-            AirFreightRateJobs.destination_airport_id == data['destination_airport_id'],
-            AirFreightRateJobs.commodity == data['commodity']
-        ).order_by(AirFreightRateJobs.updated_at.desc()).first()
+        if air_freight_rate_job.status == 'inactive' and air_freight_rate_job.updated_at > datetime.now()-timedelta(days=7):
+            continue
 
-    if not existing_job:
-        return False
+        user_id = task_distribution_system('AIR')
+        air_freight_rate_job.assigned_to_id = user_id
+        air_freight_rate_job.status = 'active'
+        air_freight_rate_job.set_locations()
+        air_freight_rate_job.save()
+        set_jobs_mapping(air_freight_rate_job.id, data)
+        get_multiple_service_objects(air_freight_rate_job)
+        updated_ids.append(air_freight_rate_job.id)
 
-    if existing_job.status == 'active':
-        return True
+    return {"updated_ids": updated_ids}
 
-    elif existing_job.updated_at + timedelta(days=30) > datetime.now():
-        return True
-
-    return False
-
-
-def build_most_spot_searched_data():
-    data = []
-    limit = PAGE_LIMIT
-    for batch in range(MAX_LIMIT):
-        offset = batch*limit
-        query_data = get_most_searched_predicted_rates_for_fcl_freight_services('air_freight',offset,limit)
-        if query_data is None:
-            break
-        data += get_spot_data(query_data)
-
-    return data
-
-def get_spot_data(list_of_spot_search_data):
-    list_of_data = []
-    for spot_search_data in list_of_spot_search_data:
-        data = {
-            'origin_airport_id': spot_search_data[0],
-            'destination_airport_id': spot_search_data[1],
-            'commodity': spot_search_data[2],
-            'row_count': spot_search_data[3],
-            'has_predicted_source': spot_search_data[4]
-        }
-        list_of_data.append(copy.deepcopy(data))
-
-    return list_of_data
-
-def build_most_spot_searched_data(service):
-    data = []
-    limit = PAGE_LIMIT
-    for batch in range(MAX_LIMIT):
-        offset = batch*limit
-        query_data = get_most_searched_predicted_rates_for_fcl_freight_services(service,offset,limit)
-        if query_data is None:
-            break
-        data += get_spot_data(query_data)
-
-    return data
+def set_jobs_mapping(jobs_id, data):
+    audit_id = AirFreightRateJobsMapping.create(
+        source_id=data.get("rate_id"),
+        job_id= jobs_id,
+        source = 'air_freight_rate'
+    )
+    return audit_id
