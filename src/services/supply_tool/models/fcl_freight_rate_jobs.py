@@ -32,8 +32,8 @@ class FclFreightRateJobs(BaseModel):
     source = TextField(null=True, index = True)
     assigned_to_id = UUIDField(index=True, null=True)
     assigned_to = BinaryJSONField(null=True)
-    created_at = DateTimeField(default=datetime.datetime.now)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    created_at = DateTimeField(default=datetime.datetime.now, index=True)
+    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     status = CharField(index=True, null=True)
     closed_by_id = UUIDField(null=True, index=True)
     closed_by = BinaryJSONField(null=True)
@@ -41,7 +41,6 @@ class FclFreightRateJobs(BaseModel):
     port = BinaryJSONField(null=True)
     port_id = UUIDField(null=True) #what logic
     rate_type = TextField(null=True)
-    service_type = TextField(null=True)
     rate_id = UUIDField(null=True)
 
     class Meta:
