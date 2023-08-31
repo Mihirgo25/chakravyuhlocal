@@ -536,7 +536,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             (FclFreightRate.validities.is_null(False))
             & (FclFreightRate.validities != SQL("'[]'"))
             & (FclFreightRate.updated_at >= datetime.strptime("2023-08-01", "%Y-%m-%d"))
-        ).limit(10)
+        )
         
         with urllib.request.urlopen(PERFORMED_BY_MAPPING_URL) as url:
             mappings = json.loads(url.read().decode())
@@ -1782,7 +1782,7 @@ def main():
     print("# active rates from rms to main_statistics")
     populate_from_rates.populate_from_active_rates()
     print('#like dislike count in main_statistics and populate feedback_statistics')
-    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
+    populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
     print("#populate request_fcl_statistics table")
     populate_from_rates.populate_fcl_request_statistics()
     print("#shipment_statistics data population")
