@@ -167,7 +167,6 @@ def find_object(request):
         object=None
     return object
 
-
 def send_stats(request,freight):
     from services.bramhastra.celery import send_air_rate_stats_in_delay
     send_air_rate_stats_in_delay.apply_async(kwargs = {'action':'update','request':request,'freight':freight},queue = 'statistics')

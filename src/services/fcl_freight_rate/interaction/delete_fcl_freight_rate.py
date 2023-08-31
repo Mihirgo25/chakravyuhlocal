@@ -82,7 +82,6 @@ def update_platform_prices_for_other_service_providers(object):
     'shipping_line_id' : object.shipping_line_id, 
     'importer_exporter_id' : object.importer_exporter_id})
     
-
 def send_stats(request,freight):
     from services.bramhastra.celery import send_fcl_rate_stats_in_delay
     send_fcl_rate_stats_in_delay.apply_async(kwargs = {'action':'delete','request':request,'freight':freight},queue = 'statistics')

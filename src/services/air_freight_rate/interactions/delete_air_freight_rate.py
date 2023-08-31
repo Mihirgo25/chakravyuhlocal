@@ -82,7 +82,6 @@ def find_object(request):
         air_freight_rate=None
     return air_freight_rate
 
-
 def send_stats(request, freight):
     from services.bramhastra.celery import send_air_rate_stats_in_delay
 
