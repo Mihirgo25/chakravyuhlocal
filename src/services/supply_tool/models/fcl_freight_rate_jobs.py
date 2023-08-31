@@ -39,10 +39,11 @@ class FclFreightRateJobs(BaseModel):
         closed_by = BinaryJSONField(null=True)
         closing_remarks = TextField(null=True)
         port = BinaryJSONField(null=True)
-        port_id = UUIDField(null=True)
+        port_id = UUIDField(null=True) #what logic
         rate_type = TextField(null=True)
         service_type = TextField(null=True)
         user_id = UUIDField(null=True)
+        rate_id = UUIDField(null=True)
 
         class Meta:
             table_name = 'fcl_freight_rate_jobs'
