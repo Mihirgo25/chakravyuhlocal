@@ -536,7 +536,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             (FclFreightRate.validities.is_null(False))
             & (FclFreightRate.validities != SQL("'[]'"))
             & (FclFreightRate.updated_at >= datetime.strptime("2023-08-01", "%Y-%m-%d"))
-        )
+        ).limit(10)
         
         with urllib.request.urlopen(PERFORMED_BY_MAPPING_URL) as url:
             mappings = json.loads(url.read().decode())
