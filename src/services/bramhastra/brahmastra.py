@@ -23,7 +23,7 @@ from services.bramhastra.enums import (
     BrahmastraTrackStatus,
     BrahmastraTrackModuleTypes,
 )
-from services.bramhastra.models.worker_log import WorkerLog
+from services.chakravyuh.models.worker_log import WorkerLog
 import sentry_sdk
 from services.bramhastra.models.air_freight_rate_statistic import (
     AirFreightRateStatistic,
