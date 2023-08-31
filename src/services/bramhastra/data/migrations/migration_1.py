@@ -1778,6 +1778,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
+    print('hard reset')
+    populate_from_rates.hard_reset()
     print("# active rates from rms to main_statistics")
     populate_from_rates.populate_from_active_rates()
     print('#like dislike count in main_statistics and populate feedback_statistics')
