@@ -6,6 +6,7 @@ from services.bramhastra.database.dictionaries.country_rate_count import (
     CountryRateCount,
 )
 from database.create_tables import Table
+from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 
 
 class Clicks:
@@ -41,6 +42,7 @@ class Clicks:
 if __name__ == "__main__":
     models = [
         FclFreightRateStatistic,
+        AirFreightRateStatistic
     ]
     dictionaries = [CountryRateCount]
 

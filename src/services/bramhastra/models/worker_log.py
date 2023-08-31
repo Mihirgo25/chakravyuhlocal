@@ -12,6 +12,7 @@ class BaseModel(Model):
 class WorkerLog(BaseModel):
     id = BigAutoField()
     status = CharField(default = "started")
+    name = CharField(null = True,index = True)
     module_type = CharField()
     module_name = TextField(index = True)
     last_updated_at = DateTimeField(null = True,index = True)

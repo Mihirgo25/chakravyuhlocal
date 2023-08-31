@@ -26,7 +26,6 @@ from services.bramhastra.enums import (
 )
 from services.bramhastra.models.worker_log import WorkerLog
 import sentry_sdk
-import csv
 
 """
 Info:
@@ -92,6 +91,7 @@ class Brahmastra:
         self, model, status, started_at, last_updated_at=None, ended_at=None
     ):
         params = {
+            "name": "brahmastra",
             "module_name": model._meta.table_name,
             "module_type": BrahmastraTrackModuleTypes.table.value,
             "last_updated_at": last_updated_at,
