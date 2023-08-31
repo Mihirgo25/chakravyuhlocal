@@ -60,7 +60,7 @@ class Rate:
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
-                == get_identifier(row.get("rate_id", "validity_id"))
+                == get_identifier(row.get("rate_id"), row.get("validity_id"))
             )
             .first()
         )
@@ -108,16 +108,11 @@ class Rate:
             if parent := self.get_feedback_details():
                 freight.update(parent)
                 self.increment_keys.add("dislikes_rate_reverted_count")
-                
-        if freight["source"] == FclModes.missing_rate.value:
-            self.increment_keys.add("reverted_rates_count")
 
         for validity in self.freight.validities:
             param = freight.copy()
             param.update(validity.dict(exclude={"line_items"}))
-            param["identifier"] = get_identifier(
-                param["rate_id"], param["validity_id"]
-            )
+            param["identifier"] = get_identifier(param["rate_id"], param["validity_id"])
             param["origin_pricing_zone_map_id"] = self.origin_pricing_zone_map_id
             param[
                 "destination_pricing_zone_map_id"
