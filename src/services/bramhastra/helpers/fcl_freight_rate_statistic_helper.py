@@ -112,9 +112,7 @@ class Rate:
         for validity in self.freight.validities:
             param = freight.copy()
             param.update(validity.dict(exclude={"line_items"}))
-            param["identifier"] = get_identifier(
-                param["rate_id"], param["validity_id"]
-            )
+            param["identifier"] = get_identifier(param["rate_id"], param["validity_id"])
             param["origin_pricing_zone_map_id"] = self.origin_pricing_zone_map_id
             param[
                 "destination_pricing_zone_map_id"
@@ -130,9 +128,6 @@ class Rate:
                         "price": param["price"],
                     }
                 ).get("price", param["price"])
-                
-            if freight["source"] == FclModes.missing_rate.value:
-                param["is_rate_reverted"] = True
 
             self.params.append(param)
 
