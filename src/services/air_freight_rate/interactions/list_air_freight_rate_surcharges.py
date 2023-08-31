@@ -49,7 +49,7 @@ def get_query(sort_by,sort_type, includes):
     if includes:
         if type(includes) != dict:
             includes =json.loads(includes)
-
+            
     requred_fields = list(includes.keys()) if includes else list(AirFreightRateSurcharge._meta.fields.keys())
     fields = [getattr(AirFreightRateSurcharge, key) for key in requred_fields] 
     
