@@ -8,11 +8,11 @@ PAGE_LIMIT = 5
 def fcl_freight_rate_job_scheduler():
     list_of_spot_search_data = build_most_spot_searched_data()
 
-    breakpoint()
+    # breakpoint()
 
-    result = create_fcl_freight_rate_jobs(list_of_spot_search_data)
+    # result = create_fcl_freight_rate_jobs(list_of_spot_search_data)
 
-    return result
+    return list_of_spot_search_data
 
 def build_most_spot_searched_data():
     data = []
