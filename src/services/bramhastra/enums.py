@@ -87,3 +87,4 @@ class BrahmastraTrackStatus(Bramhastra):
     started = "started"
     failed = "failed"
     completed = "completed"
+    empty = "empty"

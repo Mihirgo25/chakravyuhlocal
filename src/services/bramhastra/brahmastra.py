@@ -1,7 +1,7 @@
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
-from services.bramhastra.client import ClickHouse,json_encoder_for_clickhouse
+from services.bramhastra.client import ClickHouse, json_encoder_for_clickhouse
 import peewee
 from configs.env import (
     DATABASE_HOST,
@@ -12,7 +12,6 @@ from configs.env import (
     APP_ENV,
 )
 from datetime import datetime
-from database.db_session import rd
 from playhouse.postgres_ext import ServerSide
 import pandas as pd
 from services.bramhastra.constants import DEFAULT_UUID
@@ -22,7 +21,7 @@ from services.bramhastra.constants import BRAHMASTRA_CSV_FILE_PATH
 from services.bramhastra.enums import ImportTypes, AppEnv, BrahmastraTrackStatus
 from services.bramhastra.models.brahmastra_track import BrahmastraTrack
 import sentry_sdk
-import numpy as np
+import csv
 
 """
 Info:
@@ -75,27 +74,25 @@ class Brahmastra:
                 params[key] = DEFAULT_UUID
             where.append(f"{key} = %({key})s")
 
-        query = (
-            f"SELECT * from brahmastra.{model._meta.table_name} WHERE {' AND '.join(where)}"
+        old_row = self.__clickhouse.execute(
+            f"SELECT * from brahmastra.{model._meta.table_name} WHERE {' AND '.join(where)}",
+            params,
         )
-        
-        self.__clickhouse.execute(query, params)
-            
-        if old_row := self.__clickhouse.execute(query, params)[0]:
-            old_row["sign"] = -1
 
-            return old_row
+        if old_row:
+            old_row[0]["sign"] = -1
+            return old_row[0]
 
     def __create_brahmastra_track(
         self, model, status, started_at, last_updated_at=None, ended_at=None
     ):
         params = {
-                "table_name": model._meta.table_name,
-                "last_updated_at": last_updated_at,
-                "started_at": started_at,
-                "status": status,
-                "ended_at": ended_at,
-            }
+            "table_name": model._meta.table_name,
+            "last_updated_at": last_updated_at,
+            "started_at": started_at,
+            "status": status,
+            "ended_at": ended_at,
+        }
         return BrahmastraTrack.create(**params)
 
     def __build_query_and_insert_to_clickhouse(self, model: peewee.Model):
@@ -123,44 +120,56 @@ class Brahmastra:
             )
 
             try:
-                brahmastra_track.last_updated_at = (
+                query = (
                     model.select(model.updated_at)
-                    .where(model.updated_at >= last_updated_at)
+                    .where(model.updated_at > last_updated_at)
                     .order_by(model.updated_at.desc())
                     .limit(1)
                     .first()
-                    .updated_at
                 )
-                rows = [{k: None for k in columns}]
+
+                if not query:
+                    brahmastra_track.status = BrahmastraTrackStatus.empty.value
+                    brahmastra_track.ended_at = datetime.utcnow()
+                    brahmastra_track.save()
+                    return
+
+                new_last_updated_at = query.updated_at
+
+                rows = []
+                count = 0
                 for row in ServerSide(
                     model.select().where(model.updated_at >= last_updated_at)
                 ):
+                    print(count)
+                    count += 1
                     data = json_encoder_for_clickhouse(
                         {field: getattr(row, field) for field in columns}
                     )
 
                     if old_data := self.__get_clickhouse_row(model, row):
                         data["version"] = old_data["version"] + 1
-                        rows.append(data)
-                        model.update(version=data["version"]).where(
-                            model.id == data.get("id")
-                        ).execute()
+                        row.version = data["version"]
+                        row.save()
+                        rows.append(json_encoder_for_clickhouse(old_data))
 
-                    rows.append(json_encoder_for_clickhouse(old_data))
-                    
-                dataframe = pd.DataFrame(data = rows,columns=columns)
-                
-                file_path = f"BRAHMASTRA_CSV_FILE_PATH_{model._meta.table_name}"
+                    rows.append(data)
 
-                dataframe.to_csv(file_path,index=False,header = False)
-                
+                dataframe = pd.DataFrame(data=rows)
+
+                file_path = BRAHMASTRA_CSV_FILE_PATH
+
+                dataframe.to_csv(file_path, index=False)
+
                 url = upload_media_file(file_path)
-                
-                query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT * FROM s3('{url}','CSVWithNames')"
+
+                query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
                 
                 self.__clickhouse.execute(query)
 
                 status = BrahmastraTrackStatus.completed.value
+                
+                brahmastra_track.last_updated_at = new_last_updated_at
             except Exception as e:
                 print(e)
                 sentry_sdk.capture_exception(e)
@@ -183,16 +192,16 @@ class Brahmastra:
 
     def used_by(self, arjun: bool, on_startup: bool = False) -> None:
         # if APP_ENV == AppEnv.production.value:
-            self.on_startup = on_startup
+        self.on_startup = on_startup
 
-            for model in self.models:
-                self.__build_query_and_insert_to_clickhouse(model)
-                if arjun:
-                    self.__optimize_and_send_data_to_stale_tables(
-                        model, pass_to_stale=False
-                    )
+        for model in self.models:
+            self.__build_query_and_insert_to_clickhouse(model)
+            if arjun:
+                self.__optimize_and_send_data_to_stale_tables(
+                    model, pass_to_stale=False
+                )
 
-                print(f"done with {model._meta.table_name}")
+            print(f"done with {model._meta.table_name}")
 
     def get_last_updated_at(self, model):
         if (
