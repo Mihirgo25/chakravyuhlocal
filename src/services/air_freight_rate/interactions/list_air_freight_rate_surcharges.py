@@ -11,7 +11,7 @@ possible_direct_filters = ['id','origin_airport_id', 'origin_country_id', 'origi
 possible_indirect_filters = ['location_ids']
 
 def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pagination_data_required=True, return_query = False, sort_by='updated_at', sort_type = 'desc', includes= {},require_eligible_lineitems = False):
-    query = get_query(sort_by,sort_type, includes, require_eligible_lineitems)
+    query = get_query(sort_by,sort_type, includes)
 
     if filters:
         if type(filters) != dict:
@@ -45,12 +45,11 @@ def get_eligible_charge_codes(surcharges):
         surcharge['line_items'] = new_line_items
     return surcharges
 
-def get_query(sort_by,sort_type, includes, require_eligible_lineitems):
+def get_query(sort_by,sort_type, includes):
     if includes:
         if type(includes) != dict:
             includes =json.loads(includes)
-    if require_eligible_lineitems and includes:
-        includes['origin_airport_id'] = True
+
     requred_fields = list(includes.keys()) if includes else list(AirFreightRateSurcharge._meta.fields.keys())
     fields = [getattr(AirFreightRateSurcharge, key) for key in requred_fields] 
     
