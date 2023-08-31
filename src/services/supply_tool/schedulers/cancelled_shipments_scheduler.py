@@ -10,7 +10,6 @@ from services.bramhastra.client import ClickHouse
 from services.supply_tool.models.fcl_freight_rate_jobs import FclFreightRateJobs
 from services.supply_tool.helpers.add_service_objects import add_service_objects
 from services.supply_tool.interactions.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
-from services.supply_tool.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
 import time 
 
 def cancelled_shipments_scheduler():

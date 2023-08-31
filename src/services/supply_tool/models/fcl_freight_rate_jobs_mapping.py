@@ -20,6 +20,7 @@ class FclFreightRateJobsMapping(BaseModel):
     source = TextField(index=True, null=True)
     source_id = UUIDField(index=True, null=True)
     job_id = ForeignKeyField(FclFreightRateJobs,to_field="id")
+    performed_by_id = UUIDField(index=True, null=True)
     created_at = DateField(default=datetime.datetime.now)
     updated_at = DateField(default=datetime.datetime.now)
 
