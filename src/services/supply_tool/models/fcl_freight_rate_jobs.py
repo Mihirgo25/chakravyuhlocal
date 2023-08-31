@@ -42,7 +42,7 @@ class FclFreightRateJobs(BaseModel):
         port_id = UUIDField(null=True)
         rate_type = TextField(null=True)
         service_type = TextField(null=True)
-        user_id = UUIDField(null=True)
+        rate_id = UUIDField(null=True)
 
         class Meta:
             table_name = 'fcl_freight_rate_jobs'
