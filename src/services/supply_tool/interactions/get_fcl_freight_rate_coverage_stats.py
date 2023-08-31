@@ -60,8 +60,7 @@ def get_fcl_freight_rate_coverage_stats(filters = {}, page_limit = 10, page = 1,
 
 def get_daily_query(sort_by, sort_type):
   query = FclFreightRateJobs.select().where(
-       (FclFreightRateJobs.created_at > datetime.now()-timedelta(days=1))|
-       (FclFreightRateJobs.status == 'active')
+       (FclFreightRateJobs.created_at > datetime.now()-timedelta(days=1))
     )
   if sort_by:
       query = query.order_by(eval('FclFreightRateJobs.{}.{}()'.format(sort_by,sort_type)))
@@ -120,7 +119,6 @@ def get_weekly_details(query, statistics):
   for days_ago, count in total_tasks_per_day.items():
     backlog_count = backlogs_per_day[days_ago]
     total_backlog += backlog_count
-    print(f"previous_day_{days_ago}: {count} tasks, {backlog_count} backlog tasks")
 
     if count:
       statistics['previous_day_' + str(days_ago)] = round((1 - (backlog_count/count))*100)

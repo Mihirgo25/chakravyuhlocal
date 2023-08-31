@@ -17,6 +17,7 @@ class AirFreightRateJobsMapping(BaseModel):
     source_id = UUIDField(index=True, null=True)
     job_id = ForeignKeyField(AirFreightRateJobs,to_field="id")
     performed_by_id = UUIDField(index=True, null=True)
+    performed_by_type = TextField(index=True, null=True)
     created_at = DateField(default=datetime.datetime.now)
     updated_at = DateField(default=datetime.datetime.now)
 

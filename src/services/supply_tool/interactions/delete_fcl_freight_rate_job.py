@@ -8,7 +8,7 @@ def delete_fcl_freight_rate_job(request):
     update_params = {'status':'inactive'}
     update_params['updated_at'] = datetime.now()
     fcl_freight_rate_job = FclFreightRateJobs.update(update_params).where(FclFreightRateJobs.id == request['id'])
-    set_jobs_mapping(fcl_freight_rate_job.id, request)
+    set_jobs_mapping(request['id'], request)
 
     return {'id' : request['id']}
 
