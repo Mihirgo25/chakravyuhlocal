@@ -29,7 +29,7 @@ class FclFreightRateJobs(BaseModel):
         container_size = CharField(null=True, index=True)
         container_type = CharField(null=True, index=True)
         commodity = CharField(null=True, index=True)
-        sources = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True, index = True)
+        sources = TextField(null=True, index = True)
         assigned_to_id = UUIDField(index=True, null=True)
         assigned_to = BinaryJSONField(null=True)
         created_at = DateTimeField(default=datetime.datetime.now)
