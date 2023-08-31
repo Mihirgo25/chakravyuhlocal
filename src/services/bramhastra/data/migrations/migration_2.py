@@ -850,6 +850,9 @@ def main():
     populate_from_rates = PopulateAirFreightRateStatistics()
     populate_from_rates.populate_from_active_rates()
     populate_from_rates.update_pricing_map_zone_ids()
+    
+    from services.bramhastra.brahmastra import Brahmastra
+    Brahmastra([AirFreightRateStatistic]).used_by(arjun = True,on_startup = True)
 
 
 if __name__ == "__main__":

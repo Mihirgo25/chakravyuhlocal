@@ -374,7 +374,6 @@ class MigrationHelpers:
             newconnection.close()
             return all_result
         except Exception as e:
-            print("Error from railsDb", e)
             return []
 
     def get_shipment_service_fcl_freight_data_for_accuracy(
@@ -1783,26 +1782,29 @@ def main():
     populate_from_rates.populate_from_active_rates()
     print('#like dislike count in main_statistics and populate feedback_statistics')
     populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
-    print("#populate request_fcl_statistics table")
-    populate_from_rates.populate_fcl_request_statistics()
-    print("#shipment_statistics data population")
-    populate_from_rates.populate_shipment_statistics()
-    print("# update accuracy, deviation from shipment_buy_quotation")
-    populate_from_rates.update_accuracy()
     print("# update map_zone_ids for main_statistics and missing_requests")
     populate_from_rates.update_pricing_map_zone_ids()
     print("parent modes")
     populate_from_rates.update_parent_mode()
     print("# update parent_rate_id and validity_id for reverted rates from feedback")
     populate_from_rates.update_parent_rates()
+    
+    from services.bramhastra.brahmastra import Brahmastra
+    Brahmastra([FclFreightRateStatistic]).used_by(arjun = True,on_startup = True)
+    
+    print("LEAVE NOW")
+    
+    print("#populate request_fcl_statistics table")
+    populate_from_rates.populate_fcl_request_statistics()
+    print("#shipment_statistics data population")
+    populate_from_rates.populate_shipment_statistics()
+    print("# update accuracy, deviation from shipment_buy_quotation")
+    populate_from_rates.update_accuracy()
     print(
         "# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count"
     )
     populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
     print("done")
-    
-    from services.bramhastra.brahmastra import Brahmastra
-    Brahmastra().used_by(arjun = True,on_startup = True)
 
 
 if __name__ == "__main__":
