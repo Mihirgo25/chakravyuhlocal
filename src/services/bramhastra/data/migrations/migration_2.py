@@ -406,20 +406,10 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         count = 0
         print(query.count())
         for stat in query:
-            stat.origin_pricing_zone_map_id = zone_ids[str(stat.origin_airport_port_id)]
-            stat.destination_pricing_zone_map_id = zone_ids[str(stat.destination_airport_port_id)]
-            stat.save()
-            count+= 1
-            print(count)
-            
-        print('statistics done, updating request...')
-        count = 0
-        query = AirFreightRateRequestStatistic.select()
-        for stat in query:
-            count +=1
             stat.origin_pricing_zone_map_id = zone_ids.get(str(stat.origin_airport_id))
             stat.destination_pricing_zone_map_id = zone_ids.get(str(stat.destination_airport_id))
             stat.save()
+            count+= 1
             print(count)
 
     def update_air_freight_rate_checkout_count(self):
