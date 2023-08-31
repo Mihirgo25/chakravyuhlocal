@@ -94,7 +94,9 @@ CREATE TABLE brahmastra.air_freight_rate_statistics
     rate_not_available_entry Bool DEFAULT true,
     shipment_cargo_handed_over_at_origin_count UInt16,
     shipment_confirmed_by_importer_exporter_count UInt16 ,
-    rate_deviation_from_cluster_base_rate Float64 DEFAULT 0
+    rate_deviation_from_cluster_base_rate Float64 DEFAULT 0,
+    performed_by_id UUID,
+    performed_by_type FixedString(256)
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,rate_id,validity_id)
@@ -196,6 +198,8 @@ CREATE TABLE brahmastra.air_freight_rate_statistics
     rate_not_available_entry Bool DEFAULT true,
     shipment_cargo_handed_over_at_origin_count UInt16,
     shipment_confirmed_by_importer_exporter_count UInt16 ,
-    rate_deviation_from_cluster_base_rate Float64 DEFAULT 0
+    rate_deviation_from_cluster_base_rate Float64 DEFAULT 0,
+    performed_by_id UUID,
+    performed_by_type FixedString(256)
 )
 ENGINE = File(CSV);
