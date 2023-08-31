@@ -423,3 +423,4 @@ class ApplyRevenueDeskFclFreightStatistics(BaseModel):
     selected_for_booking: FclSelectedForBooking = None
     selected_for_preference: FclSelectedForPreference = None
     action: str = None
+    created_at: datetime = datetime.utcnow()
