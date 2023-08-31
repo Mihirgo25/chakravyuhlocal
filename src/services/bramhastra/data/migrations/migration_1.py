@@ -62,7 +62,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
 from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
     CheckoutFclFreightRateStatistic,
 )
-from services.bramhastra.models.worker_log import WorkerLog
+from services.chakravyuh.models.worker_log import WorkerLog
 from database.create_clicks import Clicks
 from database.rails_db import get_connection
 from playhouse.shortcuts import model_to_dict
