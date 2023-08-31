@@ -23,12 +23,10 @@ def create_fcl_freight_rate_jobs(request):
             'source' : data.get('source'),
             'rate_type' : data.get('rate_type'),
         }
-        if data.get('rate_id'):
-            rate_id = data.get('rate_id')
-        fcl_freight_rate_job = (FclFreightRateJobs.select().where(FclFreightRateJobs.rate_id == rate_id).first())
-
-        if not fcl_freight_rate_job:
-            fcl_freight_rate_job = FclFreightRateJobs(rate_id = rate_id)
+        rate_id = data.get('rate_id')
+        if rate_id:
+            fcl_freight_rate_job = (FclFreightRateJobs.select().where(FclFreightRateJobs.rate_id == rate_id).first())
+        else:
             for key in list(params.keys()):
                 setattr(fcl_freight_rate_job, key, params[key])
             
