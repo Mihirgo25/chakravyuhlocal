@@ -41,7 +41,6 @@ if __name__ == "__main__":
         ShipmentFclFreightRateStatistic,
         CheckoutFclFreightRateStatistic,
         WorkerLog,
-        AirFreightRateStatistic
     ]
 
     Table().create_tables(models)

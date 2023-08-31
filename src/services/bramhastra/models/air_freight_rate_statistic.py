@@ -12,6 +12,7 @@ from peewee import (
 from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField
+from configs.env import DEFAULT_USER_ID
 
 
 class BaseModel(Model):
@@ -116,6 +117,8 @@ class AirFreightRateStatistic(BaseModel):
     shipment_cargo_handed_over_at_origin_count = IntegerField(default=0)
     shipment_confirmed_by_importer_exporter_count = IntegerField(default=0)
     rate_deviation_from_cluster_base_rate = FloatField(default=0)
+    performed_by_id = UUIDField(index = True,default = DEFAULT_USER_ID, null = True)
+    performed_by_type = CharField(default = "agent",null = True)
     
     def save(self, *args, **kwargs):
         self.updated_at = datetime.utcnow()

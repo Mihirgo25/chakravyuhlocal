@@ -21,6 +21,7 @@ import urllib
 import json
 import uuid
 from services.bramhastra.helpers.common_statistic_helper import get_air_freight_identifier
+from playhouse.postgres_ext import ServerSide
 
 BATCH_SIZE = 1000
 AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
@@ -219,8 +220,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         self.cogoback_connection = get_connection()
 
     def populate_from_active_rates(self):
-        query = AirFreightRate.select().where(AirFreightRate.validities.is_null(False) and AirFreightRate.validities != '[]').order_by(AirFreightRate.id)
-        total_count = query.count()
+        query = AirFreightRate.select().where(AirFreightRate.validities.is_null(False) and AirFreightRate.validities != '[]')
         
         REGION_MAPPING = {}
         PERFORMED_BY_MAPPING = {}
@@ -228,47 +228,51 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
             REGION_MAPPING = json.loads(url.read().decode())
         with urllib.request.urlopen(PERFORMED_BY_MAPPING_URL) as url:
             PERFORMED_BY_MAPPING = json.loads(url.read().decode())
+        
+        row_data = []
         count = 0
-        offset = 0
-   
-        while offset < total_count:
-            cur_query = query.offset(offset).limit(BATCH_SIZE)
-            rates = jsonable_encoder(list(cur_query .dicts()))
-            offset+= BATCH_SIZE
-            row_data = []
-            for rate in rates: 
-                for validity in rate['validities']:
-                    for weight_slab in validity.get('weight_slabs'):
-                            count+= 1
-                            if weight_slab['lower_limit'] and weight_slab['upper_limit']: 
+        
+        for rate in ServerSide(query): 
+            rate = jsonable_encoder(model_to_dict(rate))
+            for validity in rate['validities']:
+                for weight_slab in validity.get('weight_slabs'):
+                        if weight_slab['lower_limit'] and weight_slab['upper_limit']: 
 
-                                identifier = self.get_identifier(rate['id'], validity['id'], weight_slab['lower_limit'], weight_slab['upper_limit'])
+                            identifier = self.get_identifier(rate['id'], validity['id'], weight_slab['lower_limit'], weight_slab['upper_limit'])
 
-                                rate_params = {key: value for key, value in rate.items() if key in RATE_PARAMS} 
-                                price = weight_slab.get('tariff_price')
-                                currency = weight_slab.get('currency') or validity.get('currency')
-                                validity_params = self.get_validity_params(validity, price, currency)
-                                row = {
-                                    **rate_params, 
-                                    **validity_params,
-                                    'identifier' : identifier,
-                                    'rate_id' : rate.get('id'),
-                                    "rate_created_at": rate.get('created_at'),
-                                    "rate_updated_at": rate.get('updated_at'),
-                                    "price": price,
-                                    "currency": currency,
-                                    "rate_type": rate.get('rate_type') or DEFAULT_RATE_TYPE,
-                                    "source": rate.get('source') or DEFAULT_MODE,
-                                    "origin_region_id": REGION_MAPPING.get(rate.get('origin_airport_id')),
-                                    "destination_region_id": REGION_MAPPING.get(rate.get('destination_airport_id')),
-                                    "validity_id" : validity.get('id'),
-                                    "lower_limit": weight_slab['lower_limit'],
-                                    "upper_limit": weight_slab['upper_limit'],
-                                    "performed_by_id": PERFORMED_BY_MAPPING.get(rate.get('id'), {}).get('performed_by_id', DEFAULT_USER_ID),
-                                    "performed_by_type": PERFORMED_BY_MAPPING.get(rate.get('id'), {}).get('performed_by_type','agent'),
-                                }
-                                row_data.append(row)
-                                print(count)
+                            rate_params = {key: value for key, value in rate.items() if key in RATE_PARAMS} 
+                            price = weight_slab.get('tariff_price')
+                            currency = weight_slab.get('currency') or validity.get('currency')
+                            validity_params = self.get_validity_params(validity, price, currency)
+                            row = {
+                                **rate_params, 
+                                **validity_params,
+                                'identifier' : identifier,
+                                'rate_id' : rate.get('id'),
+                                "rate_created_at": rate.get('created_at'),
+                                "rate_updated_at": rate.get('updated_at'),
+                                "price": price,
+                                "currency": currency,
+                                "rate_type": rate.get('rate_type') or DEFAULT_RATE_TYPE,
+                                "source": rate.get('source') or DEFAULT_MODE,
+                                "origin_region_id": REGION_MAPPING.get(rate.get('origin_airport_id')),
+                                "destination_region_id": REGION_MAPPING.get(rate.get('destination_airport_id')),
+                                "validity_id" : validity.get('id'),
+                                "lower_limit": weight_slab['lower_limit'],
+                                "upper_limit": weight_slab['upper_limit'],
+                                "performed_by_id": PERFORMED_BY_MAPPING.get(rate.get('id'), {}).get('performed_by_id', DEFAULT_USER_ID),
+                                "performed_by_type": PERFORMED_BY_MAPPING.get(rate.get('id'), {}).get('performed_by_type','agent'),
+                            }
+                            row_data.append(row)
+                            count += 1
+                            print(count)
+                        
+                        if count == 30000:
+                            AirFreightRateStatistic.insert_many(row_data).execute()
+                            print("inserted 30k")
+                            count = 0
+                            row_data = []
+        if row_data:
             AirFreightRateStatistic.insert_many(row_data).execute()
     
     def populate_from_spot_search_rates(self):
