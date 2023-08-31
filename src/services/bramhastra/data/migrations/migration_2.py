@@ -20,6 +20,7 @@ from peewee import *
 import urllib
 import json
 import uuid
+from services.bramhastra.helpers.common_statistic_helper import get_air_freight_identifier
 
 BATCH_SIZE = 1000
 AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
@@ -103,7 +104,7 @@ class MigrationHelpers:
         return freight
     
     def get_identifier(self,rate_id, validity_id, lower_limit, upper_limit):
-        return f'{rate_id}{validity_id}{lower_limit}{upper_limit}'.replace('-','')
+        return get_air_freight_identifier(rate_id, validity_id, lower_limit, upper_limit)
 
     def get_validity_params(self, validity, price, currency=STANDARD_CURRENCY):
         line_items = validity.get('line_items')
