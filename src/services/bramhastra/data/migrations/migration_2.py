@@ -12,6 +12,7 @@ from services.bramhastra.models.shipment_air_freight_rate_statistic import Shipm
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
 from services.bramhastra.constants import STANDARD_WEIGHT_SLABS
+from configs.env import  DEFAULT_USER_ID
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import common
 from playhouse.shortcuts import model_to_dict
@@ -24,6 +25,7 @@ import uuid
 BATCH_SIZE = 1000
 AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
 REGION_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json'
+PERFORMED_BY_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/3f0ec47a72bc72da5fb3b8171a9079cf/output1.json' # 2023-08-01 < updated_at < 2023-08-32 14:15:00
 STANDARD_CURRENCY = 'USD'
 RATE_PARAMS = [
     "origin_airport_id",
@@ -221,8 +223,11 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         total_count = query.count()
         
         REGION_MAPPING = {}
+        PERFORMED_BY_MAPPING = {}
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
             REGION_MAPPING = json.loads(url.read().decode())
+        with urllib.request.urlopen(PERFORMED_BY_MAPPING_URL) as url:
+            PERFORMED_BY_MAPPING = json.loads(url.read().decode())
         count = 0
         offset = 0
    
@@ -258,7 +263,9 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                                     "destination_region_id": REGION_MAPPING.get(rate.get('destination_airport_id')),
                                     "validity_id" : validity.get('id'),
                                     "lower_limit": weight_slab['lower_limit'],
-                                    "upper_limit": weight_slab['upper_limit']
+                                    "upper_limit": weight_slab['upper_limit'],
+                                    "performed_by_id": PERFORMED_BY_MAPPING.get(rate.get('id'), {}).get('performed_by_id', DEFAULT_USER_ID),
+                                    "performed_by_type": PERFORMED_BY_MAPPING.get(rate.get('id'), {}).get('performed_by_type','agent'),
                                 }
                                 row_data.append(row)
                                 print(count)
