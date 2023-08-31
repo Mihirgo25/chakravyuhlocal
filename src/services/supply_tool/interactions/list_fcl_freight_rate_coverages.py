@@ -47,5 +47,11 @@ def apply_updated_at_filter(query, filters):
   query = query.where(FclFreightRateJobs.updated_at > filters['updated_at'])
   return query
 
+
 def apply_date_range_filter(query, filters):
-   return query
+    start_date = filters['date_range']['startDate']
+    end_date = filters['date_range']['endDate']
+    query = query.where(
+        FclFreightRateJobs.updated_at.between(start_date, end_date)
+    )
+    return query
