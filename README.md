@@ -6,7 +6,7 @@
 
 To manually create a virtualenv on MacOS and Linux: 
 
-```
+``` 
 $ python3 -m venv .venv
 ```
 

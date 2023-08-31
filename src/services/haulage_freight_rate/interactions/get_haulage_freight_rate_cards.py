@@ -102,7 +102,7 @@ def initialize_query(requirements, query):
         freight_query = freight_query.where(
             HaulageFreightRate.destination_location_id << destination_location_ids
         )
-    if requirements.get("shipping_line_id"):
+    if requirements.get("transport_mode") != 'trailer' and requirements.get("shipping_line_id"):
         freight_query = freight_query.where(
             HaulageFreightRate.shipping_line_id == requirements.get("shipping_line_id")
         )
@@ -115,8 +115,8 @@ def initialize_query(requirements, query):
             == requirements.get("transport_mode")
         )
     freight_query = freight_query.where(
-        HaulageFreightRate.validity_start <= datetime.now()
-        and HaulageFreightRate.validity_end >= datetime.now()
+        HaulageFreightRate.validity_start.cast('date') <= datetime.now().date()
+        and HaulageFreightRate.validity_end.cast('date') >= datetime.now().date()
     )
 
     return freight_query
