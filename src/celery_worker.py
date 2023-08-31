@@ -61,6 +61,10 @@ from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as Fc
 from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreightVyuhSetter
 from playhouse.postgres_ext import ServerSide
 
+# Supply Tools
+
+from services.supply_tool.schedulers.cancelled_shipments_scheduler import cancelled_shipments_scheduler
+
 CELERY_CONFIG = {
     "enable_utc": True,
     "task_serializer": "pickle",
@@ -94,6 +98,8 @@ celery.conf.statistics_queues = [Queue('statistics', Exchange('statistics'), rou
 celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_freight_rate'), routing_key='fcl_freight_rate',
           queue_arguments={'x-max-priority': 2})]
 celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
+          queue_arguments={'x-max-priority': 2})]
+celery.conf.supply_tool = [Queue('low', Exchange('low'), routing_key='low',
           queue_arguments={'x-max-priority': 2})]
 
 celery.conf.update(**CELERY_CONFIG)
@@ -162,6 +168,11 @@ celery.conf.beat_schedule = {
         'task': 'services.bramhastra.celery.fcl_daily_attribute_updater_worker',
         'schedule': crontab(hour=22, minute=30),
         'options': {'queue': 'statistics'}
+    },
+    'supply_tool_cancelled_shipments':{
+        'task': 'celery_worker.cancelled_shipments_in_delay',
+        'schedule':crontab(hour='*/1'),
+        'options': {'queue': 'supply_tool'}
     }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
@@ -866,3 +877,13 @@ def air_freight_airline_factors_in_delay(self):
             pass
         else:
             raise self.retry(exc= exc) 
+        
+@celery.task(bind = True, retry_backoff=True, max_retries=3)
+def cancelled_shipments_in_delay(self):
+    try:
+        cancelled_shipments_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
