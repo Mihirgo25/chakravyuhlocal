@@ -356,22 +356,25 @@ class AirFreight(BaseModel):
     cogo_entity_id: str = None
     sourced_by_id: str = None
     procured_by_id: str = None
+    height: float = 0
+    breadth: float = 0
+    length: float = 0
+    maximum_weight: float = 0
+    currency: str
+    discount_type: str = None
+    importer_exporter_id: str = None
+    rate_not_available_entry: str = None  
     rate_created_at: datetime = Field(alias="created_at")
     rate_updated_at: datetime = Field(alias="updated_at")
 
 
-class CreateAirFreightRateStatistic(BaseModel):
+class AirFreightRateStatistic(BaseModel):
     freight: AirFreight
-
-
-class UpdateAirFreightRateStatistic(BaseModel):
-    pass
 
 
 class ApplyAirFreightRateStatistic(BaseModel):
     action: str
-    create_params: CreateAirFreightRateStatistic = None
-    update_params: UpdateAirFreightRateStatistic = None
+    params: AirFreightRateStatistic = None
 
 
 # Apply Feedback Air Freight Statistics
@@ -420,3 +423,4 @@ class ApplyRevenueDeskFclFreightStatistics(BaseModel):
     selected_for_booking: FclSelectedForBooking = None
     selected_for_preference: FclSelectedForPreference = None
     action: str = None
+    created_at: datetime = datetime.utcnow()

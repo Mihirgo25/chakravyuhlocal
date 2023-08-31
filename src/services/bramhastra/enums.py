@@ -75,6 +75,9 @@ class FclParentMode(Bramhastra):
 class Fcl(Bramhastra):
     default_currency = "USD"
     
+class Air(Bramhastra):
+    default_currency = "USD"
+    
 class ImportTypes(Bramhastra):
     parquet = "parquet"
     csv = "csv"
@@ -88,3 +91,6 @@ class BrahmastraTrackStatus(Bramhastra):
     failed = "failed"
     completed = "completed"
     empty = "empty"
+    
+class BrahmastraTrackModuleTypes(Bramhastra):
+    table = "table"

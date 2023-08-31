@@ -62,7 +62,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
 from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
     CheckoutFclFreightRateStatistic,
 )
-from services.bramhastra.models.brahmastra_track import BrahmastraTrack
+from services.bramhastra.models.worker_log import WorkerLog
 from database.create_clicks import Clicks
 from database.rails_db import get_connection
 from playhouse.shortcuts import model_to_dict
@@ -78,6 +78,7 @@ import uuid
 from playhouse.postgres_ext import ServerSide
 from database.create_tables import Table
 from services.bramhastra.client import ClickHouse
+from services.bramhastra.helpers.common_statistic_helper import get_identifier
 
 BATCH_SIZE = 1000
 REGION_MAPPING_URL = "https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json"
@@ -162,7 +163,7 @@ class MigrationHelpers:
         return freight
 
     def get_identifier(self, rate_id, validity_id):
-        return f"{rate_id}{validity_id}".replace("-", "")
+        return get_identifier(rate_id,validity_id)
 
     def get_validity_params(self, validity):
         price = validity.get("price")
@@ -1750,7 +1751,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             FeedbackFclFreightRateStatistic,
             ShipmentFclFreightRateStatistic,
             CheckoutFclFreightRateStatistic,
-            BrahmastraTrack,
+            WorkerLog,
         ]
 
         Table().create_tables(models)

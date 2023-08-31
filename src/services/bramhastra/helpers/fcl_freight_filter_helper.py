@@ -38,12 +38,14 @@ REQUIRED_FILTERS = {
 
 
 def get_direct_indirect_filters(filters):
+    if filters is None:
+        return
     for k, v in REQUIRED_FILTERS.items():
         if k not in filters:
             filters[k] = v
     where = []
     get_date_range_filter(where)
-    
+
     if filters:
         for key, value in filters.items():
             if key in POSSIBLE_DIRECT_FILTERS and value:
