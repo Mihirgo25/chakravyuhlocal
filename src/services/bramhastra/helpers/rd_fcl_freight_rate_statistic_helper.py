@@ -222,10 +222,11 @@ class RevenueDesk:
         )
 
         if fcl_freight_rate_statistic:
+            fcl_freight_rate_statistic.updated_at = created_at
+            
             self.increment_rd_rate_stats(
                 fcl_freight_rate_statistic, self.original_rate_stats_hash
             )
-            fcl_freight_rate_statistic.updated_at = created_at
 
     def increment_rd_rate_stats(self, row, update_object={}):
         for key in self.increment_keys:
