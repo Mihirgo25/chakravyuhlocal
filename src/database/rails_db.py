@@ -639,6 +639,8 @@ def get_most_searched_predicted_rates_for_fcl_freight_services(service="fcl_frei
                                             container_size,
                                             container_type,
                                             commodity,
+                                            selected_shipping_line_id,
+                                            selected_service_provider_id,
                                             COUNT(*) AS row_count,
                                             bool_or(coalesce(rates->0->>'source', '') = 'predicted') AS has_predicted_source
                                         FROM spot_search_fcl_freight_services
@@ -648,7 +650,9 @@ def get_most_searched_predicted_rates_for_fcl_freight_services(service="fcl_frei
                                             destination_port_id,
                                             container_size,
                                             container_type,
-                                            commodity
+                                            commodity,
+                                            selected_shipping_line_id,
+                                            selected_service_provider_id
                                     ),
                                     GroupedData AS (
                                         SELECT
@@ -657,6 +661,8 @@ def get_most_searched_predicted_rates_for_fcl_freight_services(service="fcl_frei
                                             container_size,
                                             container_type,
                                             commodity,
+                                            selected_shipping_line_id,
+                                            selected_service_provider_id,
                                             row_count,
                                             has_predicted_source
                                         FROM MainData
@@ -668,6 +674,8 @@ def get_most_searched_predicted_rates_for_fcl_freight_services(service="fcl_frei
                             container_size,
                             container_type,
                             commodity,
+                            selected_shipping_line_id,
+                            selected_service_provider_id,
                             row_count,
                             has_predicted_source
                         FROM GroupedData
@@ -681,6 +689,8 @@ def get_most_searched_predicted_rates_for_fcl_freight_services(service="fcl_frei
                                         origin_airport_id,
                                         destination_airport_id,
                                         commodity,
+                                        selected_airline_id,
+                                        selected_service_provider_id,
                                         COUNT(*) AS row_count,
                                         bool_or(coalesce(rates->0->>'source','') = 'predicted') AS has_predicted_source
                                     FROM spot_search_air_freight_services
@@ -688,13 +698,17 @@ def get_most_searched_predicted_rates_for_fcl_freight_services(service="fcl_frei
                                 GROUP BY
                                     origin_airport_id,
                                     destination_airport_id,
-                                    commodity
+                                    commodity,
+                                    selected_airline_id,
+                                    selected_service_provider_id
                                 ),
                                 GroupedData AS (
                                     SELECT
                                     origin_airport_id,
                                     destination_airport_id,
                                     commodity,
+                                    selected_airline_id,
+                                    selected_service_provider_id,
                                     row_count,
                                     has_predicted_source
                                 FROM MainData
@@ -704,6 +718,8 @@ def get_most_searched_predicted_rates_for_fcl_freight_services(service="fcl_frei
                                     origin_airport_id,
                                     destination_airport_id,
                                     commodity,
+                                    selected_airline_id,
+                                    selected_service_provider_id,
                                     row_count,
                                     has_predicted_source
                                 FROM GroupedData
