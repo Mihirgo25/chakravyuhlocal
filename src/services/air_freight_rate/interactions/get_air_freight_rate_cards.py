@@ -476,6 +476,10 @@ def valid_weight_slabs(freight_rates, requirements):
         validities = freight_rate['validities']
         valid_validities = []
         for freight_validity in validities:
+            validity_start = datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date()
+            validity_end = datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date()
+            if validity_start > requirements.get('validity_end').date() or validity_end < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < validity_start or requirements.get('cargo_clearance_date') > validity_end:
+                continue
             weight_slabs = freight_validity['weight_slabs']
             required_slab = None
             for weight_slab in weight_slabs:
