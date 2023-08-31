@@ -8,7 +8,7 @@ from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_m
 from services.supply_tool.helpers.task_distribution_system import task_distribution_system
 
 
-def create_fcl_freight_rate_jobs(request):
+def create_fcl_freight_rate_jobs(request, source):
     updated_ids = []
     for data in request:
         params = {
@@ -21,7 +21,7 @@ def create_fcl_freight_rate_jobs(request):
             'container_size' : data.get('container_size'),
             'container_type' : data.get('container_type'),
             'commodity' : data.get('commodity'),
-            'source' : data.get('source'),
+            'source' : source,
             'rate_type' : data.get('rate_type'),
         }
         rate_id = data.get('rate_id')
