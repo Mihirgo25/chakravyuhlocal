@@ -3,6 +3,7 @@ from services.supply_tool.models.fcl_freight_rate_jobs_mapping import FclFreight
 from datetime import datetime, timedelta
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from services.supply_tool.helpers.task_distribution_system import task_distribution_system
+from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
 
 
@@ -38,6 +39,7 @@ def create_fcl_freight_rate_jobs(request, source):
 
         user_id = task_distribution_system('FCL')
         fcl_freight_rate_job.assigned_to_id = user_id
+        fcl_freight_rate_job.assigned_to = get_user(user_id)
         fcl_freight_rate_job.status = 'active'
         fcl_freight_rate_job.set_locations()
         fcl_freight_rate_job.save()

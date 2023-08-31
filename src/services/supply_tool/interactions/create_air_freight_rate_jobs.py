@@ -4,6 +4,8 @@ from services.supply_tool.models.air_freight_rate_jobs_mapping import AirFreight
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from services.supply_tool.helpers.task_distribution_system import task_distribution_system
 from fastapi.encoders import jsonable_encoder
+from database.rails_db import get_user
+
 
 
 def create_air_freight_rate_jobs(request, source):
@@ -35,6 +37,7 @@ def create_air_freight_rate_jobs(request, source):
 
         user_id = task_distribution_system('AIR')
         air_freight_rate_job.assigned_to_id = user_id
+        air_freight_rate_job.assigned_to = get_user(user_id)
         air_freight_rate_job.status = 'active'
         air_freight_rate_job.set_locations()
         air_freight_rate_job.save()
