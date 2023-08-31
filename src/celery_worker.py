@@ -49,6 +49,7 @@ from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notific
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
 from services.extensions.interactions.create_freight_look_surcharge_rates import create_surcharge_rate_api
 from services.air_freight_rate.estimators.relate_airlines import RelateAirline
+from services.supply_tool.schedulers.spot_search_scheduler import spot_search_scheduler
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -173,6 +174,11 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.cancelled_shipments_in_delay',
         'schedule':crontab(hour='*/1'),
         'options': {'queue': 'supply_tool'}
+    },
+    'supply_tool_spot_search': {
+        'task': 'celery_worker.spot_search_scheduler_delay',
+        'schedule': crontab(minute=00,hour=21),
+        'options': {'queue' : 'fcl_freight_rate'}
     }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
@@ -872,6 +878,17 @@ def air_freight_airline_factors_in_delay(self):
     try:
         relate_ailine = RelateAirline()
         relate_ailine.relate_airlines()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def spot_search_scheduler_delay(self, request):
+    try:
+        return spot_search_scheduler(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

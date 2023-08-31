@@ -9,35 +9,27 @@ from datetime import datetime, timedelta
 from services.bramhastra.client import ClickHouse
 from services.supply_tool.models.fcl_freight_rate_jobs import FclFreightRateJobs
 from services.supply_tool.helpers.add_service_objects import add_service_objects
+from services.supply_tool.interactions.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
+from services.supply_tool.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
 import time 
 
 def cancelled_shipments_scheduler():
-    shipments_data = get_cancelled_shipments()
-
-
-def get_cancelled_shipments():
     clickhouse = ClickHouse()
-
-    services = ['fcl_freight', 'air_freight']
+    services = ['fcl_freight']
     required_columns = {
         'fcl_freight': ['rate_id', 'origin_port_id', 'origin_main_port_id', 'destination_port_id', 'destination_main_port_id',
-                        'shipping_line_id', 'service_provider_id', 'container_size', 'container_type', 'commodity']
+                        'shipping_line_id', 'service_provider_id', 'container_size', 'container_type', 'commodity', 'rate_type'],
+        'air_freight': ['rate_id', 'origin_airport_id','destination_airport_id','commodity', 'airline_id', 'service_provicer_id']
     }
-    
-    filters = {'limit': 100, 'end_date': datetime.today()-timedelta(30)}
+    filters = {'end_date': datetime.today()-timedelta(7)}
+
     for service in services:
-        query = f'''SELECT {required_columns['service']} from brahmastra.{service}_rate_statistics WHERE updated_at >= %(end_date)s LIMIT %(limit)s'''
+        select = ','.join(required_columns[service])
+        query = f'''SELECT {select} from brahmastra.{service}_rate_statistics WHERE updated_at >= %(end_date)s LIMIT 10'''
         results = jsonable_encoder(clickhouse.execute(query,filters))
-        add_service_objects(results)
-        create_jobs(service, results)
+        eval(f"create_{service}_rate_jobs")(results, 'cancelled')
+        print('data added: ',len(results))
 
-def create_jobs(service, results):
-    
-    for result in results:
-        result['source'] = 'cancelled'
-        result['status'] = 'active'
-        result['assigned_to_id'] = ''
-        result['assigned_to'] = ''
 
-        find_jobs = FclFreightRateJobs.select()
+
 
