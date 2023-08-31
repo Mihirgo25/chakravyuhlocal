@@ -912,8 +912,8 @@ def get_fcl_freight_rate_cards(requirements):
         if is_predicted:
             rates_without_cogo_assured = []
             for rate in freight_rates:
-                if not cogo_assured_rates and rate.get('rate_type') == 'cogo_assured':
-                    if not is_rate_missing_locals('origin_local', rate) or not is_rate_missing_locals('destination_local', rate):
+                if rate.get('rate_type') == 'cogo_assured':
+                    if (not cogo_assured_rates) and (not is_rate_missing_locals('origin_local', rate) or not is_rate_missing_locals('destination_local', rate)):
                         cogo_assured_rates.append(rate)
                 else:
                     rates_without_cogo_assured.append(rate)      
