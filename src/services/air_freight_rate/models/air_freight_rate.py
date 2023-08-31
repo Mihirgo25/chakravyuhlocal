@@ -472,20 +472,20 @@ class AirFreightRate(BaseModel):
                 if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
                     validity_object['validity_end'] = validity_start - datetime.timedelta(days=1)
-                    validity_object['action'] = 'updated'
+                    validity_object['action'] = 'update'
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end: 
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
                     validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
-                    validity_object['action'] = 'updated'
+                    validity_object['action'] = 'update'
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
                     old_validity1 = AirFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)})
                     old_validity2 = AirFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)})
-                    old_validity1.action = 'updated'
+                    old_validity1.action = 'update'
                     old_validity2.action = 'create'
                     new_validities.append(old_validity1)
                     new_validities.append(old_validity2)
@@ -520,7 +520,7 @@ class AirFreightRate(BaseModel):
             }
             if validity_id:
                 new_validity_object['id'] = validity_id
-                new_validity_object['action'] = 'updated'
+                new_validity_object['action'] = 'update'
 
             else:
                 new_validity_object['id'] = uuid.uuid1()
