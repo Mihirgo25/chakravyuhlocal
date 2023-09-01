@@ -62,7 +62,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
 from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
     CheckoutFclFreightRateStatistic,
 )
-from services.bramhastra.models.brahmastra_track import BrahmastraTrack
+from services.chakravyuh.models.worker_log import WorkerLog
 from database.create_clicks import Clicks
 from database.rails_db import get_connection
 from playhouse.shortcuts import model_to_dict
@@ -78,6 +78,7 @@ import uuid
 from playhouse.postgres_ext import ServerSide
 from database.create_tables import Table
 from services.bramhastra.client import ClickHouse
+from services.bramhastra.helpers.common_statistic_helper import get_identifier
 
 BATCH_SIZE = 1000
 REGION_MAPPING_URL = "https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json"
@@ -121,6 +122,11 @@ RATE_PARAMS = [
 STANDARD_CURRENCY = "USD"
 
 
+PERFORMED_BY_MAPPING_URL = "https://cogoport-production.sgp1.digitaloceanspaces.com/73f7bad75162a7ed48e36d1fd93d015a/performed_mapping.json"
+
+from configs.env import DEFAULT_USER_ID
+
+
 class MigrationHelpers:
     def get_pricing_map_zone_ids(self, origin_port_id, destination_port_id) -> list:
         query = (
@@ -162,7 +168,7 @@ class MigrationHelpers:
         return freight
 
     def get_identifier(self, rate_id, validity_id):
-        return f"{rate_id}{validity_id}".replace("-", "")
+        return get_identifier(rate_id,validity_id)
 
     def get_validity_params(self, validity):
         price = validity.get("price")
@@ -368,7 +374,6 @@ class MigrationHelpers:
             newconnection.close()
             return all_result
         except Exception as e:
-            print("Error from railsDb", e)
             return []
 
     def get_shipment_service_fcl_freight_data_for_accuracy(
@@ -528,9 +533,20 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
     def populate_from_active_rates(self):
         query = FclFreightRate.select().where(
             (FclFreightRate.validities.is_null(False))
-            & (FclFreightRate.validities != SQL("'[]'"))
-            & (FclFreightRate.updated_at >= datetime.strptime("2023-08-01", "%Y-%m-%d"))
+            & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.last_rate_available_date >= datetime.now())
         )
+        
+        with urllib.request.urlopen(PERFORMED_BY_MAPPING_URL) as url:
+            mappings = json.loads(url.read().decode())
+            print('loaded performed by mapping')
+            
+            PERFORMED_BY_MAPPING = dict()
+            
+            for mapping in mappings:
+                PERFORMED_BY_MAPPING[mapping.get('object_id')] = mapping
+                
+            del mappings
+                
 
         print("formed query")
 
@@ -570,6 +586,9 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     or validity.get("price"),
                     "validity_id": validity.get("id"),
                 }
+                
+                row["performed_by_id"] = PERFORMED_BY_MAPPING.get(getattr(rate,'id'), {}).get('performed_by_id', DEFAULT_USER_ID)
+                row["performed_by_type"] = PERFORMED_BY_MAPPING.get(getattr(rate,'id'), {}).get('performed_by_type','agent')
 
                 row_data.append(row)
                 count += 1
@@ -1737,8 +1756,10 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             db.execute_sql(f"drop table {model._meta.table_name}")
 
         ClickHouse().execute("create database brahmastra")
+        
+        from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 
-        models = [FclFreightRateStatistic]
+        models = [FclFreightRateStatistic,AirFreightRateStatistic]
 
         dictionaries = [CountryRateCount]
 
@@ -1750,7 +1771,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             FeedbackFclFreightRateStatistic,
             ShipmentFclFreightRateStatistic,
             CheckoutFclFreightRateStatistic,
-            BrahmastraTrack,
+            WorkerLog,
         ]
 
         Table().create_tables(models)
@@ -1758,30 +1779,35 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
+    print('hard reset')
+    populate_from_rates.hard_reset()
     print("# active rates from rms to main_statistics")
     populate_from_rates.populate_from_active_rates()
     print('#like dislike count in main_statistics and populate feedback_statistics')
     populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
-    print("#populate request_fcl_statistics table")
-    populate_from_rates.populate_fcl_request_statistics()
-    print("#shipment_statistics data population")
-    populate_from_rates.populate_shipment_statistics()
-    print("# update accuracy, deviation from shipment_buy_quotation")
-    populate_from_rates.update_accuracy()
     print("# update map_zone_ids for main_statistics and missing_requests")
     populate_from_rates.update_pricing_map_zone_ids()
     print("parent modes")
     populate_from_rates.update_parent_mode()
     print("# update parent_rate_id and validity_id for reverted rates from feedback")
     populate_from_rates.update_parent_rates()
+    
+    from services.bramhastra.brahmastra import Brahmastra
+    Brahmastra([FclFreightRateStatistic]).used_by(arjun = True,on_startup = True)
+    
+    print("LEAVE NOW")
+    
+    print("#populate request_fcl_statistics table")
+    populate_from_rates.populate_fcl_request_statistics()
+    print("#shipment_statistics data population")
+    populate_from_rates.populate_shipment_statistics()
+    print("# update accuracy, deviation from shipment_buy_quotation")
+    populate_from_rates.update_accuracy()
     print(
         "# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count"
     )
     populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
     print("done")
-    
-    from services.bramhastra.brahmastra import Brahmastra
-    Brahmastra().used_by(arjun = True,on_startup = True)
 
 
 if __name__ == "__main__":

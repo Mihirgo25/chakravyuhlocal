@@ -81,13 +81,28 @@ CREATE TABLE brahmastra.air_freight_rate_statistics
     rate_deviation_from_booking_on_cluster_base_rate Float32 DEFAULT 0,
     rate_deviation_from_latest_booking Float32 DEFAULT 0,
     average_booking_rate Float64 DEFAULT -1,
-    parent_rate_id UUID
+    parent_rate_id UUID,
+    booking_rate_count UInt16 DEFAULT 0,
+    parent_validity_id UUID,
+    height Float64 DEFAULT 0,
+    breadth Float64 DEFAULT 0,
+    length Float64 DEFAULT 0,
+    maximum_weight Float64 DEFAULT 0,
+    flight_uuid UUID,
+    discount_type FixedString(256),
+    importer_exporter_id UUID,
+    rate_not_available_entry Bool DEFAULT true,
+    shipment_cargo_handed_over_at_origin_count UInt16,
+    shipment_confirmed_by_importer_exporter_count UInt16 ,
+    rate_deviation_from_cluster_base_rate Float64 DEFAULT 0,
+    performed_by_id UUID,
+    performed_by_type FixedString(256)
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,rate_id,validity_id)
 ORDER BY (origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,rate_id,validity_id,rate_deviation_from_booking_rate,updated_at);
 
-CREATE TABLE brahmastra.air_freight_rate_statistics
+CREATE TABLE brahmastra.stale_air_freight_rate_statistics
 (
     id UInt256,
     identifier FixedString(256),
@@ -121,6 +136,8 @@ CREATE TABLE brahmastra.air_freight_rate_statistics
     source FixedString(256),
     likes_count UInt16 DEFAULT 0,
     dislikes_count UInt16 DEFAULT 0,
+    feedback_recieved_count UInt16 DEFAULT 0,
+    dislikes_rate_reverted_count UInt16 DEFAULT 0,
     spot_search_count UInt16 DEFAULT 0,
     buy_quotations_created UInt16 DEFAULT 0,
     sell_quotations_created UInt16 DEFAULT 0,
@@ -154,15 +171,35 @@ CREATE TABLE brahmastra.air_freight_rate_statistics
     shipment_flight_departed_count UInt16 DEFAULT 0,
     shipment_cargo_handed_over_at_destination_count UInt16 DEFAULT 0,
     shipment_is_active_count UInt16 DEFAULT 0,
+    shipment_in_progress_count UInt16 DEFAULT 0,
+    shipment_received_count UInt16 DEFAULT 0,
     created_at DateTime DEFAULT now(),
     updated_at DateTime DEFAULT now(),
     version UInt32 DEFAULT 1,
     sign Int8 DEFAULT 1,
+    revenue_desk_visit_count UInt16 DEFAULT 0,
+    so1_visit_count UInt16 DEFAULT 0,
     status FixedString(10) DEFAULT 'active',
     last_action FixedString(10) DEFAULT 'create',
     rate_deviation_from_booking_rate Float32 DEFAULT 0,
     rate_deviation_from_booking_on_cluster_base_rate Float32 DEFAULT 0,
     rate_deviation_from_latest_booking Float32 DEFAULT 0,
-    average_booking_rate Float64 DEFAULT -1
+    average_booking_rate Float64 DEFAULT -1,
+    parent_rate_id UUID,
+    booking_rate_count UInt16 DEFAULT 0,
+    parent_validity_id UUID,
+    height Float64 DEFAULT 0,
+    breadth Float64 DEFAULT 0,
+    length Float64 DEFAULT 0,
+    maximum_weight Float64 DEFAULT 0,
+    flight_uuid UUID,
+    discount_type FixedString(256),
+    importer_exporter_id UUID,
+    rate_not_available_entry Bool DEFAULT true,
+    shipment_cargo_handed_over_at_origin_count UInt16,
+    shipment_confirmed_by_importer_exporter_count UInt16 ,
+    rate_deviation_from_cluster_base_rate Float64 DEFAULT 0,
+    performed_by_id UUID,
+    performed_by_type FixedString(256)
 )
 ENGINE = File(CSV);

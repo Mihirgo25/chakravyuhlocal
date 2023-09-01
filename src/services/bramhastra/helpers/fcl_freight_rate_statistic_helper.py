@@ -60,7 +60,7 @@ class Rate:
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
-                == get_identifier(row.get("rate_id", "validity_id"))
+                == get_identifier(row.get("rate_id"), row.get("validity_id"))
             )
             .first()
         )
@@ -78,10 +78,8 @@ class Rate:
         for row in self.params:
             if row["last_action"] == ValidityAction.create.value:
                 self.create(row)
-            elif row["last_action"] == ValidityAction.update.value:
+            else:
                 self.update(row)
-            elif row["last_action"] == ValidityAction.unchanged.value:
-                continue
 
     def get_feedback_details(self):
         if row := (
@@ -112,9 +110,7 @@ class Rate:
         for validity in self.freight.validities:
             param = freight.copy()
             param.update(validity.dict(exclude={"line_items"}))
-            param["identifier"] = get_identifier(
-                param["rate_id"], param["validity_id"]
-            )
+            param["identifier"] = get_identifier(param["rate_id"], param["validity_id"])
             param["origin_pricing_zone_map_id"] = self.origin_pricing_zone_map_id
             param[
                 "destination_pricing_zone_map_id"

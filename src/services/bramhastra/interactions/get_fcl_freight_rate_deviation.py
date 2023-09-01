@@ -34,17 +34,22 @@ LOCATION_KEYS = {
     "destination_trade_id",
 }
 
-DEFAULT_SELECT_KEYS = {"origin_port_id", "destination_port_id", "service_provider_id"}
+DEFAULT_SELECT_KEYS = {"service_provider_id"}
 
 
-def get_fcl_freight_deviation(filters, page_limit, page):
+def get_fcl_freight_deviation(filters, page, page_limit):
     clickhouse = ClickHouse()
-
-    grouping = {k for k in POSSIBLE_SELECT_KEYS if k in filters}
+    
+    grouping = set()
+    
+    if filters is not None:
+        for key in POSSIBLE_SELECT_KEYS:
+            if key in filters:
+                grouping.add(key)
 
     if not grouping:
         grouping = DEFAULT_SELECT_KEYS.copy()
-
+        
     subquery = [
         f"WITH AVERAGE AS (SELECT AVG(standard_price) AS average_price,count(validity_id) AS validity_count FROM brahmastra.fcl_freight_rate_statistics"
     ]

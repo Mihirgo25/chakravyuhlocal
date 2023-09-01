@@ -15,13 +15,20 @@ from datetime import datetime
 from playhouse.postgres_ext import ServerSide
 import pandas as pd
 from services.bramhastra.constants import DEFAULT_UUID
-from fastapi.encoders import jsonable_encoder
 from services.rate_sheet.interactions.upload_file import upload_media_file
 from services.bramhastra.constants import BRAHMASTRA_CSV_FILE_PATH
-from services.bramhastra.enums import ImportTypes, AppEnv, BrahmastraTrackStatus
-from services.bramhastra.models.brahmastra_track import BrahmastraTrack
+from services.bramhastra.enums import (
+    ImportTypes,
+    AppEnv,
+    BrahmastraTrackStatus,
+    BrahmastraTrackModuleTypes,
+)
+from services.chakravyuh.models.worker_log import WorkerLog
 import sentry_sdk
-import csv
+from services.bramhastra.models.air_freight_rate_statistic import (
+    AirFreightRateStatistic,
+)
+import os
 
 """
 Info:
@@ -38,7 +45,7 @@ If `arjun` is not the user, old duplicate entries won't be cleared. We recommend
 
 class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
-        self.models = models or [FclFreightRateStatistic]
+        self.models = models or [FclFreightRateStatistic, AirFreightRateStatistic]
         self.__clickhouse = ClickHouse()
         self.on_startup = None
 
@@ -87,13 +94,15 @@ class Brahmastra:
         self, model, status, started_at, last_updated_at=None, ended_at=None
     ):
         params = {
-            "table_name": model._meta.table_name,
+            "name": "brahmastra",
+            "module_name": model._meta.table_name,
+            "module_type": BrahmastraTrackModuleTypes.table.value,
             "last_updated_at": last_updated_at,
             "started_at": started_at,
             "status": status,
             "ended_at": ended_at,
         }
-        return BrahmastraTrack.create(**params)
+        return WorkerLog.create(**params)
 
     def __build_query_and_insert_to_clickhouse(self, model: peewee.Model):
         columns = [field for field in model._meta.fields.keys()]
@@ -162,13 +171,18 @@ class Brahmastra:
                 dataframe.to_csv(file_path, index=False)
 
                 url = upload_media_file(file_path)
+                
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
 
                 query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
-                
+
                 self.__clickhouse.execute(query)
 
                 status = BrahmastraTrackStatus.completed.value
-                
+
                 brahmastra_track.last_updated_at = new_last_updated_at
             except Exception as e:
                 print(e)
@@ -191,27 +205,28 @@ class Brahmastra:
         )
 
     def used_by(self, arjun: bool, on_startup: bool = False) -> None:
-        # if APP_ENV == AppEnv.production.value:
-        self.on_startup = on_startup
+        if APP_ENV == AppEnv.production.value:
+            self.on_startup = on_startup
 
-        for model in self.models:
-            self.__build_query_and_insert_to_clickhouse(model)
-            if arjun:
-                self.__optimize_and_send_data_to_stale_tables(
-                    model, pass_to_stale=False
-                )
+            for model in self.models:
+                self.__build_query_and_insert_to_clickhouse(model)
+                if arjun:
+                    self.__optimize_and_send_data_to_stale_tables(
+                        model, pass_to_stale=False
+                    )
 
-            print(f"done with {model._meta.table_name}")
+                print(f"done with {model._meta.table_name}")
 
     def get_last_updated_at(self, model):
         if (
-            track := BrahmastraTrack.select(BrahmastraTrack.last_updated_at)
+            track := WorkerLog.select(WorkerLog.last_updated_at)
             .where(
-                BrahmastraTrack.last_updated_at != None,
-                BrahmastraTrack.status == BrahmastraTrackStatus.completed.value,
-                BrahmastraTrack.table_name == model._meta.table_name,
+                WorkerLog.last_updated_at != None,
+                WorkerLog.status == BrahmastraTrackStatus.completed.value,
+                WorkerLog.module_name == model._meta.table_name,
+                WorkerLog.module_type == BrahmastraTrackModuleTypes.table.value,
             )
-            .order_by(BrahmastraTrack.ended_at.desc())
+            .order_by(WorkerLog.ended_at.desc())
             .limit(1)
             .first()
         ):

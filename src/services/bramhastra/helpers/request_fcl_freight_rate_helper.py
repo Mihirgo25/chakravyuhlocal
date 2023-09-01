@@ -117,7 +117,7 @@ class Request:
             )
             .first()
         ):
-            for k, v in self.params:
+            for k, v in self.params.items():
                 if k not in self.exclude_keys:
                     setattr(request, k, v)
             request.save()

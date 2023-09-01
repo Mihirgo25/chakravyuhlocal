@@ -2,7 +2,7 @@ from services.bramhastra.helpers.air_freight_rate_statistic_helper import Rate
 from configs.env import APP_ENV
 
 def apply_air_freight_rate_statistic(request):
-    # if APP_ENV == "production":
+    if APP_ENV == "production":
         setting_air_freight_rate_statistic(request.action, request.params)
 
 

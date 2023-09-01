@@ -91,3 +91,6 @@ class BrahmastraTrackStatus(Bramhastra):
     failed = "failed"
     completed = "completed"
     empty = "empty"
+    
+class BrahmastraTrackModuleTypes(Bramhastra):
+    table = "table"

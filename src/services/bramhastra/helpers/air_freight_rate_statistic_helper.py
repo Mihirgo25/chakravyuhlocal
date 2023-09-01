@@ -77,10 +77,8 @@ class Rate:
         for new_row in self.params:
             if new_row["last_action"] == ValidityAction.create.value:
                 self.create(new_row)
-            elif new_row["last_action"] == ValidityAction.update.value:
+            else:
                 self.update(new_row)
-            elif new_row["last_action"] == ValidityAction.unchanged.value:
-                continue
 
     def set_non_existing_location_details(self) -> None:
         self.set_pricing_map_zone_ids(

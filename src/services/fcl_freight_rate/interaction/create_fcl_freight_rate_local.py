@@ -74,15 +74,15 @@ def execute_transaction_code(request):
     }
 
     fcl_freight_local = FclFreightRateLocal.select().where(
-        FclFreightRateLocal.port_id == request.get('port_id'),
-        FclFreightRateLocal.trade_type ==request.get('trade_type'),
-        FclFreightRateLocal.main_port_id == request.get('main_port_id'),
-        FclFreightRateLocal.container_size== request.get('container_size'),
-        FclFreightRateLocal.container_type==request.get('container_type'),
-        FclFreightRateLocal.commodity == request.get('commodity'),
-        FclFreightRateLocal.shipping_line_id==request.get('shipping_line_id'),
-        FclFreightRateLocal.service_provider_id==request.get('service_provider_id'),
-        FclFreightRateLocal.rate_type==request.get('rate_type')).first()
+        FclFreightRateLocal.port_id == row['port_id'],
+        FclFreightRateLocal.trade_type ==row['trade_type'],
+        FclFreightRateLocal.main_port_id == row['main_port_id'],
+        FclFreightRateLocal.container_size== row['container_size'],
+        FclFreightRateLocal.container_type==row['container_type'],
+        FclFreightRateLocal.commodity == row['commodity'],
+        FclFreightRateLocal.shipping_line_id==row['shipping_line_id'],
+        FclFreightRateLocal.service_provider_id==row['service_provider_id'],
+        FclFreightRateLocal.rate_type==row['rate_type']).first()
 
     if not fcl_freight_local:
         fcl_freight_local = FclFreightRateLocal(**row)
