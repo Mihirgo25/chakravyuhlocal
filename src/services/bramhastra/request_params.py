@@ -329,10 +329,10 @@ class AirValidities(BaseModel):
 
 class AirFreight(BaseModel):
     rate_id: str = Field(alias="id")
-    airline_id: str
-    commodity: str
-    commodity_type: str
-    commodity_sub_type: str
+    airline_id: str = None
+    commodity: str = None
+    commodity_type: str = None
+    commodity_sub_type: str = None
     destination_airport_id: str = None
     destination_continent_id: str = None
     destination_country_id: str = None
@@ -345,13 +345,13 @@ class AirFreight(BaseModel):
     origin_local_id: str = None
     origin_trade_id: str = None
     price_type: str = None
-    rate_type: str
+    rate_type: str = None
     service_provider_id: str
     shipment_type: str = None
     stacking_type: str = None
     surcharge_id: str = None
     validities: list[AirValidities]
-    source: str
+    source: str = None
     accuracy: float
     cogo_entity_id: str = None
     sourced_by_id: str = None
