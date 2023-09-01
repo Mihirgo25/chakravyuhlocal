@@ -13,7 +13,6 @@ class BaseModel(Model):
 
 class AirFreightRateJobs(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    user_id = UUIDField(null=True)
     origin_airport = BinaryJSONField(null=True)
     origin_airport_id = UUIDField(null=True, index=True)
     destination_airport = BinaryJSONField(null=True)
@@ -62,7 +61,6 @@ class AirFreightRateJobs(BaseModel):
         if str(self.destination_airport_id) == str(location['id']):
           self.destination_airport = self.get_required_location_data(location)
 
-
     def get_required_location_data(self, location):
         loc_data = {
           "id": location["id"],
@@ -76,3 +74,4 @@ class AirFreightRateJobs(BaseModel):
           "trade_id": location["trade_id"],
           "country_code": location["country_code"]
         }
+        return loc_data
