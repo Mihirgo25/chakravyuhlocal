@@ -40,7 +40,7 @@ def main():
 
     execute_air(click)
 
-    print("done")
+    print("completed")
 
 
 def execute_fcl(click):
@@ -79,8 +79,8 @@ def execute_air(click):
     fields = ",".join(columns)
     for source in ["manual", "predicted", "rate_extension", "rate_sheet"]:
         click.execute(
-            f"INSERT INTO brahmastra.{AirFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE source = %()s",
-            {"source": source},
+            f"INSERT INTO brahmastra.{AirFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{AirFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE source = %(source)s",
+            {"source": source}
         )
         print("done with source: ", source)
 
