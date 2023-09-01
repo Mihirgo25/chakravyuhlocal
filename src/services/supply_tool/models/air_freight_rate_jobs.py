@@ -36,6 +36,7 @@ class AirFreightRateJobs(BaseModel):
     closing_remarks = TextField(null=True)
     shipment_type = CharField(null=True)
     stacking_type = CharField(null=True, index=True)
+    rate_type = TextField(null=True)
     rate_id = UUIDField(null=True)
 
     class Meta:

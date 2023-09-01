@@ -48,13 +48,14 @@ def list_air_freight_rate_coverages_api(
     page: int = 1,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
+    generate_csv_url: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_air_freight_rate_coverages(filters, page_limit, page, sort_by, sort_type)
+        data = list_air_freight_rate_coverages(filters, page_limit, page, sort_by, sort_type, generate_csv_url)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise

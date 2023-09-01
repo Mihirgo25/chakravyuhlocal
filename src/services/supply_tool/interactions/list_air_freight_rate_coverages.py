@@ -1,4 +1,5 @@
 from services.supply_tool.models.air_freight_rate_jobs import AirFreightRateJobs
+from services.supply_tool.helpers.csv_link_generator import get_csv_url
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
@@ -7,7 +8,7 @@ from libs.json_encoder import json_encoder
 possible_direct_filters = ['origin_port_id','destination_port_id','shipping_line_id','commodity','status']
 possible_indirect_filters = ['updated_at', 'user_id', 'date_range']
 
-def list_air_freight_rate_coverages(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc'):
+def list_air_freight_rate_coverages(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', generate_csv_url = False):
     query = get_query(sort_by, sort_type)
     if filters:
         if type(filters) != dict:
@@ -18,8 +19,13 @@ def list_air_freight_rate_coverages(filters = {}, page_limit = 10, page = 1, sor
         
     if page_limit:
        query = query.paginate(page, page_limit)
+  
 
     data = get_data(query)
+    
+    if generate_csv_url:
+      csv_url = get_csv_url('air_freight',data)
+      return {'list': data, 'csv_url': csv_url }
 
     return { 'list': data } 
 

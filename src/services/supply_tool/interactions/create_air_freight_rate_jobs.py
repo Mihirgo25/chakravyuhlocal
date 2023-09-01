@@ -22,8 +22,6 @@ def create_air_freight_rate_jobs(request, source):
             'source' : source,
             'rate_type' : data.get('rate_type'),
             'rate_id' : data.get('rate_id'),
-            'origin_airport': data.get('origin_airport'),
-            'destination_airport': data.get('destination_airport'),
             'length': data.get('length'),
             'breadth': data.get('breadth'),
             'height': data.get('height')
