@@ -1,4 +1,4 @@
-from services.supply_tool.models.air_freight_rate_jobs import AirFreightRateJobs
+from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
 import json
 from datetime import datetime, timedelta
 from libs.json_encoder import json_encoder

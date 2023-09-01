@@ -1,6 +1,6 @@
 from database.db_session import db
-from services.supply_tool.models.air_freight_rate_jobs import AirFreightRateJobs
-from services.supply_tool.models.air_freight_rate_jobs_mapping import AirFreightRateJobsMapping
+from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
+from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobsMapping
 from datetime import datetime
 from fastapi import HTTPException
 

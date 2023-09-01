@@ -25,17 +25,19 @@ class AirFreightRateJobs(BaseModel):
     height = IntegerField(null=True)
     length = IntegerField(null=True)
     commodity = CharField(null=True, index=True)
-    created_at = DateTimeField(default=datetime.datetime.now)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    created_at = DateTimeField(default=datetime.datetime.now, index=True)
+    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     status = CharField(index=True, null=True)
-    source = CharField(default = 'manual', null = True, index=True)
+    source = TextField(null=True, index=True)
     assigned_to_id = UUIDField(index=True, null=True)
     assigned_to = BinaryJSONField(null=True)
     closed_by_id = UUIDField(null=True, index=True)
     closed_by = BinaryJSONField(null=True)
-    closing_remarks = TextField(null=True)    
+    closing_remarks = TextField(null=True)
     shipment_type = CharField(null=True)
     stacking_type = CharField(null=True, index=True)
+    rate_type = TextField(null=True)
+    rate_id = UUIDField(null=True)
 
     class Meta:
         table_name = 'air_freight_rate_jobs'
@@ -43,19 +45,34 @@ class AirFreightRateJobs(BaseModel):
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
         return super(AirFreightRateJobs, self).save(*args, **kwargs)
-    
 
-class AirFreightRateJobsMapping(BaseModel):
-    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    source = TextField(index=True, null=True)
-    source_id = UUIDField(index=True, null=True)
-    job_id = UUIDField(null=True, index=True)
-    created_at = DateField(default=datetime.datetime.now)
-    updated_at = DateField(default=datetime.datetime.now)
-    
-    class Meta:
-        table_name = 'air_freight_rate_jobs_mapping'
+    def set_locations(self):
 
-    def save(self, *args, **kwargs):
-        self.updated_at = datetime.datetime.now()
-        return super(AirFreightRateJobsMapping, self).save(*args, **kwargs)
+      ids = [str(self.origin_airport_id), str(self.destination_airport_id)]
+
+      obj = {'filters':{"id": ids, "type":'airport'}}
+      locations_response = maps.list_locations(obj)
+      locations = []
+      if 'list' in locations_response:
+        locations = locations_response["list"]
+
+      for location in locations:
+        if str(self.origin_airport_id) == str(location['id']):
+          self.origin_airport = self.get_required_location_data(location)
+        if str(self.destination_airport_id) == str(location['id']):
+          self.destination_airport = self.get_required_location_data(location)
+
+    def get_required_location_data(self, location):
+        loc_data = {
+          "id": location["id"],
+          "type":location['type'],
+          "name":location['name'],
+          "display_name": location["display_name"],
+          "is_icd": location["is_icd"],
+          "port_code": location["port_code"],
+          "country_id": location["country_id"],
+          "continent_id": location["continent_id"],
+          "trade_id": location["trade_id"],
+          "country_code": location["country_code"]
+        }
+        return loc_data

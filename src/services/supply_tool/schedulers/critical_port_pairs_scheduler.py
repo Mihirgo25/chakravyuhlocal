@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.supply_tool.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
+from services.air_freight_rate.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
 from services.supply_tool.interactions.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
 from configs.fcl_freight_rate_constants import CRITICAL_PORTS_INDIA_VIETNAM, CRITICAL_AIRPORTS_INDIA_VIETNAM
 import datetime

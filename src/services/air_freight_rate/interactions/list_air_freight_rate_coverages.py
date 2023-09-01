@@ -1,4 +1,4 @@
-from services.supply_tool.models.air_freight_rate_jobs import AirFreightRateJobs
+from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
 from services.supply_tool.helpers.csv_link_generator import get_csv_url
 import json
 from libs.get_applicable_filters import get_applicable_filters
