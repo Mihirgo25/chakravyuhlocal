@@ -2,16 +2,16 @@ from database.rails_db import get_connection
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
-from services.bramhastra.models.checkout_air_freight_rate_statistic import CheckoutAirFreightRateStatistic
 from services.bramhastra.models.feedback_air_freight_rate_statistic import FeedbackAirFreightRateStatistic
-from services.bramhastra.models.feedback_air_freight_rate_statistic import SpotSearchAirFreightRateStatistic 
-from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
+from services.bramhastra.models.spot_search_air_freight_rate_statistic import SpotSearchAirFreightRateStatistic 
+from services.air_freight_rate.models.air_freight_location_cluster import AirFreightLocationCluster
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from services.bramhastra.models.air_freight_rate_request_statistics import AirFreightRateRequestStatistic
 from services.bramhastra.models.shipment_air_freight_rate_statistic import ShipmentAirFreightRateStatistic
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
 from services.bramhastra.constants import STANDARD_WEIGHT_SLABS
+from configs.env import  DEFAULT_USER_ID
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import common
 from playhouse.shortcuts import model_to_dict
@@ -20,10 +20,13 @@ from peewee import *
 import urllib
 import json
 import uuid
+from services.bramhastra.helpers.common_statistic_helper import get_air_freight_identifier
+from playhouse.postgres_ext import ServerSide
 
 BATCH_SIZE = 1000
 AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
 REGION_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json'
+PERFORMED_BY_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/3f0ec47a72bc72da5fb3b8171a9079cf/output1.json' # 2023-08-01 < updated_at < 2023-08-32 14:15:00
 STANDARD_CURRENCY = 'USD'
 RATE_PARAMS = [
     "origin_airport_id",
@@ -103,7 +106,7 @@ class MigrationHelpers:
         return freight
     
     def get_identifier(self,rate_id, validity_id, lower_limit, upper_limit):
-        return f'{rate_id}{validity_id}{lower_limit}{upper_limit}'.replace('-','')
+        return get_air_freight_identifier(rate_id, validity_id, lower_limit, upper_limit)
 
     def get_validity_params(self, validity, price, currency=STANDARD_CURRENCY):
         line_items = validity.get('line_items')
@@ -217,51 +220,60 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         self.cogoback_connection = get_connection()
 
     def populate_from_active_rates(self):
-        query = AirFreightRate.select().where(AirFreightRate.validities.is_null(False) and AirFreightRate.validities != '[]').order_by(AirFreightRate.id)
-        total_count = query.count()
+        from datetime import datetime
+        query = AirFreightRate.select().where(AirFreightRate.validities.is_null(False) and AirFreightRate.validities != '[]' and AirFreightRate.last_rate_available_date >= datetime.now())
         
         REGION_MAPPING = {}
+        PERFORMED_BY_MAPPING = {}
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
             REGION_MAPPING = json.loads(url.read().decode())
+        with urllib.request.urlopen(PERFORMED_BY_MAPPING_URL) as url:
+            PERFORMED_BY_MAPPING = json.loads(url.read().decode())
+        
+        row_data = []
         count = 0
-        offset = 0
-   
-        while offset < total_count:
-            cur_query = query.offset(offset).limit(BATCH_SIZE)
-            rates = jsonable_encoder(list(cur_query .dicts()))
-            offset+= BATCH_SIZE
-            row_data = []
-            for rate in rates: 
-                for validity in rate['validities']:
-                    for weight_slab in validity.get('weight_slabs'):
-                            count+= 1
-                            if weight_slab['lower_limit'] and weight_slab['upper_limit']: 
+        
+        for rate in ServerSide(query): 
+            rate = jsonable_encoder(model_to_dict(rate))
+            for validity in rate['validities']:
+                for weight_slab in validity.get('weight_slabs'):
+                        if weight_slab['lower_limit'] and weight_slab['upper_limit']: 
 
-                                identifier = self.get_identifier(rate['id'], validity['id'], weight_slab['lower_limit'], weight_slab['upper_limit'])
+                            identifier = self.get_identifier(rate['id'], validity['id'], weight_slab['lower_limit'], weight_slab['upper_limit'])
 
-                                rate_params = {key: value for key, value in rate.items() if key in RATE_PARAMS} 
-                                price = weight_slab.get('tariff_price')
-                                currency = weight_slab.get('currency') or validity.get('currency')
-                                validity_params = self.get_validity_params(validity, price, currency)
-                                row = {
-                                    **rate_params, 
-                                    **validity_params,
-                                    'identifier' : identifier,
-                                    'rate_id' : rate.get('id'),
-                                    "rate_created_at": rate.get('created_at'),
-                                    "rate_updated_at": rate.get('updated_at'),
-                                    "price": price,
-                                    "currency": currency,
-                                    "rate_type": rate.get('rate_type') or DEFAULT_RATE_TYPE,
-                                    "source": rate.get('source') or DEFAULT_MODE,
-                                    "origin_region_id": REGION_MAPPING.get(rate.get('origin_airport_id')),
-                                    "destination_region_id": REGION_MAPPING.get(rate.get('destination_airport_id')),
-                                    "validity_id" : validity.get('id'),
-                                    "lower_limit": weight_slab['lower_limit'],
-                                    "upper_limit": weight_slab['upper_limit']
-                                }
-                                row_data.append(row)
-                                print(count)
+                            rate_params = {key: value for key, value in rate.items() if key in RATE_PARAMS} 
+                            price = weight_slab.get('tariff_price')
+                            currency = weight_slab.get('currency') or validity.get('currency')
+                            validity_params = self.get_validity_params(validity, price, currency)
+                            row = {
+                                **rate_params, 
+                                **validity_params,
+                                'identifier' : identifier,
+                                'rate_id' : rate.get('id'),
+                                "rate_created_at": rate.get('created_at'),
+                                "rate_updated_at": rate.get('updated_at'),
+                                "price": price,
+                                "currency": currency,
+                                "rate_type": rate.get('rate_type') or DEFAULT_RATE_TYPE,
+                                "source": rate.get('source') or DEFAULT_MODE,
+                                "origin_region_id": REGION_MAPPING.get(rate.get('origin_airport_id')),
+                                "destination_region_id": REGION_MAPPING.get(rate.get('destination_airport_id')),
+                                "validity_id" : validity.get('id'),
+                                "lower_limit": weight_slab['lower_limit'],
+                                "upper_limit": weight_slab['upper_limit'],
+                                "performed_by_id": PERFORMED_BY_MAPPING.get(rate.get('id'), {}).get('performed_by_id', DEFAULT_USER_ID),
+                                "performed_by_type": PERFORMED_BY_MAPPING.get(rate.get('id'), {}).get('performed_by_type','agent'),
+                            }
+                            row_data.append(row)
+                            count += 1
+                            print(count)
+                        
+                        if count == 30000:
+                            AirFreightRateStatistic.insert_many(row_data).execute()
+                            print("inserted 30k")
+                            count = 0
+                            row_data = []
+        if row_data:
             AirFreightRateStatistic.insert_many(row_data).execute()
     
     def populate_from_spot_search_rates(self):
@@ -386,7 +398,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         
     
     def update_pricing_map_zone_ids(self):
-        query  = AirFreightLocationClusters.select(AirFreightLocationClusterMapping.location_id,AirFreightLocationClusters.map_zone_id).join(AirFreightLocationClusterMapping)
+        query  = AirFreightLocationCluster.select(AirFreightLocationClusterMapping.location_id,AirFreightLocationCluster.map_zone_id).join(AirFreightLocationClusterMapping)
         zone_ids = jsonable_encoder(list(query.dicts()))
         zone_ids = {row['location_id']: row['map_zone_id'] for row in zone_ids}
         
@@ -394,20 +406,10 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         count = 0
         print(query.count())
         for stat in query:
-            stat.origin_pricing_zone_map_id = zone_ids[str(stat.origin_airport_port_id)]
-            stat.destination_pricing_zone_map_id = zone_ids[str(stat.destination_airport_port_id)]
-            stat.save()
-            count+= 1
-            print(count)
-            
-        print('statistics done, updating request...')
-        count = 0
-        query = AirFreightRateRequestStatistic.select()
-        for stat in query:
-            count +=1
             stat.origin_pricing_zone_map_id = zone_ids.get(str(stat.origin_airport_id))
             stat.destination_pricing_zone_map_id = zone_ids.get(str(stat.destination_airport_id))
             stat.save()
+            count+= 1
             print(count)
 
     def update_air_freight_rate_checkout_count(self):
@@ -837,18 +839,11 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
             
 def main():
     populate_from_rates = PopulateAirFreightRateStatistics()
-    populate_from_rates.populate_from_active_rates() # active rates from rms to main_statistics
-    #X populate_from_rates.populate_from_feedback() # old rates from data in feedbacks to main_statistics
-    populate_from_rates.populate_from_spot_search_rates() # old rates from spot_search_rates to main_statistics
-    populate_from_rates.update_shipment_stats_in_air_freight_stats() # data from shipment_air_freight_services to main_statistics
-    populate_from_rates.update_air_freight_rate_checkout_count()  # checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs
-    populate_from_rates.populate_air_feedback_freight_rate_statistic() # like dislike count in main_statistics and populate feedback_statistics
-    populate_from_rates.populate_air_request_statistics() # populate request_air_statistics table
-    populate_from_rates.populate_shipment_statistics() # shipment_statistics data population
-    #X populate_from_rates.update_accuracy() # update accuracy, deviation from shipment_buy_quotation
-    #X populate_from_rates.update_air_freight_rate_statistics_spot_search_count() # populate SpotSearchAirFreightRateStatistic table and increase spot_search_count
-    populate_from_rates.update_pricing_map_zone_ids()  # update map_zone_ids for main_statistics and missing_requests
-    pass
+    populate_from_rates.populate_from_active_rates()
+    populate_from_rates.update_pricing_map_zone_ids()
+    
+    from services.bramhastra.brahmastra import Brahmastra
+    Brahmastra([AirFreightRateStatistic]).used_by(arjun = True,on_startup = True)
 
 
 if __name__ == "__main__":

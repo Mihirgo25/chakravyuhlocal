@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.post_fcl_freight_helper import SpotSearch
+from services.bramhastra.helpers.spot_search_fcl_freight_statistic_helper import SpotSearch
 from configs.env import APP_ENV
 
 
