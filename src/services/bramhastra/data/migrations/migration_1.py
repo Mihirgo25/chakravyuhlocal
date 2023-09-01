@@ -1746,6 +1746,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
     def hard_reset(self):
         ClickHouse().execute("drop database if exists brahmastra")
+        from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 
         for model in [
             FclFreightRateRequestStatistic,
@@ -1754,12 +1755,12 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             SpotSearchFclFreightRateStatistic,
             FeedbackFclFreightRateStatistic,
             FclFreightRateStatistic,
+            AirFreightRateStatistic,
+            WorkerLog
         ]:
             db.execute_sql(f"drop table {model._meta.table_name}")
 
         ClickHouse().execute("create database brahmastra")
-        
-        from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 
         models = [FclFreightRateStatistic,AirFreightRateStatistic]
 
@@ -1791,21 +1792,23 @@ def main():
     populate_from_rates.update_pricing_map_zone_ids()
     print("parent modes")
     populate_from_rates.update_parent_mode()
-    print("# update parent_rate_id and validity_id for reverted rates from feedback")
-    populate_from_rates.update_parent_rates()
     
-    print("LEAVE NOW")
+    print('done')
     
-    print("#populate request_fcl_statistics table")
-    populate_from_rates.populate_fcl_request_statistics()
-    print("#shipment_statistics data population")
-    populate_from_rates.populate_shipment_statistics()
-    print("# update accuracy, deviation from shipment_buy_quotation")
-    populate_from_rates.update_accuracy()
-    print(
-        "# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count"
-    )
-    populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
+    
+    # print("# update parent_rate_id and validity_id for reverted rates from feedback")
+    # populate_from_rates.update_parent_rates()
+    
+    # print("#populate request_fcl_statistics table")
+    # populate_from_rates.populate_fcl_request_statistics()
+    # print("#shipment_statistics data population")
+    # populate_from_rates.populate_shipment_statistics()
+    # print("# update accuracy, deviation from shipment_buy_quotation")
+    # populate_from_rates.update_accuracy()
+    # print(
+    #     "# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count"
+    # )
+    # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
     print("done")
 
 
