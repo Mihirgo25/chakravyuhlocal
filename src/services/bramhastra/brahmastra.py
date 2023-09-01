@@ -219,7 +219,6 @@ class Brahmastra:
                 WorkerLog.module_type == BrahmastraTrackModuleTypes.table.value,
             )
             .order_by(WorkerLog.ended_at.desc())
-            .limit(1)
             .first()
         ):
             return track
