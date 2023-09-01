@@ -26,7 +26,6 @@ STATISTICS = {
         }
 
 def get_air_freight_rate_coverage_stats(filters = {}, page_limit = 10, page = 1, sort_by = 'created_at', sort_type = 'desc'):
-    statistics = STATISTICS.copy()
     daily_query = get_daily_query(sort_by, sort_type)
     weekly_query = get_weekly_query(sort_by, sort_type)
 
@@ -41,7 +40,8 @@ def get_air_freight_rate_coverage_stats(filters = {}, page_limit = 10, page = 1,
 
         daily_query = apply_indirect_filters(daily_query, indirect_filters)
         weekly_query = apply_indirect_filters(weekly_query, indirect_filters)
-
+  
+    statistics = STATISTICS.copy()
     statistics = statistics if not daily_query else get_daily_stats_data(daily_query, statistics)
     statistics = statistics if not weekly_query else get_weekly_details(weekly_query, statistics)
     

@@ -38,6 +38,7 @@ class AirFreightRateJobs(BaseModel):
     stacking_type = CharField(null=True, index=True)
     rate_type = TextField(null=True)
     rate_id = UUIDField(null=True)
+    init_key = TextField(index=True, null=True)
 
     class Meta:
         table_name = 'air_freight_rate_jobs'

@@ -22,13 +22,22 @@ def create_air_freight_rate_jobs(request, source):
             'source' : source,
             'rate_type' : data.get('rate_type'),
             'rate_id' : data.get('rate_id'),
-            'length': data.get('length'),
-            'breadth': data.get('breadth'),
-            'height': data.get('height')
+            "commodity_type":data.get("commodity_type"),
+            "commodity_sub_type":data.get("commodity_sub_type"),
+            "stacking_type":data.get("stacking_type"),
+            "shipment_type":data.get("shipment_type"),
+            "operation_type":data.get("operation_type")
         }
+        init_key = f'{str(params.get("origin_airport_id"))}:{str(params["destination_airport_id"] or "")}:{str(params["airline_id"])}:{str(params["service_provider_id"] or "")}:{str(params["commodity"])}:{str(params["source"])}:{str(params["rate_id"])}:{str(params["rate_type"])}:{str(params["commodity_type"] or "")}:{str(params["commodity_sub_type"] or "")}:{str(params["stacking_type"] or ""):{str(params["operation_type"] or "")}}'
+        air_freight_rate_job = AirFreightRateJobs.select().where(init_key = init_key).first()
+        params['init_key'] = init_key
 
-        conditions = [getattr(AirFreightRateJobs, key) == value for key, value in params.items() if value is not None]
-        air_freight_rate_job = AirFreightRateJobs.select().where(*conditions).first()
+        if not air_freight_rate_job:
+            air_freight_rate_job = create_job_object(params)
+        
+        if air_freight_rate_job.status == 'active' or (air_freight_rate_job.status == 'inactive' and air_freight_rate_job.updated_at > (datetime.now()-timedelta(days=7))):
+            continue
+
         if not air_freight_rate_job:
             air_freight_rate_job = AirFreightRateJobs()
             for key in list(params.keys()):
@@ -58,3 +67,8 @@ def set_jobs_mapping(jobs_id, data):
         source = 'air_freight_rate'
     )
     return audit_id
+
+def create_job_object(params):
+    air_freight_rate_job = AirFreightRateJobs()
+    for key in list(params.keys()):
+        setattr(air_freight_rate_job, key, params[key])

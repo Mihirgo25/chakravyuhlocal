@@ -13,9 +13,7 @@ def create_fcl_freight_rate_jobs(request, source):
     for data in request:
         params = {
             'origin_port_id' : data.get('origin_port_id'),
-            'origin_main_port_id' : data.get('origin_main_port_id'),
             'destination_port_id' : data.get('destination_port_id'),
-            'destination_main_port_id' : data.get('destination_main_port_id'),
             'shipping_line_id' : data.get('shipping_line_id'),
             'service_provider_id' : data.get('service_provider_id'),
             'container_size' : data.get('container_size'),
@@ -25,21 +23,18 @@ def create_fcl_freight_rate_jobs(request, source):
             'rate_type' : data.get('rate_type'),
             'rate_id' : data.get('rate_id'),
         }
-        conditions = [getattr(FclFreightRateJobs, key) == value for key, value in params.items() if value is not None]
-        fcl_freight_rate_job = FclFreightRateJobs.select().where(*conditions).first()
+        init_key = f'{str(params.get("origin_port_id"))}:{str(params["destination_port_id"] or "")}:{str(params["shipping_line_id"])}:{str(params["service_provider_id"] or "")}:{str(params["container_size"])}:{str(params["container_type"])}:{str(params["commodity"])}:{str(params["source"])}:{str(params["rate_type"])}:{str(params["rate_id"] or "")}'
+        fcl_freight_rate_job = FclFreightRateJobs.select().where(FclFreightRateJobs.init_key == init_key).first()
+        params['init_key'] = init_key
         if not fcl_freight_rate_job:
-            fcl_freight_rate_job = FclFreightRateJobs()
-            for key in list(params.keys()):
-                setattr(fcl_freight_rate_job, key, params[key])
-        if fcl_freight_rate_job.status == 'active':
-            continue
+            fcl_freight_rate_job = create_job_object(params)
 
-        if fcl_freight_rate_job.status == 'inactive' and fcl_freight_rate_job.updated_at > datetime.now()-timedelta(days=7):
+        if fcl_freight_rate_job.status == 'active' or (fcl_freight_rate_job.status == 'inactive' and fcl_freight_rate_job.updated_at > (datetime.now()-timedelta(days=7))):
             continue
 
         user_id = task_distribution_system('FCL')
         fcl_freight_rate_job.assigned_to_id = user_id
-        fcl_freight_rate_job.assigned_to = get_user(user_id)
+        fcl_freight_rate_job.assigned_to = get_user(user_id)[0]
         fcl_freight_rate_job.status = 'active'
         fcl_freight_rate_job.set_locations()
         fcl_freight_rate_job.save()
@@ -57,5 +52,8 @@ def set_jobs_mapping(jobs_id, data):
     )
     return audit_id
 
-
-    
+def create_job_object(params):
+    fcl_freight_rate_job = FclFreightRateJobs()
+    for key in list(params.keys()):
+        setattr(fcl_freight_rate_job, key, params[key])
+    return fcl_freight_rate_job
