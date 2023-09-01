@@ -66,6 +66,7 @@ from playhouse.postgres_ext import ServerSide
 # Supply Tools
 
 from services.supply_tool.schedulers.cancelled_shipments_scheduler import cancelled_shipments_scheduler
+from services.supply_tool.schedulers.expired_shipments_scheduler import expired_shipments_scheduler
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -100,8 +101,6 @@ celery.conf.statistics_queues = [Queue('statistics', Exchange('statistics'), rou
 celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_freight_rate'), routing_key='fcl_freight_rate',
           queue_arguments={'x-max-priority': 2})]
 celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
-          queue_arguments={'x-max-priority': 2})]
-celery.conf.supply_tool = [Queue('low', Exchange('low'), routing_key='low',
           queue_arguments={'x-max-priority': 2})]
 
 celery.conf.update(**CELERY_CONFIG)
@@ -173,8 +172,13 @@ celery.conf.beat_schedule = {
     },
     'supply_tool_cancelled_shipments':{
         'task': 'celery_worker.cancelled_shipments_in_delay',
-        'schedule':crontab(hour='*/1'),
-        'options': {'queue': 'supply_tool'}
+        'schedule':crontab(hour='*/5'),
+        'options': {'queue': 'fcl_freight_rate'}
+    },
+    'supply_tool_expired_shipments':{
+        'task': 'celery_worker.expired_shipments_in_delay',
+        'schedule':crontab(hour='*/5'),
+        'options': {'queue': 'fcl_freight_rate'}
     },
     'supply_tool_spot_search': {
         'task': 'celery_worker.spot_search_scheduler_delay',
@@ -905,6 +909,26 @@ def spot_search_scheduler_delay(self):
 def cancelled_shipments_in_delay(self):
     try:
         cancelled_shipments_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True, max_retries=3)
+def expired_shipments_in_delay(self):
+    try:
+        expired_shipments_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True, max_retries=3)
+def expired_shipments_in_delay(self):
+    try:
+        expired_shipments_scheduler()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
