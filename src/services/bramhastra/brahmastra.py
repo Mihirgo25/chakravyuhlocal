@@ -28,6 +28,9 @@ import sentry_sdk
 from services.bramhastra.models.air_freight_rate_statistic import (
     AirFreightRateStatistic,
 )
+from services.bramhastra.models.fcl_freight_rate_request_statistics import (
+       FclFreightRateRequestStatistic
+)
 import os
 
 """
@@ -45,7 +48,7 @@ If `arjun` is not the user, old duplicate entries won't be cleared. We recommend
 
 class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
-        self.models = models or [FclFreightRateStatistic, AirFreightRateStatistic]
+        self.models = models or [FclFreightRateStatistic, AirFreightRateStatistic,FclFreightRateRequestStatistic]
         self.__clickhouse = ClickHouse()
         self.on_startup = None
 
