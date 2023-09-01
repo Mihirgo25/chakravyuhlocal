@@ -7,8 +7,8 @@ import pandas as pd
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime, timedelta
 from services.bramhastra.client import ClickHouse
-from services.supply_tool.models.fcl_freight_rate_jobs import FclFreightRateJobs
-from services.supply_tool.interactions.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
+from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJobs
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
 import time 
 
 def cancelled_shipments_scheduler():

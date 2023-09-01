@@ -1,4 +1,4 @@
-from services.supply_tool.models.fcl_freight_rate_jobs import FclFreightRateJobs
+from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJobs
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters

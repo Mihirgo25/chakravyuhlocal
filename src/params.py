@@ -960,3 +960,11 @@ class FclLocationCluster(BaseModel):
     base_port_id: str
     location_ids: List[str]
     map_zone_id: str
+
+class DeleteFclFreightRateJob(BaseModel):
+    id: str = None
+    closing_remarks: list[str] = []
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+
