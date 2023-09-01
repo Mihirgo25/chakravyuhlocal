@@ -122,7 +122,7 @@ class Brahmastra:
             ).id
 
         if model.IMPORT_TYPE == ImportTypes.csv.value:
-            last_updated_at = self.get_last_updated_at(model)
+            track = self.get_track(model)
 
             brahmastra_track = self.__create_brahmastra_track(
                 model, status, datetime.utcnow()
@@ -131,7 +131,7 @@ class Brahmastra:
             try:
                 query = (
                     model.select(model.updated_at)
-                    .where(model.updated_at > last_updated_at)
+                    .where(model.updated_at > track.last_updated_at)
                     .order_by(model.updated_at.desc())
                     .limit(1)
                     .first()
@@ -148,7 +148,7 @@ class Brahmastra:
                 rows = []
                 count = 0
                 for row in ServerSide(
-                    model.select().where(model.updated_at >= last_updated_at)
+                    model.select().where(model.updated_at >= track.last_updated_at)
                 ):
                     print(count)
                     count += 1
@@ -215,12 +215,10 @@ class Brahmastra:
 
                 print(f"done with {model._meta.table_name}")
 
-    def get_last_updated_at(self, model):
+    def get_track(self, model):
         if (
             track := WorkerLog.select(WorkerLog.last_updated_at)
             .where(
-                WorkerLog.last_updated_at != None,
-                WorkerLog.status == BrahmastraTrackStatus.completed.value,
                 WorkerLog.module_name == model._meta.table_name,
                 WorkerLog.module_type == BrahmastraTrackModuleTypes.table.value,
             )
@@ -228,4 +226,4 @@ class Brahmastra:
             .limit(1)
             .first()
         ):
-            return track.last_updated_at
+            return track
