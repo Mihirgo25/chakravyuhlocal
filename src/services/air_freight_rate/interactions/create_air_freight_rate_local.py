@@ -19,7 +19,8 @@ def execute_transaction_code(request):
         'commodity':request.get('commodity'),
         'service_provider_id':request.get('service_provider_id'),
         'commodity_type': request.get('commodity_type'),
-        'rate_type': request.get('rate_type')
+        'rate_type': request.get('rate_type'),
+        'importer_exporter_id':request.get('importer_exporter_id')
     }
 
     air_freight_local=AirFreightRateLocal.select().where(
@@ -29,8 +30,9 @@ def execute_transaction_code(request):
         AirFreightRateLocal.commodity== request.get('commodity'),
         AirFreightRateLocal.commodity_type == request.get('commodity_type'),
         AirFreightRateLocal.rate_type == request.get('rate_type'),
-        AirFreightRateLocal.service_provider_id==request.get('service_provider_id')).first()
-    
+        AirFreightRateLocal.service_provider_id==request.get('service_provider_id'),
+        AirFreightRateLocal.importer_exporter_id == request.get('importer_exporter_id')).first()
+
     if not air_freight_local:
         air_freight_local=AirFreightRateLocal(**row)
         air_freight_local.set_locations()
@@ -48,8 +50,8 @@ def execute_transaction_code(request):
     air_freight_local.procured_by_id = request.get('procured_by_id')
     if 'rate_sheet_validation' not in request:
         air_freight_local.validate()
-    
-    
+
+
     try:
         air_freight_local.save()
     except Exception:
@@ -91,5 +93,5 @@ def create_audit(request,air_freight_local_id):
         data = audit_data,
         object_id = air_freight_local_id,
         object_type = 'AirFreightRateLocal')
-    
+
     return id

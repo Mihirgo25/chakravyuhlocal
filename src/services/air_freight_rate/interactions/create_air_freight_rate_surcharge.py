@@ -20,12 +20,11 @@ def create_audit(request,surcharge_id):
 def create_air_freight_rate_surcharge(request):
     object_type = 'Air_Freight_Rate_Surcharge'
     query="create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
-    db.execute_sql(query)    
+    db.execute_sql(query)
     with db.atomic():
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):
-
     row = {
         'origin_airport_id' : request.get("origin_airport_id"),
         'destination_airport_id' : request.get("destination_airport_id"),
@@ -33,8 +32,10 @@ def execute_transaction_code(request):
         'commodity' : request.get("commodity"),
         'airline_id': request.get("airline_id"),
         'operation_type':request.get('operation_type'),
-        'service_provider_id':request.get('service_provider_id')
+        'service_provider_id':request.get('service_provider_id'),
+        'importer_exporter_id': request.get('importer_exporter_id')
         }
+
     surcharge = AirFreightRateSurcharge.select().where(
         AirFreightRateSurcharge.origin_airport_id == request.get("origin_airport_id"),
         AirFreightRateSurcharge.destination_airport_id == request.get("destination_airport_id"),
@@ -42,15 +43,16 @@ def execute_transaction_code(request):
         AirFreightRateSurcharge.commodity == request.get("commodity"),
         AirFreightRateSurcharge.airline_id == request.get("airline_id"),
         AirFreightRateSurcharge.operation_type == request.get("operation_type"),
-        AirFreightRateSurcharge.service_provider_id == request.get("service_provider_id")).first()
+        AirFreightRateSurcharge.service_provider_id == request.get("service_provider_id"),
+        AirFreightRateSurcharge.importer_exporter_id == request.get("importer_exporter_id")).first()
 
-    
     if not surcharge:
         surcharge = AirFreightRateSurcharge(**row)
         surcharge.line_items=request.get('line_items')
         surcharge.set_locations()
         surcharge.set_destination_location_ids()
         surcharge.set_origin_location_ids()
+
     else:
         old_line_items= surcharge.line_items
         if not old_line_items:
@@ -58,11 +60,10 @@ def execute_transaction_code(request):
         for line_item in request.get('line_items'):
             old_line_items = add_line_item(old_line_items, line_item)
         surcharge.line_items = old_line_items
-    
-    surcharge.update_freight_objects()
 
+    surcharge.update_freight_objects()
     surcharge.update_line_item_messages()
-    
+
     if 'rate_sheet_validation' not in request:
         surcharge.validate()
 
@@ -73,13 +74,13 @@ def execute_transaction_code(request):
         surcharge.save()
     except Exception:
         raise HTTPException(status_code=400, detail="Rate Did Not Save")
-    
+
     create_audit(request,surcharge.id)
     get_multiple_service_objects(surcharge)
     return {
       'id': str(surcharge.id)
     }
-    
+
 def add_line_item(old_line_items, line_item):
     is_new_line_item = True
     for index, old_line_item in enumerate(old_line_items):
