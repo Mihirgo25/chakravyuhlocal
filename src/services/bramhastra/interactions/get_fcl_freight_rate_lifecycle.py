@@ -20,7 +20,6 @@ POSSIBLE_DIRECT_FILTERS = {
     "shipping_line_id",
     "importer_exporter_id",
     "container_size",
-    "container_type",
     "commodity",
     "origin_main_port_id",
     "destination_main_port_id",
@@ -80,7 +79,7 @@ async def get_fcl_freight_rate_lifecycle(filters):
             {
                 "action_type": "booking_confirm",
                 "rates_count": search_to_book_statistics[
-                    "shipment_confirmed_by_importer_exporter"
+                    "bookings_created_count"
                 ],
                 "drop": filter_out_of_range_value(
                     search_to_book_statistics["confirmed_booking_percentage"]
@@ -204,8 +203,8 @@ async def get_search_to_book_and_feedback_statistics(filters, where):
         """SELECT SUM(spot_search_count) as spot_search,
         SUM(checkout_count) as checkout,
         FLOOR((1-SUM(checkout_count)/spot_search),2)*100 AS checkout_percentage,
-        SUM(shipment_confirmed_by_importer_exporter_count) AS shipment_confirmed_by_importer_exporter,
-        FLOOR((1-SUM(shipment_confirmed_by_importer_exporter_count)/checkout),2)*100 AS confirmed_booking_percentage,
+        SUM(bookings_created) AS bookings_created_count,
+        FLOOR((1-SUM(bookings_created)/checkout),2)*100 AS confirmed_booking_percentage,
         SUM(revenue_desk_visit_count) AS revenue_desk_visit,
         FLOOR((1-SUM(revenue_desk_visit_count)/SUM(bookings_created)),2)*100 AS revenue_desk_visit_percentage,
         SUM(so1_visit_count) AS so1_visit,

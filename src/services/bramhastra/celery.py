@@ -39,7 +39,7 @@ def fcl_extended_object_worker_in_delay(self):
             raise self.retry(exc= exc)
         
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
-def send_rate_stats_in_delay(self,action,request,freight):
+def send_fcl_rate_stats_in_delay(self,action,request,freight):
     from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_rate_stats
     try:
         return send_rate_stats(action,request,freight)
@@ -48,6 +48,19 @@ def send_rate_stats_in_delay(self,action,request,freight):
             pass
         else:
             raise self.retry(exc= exc)
+        
+
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def send_air_rate_stats_in_delay(self,action,request,freight):
+    from services.air_freight_rate.helpers.air_freight_rate_statistic_helper import send_rate_stats
+    try:
+        return send_rate_stats(action,request,freight)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
 
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
 def send_feedback_delete_stats_in_delay(self,obj):

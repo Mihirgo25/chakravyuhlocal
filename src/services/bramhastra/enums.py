@@ -5,13 +5,6 @@ class Bramhastra(Enum):
     pass
 
 
-class Table(Bramhastra):
-    fcl_freight_rate_statistics = "fcl_freight_rate_statistics"
-    feedback_fcl_freight_rate_statistics = "feedback_fcl_freight_rate_statistics"
-    air_freight_rate_statistics = "air_freight_rate_statistics"
-    feedback_air_freight_rate_statistics = "feedback_air_freight_rate_statistics"
-
-
 class ValidityAction(Bramhastra):
     create = "create"
     update = "update"
@@ -51,11 +44,6 @@ class RedisKeys(Bramhastra):
         "fcl_freight_rate_all_time_accuracy_chart"
     )
 
-
-class DTString(Bramhastra):
-    rate_monitoring = "rate_monitoring"
-
-
 class ShipmentServices(Bramhastra):
     fcl_freight_service = "fcl_freight_service"
 
@@ -83,3 +71,26 @@ class FclParentMode(Bramhastra):
     rate_extension = "rate_extension"
     predicted = "predicted"
     cluster_extension = "cluster_extension"
+    
+class Fcl(Bramhastra):
+    default_currency = "USD"
+    
+class Air(Bramhastra):
+    default_currency = "USD"
+    
+class ImportTypes(Bramhastra):
+    parquet = "parquet"
+    csv = "csv"
+    postgres = "postgres"
+    
+class AppEnv(Bramhastra):
+    production = "production"
+    
+class BrahmastraTrackStatus(Bramhastra):
+    started = "started"
+    failed = "failed"
+    completed = "completed"
+    empty = "empty"
+    
+class BrahmastraTrackModuleTypes(Bramhastra):
+    table = "table"
