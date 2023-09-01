@@ -3,6 +3,7 @@ from services.fcl_freight_rate.models.cluster_extension_gri_worker import Cluste
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.bramhastra.interactions.list_fcl_freight_rate_statistics import list_fcl_freight_rate_statistics
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
+from micro_services.client import common
 
 MAIN_SHIPPING_LINE_IDS = []
 
@@ -52,15 +53,30 @@ async def get_cluster_extension_gri_worker(request):
                     (FclFreightRate.destination_port_id == destination_port_id)
                 ))  
         
+        price = []
+        currency = []
         rate_ids = []
         shipping_line_ids = []
+        
 
         records = query.execute()
         for record in records:
             rate_ids.append(str(record.id)) 
-            shipping_line_ids.append(record.shipping_line_id)
-        
-
+            shipping_line_ids.append(str(record.shipping_line_id))
+            
+            price = record.validities["price"]
+            currency = record.validities["currency"]
+            
+            if currency != "USD":
+                data = {
+                    "from_currency" : currency,
+                    "to_currency": "USD",
+                    "price": price
+                }
+                
+                price = common.get_money_exchange_for_fcl(data).get('price')
+                
+                
         response = await list_fcl_freight_rate_statistics(get_filters(start_cur, "average_price", rate_ids, shipping_line_ids), 1, 1, False)
         
         overall_gri_avg = 0
@@ -90,7 +106,6 @@ async def get_cluster_extension_gri_worker(request):
             request['origin_port_id']+= 
             request['destination_port_id']+= 
 
-            
             rate_extension_via_bulk_operation(request)
             
                       
