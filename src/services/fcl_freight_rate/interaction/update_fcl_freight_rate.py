@@ -121,7 +121,9 @@ def execute_transaction_code(request):
 
   current_validities = freight_object.validities
   adjust_dynamic_pricing(request, freight_object, current_validities)
-
+  
+  send_stats(request,freight_object)
+  
   return {
     'id': freight_object.id
   }
@@ -155,3 +157,8 @@ def adjust_dynamic_pricing(request, freight: FclFreightRate, current_validities)
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
 
     adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
+    
+  
+def send_stats(request,freight):
+    from services.bramhastra.celery import send_fcl_rate_stats_in_delay
+    send_fcl_rate_stats_in_delay.apply_async(kwargs = {'action':'update','request':request,'freight':freight},queue = 'statistics')

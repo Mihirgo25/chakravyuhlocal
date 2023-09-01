@@ -79,6 +79,19 @@ class Rate:
                 self.create(new_row)
             else:
                 self.update(new_row)
+                
+    def delete_latest_stat(self) -> None:
+        params = dict(is_deleted = True)
+        exc_params = UPDATE_EXCLUDE_ITEMS.copy()
+        exc_params.add("validities")
+        
+        params.update({key: value for key, value in dict(self.freight).items() if key not in exc_params})
+            
+        try:
+            AirFreightRateStatistic.update(**params).where(AirFreightRateStatistic.rate_id == str(self.freight.rate_id)).execute()        
+        except Exception as e:
+            raise e
+            
 
     def set_non_existing_location_details(self) -> None:
         self.set_pricing_map_zone_ids(
