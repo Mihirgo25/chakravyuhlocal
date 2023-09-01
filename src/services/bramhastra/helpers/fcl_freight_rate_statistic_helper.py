@@ -79,7 +79,7 @@ class Rate:
         exc_params = UPDATE_EXCLUDE_ITEMS.copy()
         exc_params.add("validities")
         
-        params.update(self.freight.dicts(exclude = exc_params))
+        params.update({key: value for key, value in dict(self.freight).items() if key not in exc_params})
             
         try:
             FclFreightRateStatistic.update(**params).where(FclFreightRateStatistic.rate_id == str(self.freight.rate_id)).execute()        
