@@ -13,8 +13,10 @@ def create_or_update_worker(request_data):
         'container_size': request_data['container_size'],
         'origin_port_id': request_data['origin_port_id'],
         'destination_port_id': request_data['destination_port_id'],
-        'min_range': request_data['min_range'],
-        'max_range': request_data['max_range'],
+        'min_decrease_percent': request_data['min_decrease_percent'],
+        'max_increase_percent': request_data['max_increase_percent'],
+        'manual_gri':request_data['manual_gri'],
+        'commodity': 'general',
         'status': 'done',
         'performed_by_id': request_data.get('performed_by_id'),
         'performed_by_type': request_data.get('performed_by_type')

@@ -972,7 +972,8 @@ class CreateClusterExtensionGriWorker(BaseModel):
     container_size: str
     origin_port_id: str
     destination_port_id: str
-    min_range: int
-    max_range: int
+    min_decrease_percent: float
+    max_increase_percent: float
+    manual_gri: float=None
 
     
