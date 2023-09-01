@@ -50,7 +50,7 @@ def get_accuracy(filters, where):
         queries.append("AND accuracy != -1")
 
     queries.append(
-        """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day HAVING sum(sign)>0 ORDER BY day,mode;"""
+        """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day ORDER BY day,mode;"""
     )
 
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
