@@ -29,12 +29,11 @@ def create_air_freight_rate_jobs(request, source):
             "operation_type":data.get("operation_type")
         }
         init_key = f'{str(params.get("origin_airport_id"))}:{str(params["destination_airport_id"] or "")}:{str(params["airline_id"])}:{str(params["service_provider_id"] or "")}:{str(params["commodity"])}:{str(params["source"])}:{str(params["rate_id"])}:{str(params["rate_type"])}:{str(params["commodity_type"] or "")}:{str(params["commodity_sub_type"] or "")}:{str(params["stacking_type"] or ""):{str(params["operation_type"] or "")}}'
-        air_freight_rate_job = AirFreightRateJobs.select().where(init_key = init_key).first()
+        air_freight_rate_job = AirFreightRateJobs.select().where(AirFreightRateJobs.init_key == init_key).first()
         params['init_key'] = init_key
 
         if not air_freight_rate_job:
             air_freight_rate_job = create_job_object(params)
-        
         if air_freight_rate_job.status == 'active' or (air_freight_rate_job.status == 'inactive' and air_freight_rate_job.updated_at > (datetime.now()-timedelta(days=7))):
             continue
 
@@ -72,3 +71,4 @@ def create_job_object(params):
     air_freight_rate_job = AirFreightRateJobs()
     for key in list(params.keys()):
         setattr(air_freight_rate_job, key, params[key])
+    return air_freight_rate_job
