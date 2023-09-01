@@ -624,7 +624,7 @@ def get_organization_partner(id):
         sentry_sdk.capture_exception(e)
         return all_result
 
-def get_most_searched_predicted_rates_for_fcl_freight_services(service="fcl_freight",offset = 0,limit = 500):
+def get_most_searched_predicted_rates_for_fcl_freight_services(service="fcl_freight"):
     list_of_most_searched_predicted_rates = None
     try:
         connection = get_connection()
@@ -679,8 +679,6 @@ def get_most_searched_predicted_rates_for_fcl_freight_services(service="fcl_frei
                             row_count,
                             has_predicted_source
                         FROM GroupedData
-                                LIMIT  %s
-                                OFFSET %s
                             """
                 else:
                     sql_query = """
@@ -723,10 +721,8 @@ def get_most_searched_predicted_rates_for_fcl_freight_services(service="fcl_frei
                                     row_count,
                                     has_predicted_source
                                 FROM GroupedData
-                                LIMIT %s
-                                OFFSET %s
                             """
-                cursor.execute(sql_query,(limit,offset))
+                cursor.execute(sql_query)
                 for result in cursor.fetchall():
                     yield result
     except Exception as e:
