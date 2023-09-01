@@ -437,19 +437,26 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, retry_backoff=True,max_retries=1)
+# @celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_freight_rates_to_cogo_assured(self):
     try:
-        from services.fcl_freight_rate.models.worker_time_stamp import WorkerTimeStamp
+        from services.chakravyuh.models.worker_log import WorkerLog
+        from fastapi.encoders import jsonable_encoder
+        row = {
+            'module_name' : 'fcl_freight_rates_to_cogo_assured', 
+            'module_type' : 'function'
+        }
         
-        updation_time = WorkerTimeStamp.select().first()
+        query = WorkerLog.select().where(
+            WorkerLog.module_name == 'fcl_freight_rates_to_cogo_assured', 
+            WorkerLog.module_type == 'function',
+            ).order_by(WorkerLog.ended_at.desc()).limit(1)
         
-        if not updation_time:
+        if not query:
             last_updated_at = datetime.utcnow() - timedelta(hours=24)
-            WorkerTimeStamp.create()
         else:
-            last_updated_at = updation_time.last_updated_at
-            updation_time.save()
+            last_updated_at = jsonable_encoder(list(query.dicts()))[0]['started_at']
+        WorkerLog.create(**row)
 
         query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.updated_at >= last_updated_at, FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE)   
         grouped_set = set()
