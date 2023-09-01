@@ -172,8 +172,6 @@ class Brahmastra:
                     pass
 
                 query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
-                
-                breakpoint()
 
                 self.__clickhouse.execute(query)
 
@@ -201,7 +199,7 @@ class Brahmastra:
         )
 
     def used_by(self, arjun: bool, on_startup: bool = False) -> None:
-        # if APP_ENV == AppEnv.production.value:
+        if APP_ENV == AppEnv.production.value:
             self.on_startup = on_startup
 
             for model in self.models:
