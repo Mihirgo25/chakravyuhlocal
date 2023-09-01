@@ -17,16 +17,12 @@ def list_air_freight_rate_coverages(filters = {}, page_limit = 10, page = 1, sor
         query = get_filters(direct_filters, query, AirFreightRateJobs)
         query = apply_indirect_filters(query, indirect_filters)
         
-    if page_limit:
+    if page_limit and not generate_csv_url:
        query = query.paginate(page, page_limit)
   
 
     data = get_data(query)
     
-    if generate_csv_url:
-      csv_url = get_csv_url('air_freight',data)
-      return {'list': data, 'csv_url': csv_url }
-
     return { 'list': data } 
 
 def get_data(query):
