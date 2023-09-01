@@ -49,7 +49,6 @@ from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notific
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
 from services.extensions.interactions.create_freight_look_surcharge_rates import create_surcharge_rate_api
 from services.air_freight_rate.estimators.relate_airlines import RelateAirline
-# from services.supply_tool.schedulers.spot_search_scheduler import spot_search_scheduler
 from services.envision.schedulers.critical_port_pairs_scheduler import critical_port_pairs_scheduler
 # Rate Producers
 
