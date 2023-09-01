@@ -182,13 +182,13 @@ celery.conf.beat_schedule = {
     },
     'supply_tool_spot_search': {
         'task': 'celery_worker.spot_search_scheduler_delay',
-        'schedule': crontab(minute=22,hour=14),
+        'schedule': crontab(hour='*/5'),
         'options': {'queue' : 'fcl_freight_rate'}
     },
     'smt_critical_port_pairs': {
         'task': 'celery_worker.smt_critical_port_pairs_delay',
-        'schedule': crontab(minute=7,hour=15),
-        'options': {'queue': 'low'}
+        'schedule': crontab(hour='*/5'),
+        'options': {'queue': 'fcl_freight_rate'}
         }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)

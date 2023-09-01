@@ -6,7 +6,7 @@ from configs.fcl_freight_rate_constants import CRITICAL_PORTS_INDIA_VIETNAM, CRI
 import datetime
 from fastapi.encoders import jsonable_encoder
 
-SEVEN_DAYS_AGO = datetime.datetime.now() - datetime.timedelta(days=30)
+SEVEN_DAYS_AGO = datetime.datetime.now() - datetime.timedelta(days=7)
 
 def critical_port_pairs_scheduler():
     services = ['fcl_freight', 'air_freight']
