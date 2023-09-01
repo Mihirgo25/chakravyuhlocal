@@ -12,7 +12,6 @@ from fastapi.responses import JSONResponse
 # from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from database.db_migration import run_migration
 
-from services.supply_tool.supply_tool_router import supply_tool_router
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.nandi.nandi_router import nandi_router
@@ -64,7 +63,6 @@ app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags
 app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'], dependencies=[Depends(get_db)])
 app.include_router(prefix = "/air_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'], dependencies=[Depends(get_db)])
 app.include_router(prefix = "/fcl_freight_rate",router = bramhastra, tags = ['Brahmastra'], dependencies=[Depends(get_db)])
-app.include_router(prefix = "/fcl_freight_rate", router = supply_tool_router, tags=['Supply Tool'], dependencies=[Depends(get_db)])
 
 app.add_middleware(
     CORSMiddleware,
