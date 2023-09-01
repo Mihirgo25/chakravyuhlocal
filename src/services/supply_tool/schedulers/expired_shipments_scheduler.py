@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
-from services.supply_tool.interactions.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
 import datetime
 from fastapi.encoders import jsonable_encoder
 
