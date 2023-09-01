@@ -25,9 +25,7 @@ class WorkerLog(BaseModel):
             (
                 (
                     "module_type",
-                    "module_name",
-                    "last_updated_at",
-                    "status"
+                    "module_name"
                 ),
                 True,
             ),

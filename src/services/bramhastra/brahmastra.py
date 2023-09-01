@@ -122,16 +122,12 @@ class Brahmastra:
             ).id
 
         if model.IMPORT_TYPE == ImportTypes.csv.value:
-            track = self.get_track(model)
-
-            brahmastra_track = self.__create_brahmastra_track(
-                model, status, datetime.utcnow()
-            )
+            brahmastra_track = self.get_track(model)
 
             try:
                 query = (
                     model.select(model.updated_at)
-                    .where(model.updated_at > track.last_updated_at)
+                    .where(model.updated_at > brahmastra_track.last_updated_at)
                     .order_by(model.updated_at.desc())
                     .limit(1)
                     .first()
@@ -148,7 +144,7 @@ class Brahmastra:
                 rows = []
                 count = 0
                 for row in ServerSide(
-                    model.select().where(model.updated_at >= track.last_updated_at)
+                    model.select().where(model.updated_at >= brahmastra_track.last_updated_at)
                 ):
                     print(count)
                     count += 1
@@ -176,6 +172,8 @@ class Brahmastra:
                     pass
 
                 query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
+                
+                breakpoint()
 
                 self.__clickhouse.execute(query)
 
@@ -203,7 +201,7 @@ class Brahmastra:
         )
 
     def used_by(self, arjun: bool, on_startup: bool = False) -> None:
-        if APP_ENV == AppEnv.production.value:
+        # if APP_ENV == AppEnv.production.value:
             self.on_startup = on_startup
 
             for model in self.models:
@@ -217,7 +215,7 @@ class Brahmastra:
 
     def get_track(self, model):
         if (
-            track := WorkerLog.select(WorkerLog.last_updated_at)
+            track := WorkerLog.select()
             .where(
                 WorkerLog.module_name == model._meta.table_name,
                 WorkerLog.module_type == BrahmastraTrackModuleTypes.table.value,
