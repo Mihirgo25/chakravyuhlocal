@@ -25,9 +25,10 @@ STATISTICS = {
             'weekly_backlog_count' : 0
         }
 
-def get_air_freight_rate_coverage_stats(filters = {}, page_limit = 10, page = 1, sort_by = 'created_at', sort_type = 'desc'):
-    daily_query = get_daily_query(sort_by, sort_type)
-    weekly_query = get_weekly_query(sort_by, sort_type)
+def get_air_freight_rate_coverage_stats(filters = {}):
+    statistics = STATISTICS.copy()
+    daily_query = get_daily_query()
+    weekly_query = get_weekly_query()
 
     if filters:
         if type(filters) != dict:
@@ -47,22 +48,27 @@ def get_air_freight_rate_coverage_stats(filters = {}, page_limit = 10, page = 1,
     
     return statistics
 
-def get_daily_query(sort_by, sort_type):
-  query = AirFreightRateJobs.select().where(
-       (AirFreightRateJobs.created_at > datetime.now()-timedelta(days=1))|
-       (AirFreightRateJobs.status == 'active')
-    )
-  if sort_by:
-      query = query.order_by(eval('AirFreightRateJobs.{}.{}()'.format(sort_by,sort_type)))
-  return query
+def get_daily_query():
+    query = AirFreightRateJobs.select(
+         AirFreightRateJobs.id,
+         AirFreightRateJobs.created_at,
+         AirFreightRateJobs.status,
+         AirFreightRateJobs.source
+    ).where(
+             (AirFreightRateJobs.created_at > datetime.now()-timedelta(days=1)) | (AirFreightRateJobs.status == 'active')
+        )
+    return query
 
-def get_weekly_query(sort_by, sort_type):
-  query = AirFreightRateJobs.select().where(
-      AirFreightRateJobs.created_at > datetime.now()-timedelta(days=7)
-    )
-  if sort_by:
-    query = query.order_by(eval('AirFreightRateJobs.{}.{}()'.format(sort_by,sort_type)))
-  return query
+def get_weekly_query():
+    query = AirFreightRateJobs.select(
+         AirFreightRateJobs.id,
+         AirFreightRateJobs.created_at,
+         AirFreightRateJobs.status,
+         AirFreightRateJobs.source
+    ).where(
+            AirFreightRateJobs.created_at > datetime.now()-timedelta(days=7)
+        )
+    return query
 
 def get_daily_stats_data(query,statistics):
     raw_data = json_encoder(list(query.dicts()))

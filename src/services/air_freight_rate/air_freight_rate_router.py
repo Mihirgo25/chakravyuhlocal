@@ -1296,17 +1296,13 @@ def list_rates_sheet_stat(
 @air_freight_router.get("/get_air_freight_rate_coverage_stats")
 def get_air_freight_rate_coverage_stats_api(
     filters: str = None,
-    page_limit: int = 10,
-    page: int = 1,
-    sort_by: str = 'created_at',
-    sort_type: str = 'desc',
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = get_air_freight_rate_coverage_stats(filters, page_limit, page, sort_by, sort_type)
+        data = get_air_freight_rate_coverage_stats(filters)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
