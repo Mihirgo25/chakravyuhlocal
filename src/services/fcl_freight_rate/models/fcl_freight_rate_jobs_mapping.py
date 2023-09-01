@@ -7,7 +7,7 @@ from params import Slab
 from micro_services.client import *
 from database.rails_db import *
 from micro_services.client import maps
-from services.supply_tool.models.fcl_freight_rate_jobs import FclFreightRateJobs
+from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJobs
 
 
 class BaseModel(Model):

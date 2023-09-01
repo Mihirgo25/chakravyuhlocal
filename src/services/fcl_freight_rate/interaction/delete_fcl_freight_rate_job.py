@@ -1,6 +1,6 @@
 from database.db_session import db
-from services.supply_tool.models.fcl_freight_rate_jobs import FclFreightRateJobs
-from services.supply_tool.models.fcl_freight_rate_jobs_mapping import FclFreightRateJobsMapping
+from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJobs
+from services.fcl_freight_rate.models.fcl_freight_rate_jobs_mapping import FclFreightRateJobsMapping
 from datetime import datetime
 from fastapi import HTTPException
 
