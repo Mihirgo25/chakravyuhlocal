@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
 from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobsMapping
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-from services.supply_tool.helpers.task_distribution_system import task_distribution_system
+from services.envision.helpers.task_distribution_system import task_distribution_system
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_user
 

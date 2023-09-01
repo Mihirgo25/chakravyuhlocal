@@ -50,7 +50,7 @@ from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_r
 from services.extensions.interactions.create_freight_look_surcharge_rates import create_surcharge_rate_api
 from services.air_freight_rate.estimators.relate_airlines import RelateAirline
 # from services.supply_tool.schedulers.spot_search_scheduler import spot_search_scheduler
-from services.supply_tool.schedulers.critical_port_pairs_scheduler import critical_port_pairs_scheduler
+from services.envision.schedulers.critical_port_pairs_scheduler import critical_port_pairs_scheduler
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -65,8 +65,8 @@ from playhouse.postgres_ext import ServerSide
 
 # Supply Tools
 
-from services.supply_tool.schedulers.cancelled_shipments_scheduler import cancelled_shipments_scheduler
-from services.supply_tool.schedulers.expired_shipments_scheduler import expired_shipments_scheduler
+from services.envision.schedulers.cancelled_shipments_scheduler import cancelled_shipments_scheduler
+from services.envision.schedulers.expired_shipments_scheduler import expired_shipments_scheduler
 
 CELERY_CONFIG = {
     "enable_utc": True,
