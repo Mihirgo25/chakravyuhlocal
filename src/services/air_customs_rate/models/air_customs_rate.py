@@ -24,6 +24,8 @@ class AirCustomsRate(BaseModel):
     continent_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     commodity = CharField(null=True, index=True)
+    commodity_type = CharField(null=True)
+    commodity_sub_type = CharField(null=True)
     service_provider_id = UUIDField(index=True, default = DEFAULT_SERVICE_PROVIDER_ID)
     importer_exporter_id = UUIDField(null=True)
     line_items = BinaryJSONField(null=True)
@@ -190,9 +192,9 @@ class AirCustomsRate(BaseModel):
         if self.trade_type and self.trade_type not in TRADE_TYPES:
             raise HTTPException(status_code = 400, detail = 'Invalid Trade Type')
         
-    def validate_commodity(self):
-        if self.commodity not in COMMODITIES:
-            raise HTTPException(status_code = 400, detail = 'Invalid Commodity')
+    # def validate_commodity(self):
+    #     if self.commodity not in COMMODITIES:
+    #         raise HTTPException(status_code = 400, detail = 'Invalid Commodity')
     
     def validate_rate_type(self):
         if self.rate_type not in RATE_TYPES:

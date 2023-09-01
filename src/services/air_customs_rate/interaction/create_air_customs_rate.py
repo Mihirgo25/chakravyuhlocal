@@ -19,7 +19,8 @@ def execute_transaction_code(request):
         AirCustomsRate.trade_type ==request.get('trade_type'),
         AirCustomsRate.service_provider_id == request.get('service_provider_id'),
         AirCustomsRate.commodity == request.get('commodity'),
-        AirCustomsRate.rate_type == request.get('rate_type')
+        AirCustomsRate.rate_type == request.get('rate_type'),
+        AirCustomsRate.importer_exporter_id == request.get('importer_exporter_id')
     ).first()
 
   if not air_customs_rate:
@@ -53,7 +54,10 @@ def get_create_object_params(request):
       'trade_type' : request.get('trade_type'),
       'service_provider_id': request.get('service_provider_id'),
       'commodity' : request.get('commodity'),
-      'rate_type' : request.get('rate_type',DEFAULT_RATE_TYPE)
+      'commodity_type' : request.get('commodity_type'),
+      'commodity_sub_type' : request.get('commodity_sub_type'),
+      'rate_type' : request.get('rate_type',DEFAULT_RATE_TYPE),
+      'importer_exporter_id' : request.get('importer_exporter_id')
     }
 
 def create_audit(request, customs_rate_id):

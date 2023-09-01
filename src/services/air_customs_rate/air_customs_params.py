@@ -83,6 +83,8 @@ class CreateAirCustomsRate(BaseModel):
   airport_id: str
   trade_type: str
   commodity: str = None
+  commodity_type: str = None
+  commodity_sub_type: str = None
   service_provider_id: str
   performed_by_id: str = None
   sourced_by_id: str
