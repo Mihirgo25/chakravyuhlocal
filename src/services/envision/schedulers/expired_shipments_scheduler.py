@@ -30,5 +30,5 @@ def expired_shipments_scheduler():
     for item in air_data:
         item['rate_id'] = item.pop('id')
 
-    create_fcl_freight_rate_jobs(fcl_data, 'expiring_rate')
-    create_air_freight_rate_jobs(air_data, 'expiring_rate')
+    create_fcl_freight_rate_jobs(fcl_data, 'expiring_rates')
+    create_air_freight_rate_jobs(air_data, 'expiring_rates')

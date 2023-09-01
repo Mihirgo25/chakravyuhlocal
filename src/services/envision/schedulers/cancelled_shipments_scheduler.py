@@ -26,7 +26,7 @@ def cancelled_shipments_scheduler():
         select = ','.join(required_columns[service])
         query = f'''SELECT {select} from brahmastra.{service}_rate_statistics WHERE updated_at >= %(end_date)s'''
         results = jsonable_encoder(clickhouse.execute(query,filters))
-        eval(f"create_{service}_rate_jobs")(results, 'cancelled_shipment')
+        eval(f"create_{service}_rate_jobs")(results, 'cancelled_shipments')
 
 
 

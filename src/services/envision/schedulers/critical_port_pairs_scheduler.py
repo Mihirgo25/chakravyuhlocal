@@ -39,5 +39,5 @@ def critical_port_pairs_scheduler():
     for item in air_data:
         item['rate_id'] = item.pop('id')
 
-    create_fcl_freight_rate_jobs(fcl_data, 'critical_ports')
-    create_air_freight_rate_jobs(air_data, 'critical_ports')
+    create_fcl_freight_rate_jobs(fcl_data, 'critical_pairs')
+    create_air_freight_rate_jobs(air_data, 'critical_pairs')
