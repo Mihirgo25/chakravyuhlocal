@@ -24,12 +24,12 @@ STATISTICS = {
             'weekly_backlog_count' : 0
         }
 
-def get_fcl_freight_rate_coverage_stats(filters = {}, page_limit = 10, page = 1, sort_by = 'created_at', sort_type = 'desc'):
+def get_fcl_freight_rate_coverage_stats(filters = {}):
         statistics = STATISTICS.copy()
         ## Query to get Daily Stats
-        daily_query = get_daily_query(sort_by, sort_type)
+        daily_query = get_daily_query()
         ## Query to get Weekly Detials
-        weekly_query = get_weekly_query(sort_by, sort_type)
+        weekly_query = get_weekly_query()
 
         if filters:
                 if type(filters) != dict:
@@ -58,21 +58,27 @@ def get_fcl_freight_rate_coverage_stats(filters = {}, page_limit = 10, page = 1,
 # TODAY'S TASKS
 # a. Whatever Jobs created today
 # b. Whatever Jobs that is still active
-def get_daily_query(sort_by, sort_type):
-    query = FclFreightRateJobs.select().where(
+def get_daily_query():
+    query = FclFreightRateJobs.select(
+         FclFreightRateJobs.id,
+         FclFreightRateJobs.created_at,
+         FclFreightRateJobs.status,
+         FclFreightRateJobs.source
+    ).where(
              (FclFreightRateJobs.created_at > datetime.now()-timedelta(days=1)) | (FclFreightRateJobs.status == 'active')
         )
-    if sort_by:
-            query = query.order_by(eval('FclFreightRateJobs.{}.{}()'.format(sort_by,sort_type)))
     return query
 
 # WEEKLY DETAILS : Whatever Jobs created in past 7 days
-def get_weekly_query(sort_by, sort_type):
-    query = FclFreightRateJobs.select().where(
+def get_weekly_query():
+    query = FclFreightRateJobs.select(
+         FclFreightRateJobs.id,
+         FclFreightRateJobs.created_at,
+         FclFreightRateJobs.status,
+         FclFreightRateJobs.source
+    ).where(
             FclFreightRateJobs.created_at > datetime.now()-timedelta(days=7)
         )
-    if sort_by:
-        query = query.order_by(eval('FclFreightRateJobs.{}.{}()'.format(sort_by,sort_type)))
     return query
 
 
