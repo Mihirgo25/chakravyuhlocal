@@ -23,13 +23,13 @@ def critical_port_pairs_scheduler():
                     ((FclFreightRate.origin_port_id << CRITICAL_PORTS_INDIA_VIETNAM) |
                     (FclFreightRate.destination_port_id << CRITICAL_PORTS_INDIA_VIETNAM)),
                     (FclFreightRate.updated_at < SEVEN_DAYS_AGO)
-                ).limit(10)
+                )
         if service == 'air_freight':
             air_query = AirFreightRate.select(*[getattr(AirFreightRate, col) for col in required_columns['air_freight']]).where(
                     ((AirFreightRate.origin_airport_id << CRITICAL_AIRPORTS_INDIA_VIETNAM) |
                     (AirFreightRate.destination_airport_id << CRITICAL_AIRPORTS_INDIA_VIETNAM)),
                     (AirFreightRate.updated_at < SEVEN_DAYS_AGO)
-                ).limit(1)
+                )
     
     fcl_data = jsonable_encoder(list(fcl_query.dicts()))
     air_data = jsonable_encoder(list(air_query.dicts()))
