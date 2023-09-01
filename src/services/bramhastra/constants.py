@@ -1,6 +1,7 @@
 INDIAN_LOCATION_ID = "541d1232-58ce-4d64-83d6-556a42209eb7"
 DEFAULT_START_DATE = "2016-03-01"
 ALL_TIME_ACCURACY_JSON_FILE_PATH = "./all_time_accuracy.json"
+BRAHMASTRA_CSV_FILE_PATH = "./brahmastra.csv"
 
 STANDARD_WEIGHT_SLABS = [
     {
@@ -61,5 +62,22 @@ FCL_MODE_MAPPINGS = {
     "rms_upload": "supply",
     "missing_rate": "supply",
     "spot_negotation": "supply",
-    "cogolens": "predicted"
+    "cogolens": "predicted",
 }
+
+SHIPMENT_RATE_STATS_KEYS = [
+    "rate_deviation_from_latest_booking",
+    "average_booking_rate",
+    "rate_deviation_from_booking_rate",
+    "accuracy",
+]
+
+RATE_DETAIL_KEYS = [
+    "id",
+    "rate_id",
+    "validity_id",
+    "booking_rate_count",
+    "standard_price",
+]
+
+DEFAULT_UUID = "00000000-0000-0000-0000-000000000000"
