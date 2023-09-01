@@ -97,6 +97,8 @@ RATE_PARAMS = [
     "container_size",
     "container_type",
     "destination_country_id",
+    "origin_continent_id",
+    "destination_continent_id",
     "destination_local_id",
     "destination_detention_id",
     "destination_main_port_id",
@@ -1791,9 +1793,6 @@ def main():
     populate_from_rates.update_parent_mode()
     print("# update parent_rate_id and validity_id for reverted rates from feedback")
     populate_from_rates.update_parent_rates()
-    
-    from services.bramhastra.brahmastra import Brahmastra
-    Brahmastra([FclFreightRateStatistic]).used_by(arjun = True,on_startup = True)
     
     print("LEAVE NOW")
     
