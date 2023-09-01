@@ -5,7 +5,7 @@ from libs.get_filters import get_filters
 from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
 
-possible_direct_filters = ['origin_port_id','destination_port_id','shipping_line_id','commodity','status']
+possible_direct_filters = ['origin_port_id','destination_port_id','shipping_line_id','commodity']
 possible_indirect_filters = ['date_range', 'user_id']
 
 STRING_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
