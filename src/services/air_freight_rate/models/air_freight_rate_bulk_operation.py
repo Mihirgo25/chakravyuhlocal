@@ -134,8 +134,6 @@ class AirFreightRateBulkOperation(BaseModel):
             if not rate_sheet_id:
                 raise HTTPException(status_code=400, detail='Invalid Rate sheet serial id') 
         
-        data['validity_start'] = data['validity_start'].date()
-        data['validity_end'] = data['validity_end'].date()
         return
 
     def validate_add_local_rate_markup_data(self):
@@ -185,8 +183,14 @@ class AirFreightRateBulkOperation(BaseModel):
         data = self.data
         freight_rates = jsonable_encoder(list(batches_query.dicts()))
         weight_slabs = data['weight_slabs']
+        validity_start_date = datetime.strptime(data['validity_start'], '%Y-%m-%d')
+        validity_end_date = datetime.strptime(data['validity_end'], '%Y-%m-%d') 
         for freight in freight_rates:
-            count += 1
+            count += 1  
+            freight_validity_start = datetime.strptime(freight['validity']['validity_start'], '%Y-%m-%d')
+            freight_validity_end = datetime.strptime(freight['validity']['validity_end'], '%Y-%m-%d')
+            if freight_validity_start > validity_end_date  or freight_validity_end < validity_start_date:
+                continue
             if AirFreightRateAudit.select().where(
                 AirFreightRateAudit.bulk_operation_id == self.id,
                 AirFreightRateAudit.object_id == freight["id"],
@@ -196,39 +200,28 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.save()
                 continue
             slabs = get_weight_slabs(freight['validity']["weight_slabs"],weight_slabs,data)
-
-            if not new_weight_slabs:
-                delete_air_freight_rate(
-                    {
-                        "id": freight["id"],
-                        "performed_by_id": self.performed_by_id,
-                        "validity_id": freight['validity']['id'],
-                        "bulk_operation_id": self.id,
-                    }
-                )
-            else:
-                update_air_freight_rate(
-                {
-                    "id": freight["id"],
-                    "validity_id": freight['validity']["id"],
-                    "performed_by_id": self.performed_by_id,
-                    "bulk_operation_id": self.id,
-                    "min_price": freight['validity']["min_price"],
-                    "currency": freight['validity']["currency"],
-                    "weight_slabs": new_weight_slabs,
-                }
-            )
-            update_air_freight_rate(
+            validity_start = max(freight_validity_start, validity_start_date)
+            validity_end = min(freight_validity_end, validity_end_date)
+            delete_air_freight_rate(
                 {
                     "id": freight["id"],
                     "validity_id":freight['validity']['id'],
-                    "validity_start":datetime.strptime(self.data.get('validity_start'),'%Y-%m-%d').date() ,
-                    "validity_end":datetime.strptime(self.data.get('validity_end'),'%Y-%m-%d').date() ,
+                    "validity_start":validity_start.date() ,
+                    "validity_end":validity_end.date() ,
                     "performed_by_id": self.performed_by_id,
                     "bulk_operation_id": self.id,
                     "min_price": freight['validity']["min_price"],
                     "currency": freight['validity']["currency"],
                     "weight_slabs": slabs,
+                    "density_category": freight['validity']["density_category"],
+                    "density_ratio": "1:{}".format(freight['validity']['min_density_weight']),
+                    "initial_volume":freight['validity']['initial_volume'],
+                    "initial_gross_weight":freight['validity']['initial_gross_weight'],
+                    "available_volume":freight['validity']['available_volume'],
+                    "available_gross_weight":freight['validity']['available_gross_weight'],
+                    "rate_type": freight['rate_type'],
+                    "likes_count":freight['validity']['likes_count'],
+                    "dislikes_count":freight['validity']['dislikes_count']
                 }
             )
 

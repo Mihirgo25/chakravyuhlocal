@@ -366,8 +366,8 @@ class AddFreightRateMarkupParams(BaseModel):
 class DeleteFreightRateParams(BaseModel):
     filters:dict = {}
     weight_slabs: List[BulkOperationSlabs] = []
-    validity_start: datetime
-    validity_end: datetime
+    validity_start: date
+    validity_end: date
     rate_sheet_serial_id: int = None
     comparison_currency: str = "USD"
     rates_greater_than_price: float = None
