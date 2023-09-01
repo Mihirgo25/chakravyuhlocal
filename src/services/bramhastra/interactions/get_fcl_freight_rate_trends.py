@@ -9,7 +9,7 @@ from services.bramhastra.enums import FclParentMode
 ALLOWED_TIME_PERIOD = 6
 
 
-def get_fcl_freight_rate_trend(filters):
+def get_fcl_freight_rate_trends(filters):
     where = get_direct_indirect_filters(filters)
     response = get_rate(filters, where)
     return {
