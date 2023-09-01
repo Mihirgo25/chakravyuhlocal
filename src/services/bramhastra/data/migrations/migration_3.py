@@ -16,8 +16,6 @@ from services.bramhastra.enums import BrahmastraTrackModuleTypes, BrahmastraTrac
 def main():
     print("running migration")
 
-    run_migration()
-
     click = ClickHouse()
 
     click.execute("drop database brahmastra")
