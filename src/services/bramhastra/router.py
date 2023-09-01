@@ -306,6 +306,7 @@ async def list_fcl_freight_rate_statistics_api(
     filters: Annotated[Json, Query()] = {},
     page_limit: int = 10,
     page: int = 1,
+    is_service_object_required: bool = True,
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
@@ -314,7 +315,7 @@ async def list_fcl_freight_rate_statistics_api(
         )
 
     try:
-        response = await list_fcl_freight_rate_statistics(filters, page_limit, page)
+        response = await list_fcl_freight_rate_statistics(filters, page_limit, page, is_service_object_required)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
