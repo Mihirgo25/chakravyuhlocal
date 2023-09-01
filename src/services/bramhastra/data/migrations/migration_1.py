@@ -1746,6 +1746,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
     def hard_reset(self):
         ClickHouse().execute("drop database if exists brahmastra")
+        print('dropped bramhastra')
         from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 
         for model in [
@@ -1778,6 +1779,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         ]
 
         Table().create_tables(models)
+        
+        print('created')
 
 
 def main():
