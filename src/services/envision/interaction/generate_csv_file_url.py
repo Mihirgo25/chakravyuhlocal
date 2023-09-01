@@ -2,7 +2,12 @@ from services.envision.helpers.csv_link_generator import get_csv_url
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_coverages import list_fcl_freight_rate_coverages
 from services.air_freight_rate.interactions.list_air_freight_rate_coverages import list_air_freight_rate_coverages
 import copy
+import json
 def generate_csv_file_url(filters):
+    if filters:
+        if type(filters) != dict:
+           filters = json.loads(filters)
+    
     service_type = filters.get('service_type')
     
     required_coverage_data = []
