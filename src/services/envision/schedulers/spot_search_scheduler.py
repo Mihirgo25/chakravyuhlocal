@@ -1,50 +1,58 @@
-from database.rails_db import get_most_searched_predicted_rates_for_fcl_freight_services
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
 from services.air_freight_rate.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
-from database.rails_db import get_most_searched_predicted_rates_for_fcl_freight_services
-from fastapi.encoders import jsonable_encoder
-from libs.json_encoder import json_encoder
-import copy
+from database.db_session import rd
 
-def spot_search_scheduler():
+current_processing_line = "spot_search_count"
 
-    services = ['fcl_freight', 'air_freight']
+def build_init_key(requirements, source):
+    if source == 'fcl_freight':
+        init_key = f'{str(requirements["origin_port_id"])}:{str(requirements["destination_port_id"])}:{str(requirements["container_size"])}:{str(requirements["container_type"])}:{str(requirements["commodity"] or "")}'
+    elif source == 'air_freight':
+        init_key = f'{str(requirements.get("origin_airport_id"))}:{str(requirements["destination_airport_id"] or "")}:{str(requirements["airline_id"])}:{str(requirements["commodity"])}:{str(requirements["commodity_type"] or "")}:{str(requirements.get("commodity_sub_type") or "")}::{str(requirements.get("stacking_type") or "")}:{str(requirements.get("operation_type") or "")}'
+    return init_key
 
-    for service in services:
-        data = get_most_searched_predicted_rates_for_fcl_freight_services(service)
-        if service == 'fcl_freight':
-            data = get_spot_data_fcl(data)
-            result = create_fcl_freight_rate_jobs(data, 'spot_search')
+
+def get_current_predicted_count(requirements, source):
+    if rd:
+        try:
+            cached_response = rd.hget(current_processing_line, build_init_key(requirements, source))
+            return int(cached_response)
+        except:
+            return 0
+
+def set_predicted_count(requirements, count, source):
+    if rd:
+        rd.hset(current_processing_line, build_init_key(requirements, source), int(count)+1)
+
+def delete_init_key(requirements, source):
+    rd.delete(build_init_key(requirements, source))
+
+
+def spot_search_scheduler(is_predicted, requirements, source):
+    # requirements = requirements['requirements']
+    # is_predicted = is_predicted['is_predicted']
+    # source = source['source']
+    if is_predicted:
+        current_count = get_current_predicted_count(requirements, source)
+        if current_count>=3:
+            if source == 'fcl_freight':
+                data = create_fcl_freight_rate_jobs([requirements],  'spot_search')
+            elif source == 'air_freight':
+                data = create_air_freight_rate_jobs([requirements],  'spot_search')
+            delete_init_key(requirements, source)
+            return {"init_key": requirements}
         else:
-            data = get_spot_data_air(data)
-            result = create_air_freight_rate_jobs(data, 'spot_search')
+            set_predicted_count(requirements, current_count, source)
+            return {"init_key": requirements}
+    else:
+        current_count = get_current_predicted_count(requirements, source)
+        if current_count:
+            delete_init_key(requirements, source)
+            return {"init_key": requirements}
 
-def get_spot_data_air(list_of_spot_search_data):
-    list_of_data = []
-    for spot_search_data in list_of_spot_search_data:
-        data = {
-            'origin_airport_id': spot_search_data[0],
-            'destination_airport_id': spot_search_data[1],
-            'commodity': spot_search_data[2],
-            'airline_id': spot_search_data[3],
-            'service_provider_id': spot_search_data[4]
-        }
-        list_of_data.append(copy.deepcopy(data))
 
-    return list_of_data
 
-def get_spot_data_fcl(list_of_spot_search_data):
-    list_of_data = []
-    for spot_search_data in list_of_spot_search_data:
-        data = {
-            'origin_port_id': spot_search_data[0],
-            'destination_port_id': spot_search_data[1],
-            'container_size': spot_search_data[2],
-            'container_type': spot_search_data[3],
-            'commodity': spot_search_data[4],
-            'shipping_line_id': spot_search_data[5],
-            'service_provider_id': spot_search_data[6]
-        }
-        list_of_data.append(copy.deepcopy(data))
 
-    return list_of_data
+
+
+

@@ -180,11 +180,6 @@ celery.conf.beat_schedule = {
         'schedule':crontab(hour='*/5'),
         'options': {'queue': 'fcl_freight_rate'}
     },
-    'supply_tool_spot_search': {
-        'task': 'celery_worker.spot_search_scheduler_delay',
-        'schedule': crontab(hour='*/5'),
-        'options': {'queue' : 'fcl_freight_rate'}
-    },
     'smt_critical_port_pairs': {
         'task': 'celery_worker.smt_critical_port_pairs_delay',
         'schedule': crontab(hour='*/5'),
@@ -896,9 +891,9 @@ def air_freight_airline_factors_in_delay(self):
 
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def spot_search_scheduler_delay(self):
+def spot_search_scheduler_delay(self, is_predicted, requirements, source):
     try:
-        return spot_search_scheduler()
+        return spot_search_scheduler(is_predicted, requirements, source)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

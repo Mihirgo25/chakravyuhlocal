@@ -14,6 +14,7 @@ import sentry_sdk
 import traceback
 from services.air_freight_rate.interactions.get_air_freight_rates_from_clusters import get_air_freight_rates_from_clusters
 from rms_utils.filter_predicted_or_extension_rates import filter_predicted_or_extension_rates
+from celery_worker import spot_search_scheduler_delay
 
 def initialize_freight_query(requirements,prediction_required=False):
     freight_query = AirFreightRate.select(
@@ -513,8 +514,9 @@ def get_air_freight_rate_cards(requirements):
         freight_rates = filter_predicted_or_extension_rates(freight_rates)
 
         is_predicted = False
-        freight_rates,is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
         
+        freight_rates,is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
+        spot_search_scheduler_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements, "source": "air_freight"}, queue='critical')
         freight_rates = post_discard_less_relevant_rates(freight_rates)
         missing_surcharge = get_missing_surcharges(freight_rates)
         surcharges = get_surcharges(requirements,missing_surcharge)
