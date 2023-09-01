@@ -95,8 +95,8 @@ class DeleteAirFreightRateParams(BaseModel):
     bulk_operation_id: str = None
     sourced_by_id: str = None
     procured_by_id: str = None
-    validity_start:datetime
-    validity_end:datetime
+    validity_start:date
+    validity_end:date
     density_category:str
     density_ratio:str
     min_price:float
@@ -353,8 +353,14 @@ class AddFreightRateMarkupParams(BaseModel):
     markup: float
     markup_type: str
     markup_currency: str = None
-    weight_slabs: List[BulkOperationSlabs]
+    weight_slabs: List[BulkOperationSlabs] = []
     filters:dict = {}
+    validity_start: date
+    validity_end: date
+    rate_sheet_serial_id: int = None
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
 
 
 class DeleteFreightRateParams(BaseModel):
@@ -369,17 +375,41 @@ class DeleteFreightRateParams(BaseModel):
     
 class UpdateFreightRateParams(BaseModel):
     filters:dict = {}
-    new_start_date: datetime
     new_end_date: datetime
 
 
 class DeleteAirFreightRateLocalParams(BaseModel):
     filters: dict = {}
+    rate_sheet_serial_id: int = None
+    charge_codes: List[str] = []
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
 
 
 class DeleteAirFreightRateSurchargeParams(BaseModel):
     filters: dict = {}
+    rate_sheet_serial_id: int = None
+    charge_codes: List[str] = []
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
 
+class UpdateFreightRateLocal(BaseModel):
+    filters: dict = {}
+    rate_sheet_serial_id: int = None
+    line_item: LineItem
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
+
+class UpdateFreightRateSurcharge(BaseModel):
+    filters: dict = {}
+    rate_sheet_serial_id: int = None
+    line_item: LineItem
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
 
 class CreateBulkOperationParams(BaseModel):
     performed_by_id: str = None
@@ -389,6 +419,9 @@ class CreateBulkOperationParams(BaseModel):
     update_freight_rate: UpdateFreightRateParams = None
     delete_freight_rate_local: DeleteAirFreightRateLocalParams = None
     delete_freight_rate_surcharge: DeleteAirFreightRateSurchargeParams = None
+    update_freight_rate_local: UpdateFreightRateLocal = None
+    update_freight_rate_surcharge: UpdateFreightRateSurcharge = None
+
 
 
 class CreateAirFreightRateParams(BaseModel):

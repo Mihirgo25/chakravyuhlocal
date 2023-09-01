@@ -20,6 +20,8 @@ def execute_transaction_code(request):
     
     air_freight_rate_local.line_items=request.get('line_items')
 
+    if not air_freight_rate_local.line_items:
+        air_freight_rate_local.rate_not_available_entry = True
     air_freight_rate_local.update_line_item_messages()
 
     air_freight_rate_local.validate()

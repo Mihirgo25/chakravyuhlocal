@@ -32,7 +32,8 @@ def execute_transaction_code(request):
     air_freight_rate_surcharge.line_items=request.get('line_items')
 
     air_freight_rate_surcharge.update_line_item_messages()
-
+    if not air_freight_rate_surcharge.line_items:
+        air_freight_rate_surcharge.rate_not_available_entry = True
     air_freight_rate_surcharge.validate()
     try:
         air_freight_rate_surcharge.save()

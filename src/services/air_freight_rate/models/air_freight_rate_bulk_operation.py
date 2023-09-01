@@ -176,7 +176,11 @@ class AirFreightRateBulkOperation(BaseModel):
             raise HTTPException(
                 status_code=400, detail="Min Price Markup Currency Is Invalid"
             )
+    def validate_update_freight_rate_local_data(self):
+        return
 
+    def validate_update_freight_rate_surcharge_data(self):
+        return
     def perform_batch_wise_delete_freight_rate_action(self,count,batches_query,total_count):
         data = self.data
         freight_rates = jsonable_encoder(list(batches_query.dicts()))
@@ -191,9 +195,7 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.progress = (count * 100.0) / int(total_count)
                 self.save()
                 continue
-            new_weight_slabs = []
-            slabs = freight['validity']["weight_slabs"]
-            slabs = get_weight_slabs(freight['weight_slabs'],weight_slabs,data)
+            slabs = get_weight_slabs(freight['validity']["weight_slabs"],weight_slabs,data)
 
             if not new_weight_slabs:
                 delete_air_freight_rate(
@@ -214,6 +216,19 @@ class AirFreightRateBulkOperation(BaseModel):
                     "min_price": freight['validity']["min_price"],
                     "currency": freight['validity']["currency"],
                     "weight_slabs": new_weight_slabs,
+                }
+            )
+            update_air_freight_rate(
+                {
+                    "id": freight["id"],
+                    "validity_id":freight['validity']['id'],
+                    "validity_start":datetime.strptime(self.data.get('validity_start'),'%Y-%m-%d').date() ,
+                    "validity_end":datetime.strptime(self.data.get('validity_end'),'%Y-%m-%d').date() ,
+                    "performed_by_id": self.performed_by_id,
+                    "bulk_operation_id": self.id,
+                    "min_price": freight['validity']["min_price"],
+                    "currency": freight['validity']["currency"],
+                    "weight_slabs": slabs,
                 }
             )
 
@@ -255,8 +270,14 @@ class AirFreightRateBulkOperation(BaseModel):
         freight_rates = jsonable_encoder(list(batches_query.dicts()))
         data = self.data
         weight_slabs = data['weight_slabs']
+        validity_start_date = datetime.strptime(data['validity_start'], '%Y-%m-%d')
+        validity_end_date = datetime.strptime(data['validity_end'], '%Y-%m-%d') 
         for freight in freight_rates:
             count += 1
+            freight_validity_start = datetime.strptime(freight['validity']['validity_start'], '%Y-%m-%d')
+            freight_validity_end = datetime.strptime(freight['validity']['validity_end'], '%Y-%m-%d')
+            if freight_validity_start > validity_end_date  or freight_validity_end < validity_start_date:
+                continue
             if (
                 AirFreightRateAudit.select()
                 .where(
@@ -271,7 +292,7 @@ class AirFreightRateBulkOperation(BaseModel):
                 continue
                 
 
-            slabs = get_weight_slabs(freight['weight_slabs'],weight_slabs,data)
+            slabs = get_weight_slabs(freight['validity']['weight_slabs'],weight_slabs,data)
             for slab in slabs:
                 if data["markup_type"].lower() == "percent":
                     markup = (
@@ -294,10 +315,15 @@ class AirFreightRateBulkOperation(BaseModel):
                 if slab["tariff_price"] < 0:
                     slab["tariff_price"] = 0
                 slab["tariff_price"] = round(slab["tariff_price"], 4)
-
+ 
+            validity_start = max(freight_validity_start, validity_start_date)
+            validity_end = min(freight_validity_end, validity_end_date)
             update_air_freight_rate(
                 {
                     "id": freight["id"],
+                    "validity_id":freight['validity']['id'],
+                    "validity_start":validity_start.date(),
+                    "validity_end":validity_end.date() ,
                     "performed_by_id": self.performed_by_id,
                     "bulk_operation_id": self.id,
                     "min_price": freight['validity']["min_price"],
@@ -397,7 +423,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
     def perform_bacth_wise_delete_freight_rate_surcharge_action(self,count,batch_query,total_count):
         freights = jsonable_encoder(list(batch_query.dicts()))
-        line_item_codes = self.data['line_item_codes']
+        line_item_codes = self.data['charge_codes']
         for freight in freights:
             count += 1
 
@@ -412,9 +438,9 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.progress = (count * 100.0) / int(total_count)
                 self.save()
                 continue
-
-            if line_item_codes:
-                line_items = [line_item for line_item in line_items if line_item['code'] in line_item_codes]
+            if line_item_codes or self.data.get('rates_greater_than_price') or self.data.get('rates_less_than_price'):
+                line_items = [line_item for line_item in freight['line_items'] if line_item['code'] not in line_item_codes]
+                line_items = freight_service_price_wise_filter(line_items,self.data)
                 update_air_freight_rate_surcharge(
                         {
                         'id': freight['id'],
@@ -439,7 +465,7 @@ class AirFreightRateBulkOperation(BaseModel):
         filters = data['filters']
         rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
         rate_ids = []
-        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id)
+        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id,freight=False)
         if rate_ids:
             if isinstance(filters.get('id'), list):
                 rate_ids += filters['id']
@@ -463,7 +489,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
     def perform_bacth_wise_delete_freight_rate_local_action(self,count,batch_query,total_count):
         freights = jsonable_encoder(list(batch_query.dicts()))
-        line_item_codes = self.data['line_item_codes']
+        line_item_codes = self.data['charge_codes']
         for freight in freights:
             count += 1
 
@@ -480,8 +506,9 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.save()
                 continue
             
-            if line_item_codes:
-                line_items = [line_item for line_item in line_items if line_item['code'] in line_item_codes]
+            if line_item_codes or self.data.get('rates_greater_than_price') or self.data.get('rates_less_than_price'):
+                line_items = [line_item for line_item in freight['line_items'] if line_item['code'] not in line_item_codes]
+                line_items = freight_service_price_wise_filter(line_items,self.data)
                 update_air_freight_rate_local(
                         {
                         'id': freight['id'],
@@ -506,7 +533,7 @@ class AirFreightRateBulkOperation(BaseModel):
         filters = data['filters']
         rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
         rate_ids = []
-        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id)
+        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id,freight=False)
         if rate_ids:
             if isinstance(filters.get('id'), list):
                 rate_ids += filters['id']
@@ -546,30 +573,31 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.progress = (count * 100.0) / int(total_count)
                 self.save()
                 continue
-            
+            new_line_items = []
             for line_item in freight['line_items']:
-                if line_item['code'] == local_line_item['code']:
-                    line_item['tariff_price'] = local_line_item['tariff_price']
-                    line_item['currency'] = local_line_item['currency']
-                    line_item['min_price'] = local_line_item['min_price']
-            
-            update_air_freight_rate_local({
-                                        
+                if line_item['code'] == local_line_item['code'] and line_item['unit']==local_line_item['unit']:
+                    if self.data.get('rates_greater_than_price') or self.data.get('rates_less_than_price'):
+                        line_items = freight_service_price_wise_filter([line_item],self.data)
+                        if not line_items:
+                            line_item = local_line_item
+                    else:
+                        line_item = local_line_item
+                new_line_items.append(line_item)
+            update_air_freight_rate_local({                    
                         'id': freight['id'],
                         'bulk_operation_id': str(self.id),
-                        'line_items': freight['line_items']
-                        
+                        'line_items': new_line_items  
             })
             self.progress = (count * 100.0) / int(total_count)
             self.save()
         return count
 
-    def perform_update_freight_rate_local(self):
+    def perform_update_freight_rate_local_action(self):
         data = self.data
         filters = data['filters']
         rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
         rate_ids = []
-        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id)
+        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id,freight=False)
         if rate_ids:
             if isinstance(filters.get('id'), list):
                 rate_ids += filters['id']
@@ -610,11 +638,16 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.save()
                 continue
             
+            new_line_items = []
             for line_item in freight['line_items']:
-                if line_item['code'] == local_line_item['code']:
-                    line_item['tariff_price'] = local_line_item['tariff_price']
-                    line_item['currency'] = local_line_item['currency']
-                    line_item['min_price'] = local_line_item['min_price']
+                if line_item['code'] == local_line_item['code'] and line_item['unit']==local_line_item['unit']:
+                    if self.data.get('rates_greater_than_price') or self.data.get('rates_less_than_price'):
+                        line_items = freight_service_price_wise_filter([line_item],self.data)
+                        if not line_items:
+                            line_item = local_line_item
+                    else:
+                        line_item = local_line_item
+                new_line_items.append(line_item)
             
             update_air_freight_rate_surcharge({
                                         
@@ -632,7 +665,7 @@ class AirFreightRateBulkOperation(BaseModel):
         filters = data['filters']
         rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
         rate_ids = []
-        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id)
+        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id,freight=False)
         if rate_ids:
             if isinstance(filters.get('id'), list):
                 rate_ids += filters['id']
@@ -691,39 +724,63 @@ def get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id,freight=True)
 
 def get_weight_slabs(freight_validity_weight_slabs,weight_slabs_to_effect,data):
     weight_slabs = []
-    if len(weight_slabs) ==0:
+    if len(weight_slabs_to_effect) ==0:
         weight_slabs = freight_validity_weight_slabs
     else:
         for slab in freight_validity_weight_slabs:
             for weight_slab in weight_slabs_to_effect:
                 if slab['lower_limit'] >=weight_slab['lower_limit'] and slab['upper_limit'] <= weight_slab['upper_limit']:
-                    weight_slabs.append(weight_slab)
+                    weight_slabs.append(slab)
                     break
     
-    if data.get('rates_greater_than_price') and data.get('rates_less_than_price'):
-        weight_slabs = filter_price_wise(weight_slabs,data)
+    if data.get('rates_greater_than_price') or data.get('rates_less_than_price'):
+        weight_slabs = freight_price_wise_filter(weight_slabs,data)
     return weight_slabs
 
-def filter_price_wise(weight_slabs,data):
+def freight_price_wise_filter(weight_slabs,data):
     new_weight_slabs = []
     for weight_slab in weight_slabs:
+        price = weight_slab['tariff_price']
         if weight_slab['currency']!=data['comparison_currency']:
-            weight_slab['tariff_price'] = common.get_money_exchange_for_fcl({
+            price = common.get_money_exchange_for_fcl({
                             "from_currency": weight_slab['currency'],
                             "to_currency": data['comparison_currency'],
                             "price": weight_slab['tariff_price'],
                         })['price']
         greater_than = False
         less_than = False
-        if not data.get('rates_greater_than_price') or (data.get('rates_greater_than_price') and weight_slab['tariff_price'] >= data['rates_greater_than_price']):
+        if not data.get('rates_greater_than_price') or (data.get('rates_greater_than_price') and price >= data['rates_greater_than_price']):
             greater_than = True
-        if not data.get('rates_less_than_price') or (data.get('rates_less_than_price') and weight_slab['tariff_price'] <= data['rates_less_than_price']):
+        if not data.get('rates_less_than_price') or (data.get('rates_less_than_price') and price <= data['rates_less_than_price']):
             less_than = True
 
         if greater_than and less_than:
             new_weight_slabs.append(weight_slab)
     return new_weight_slabs
                 
+def freight_service_price_wise_filter(line_items,data):
+    new_line_items = []
+    if not data.get('rates_greater_than_price') and not data.get('rates_less_than_price'):
+        return line_items
+    for line_item in line_items:
+        price = line_item['price']
+        if line_item['currency']!=data['comparison_currency']:
+            price = common.get_money_exchange_for_fcl({
+                "from_currency": line_item['currency'],
+                "to_currency": data['comparison_currency'],
+                "price": line_item['tariff_price'],
+            })['price']
+        greater_than = False
+        less_than = False
+        if data.get('rates_greater_than_price') and price > data['rates_greater_than_price']:
+            greater_than = True
+        if data.get('rates_less_than_price') and price < data['rates_less_than_price']:
+            less_than = True
+        if not greater_than and not less_than:
+            new_line_items.append(line_item)
+    
+    return new_line_items
+
             
 
     

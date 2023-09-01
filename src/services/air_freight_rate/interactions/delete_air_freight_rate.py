@@ -15,8 +15,8 @@ def delete_air_freight_rate_data(request):
         raise HTTPException(status_code=404,detail="Air Freight Rate Not Found")
 
     air_freight_rate.set_validities(  
-        request.get("validity_start").date(),
-        request.get("validity_end").date(),
+        request.get("validity_start"),
+        request.get("validity_end"),
         request.get("min_price"),
         request.get("currency"),
         request.get("weight_slabs"),
@@ -30,6 +30,7 @@ def delete_air_freight_rate_data(request):
         request.get("available_gross_weight"),
         request.get("rate_type")
     )
+    print(air_freight_rate.validities)
     validities =  air_freight_rate.validities
     total_avaliable_validities = len(validities)
 
