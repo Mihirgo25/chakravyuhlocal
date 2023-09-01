@@ -9,19 +9,13 @@ ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 def get_csv_url(service, lists):
     
     csv_file_name = generate_file_name(service)
-    csv_file_path = os.path.join(ROOT_DIR,'tmp',csv_file_name)
+    csv_file_path = os.path.join(ROOT_DIR,'tmp','coverage_stats')
     os.makedirs(csv_file_path, exist_ok=True)
-    
     df = pd.DataFrame(lists)
-    df.to_csv(csv_file_path, index=False)
-    csv_link = upload_media_file(csv_file_path)
+    file_path = f"{csv_file_path}/{csv_file_name}"
+    df.to_csv(file_path, index=False)
+    csv_link = upload_media_file(file_path)
     
-    try:
-      if os.path.exists(csv_file_path):
-          os.remove(csv_file_path)
-    except Exception as e:
-        raise Exception("An error occurred while deleting the file: {e}")
-
     return csv_link
 
 
