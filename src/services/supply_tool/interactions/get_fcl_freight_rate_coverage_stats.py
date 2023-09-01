@@ -55,10 +55,10 @@ def get_fcl_freight_rate_coverage_stats(filters = {}, page_limit = 10, page = 1,
         return statistics
 
 
+# TODAY'S TASKS
+# a. Whatever Jobs created today
+# b. Whatever Jobs that is still active
 def get_daily_query(sort_by, sort_type):
-    # TODAY'S TASKS
-    # a. Whatever Jobs created today
-    # b. Whatever Jobs that is still active
     query = FclFreightRateJobs.select().where(
              (FclFreightRateJobs.created_at > datetime.now()-timedelta(days=1)) | (FclFreightRateJobs.status == 'active')
         )
@@ -66,8 +66,8 @@ def get_daily_query(sort_by, sort_type):
             query = query.order_by(eval('FclFreightRateJobs.{}.{}()'.format(sort_by,sort_type)))
     return query
 
+# WEEKLY DETAILS : Whatever Jobs created in past 7 days
 def get_weekly_query(sort_by, sort_type):
-    # WEEKLY DETAILS : Whatever Jobs created in past 7 days
     query = FclFreightRateJobs.select().where(
             FclFreightRateJobs.created_at > datetime.now()-timedelta(days=7)
         )
@@ -76,14 +76,15 @@ def get_weekly_query(sort_by, sort_type):
     return query
 
 
+# a. PENDING: CREATED AT = today and STATUS = active
+# b. COMPLETED: CREATED AT = today and STATUS = inactive
+# c. BACKLOG: CREATED AT before today and STATUS = active
 def get_daily_stats_data(query,statistics):
         raw_data = json_encoder(list(query.dicts()))
         statistics['total'] = len(raw_data)
         for item in raw_data:
             status = item['status']
             created_at = item['created_at']
-
-            # a. BACKLOG
 
             if status == 'active':
                 if datetime.strptime(created_at,STRING_FORMAT).date() > datetime.now().date()-timedelta(days=1):
@@ -118,6 +119,7 @@ def get_weekly_details(query,statistics):
         date = start_date + timedelta(days=day_offset)
         weekly_completed_percentage[date] = 0
 
+    # Loop through weekly data, find number of jobs created on each day, count jobs that are still active
     for task in raw_data:
          created_at = datetime.strptime(task['created_at'], STRING_FORMAT)
          if start_date <= created_at.date() <= current_date:
