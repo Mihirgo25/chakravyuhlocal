@@ -15,51 +15,49 @@ def create_air_freight_rate_jobs(request, source):
 
 
 def create_air_freight_rate_job(request, source):
-    updated_ids = []
 
     request = jsonable_encoder(request)
-    for data in request:
-        params = {
-            'origin_airport_id' : data.get('origin_airport_id'),
-            'destination_airport_id' : data.get('destination_airport_id'),
-            'airline_id' : data.get('airline_id'),
-            'service_provider_id' : data.get('service_provider_id'),
-            'commodity' : data.get('commodity'),
-            'source' : source,
-            'rate_type' : data.get('rate_type'),
-            'rate_id' : data.get('rate_id'),
-            'commodity_type': data.get('commodity_type'),
-            'commodity_sub_type': data.get('commodity_sub_type'),
-            'operation_type': data.get('operation_type'),
-            'shipment_type': data.get('shipment_type'),
-            'stacking_type': data.get('stacking_type'),
-            'price_type': data.get('price_type')
-        }
-        
-        init_key = f'{str(params.get("origin_airport_id"))}:{str(params["destination_airport_id"] or "")}:{str(params["airline_id"])}:{str(params["service_provider_id"] or "")}:{str(params["commodity"])}:{str(params["source"])}:{str(params["rate_id"])}:{str(params["rate_type"])}:{str(params["commodity_type"] or "")}:{str(params["commodity_sub_type"] or "")}:{str(params["stacking_type"] or "")}:{str(params["operation_type"] or "")}'
-        air_freight_rate_job = AirFreightRateJobs.select().where(AirFreightRateJobs.init_key == init_key, AirFreightRateJobs.status << ['backlog', 'pending']).first()
-        params['init_key'] = init_key
 
-        if not air_freight_rate_job:
-            air_freight_rate_job = create_job_object(params)
-        else:
-            continue
+    params = {
+        'origin_airport_id' : request.get('origin_airport_id'),
+        'destination_airport_id' : request.get('destination_airport_id'),
+        'airline_id' : request.get('airline_id'),
+        'service_provider_id' : request.get('service_provider_id'),
+        'commodity' : request.get('commodity'),
+        'source' : source,
+        'rate_type' : request.get('rate_type'),
+        'rate_id' : request.get('rate_id'),
+        'commodity_type': request.get('commodity_type'),
+        'commodity_sub_type': request.get('commodity_sub_type'),
+        'operation_type': request.get('operation_type'),
+        'shipment_type': request.get('shipment_type'),
+        'stacking_type': request.get('stacking_type'),
+        'price_type': request.get('price_type')
+    }
+    
+    init_key = f'{str(params.get("origin_airport_id"))}:{str(params["destination_airport_id"] or "")}:{str(params["airline_id"])}:{str(params["service_provider_id"] or "")}:{str(params["commodity"])}:{str(params["source"])}:{str(params["rate_id"])}:{str(params["rate_type"])}:{str(params["commodity_type"] or "")}:{str(params["commodity_sub_type"] or "")}:{str(params["stacking_type"] or "")}:{str(params["operation_type"] or "")}'
+    air_freight_rate_job = AirFreightRateJobs.select().where(AirFreightRateJobs.init_key == init_key, AirFreightRateJobs.status << ['backlog', 'pending']).first()
+    params['init_key'] = init_key
 
-        user_id = task_distribution_system('AIR')
-        air_freight_rate_job.assigned_to_id = user_id
-        air_freight_rate_job.assigned_to = get_user(user_id)
-        air_freight_rate_job.status = 'pending'
-        air_freight_rate_job.set_locations()
-        air_freight_rate_job.save()
-        set_jobs_mapping(air_freight_rate_job.id, data)
-        get_multiple_service_objects(air_freight_rate_job)
-        updated_ids.append(air_freight_rate_job.id)
+    if not air_freight_rate_job:
+        air_freight_rate_job = create_job_object(params)
+    else:
+        return {"id": air_freight_rate_job.id}
 
-    return {"updated_ids": updated_ids}
+    user_id = task_distribution_system('AIR')
+    air_freight_rate_job.assigned_to_id = user_id
+    air_freight_rate_job.assigned_to = get_user(user_id)
+    air_freight_rate_job.status = 'pending'
+    air_freight_rate_job.set_locations()
+    air_freight_rate_job.save()
+    set_jobs_mapping(air_freight_rate_job.id, request)
+    get_multiple_service_objects(air_freight_rate_job)
 
-def set_jobs_mapping(jobs_id, data):
+    return {"updated_ids": air_freight_rate_job.id}
+
+def set_jobs_mapping(jobs_id, request):
     audit_id = AirFreightRateJobsMapping.create(
-        source_id=data.get("rate_id"),
+        source_id=request.get("rate_id"),
         job_id= jobs_id,
         source = 'air_freight_rate'
     )

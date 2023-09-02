@@ -3,7 +3,8 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
 import datetime
-from fastapi.encoders import jsonable_encoder
+from playhouse.postgres_ext import ServerSide
+from playhouse.shortcuts import model_to_dict
 
 DAYS_TO_EXPIRE = datetime.datetime.now() + datetime.timedelta(days=7)
 
@@ -22,13 +23,10 @@ def expiring_rates_scheduler():
         if service == 'air_freight':
             air_query = AirFreightRate.select(*[getattr(AirFreightRate, col) for col in required_columns['air_freight']]).where(AirFreightRate.last_rate_available_date <= DAYS_TO_EXPIRE)
     
-    fcl_data = jsonable_encoder(list(fcl_query.dicts()))
-    air_data = jsonable_encoder(list(air_query.dicts()))
-
-    for item in fcl_data:
-        item['rate_id'] = item.pop('id')
-    for item in air_data:
-        item['rate_id'] = item.pop('id')
-
-    create_fcl_freight_rate_jobs(fcl_data, 'expiring_rates')
-    create_air_freight_rate_jobs(air_data, 'expiring_rates')
+    for rate in ServerSide(fcl_query):
+        rate_data = model_to_dict(rate)
+        create_fcl_freight_rate_jobs(rate_data, 'expiring_rates')
+        
+    for rate in ServerSide(air_query):
+        rate_data = model_to_dict(rate)
+        create_air_freight_rate_jobs(rate_data, 'expiring_rates')

@@ -4,6 +4,9 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_jobs import c
 from services.air_freight_rate.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
 from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
 from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
+from playhouse.shortcuts import model_to_dict
+from playhouse.postgres_ext import ServerSide
+
 
 SEVEN_DAYS_AGO = datetime.today()-timedelta(7)
 
@@ -26,11 +29,13 @@ def cancelled_shipments_scheduler():
                     (AirFreightRateStatistic.updated_at >= SEVEN_DAYS_AGO),
                     (AirFreightRateStatistic.shipment_cancelled_count > 0)
                 )
+                
+    for rate in ServerSide(fcl_query):
+        rate_data = model_to_dict(rate)
+        create_fcl_freight_rate_jobs(rate_data, 'cancelled_shipments')
         
-    fcl_data = jsonable_encoder(list(fcl_query.dicts()))
-    air_data = jsonable_encoder(list(air_query.dicts()))
-
-    create_fcl_freight_rate_jobs(fcl_data, 'cancelled_shipments')
-    create_air_freight_rate_jobs(air_data, 'cancelled_shipments')
+    for rate in ServerSide(air_query):
+        rate_data = model_to_dict(rate)
+        create_air_freight_rate_jobs(rate_data, 'cancelled_shipments')
 
 
