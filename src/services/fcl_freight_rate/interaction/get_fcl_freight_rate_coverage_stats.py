@@ -16,6 +16,7 @@ STATISTICS = {
             'pending': 0,
             'backlog': 0,
             'completed': 0,
+            'aborted':0,
             'completed_percentage':0,
             'total' : 0,
             'weekly_backlog_count' : 0
@@ -82,10 +83,15 @@ def build_daily_details(query,statistics):
           FclFreightRateJobs.status
     )
 
+    total_daily_count = 0
     daily_results = json_encoder(list(daily_stats_query.dicts()))
     for data in daily_results:
+        total_daily_count += data['count']
         statistics[data['status']] = data['count']
 
+    statistics['total'] = total_daily_count
+    if total_daily_count != 0:
+        statistics['completed_percentage'] = round((statistics['completed']/total_daily_count)*100)
     return statistics
 
 def build_weekly_details(query,statistics):
