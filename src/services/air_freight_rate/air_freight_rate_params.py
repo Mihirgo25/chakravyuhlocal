@@ -482,7 +482,7 @@ class DeleteAirFreightRateRequestParams(BaseModel):
 
 class DeleteAirFreightRateJob(BaseModel):
     id: str = None
-    closing_remarks: list[str] = []
+    closing_remarks: str = None
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
