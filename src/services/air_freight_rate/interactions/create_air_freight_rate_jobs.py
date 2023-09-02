@@ -43,7 +43,7 @@ def create_air_freight_rate_jobs(request, source):
         user_id = task_distribution_system('AIR')
         air_freight_rate_job.assigned_to_id = user_id
         air_freight_rate_job.assigned_to = get_user(user_id)
-        air_freight_rate_job.status = 'active'
+        air_freight_rate_job.status = 'pending'
         air_freight_rate_job.set_locations()
         air_freight_rate_job.save()
         set_jobs_mapping(air_freight_rate_job.id, data)
