@@ -14,7 +14,14 @@ class FclDailyAttributeUpdaterWorker:
 
     def execute(self):
         try:
-            keys = {"parent_rate_id", "rate_sheet_id", "bulk_operation_id"}
+            keys = {
+                "parent_rate_id",
+                "rate_sheet_id",
+                "bulk_operation_id",
+                "performed_by_id",
+                "performed_by_type",
+                "source",
+            }
 
             query = FclFreightRateAudit.select(
                 FclFreightRateAudit.object_id.alias("rate_id"),
@@ -23,10 +30,8 @@ class FclDailyAttributeUpdaterWorker:
                 FclFreightRateAudit.bulk_operation_id,
                 FclFreightRateAudit.created_at,
             ).where(
-                FclFreightRateAudit.created_at
-                > datetime.utcnow() - timedelta(hours=27),
+                FclFreightRateAudit.created_at > datetime.utcnow() - timedelta(hours=5),
                 FclFreightRateAudit.object_type == "FclFreightRate",
-                FclFreightRateAudit.action_name == "create",
             )
             for fcl_freight_rate_audit in ServerSide(query):
                 params = dict()
