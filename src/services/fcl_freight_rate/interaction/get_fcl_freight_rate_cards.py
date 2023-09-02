@@ -910,21 +910,23 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
         
         cogo_assured_rates = []
+        other_rates = []
+        for rate in freight_rates:
+            if rate.get('rate_type') == 'cogo_assured':
+                cogo_assured_rates.append(rate)
+            else:
+                other_rates.append(rate)   
+         
+        selected_cogo_assured = get_cogo_assured_with_locals(cogo_assured_rates)
         spot_search_scheduler_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements, "source": "fcl_freight"}, queue='critical')
         if is_predicted:
-            rates_without_cogo_assured = []
-            for rate in freight_rates:
-                if rate.get('rate_type') == 'cogo_assured':
-                    cogo_assured_rates.append(rate)
-                else:
-                    rates_without_cogo_assured.append(rate)
-            fcl_freight_vyuh = FclFreightVyuh(rates_without_cogo_assured, requirements)
-            freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
+            fcl_freight_vyuh = FclFreightVyuh(other_rates, requirements)
+            other_rates = fcl_freight_vyuh.apply_dynamic_pricing()
         
-        freight_rates+= cogo_assured_rates
-        freight_rates = build_response_list(freight_rates, requirements)
+        all_rates = other_rates + selected_cogo_assured 
+        all_rates = build_response_list(all_rates, requirements)
         return {
-            "list" : freight_rates
+            "list" : all_rates
         }
     except Exception as e:
         traceback.print_exc()
@@ -956,3 +958,12 @@ def get_cogo_assured_rates(requirements):
     initial_query = initialize_freight_query(requirements=requirements, get_cogo_assured=True)
     cogo_assured_rates = jsonable_encoder(list(initial_query.dicts()))
     return cogo_assured_rates
+
+def get_cogo_assured_with_locals(cogo_assured_rates=[]):
+    selected_cogo_assured = cogo_assured_rates[:1] if cogo_assured_rates else []
+    for rate in cogo_assured_rates:
+        if (rate.get('origin_local') or rate.get('destination_local')):
+            selected_cogo_assured.append(rate)
+            break
+        
+    return selected_cogo_assured[-1:] if selected_cogo_assured else []

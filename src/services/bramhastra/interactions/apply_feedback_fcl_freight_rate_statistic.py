@@ -1,5 +1,5 @@
 from database.db_session import db
-from services.bramhastra.helpers.post_fcl_freight_helper import Feedback
+from services.bramhastra.helpers.feedback_fcl_freight_rate_helper import Feedback
 from services.bramhastra.enums import FeedbackAction
 from configs.env import APP_ENV
 

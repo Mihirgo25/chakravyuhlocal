@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
+import math
 from configs.fcl_freight_rate_constants import RATE_TYPES
 from libs.json_encoder import json_encoder
 
@@ -14,7 +15,7 @@ NOT_REQUIRED_FIELDS = ["destination_local_line_items_info_messages",  "origin_lo
 possible_direct_filters = ['id', 'origin_port_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_port_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'container_size', 'container_type', 'commodity', 'is_best_price', 'rate_not_available_entry', 'origin_main_port_id', 'destination_main_port_id', 'cogo_entity_id', 'procured_by_id','rate_type', 'mode']
 possible_indirect_filters = ['is_origin_local_missing', 'is_destination_local_missing', 'is_weight_limit_missing', 'is_origin_detention_missing', 'is_origin_plugin_missing', 'is_destination_detention_missing', 'is_destination_demurrage_missing', 'is_destination_plugin_missing', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'origin_location_ids', 'destination_location_ids', 'importer_exporter_present', 'last_rate_available_date_greater_than','last_rate_available_date_less_than', 'validity_start_greater_than', 'validity_end_less_than', 'partner_id', 'importer_exporter_relevant_rate','exclude_shipping_line_id','exclude_service_provider_types','exclude_rate_types','service_provider_type', 'updated_at_greater_than', 'updated_at_less_than', 'get_cogo_assured_checkout_rates']
 
-def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, expired_rates_required = False, return_count = False,  is_line_items_required = False, includes = {}):
+def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, expired_rates_required = False, return_count = False,  is_line_items_required = False, includes = {}, pagination_data_required = False):
   query = get_query(sort_by, sort_type, includes)
   if filters:
     if type(filters) != dict:
@@ -32,6 +33,8 @@ def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
   if return_count:
     return {'total_count': query.count()}
   
+  pagination_data= get_pagination_data(query,page,page_limit) if pagination_data_required else {}
+  
   if page_limit:
     query = query.paginate(page, page_limit)
     
@@ -39,7 +42,8 @@ def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
     return {'list': query} 
 
   data = get_data(query,expired_rates_required,is_line_items_required)
-  return { 'list': data } 
+  
+  return { 'list': data } | pagination_data
 
 def get_query(sort_by, sort_type, includes):
   
@@ -317,3 +321,14 @@ def apply_exclude_service_provider_types_filter(query, filters):
 def apply_exclude_rate_types_filter(query, filters):
   query=query.where(~FclFreightRate.rate_type << filters['exclude_rate_types'])
   return query
+
+def get_pagination_data(query, page, page_limit):
+    total_count = query.count()
+    pagination_data = {
+        'page': page,
+        'total': math.ceil(total_count/page_limit),
+        'total_count': total_count,
+        'page_limit': page_limit
+        }
+    
+    return pagination_data
