@@ -23,6 +23,7 @@ DYNAMIC_STATISTICS = {
 }
 
 DEFAULT_REQUIRED_FIELDS = [
+    'id',
     'assigned_to',
     'closed_by',
     'closing_remarks',
