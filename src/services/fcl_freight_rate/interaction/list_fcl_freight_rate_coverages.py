@@ -63,7 +63,7 @@ def get_statisitcs(dynamic_statisitcs, query, filters):
     dynamic_statisitcs['critical_ports'] = query.where(FclFreightRateJobs.source == 'critical_ports').count()
     dynamic_statisitcs['expiring_rates'] = query.where(FclFreightRateJobs.source == 'expiring_rates').count()
     dynamic_statisitcs['cancelled_shipments'] = query.where(FclFreightRateJobs.source == 'cancelled_shipments').count()
-    query = query.where(FclFreightRateJobs.source == filters['status'])
+    query = query.where(FclFreightRateJobs.source == filters['source'])
     return dynamic_statisitcs, query
     
     
