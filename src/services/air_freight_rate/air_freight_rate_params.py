@@ -375,8 +375,11 @@ class DeleteFreightRateParams(BaseModel):
     
 class UpdateFreightRateParams(BaseModel):
     filters:dict = {}
-    new_end_date: datetime
-
+    end_date: datetime
+    markup: float = None
+    markup_type: str = None
+    markup_currency: str = None
+    rate_sheet_serial_id: int = None
 
 class DeleteAirFreightRateLocalParams(BaseModel):
     filters: dict = {}
