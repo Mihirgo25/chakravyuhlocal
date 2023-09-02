@@ -11,11 +11,34 @@ possible_direct_filters = [
     "shipping_line_id",
     "commodity",
 ]
-possible_indirect_filters = ["updated_at", "user_id", "date_range", "status"]
+possible_indirect_filters = ["updated_at", "user_id", "date_range"]
+
+DYNAMIC_STATISTICS = {
+    'monitoring_dashboard':0,
+    'spot_search' : 0,
+    'critical_ports' : 0,
+    'expiring_rates' : 0,
+}
+
+DEFAULT_REQUIRED_FIELDS = [
+    'assigned_to',
+    'closed_by',
+    'closing_remarks',
+    'commodity',
+    'container_size',
+    'created_at',
+    'updated_at',
+    'status',
+    'shipping_line',
+    'service_provider',
+    'origin_port',
+    'destination_port',
+    'container_type',
+]
 
 
-def list_fcl_freight_rate_coverages(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', generate_csv_url = False):
-    query = get_query(sort_by, sort_type)
+def list_fcl_freight_rate_coverages(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', generate_csv_url = False, includes = {}):
+    query = get_query(sort_by, sort_type, includes)
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -24,21 +47,36 @@ def list_fcl_freight_rate_coverages(filters = {}, page_limit = 10, page = 1, sor
         )
         query = get_filters(direct_filters, query, FclFreightRateJobs)
         query = apply_indirect_filters(query, indirect_filters)
-
+        dynamic_statisitcs, query = get_statisitcs(DYNAMIC_STATISTICS.copy(), query, filters)
     if page_limit and not generate_csv_url:
         query = query.paginate(page, page_limit)
 
     data = get_data(query)
 
-    return {"list": data}
+    return {"list": data, "stats": dynamic_statisitcs}
 
 
+def get_statisitcs(dynamic_statisitcs, query, filters):
+    dynamic_statisitcs['monitoring_dashboard'] = query.where(FclFreightRateJobs.source == 'monitoring_dashboard').count()
+    dynamic_statisitcs['spot_search'] = query.where(FclFreightRateJobs.source == 'spot_search').count()
+    dynamic_statisitcs['critical_ports'] = query.where(FclFreightRateJobs.source == 'critical_ports').count()
+    dynamic_statisitcs['expiring_rates'] = query.where(FclFreightRateJobs.source == 'expiring_rates').count()
+    query = query.where(FclFreightRateJobs.source == filters['source'])
+    return dynamic_statisitcs, query
+    
+    
 def get_data(query):
     return list(query.dicts())
 
 
-def get_query(sort_by, sort_type):
-    query = FclFreightRateJobs.select()
+def get_query(sort_by, sort_type, includes):
+    if includes:
+        fcl_all_fields = list(FclFreightRateJobs._meta.fields.keys())
+        required_fcl_fields =  [a for a in includes.keys() if a in fcl_all_fields]
+        fcl_fields = [getattr(FclFreightRateJobs, key) for key in required_fcl_fields]
+    else:
+        fcl_fields = [getattr(FclFreightRateJobs, key) for key in DEFAULT_REQUIRED_FIELDS]
+    query = FclFreightRateJobs.select(*fcl_fields)
     if sort_by:
         query = query.order_by(
             eval("FclFreightRateJobs.{}.{}()".format(sort_by, sort_type))
