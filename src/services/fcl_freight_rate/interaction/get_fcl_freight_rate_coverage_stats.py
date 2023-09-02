@@ -4,6 +4,8 @@ from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
+import time
+from peewee import fn
 
 possible_direct_filters = ['origin_port_id','destination_port_id','shipping_line_id','commodity']
 possible_indirect_filters = ['date_range', 'user_id']
@@ -15,11 +17,6 @@ STATISTICS = {
             'backlog': 0,
             'completed': 0,
             'completed_percentage':0,
-            'spot_search' : 0,
-            'critical_ports' : 0,
-            'expiring_rates' : 0,
-            'monitoring_dashboard' : 0,
-            'cancelled_shipments' : 0,
             'total' : 0,
             'weekly_backlog_count' : 0
         }
@@ -46,109 +43,97 @@ def get_fcl_freight_rate_coverage_stats(filters = {}):
                 daily_query = apply_indirect_filters(daily_query, indirect_filters)
                 weekly_query = apply_indirect_filters(weekly_query, indirect_filters)
 
+        daily_statistics = build_daily_details(daily_query)
+        weekly_statistics = build_weekly_details(weekly_query)
 
-        # IF NO DATA PRESENT IN DB, return default
-        # ELSE, calculate statistics (Daily and Weekly)
-        statistics = statistics if not daily_query else get_daily_stats_data(daily_query,statistics)
-        statistics = statistics if not weekly_query else get_weekly_details(weekly_query,statistics)
-
-        return statistics
+        return daily_statistics,weekly_statistics
 
 
 # TODAY'S TASKS
 # a. Whatever Jobs created today
 # b. Whatever Jobs that is still active
 def get_daily_query():
-    query = FclFreightRateJobs.select(
-         FclFreightRateJobs.id,
-         FclFreightRateJobs.created_at,
+    stats = FclFreightRateJobs.select(
          FclFreightRateJobs.status,
-         FclFreightRateJobs.source
-    ).where(
-             (FclFreightRateJobs.created_at > datetime.now()-timedelta(days=1)) | (FclFreightRateJobs.status == 'active')
+         FclFreightRateJobs.origin_port_id,
+         FclFreightRateJobs.destination_port_id,
+         FclFreightRateJobs.shipping_line_id,
+         FclFreightRateJobs.commodity,
+         FclFreightRateJobs.assigned_to_id
+         ).where(
+              FclFreightRateJobs.created_at.cast('date') == datetime.now().date()
         )
-    return query
+    return stats
 
 # WEEKLY DETAILS : Whatever Jobs created in past 7 days
 def get_weekly_query():
     query = FclFreightRateJobs.select(
-         FclFreightRateJobs.id,
-         FclFreightRateJobs.created_at,
          FclFreightRateJobs.status,
-         FclFreightRateJobs.source
+         FclFreightRateJobs.origin_port_id,
+         FclFreightRateJobs.destination_port_id,
+         FclFreightRateJobs.shipping_line_id,
+         FclFreightRateJobs.commodity,
+         FclFreightRateJobs.assigned_to_id
     ).where(
-            FclFreightRateJobs.created_at > datetime.now()-timedelta(days=7)
-        )
+            FclFreightRateJobs.created_at.cast('date') >= datetime.now().date()-timedelta(days=7)
+    )
     return query
 
+def build_daily_details(query):
+    daily_stats_query = query.select(
+          FclFreightRateJobs.status,
+          fn.COUNT(FclFreightRateJobs.id).alias('count')
+     ).group_by(
+          FclFreightRateJobs.status
+    )
 
-# a. PENDING: CREATED AT = today and STATUS = active
-# b. COMPLETED: CREATED AT = today and STATUS = inactive
-# c. BACKLOG: CREATED AT before today and STATUS = active
-def get_daily_stats_data(query,statistics):
-        raw_data = json_encoder(list(query.dicts()))
-        statistics['total'] = len(raw_data)
-        for item in raw_data:
-            status = item['status']
-            created_at = item['created_at']
+    daily_stats = {}
+    daily_results = json_encoder(list(daily_stats_query.dicts()))
+    for data in daily_results:
+        daily_stats[data['status']] = data['count']
 
-            if status == 'active':
-                if datetime.strptime(created_at,STRING_FORMAT).date() > datetime.now().date()-timedelta(days=1):
-                    statistics['pending'] += 1
-                else:
-                    statistics['backlog'] += 1
-            else:
-                if datetime.strptime(created_at,STRING_FORMAT).date() > datetime.now().date()-timedelta(days=1):
-                    statistics['completed'] += 1
+    return daily_stats
 
-            source = item['source']
-            if source in statistics:
-                statistics[source] += 1
+def build_weekly_details(query):
+    weekly_stats_query = query.select(
+          FclFreightRateJobs.status,
+          fn.COUNT(FclFreightRateJobs.id).alias('count'),
+          FclFreightRateJobs.created_at.cast('date')
+     ).group_by(
+          FclFreightRateJobs.status,
+          FclFreightRateJobs.created_at.cast('date')
+    )
+    weekly_results = json_encoder(list(weekly_stats_query.dicts()))
+    weekly_stats = {}
 
-        if statistics['total']:
-            statistics['completed_percentage'] = round((statistics['completed']/statistics['total'])*100)
+    total_dict = {}
+    total_weekly_backlog_count = 0
 
-        return statistics
+    for item in weekly_results:
+        created_at = item['created_at']
+        status = item['status']
+        count = item['count']
 
-def get_weekly_details(query,statistics):
-    raw_data = json_encoder(list(query.dicts()))
-    total_weekly_backlog = 0
+        if created_at not in total_dict:
+            total_dict[created_at] = {
+                      'pending':0,
+                      'completed':0,
+                      'backlog':0,
+                      'aborted':0
+                 }
 
-    current_date = datetime.now().date()
+        if status == 'backlog':
+            total_weekly_backlog_count += count
 
-    weekly_completed_percentage = {}
-    task_counts = {}
-    backlog_counts = {}
-    start_date = current_date - timedelta(days=6)
+        total_dict[created_at][status] = count
 
-    for day_offset in range(6):
-        date = start_date + timedelta(days=day_offset)
-        weekly_completed_percentage[date] = 0
+    for date in total_dict:
+        total_task_per_day = total_dict[date]['pending'] + total_dict[date]['completed'] + total_dict[date]['backlog'] + total_dict[date]['aborted']
+        total_completed_per_day = total_dict[date]['completed']
+        weekly_stats[date] = round((total_completed_per_day/total_task_per_day * 100))
 
-    # Loop through weekly data, find number of jobs created on each day, count jobs that are still active
-    for task in raw_data:
-         created_at = datetime.strptime(task['created_at'], STRING_FORMAT)
-         if start_date <= created_at.date() <= current_date:
-                if created_at.date() not in task_counts:
-                    backlog_counts[created_at.date()] = 0
-                    task_counts[created_at.date()] = 0
-
-                task_counts[created_at.date()] +=1
-
-                if task['status'] == 'active':
-                     backlog_counts[created_at.date()] +=1
-
-    for day, count in task_counts.items():
-         backlog = backlog_counts[day]
-         total_weekly_backlog += backlog
-
-         if count:
-              weekly_completed_percentage[day] = round((1 - (backlog/count))*100)
-
-    statistics['weekly_backlog_count'] = total_weekly_backlog
-    statistics['weekly_completed_percentage'] = weekly_completed_percentage
-
-    return statistics
+    weekly_stats['total_weekly_backlog_count'] = total_weekly_backlog_count
+    return weekly_stats
 
 def apply_indirect_filters(query, filters):
     for key in filters:
