@@ -410,14 +410,14 @@ class FclSelectedForBooking(BaseModel):
 
 
 class FclSelectedForPreference(BaseModel):
-    rate_id: str
-    validity_id: str
-    given_priority: int
+    rate_id: str = None
+    validity_id: str = None
+    given_priority: int = 1
 
 
 class ApplyRevenueDeskFclFreightStatistics(BaseModel):
-    shipment_id: str
-    shipment_fcl_freight_service_id: str
+    shipment_id: str = None
+    shipment_fcl_freight_service_id: str = None
     rate_id: str = None
     validities: list[str] = None
     selected_for_booking: FclSelectedForBooking = None

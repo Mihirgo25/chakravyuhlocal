@@ -57,8 +57,8 @@ class RevenueDesk:
         self.increment_keys = {"so1_visit_count"}
 
         total_priority = (
-            fcl_freight_rate_statistic.total_priority
-            + request.selected_for_preference.given_priority
+            (fcl_freight_rate_statistic.total_priority or 1)
+            + (request.selected_for_preference.given_priority or 1)
         )
 
         update_params = dict(total_priority=total_priority)
@@ -190,7 +190,7 @@ class RevenueDesk:
     def set_rate_stats(self,created_at):
         fcl_freight_rate_statistic = FclFreightRateStatistic.select().where(
             FclFreightRateStatistic.identifier == get_identifier(**self.rate)
-        )
+        ).first()
 
         self.rate = jsonable_encoder(model_to_dict(fcl_freight_rate_statistic))
 

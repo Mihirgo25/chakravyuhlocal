@@ -163,7 +163,7 @@ async def use_default_filter(filters, page_limit, page, is_service_object_requir
     select = ",".join(DEFAULT_PARAMS)
 
     aggregate_select = ",".join(
-        [f"{v} AS {k}" for k, v in DEFAULT_AGGREGATE_PARAMS.items()]
+        [f"{v} AS aggregate_{k}" for k, v in DEFAULT_AGGREGATE_PARAMS.items()]
     )
 
     queries = [
@@ -175,7 +175,7 @@ async def use_default_filter(filters, page_limit, page, is_service_object_requir
         queries.append(where)
 
     queries.append(f"GROUP BY {select}")
-
+    
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
     )

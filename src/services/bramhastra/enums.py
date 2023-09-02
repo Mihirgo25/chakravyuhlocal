@@ -94,3 +94,10 @@ class BrahmastraTrackStatus(Bramhastra):
     
 class BrahmastraTrackModuleTypes(Bramhastra):
     table = "table"
+    
+
+class AirSources(Bramhastra):
+    manual = "manual"
+    predicted = "predicted"
+    rate_extension = "rate_extension"
+    rate_sheet = "rate_sheet"
