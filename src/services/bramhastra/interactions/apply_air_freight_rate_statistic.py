@@ -8,6 +8,10 @@ def apply_air_freight_rate_statistic(request):
 
 def setting_air_freight_rate_statistic(action, params):
     rate = Rate(freight=params.freight)
+    
+    if action == "delete":
+        rate.delete_latest_stat()
+        return
 
     rate.set_formatted_data()
 

@@ -6,6 +6,7 @@ from peewee import (
     TextField,
     DateField,
     IntegerField,
+    BooleanField,
 )
 from datetime import datetime
 from database.db_session import db
@@ -121,6 +122,7 @@ class FclFreightRateStatistic(BaseModel):
     bulk_operation_id = UUIDField(null=True, index=True)
     operation_created_at = DateTimeTZField(default=datetime.utcnow())
     operation_updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
+    is_deleted = BooleanField(index = True,default = False)
 
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()

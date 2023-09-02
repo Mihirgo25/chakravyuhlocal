@@ -82,6 +82,8 @@ def execute(request):
 
     if str(object.service_provider_id)== SERVICE_PROVIDER_FF and not request.get('extension_not_required'):
         extend_rate_fun(object,request,validity_object)
+        
+    send_stats(request,object)
 
     return {
         'id':object.id
@@ -164,3 +166,7 @@ def find_object(request):
     except:
         object=None
     return object
+
+def send_stats(request,freight):
+    from services.bramhastra.celery import send_air_rate_stats_in_delay
+    send_air_rate_stats_in_delay.apply_async(kwargs = {'action':'update','request':request,'freight':freight},queue = 'statistics')

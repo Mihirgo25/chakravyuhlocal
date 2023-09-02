@@ -28,6 +28,9 @@ import sentry_sdk
 from services.bramhastra.models.air_freight_rate_statistic import (
     AirFreightRateStatistic,
 )
+from services.bramhastra.models.fcl_freight_rate_request_statistics import (
+       FclFreightRateRequestStatistic
+)
 import os
 
 """
@@ -45,7 +48,7 @@ If `arjun` is not the user, old duplicate entries won't be cleared. We recommend
 
 class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
-        self.models = models or [FclFreightRateStatistic, AirFreightRateStatistic]
+        self.models = models or [FclFreightRateStatistic, AirFreightRateStatistic,FclFreightRateRequestStatistic]
         self.__clickhouse = ClickHouse()
         self.on_startup = None
 
@@ -122,16 +125,12 @@ class Brahmastra:
             ).id
 
         if model.IMPORT_TYPE == ImportTypes.csv.value:
-            last_updated_at = self.get_last_updated_at(model)
-
-            brahmastra_track = self.__create_brahmastra_track(
-                model, status, datetime.utcnow()
-            )
+            brahmastra_track = self.get_track(model)
 
             try:
                 query = (
                     model.select(model.updated_at)
-                    .where(model.updated_at > last_updated_at)
+                    .where(model.updated_at > brahmastra_track.last_updated_at)
                     .order_by(model.updated_at.desc())
                     .limit(1)
                     .first()
@@ -148,7 +147,7 @@ class Brahmastra:
                 rows = []
                 count = 0
                 for row in ServerSide(
-                    model.select().where(model.updated_at >= last_updated_at)
+                    model.select().where(model.updated_at >= brahmastra_track.last_updated_at)
                 ):
                     print(count)
                     count += 1
@@ -158,8 +157,6 @@ class Brahmastra:
 
                     if old_data := self.__get_clickhouse_row(model, row):
                         data["version"] = old_data["version"] + 1
-                        row.version = data["version"]
-                        row.save()
                         rows.append(json_encoder_for_clickhouse(old_data))
 
                     rows.append(data)
@@ -217,17 +214,14 @@ class Brahmastra:
 
                 print(f"done with {model._meta.table_name}")
 
-    def get_last_updated_at(self, model):
+    def get_track(self, model):
         if (
-            track := WorkerLog.select(WorkerLog.last_updated_at)
+            track := WorkerLog.select()
             .where(
-                WorkerLog.last_updated_at != None,
-                WorkerLog.status == BrahmastraTrackStatus.completed.value,
                 WorkerLog.module_name == model._meta.table_name,
                 WorkerLog.module_type == BrahmastraTrackModuleTypes.table.value,
             )
             .order_by(WorkerLog.ended_at.desc())
-            .limit(1)
             .first()
         ):
-            return track.last_updated_at
+            return track

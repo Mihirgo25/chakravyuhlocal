@@ -96,11 +96,14 @@ CREATE TABLE brahmastra.air_freight_rate_statistics
     shipment_confirmed_by_importer_exporter_count UInt16 ,
     rate_deviation_from_cluster_base_rate Float64 DEFAULT 0,
     performed_by_id UUID,
-    performed_by_type FixedString(256)
+    performed_by_type FixedString(256),
+    operation_created_at DateTime,
+    operation_updated_at DateTime,
+    is_deleted Bool DEFAULT false
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,rate_id,validity_id)
-ORDER BY (origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,rate_id,validity_id,rate_deviation_from_booking_rate,updated_at);
+PRIMARY KEY (is_deleted,origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,rate_id,validity_id)
+ORDER BY (is_deleted,origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,rate_id,validity_id,rate_deviation_from_booking_rate,updated_at);
 
 CREATE TABLE brahmastra.stale_air_freight_rate_statistics
 (
@@ -200,6 +203,9 @@ CREATE TABLE brahmastra.stale_air_freight_rate_statistics
     shipment_confirmed_by_importer_exporter_count UInt16 ,
     rate_deviation_from_cluster_base_rate Float64 DEFAULT 0,
     performed_by_id UUID,
-    performed_by_type FixedString(256)
+    performed_by_type FixedString(256),
+    operation_created_at DateTime,
+    operation_updated_at DateTime,
+    is_deleted Bool DEFAULT false
 )
 ENGINE = File(CSV);
