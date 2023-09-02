@@ -133,6 +133,7 @@ class CreateAirFreightRateSurchargeParams(BaseModel):
     bulk_operation_id: str = None
     rate_sheet_id: str = None
     line_items: list[LineItem]
+    importer_exporter_id:str = None
 
 
 class UpdateAirFreightRateSurchargeParams(BaseModel):
@@ -164,6 +165,7 @@ class CreateAirFreightRateLocalParams(BaseModel):
     rate_sheet_id: str = None
     rate_type: str = "market_place"
     line_items: list[LineItemLocal]
+    importer_exporter_id:str = None
 
 
 class LocalSlabsParams(BaseModel):
