@@ -170,12 +170,12 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=22, minute=30),
         'options': {'queue': 'statistics'}
     },
-    'supply_tool_cancelled_shipments':{
+    'smt_cancelled_shipments':{
         'task': 'celery_worker.cancelled_shipments_in_delay',
         'schedule':crontab(hour=20, minute=30),
         'options': {'queue': 'fcl_freight_rate'}
     },
-    'supply_tool_expiring_rates':{
+    'smt_expiring_rates':{
         'task': 'celery_worker.expiring_rates_in_delay',
         'schedule':crontab(hour=17, minute=30),
         'options': {'queue': 'fcl_freight_rate'}
