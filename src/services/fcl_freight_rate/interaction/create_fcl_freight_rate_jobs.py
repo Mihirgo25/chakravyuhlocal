@@ -26,14 +26,15 @@ def create_fcl_freight_rate_job(request, source):
             'commodity' : data.get('commodity'),
             'source' : source,
             'rate_type' : data.get('rate_type'),
-            'rate_id' : data.get('rate_id'),
         }
-        init_key = f'{str(params.get("origin_port_id"))}:{str(params["destination_port_id"] or "")}:{str(params["shipping_line_id"])}:{str(params["service_provider_id"] or "")}:{str(params["container_size"])}:{str(params["container_type"])}:{str(params["commodity"])}:{str(params["source"])}:{str(params["rate_type"])}:{str(params["rate_id"] or "")}'
-        fcl_freight_rate_job = FclFreightRateJobs.select().where(FclFreightRateJobs.init_key == init_key, FclFreightRateJobs.status in ['backlog', 'pending']).first()
+        init_key = f'{str(params.get("origin_port_id"))}:{str(params["destination_port_id"] or "")}:{str(params["shipping_line_id"])}:{str(params["service_provider_id"] or "")}:{str(params["container_size"])}:{str(params["container_type"])}:{str(params["commodity"])}:{str(params["source"])}:{str(params["rate_type"])}'
+        fcl_freight_rate_job = FclFreightRateJobs.select().where(FclFreightRateJobs.init_key == init_key, FclFreightRateJobs.status << ['backlog', 'pending']).first()
         params['init_key'] = init_key
 
         if not fcl_freight_rate_job:
             fcl_freight_rate_job = create_job_object(params)
+        else:
+            continue
 
 
         user_id = task_distribution_system('FCL')

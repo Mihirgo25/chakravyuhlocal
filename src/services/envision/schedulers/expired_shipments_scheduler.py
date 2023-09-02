@@ -4,6 +4,8 @@ from services.air_freight_rate.interactions.create_air_freight_rate_jobs import 
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
 import datetime
 from fastapi.encoders import jsonable_encoder
+from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
+
 
 DAYS_TO_EXPIRE = datetime.datetime.now() + datetime.timedelta(days=7)
 
@@ -18,9 +20,9 @@ def expired_shipments_scheduler():
     
     for service in services:
         if service == "fcl_freight":
-            fcl_query = FclFreightRate.select(*[getattr(FclFreightRate, col) for col in required_columns['fcl_freight']]).where(FclFreightRate.last_rate_available_date <= DAYS_TO_EXPIRE)
+            fcl_query = FclFreightRate.select(*[getattr(FclFreightRate, col) for col in required_columns['fcl_freight']]).where(FclFreightRate.last_rate_available_date <= DAYS_TO_EXPIRE and FclFreightRate.service_provider_id != DEFAULT_SERVICE_PROVIDER_ID)
         if service == 'air_freight':
-            air_query = AirFreightRate.select(*[getattr(AirFreightRate, col) for col in required_columns['air_freight']]).where(AirFreightRate.last_rate_available_date <= DAYS_TO_EXPIRE)
+            air_query = AirFreightRate.select(*[getattr(AirFreightRate, col) for col in required_columns['air_freight']]).where(AirFreightRate.last_rate_available_date <= DAYS_TO_EXPIRE and AirFreightRate.service_provider_id != DEFAULT_SERVICE_PROVIDER_ID)
     
     fcl_data = jsonable_encoder(list(fcl_query.dicts()))
     air_data = jsonable_encoder(list(air_query.dicts()))

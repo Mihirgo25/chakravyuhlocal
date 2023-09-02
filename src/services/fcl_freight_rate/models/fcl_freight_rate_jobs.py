@@ -38,10 +38,7 @@ class FclFreightRateJobs(BaseModel):
     closed_by_id = UUIDField(null=True, index=True)
     closed_by = BinaryJSONField(null=True)
     closing_remarks = TextField(null=True)
-    port = BinaryJSONField(null=True)
-    port_id = UUIDField(null=True)
     rate_type = TextField(null=True)
-    rate_id = UUIDField(null=True, index=True)
     init_key = TextField(index=True, null=True)
 
     class Meta:

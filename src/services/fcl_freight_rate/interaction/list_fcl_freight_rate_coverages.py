@@ -4,9 +4,9 @@ from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
+
+
 STRING_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
-
-
 
 possible_direct_filters = [
     "origin_port_id",
@@ -102,25 +102,14 @@ def apply_updated_at_filter(query, filters):
 
 
 def apply_date_range_filter(query, filters):
-    start_date = datetime.strptime(filters["date_range"]["startDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
-    end_date = datetime.strptime(filters["date_range"]["endDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
+    if not filters["date_range"]["startDate"]:
+        start_date = datetime.now() - timedelta(days=7)
+    else:
+        start_date = datetime.strptime(filters["date_range"]["startDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
+    if not filters["date_range"]["endDate"]:
+        
+        end_date = datetime.now() 
+    else:
+        end_date = datetime.strptime(filters["date_range"]["endDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
     query = query.where(FclFreightRateJobs.created_at.cast("date") >= start_date.date(), FclFreightRateJobs.created_at.cast("date") <= end_date.date())
-    print(query)
-    return query
-
-
-def apply_status_filter(query, filters):
-    status = filters["status"]
-    if status == "completed":
-        query = query.where(FclFreightRateJobs.status == "inactive")
-    elif status == "pending":
-        query = query.where(
-            FclFreightRateJobs.status == "active"
-            and FclFreightRateJobs.created_at.cast("date") >= datetime.now().date()
-        )
-    elif status == "backlog":
-        query = query.where(
-            FclFreightRateJobs.status == "active"
-            and FclFreightRateJobs.created_at.cast("date") < datetime.now().date()
-        )
     return query

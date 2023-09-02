@@ -4,13 +4,15 @@ from services.fcl_freight_rate.models.fcl_freight_rate_jobs_mapping import FclFr
 from datetime import datetime
 from fastapi import HTTPException
 
-def delete_fcl_freight_rate_job(request):
-    if request.get('rate_id'):
-        update_params = {'status':'completed'}
-    else:
-        update_params = {'status':'aborted'}
+POSSIBLE_CLOSING_REMARKS = ['Shipping/Airline not serviceable', 'Rate not available', 'No change in rate']
 
-    update_params['updated_at'] = datetime.now()
+
+def delete_fcl_freight_rate_job(request):
+    if request.get('closing_remarks') and request.get('closing_remarks') in POSSIBLE_CLOSING_REMARKS:
+        update_params = {'status':'aborted'}
+    else:
+        update_params = {'status':'completed'}
+
     fcl_freight_rate_job = FclFreightRateJobs.update(update_params).where(FclFreightRateJobs.id == request['id']).execute()
     set_jobs_mapping(request['id'], request)
 
@@ -21,8 +23,7 @@ def set_jobs_mapping(jobs_id, data):
     audit_id = FclFreightRateJobsMapping.create(
         source_id=data.get("rate_id"),
         job_id= jobs_id,
-        source = 'fcl_freight_rate',
-        performed_by_id = data.get("performed_by_id"),
+        closed_by_id = data.get("performed_by_id"),
         data = data.get('data')
     )
     return audit_id

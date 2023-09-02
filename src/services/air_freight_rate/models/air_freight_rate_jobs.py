@@ -34,12 +34,10 @@ class AirFreightRateJobs(BaseModel):
     shipment_type = CharField(null=True)
     stacking_type = CharField(null=True, index=True)
     rate_type = TextField(null=True)
-    rate_id = UUIDField(null=True)
     init_key = TextField(index=True, null=True)
     commodity_type = CharField(null=True)
     commodity_sub_type = CharField(null=True)
     operation_type = CharField(null=True)
-    shipment_type = CharField(null=True)
     stacking_type = CharField(null=True)
     price_type = CharField(null=True)
 
