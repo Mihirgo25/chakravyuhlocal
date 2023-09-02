@@ -101,7 +101,11 @@ if APP_ENV != "production":
         response.headers["X-Process-Time"] = str(process_time)
         return response
 
-
+from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
+from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobsMapping
+from services.fcl_freight_rate.models.fcl_freight_rate_jobs_mapping import FclFreightRateJobsMapping
+from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJobs
+from database.create_tables import Table
 @app.on_event("startup")
 def startup():
     pass
@@ -120,6 +124,8 @@ def startup():
     # fcl_local_
     # migration()
     # free_day()
+    table = Table()
+    table.create_tables([AirFreightRateJobs, AirFreightRateJobsMapping, FclFreightRateJobsMapping, FclFreightRateJobs])
 
 
 @app.on_event("shutdown")
