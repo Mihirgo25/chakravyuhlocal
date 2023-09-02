@@ -11,7 +11,6 @@ from fastapi.responses import JSONResponse
 # from services.haulage_freight_rate.datamigrations.inserting_rule_set_data import insert, insert_china
 # from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from database.db_migration import run_migration
-
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.nandi.nandi_router import nandi_router
@@ -64,6 +63,7 @@ app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl
 app.include_router(prefix = "/air_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'], dependencies=[Depends(get_db)])
 app.include_router(prefix = "/fcl_freight_rate",router = bramhastra, tags = ['Brahmastra'], dependencies=[Depends(get_db)])
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -100,6 +100,7 @@ if APP_ENV != "production":
         process_time = time() - start_time
         response.headers["X-Process-Time"] = str(process_time)
         return response
+
 
 @app.on_event("startup")
 def startup():
