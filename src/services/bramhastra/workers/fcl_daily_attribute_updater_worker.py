@@ -30,6 +30,9 @@ class FclDailyAttributeUpdaterWorker:
                 FclFreightRateAudit.bulk_operation_id,
                 FclFreightRateAudit.created_at,
                 FclFreightRateAudit.action_name,
+                FclFreightRateAudit.performed_by_id,
+                FclFreightRateAudit.performed_by_id,
+                FclFreightRateAudit.source,
             ).where(
                 FclFreightRateAudit.created_at > datetime.utcnow() - timedelta(hours=5),
                 FclFreightRateAudit.object_type == "FclFreightRate",
