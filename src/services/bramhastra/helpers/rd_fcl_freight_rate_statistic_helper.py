@@ -218,7 +218,7 @@ class RevenueDesk:
             == get_identifier(
                 self.original_booked_rate.get("rate_id"),
                 self.original_booked_rate.get("validity_id"),
-            )
+            ).first()
         )
 
         if fcl_freight_rate_statistic:
