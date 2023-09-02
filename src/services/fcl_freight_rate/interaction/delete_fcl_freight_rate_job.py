@@ -4,11 +4,11 @@ from services.fcl_freight_rate.models.fcl_freight_rate_jobs_mapping import FclFr
 from datetime import datetime
 from fastapi import HTTPException
 
-POSSIBLE_CLOSING_REMARKS = ['Shipping/Airline not serviceable', 'Rate not available', 'No change in rate']
+POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_in_rate']
 
 
 def delete_fcl_freight_rate_job(request):
-    if request.get('closing_remarks') and request.get('closing_remarks') in POSSIBLE_CLOSING_REMARKS:
+    if request.get('closing_remarks') and request.get('closing_remarks')[0] in POSSIBLE_CLOSING_REMARKS:
         update_params = {'status':'aborted'}
     else:
         update_params = {'status':'completed'}
