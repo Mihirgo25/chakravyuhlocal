@@ -30,11 +30,13 @@ CREATE TABLE brahmastra.fcl_freight_rate_request_statistics
     created_at DateTime DEFAULT now(),
     updated_at DateTime DEFAULT now(),
     sign Int8 DEFAULT 1,
-    version UInt32 DEFAULT 1
+    version UInt32 DEFAULT 1,
+    operation_created_at DateTime,
+    operation_updated_at DateTime
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id)
-ORDER BY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,updated_at);
+PRIMARY KEY (origin_continent_id,origin_country_id,origin_port_id,performed_by_id)
+ORDER BY (origin_continent_id,origin_country_id,origin_port_id,performed_by_id,updated_at);
 
 CREATE TABLE brahmastra.stale_fcl_freight_rate_request_statistics
 (

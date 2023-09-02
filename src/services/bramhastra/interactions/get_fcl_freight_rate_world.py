@@ -7,7 +7,7 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 
 
 async def get_fcl_freight_rate_world():
-    statistics = await get_past_count()
+    statistics = await get_count_distribution()
 
     count = await get_total_count()
 
@@ -24,7 +24,7 @@ async def get_total_count():
         return result[0]["count"]
 
 
-async def get_past_count():
+async def get_count_distribution():
     clickhouse = ClickHouse()
 
     query = f"""

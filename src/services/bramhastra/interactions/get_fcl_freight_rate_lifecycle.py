@@ -59,6 +59,8 @@ def get_date_range_filter(where):
 async def get_fcl_freight_rate_lifecycle(filters):
     where = get_direct_indirect_filters_for_rate(filters)
 
+    mode_wise_rate_count = await get_mode_wise_rate_count(filters.copy(), where)
+
     search_to_book_statistics = await get_search_to_book_and_feedback_statistics(
         filters.copy(), where
     )
@@ -78,9 +80,7 @@ async def get_fcl_freight_rate_lifecycle(filters):
             },
             {
                 "action_type": "booking_confirm",
-                "rates_count": search_to_book_statistics[
-                    "bookings_created_count"
-                ],
+                "rates_count": search_to_book_statistics["bookings_created_count"],
                 "drop": filter_out_of_range_value(
                     search_to_book_statistics["confirmed_booking_percentage"]
                 ),
@@ -118,7 +118,7 @@ async def get_fcl_freight_rate_lifecycle(filters):
         ],
         [
             {
-                "action_type": "disliked_rates",
+                "action_type": "dislike",
                 "rates_count": search_to_book_statistics["dislikes"],
                 "drop": filter_out_of_range_value(
                     search_to_book_statistics["dislikes_percentage"]
@@ -141,20 +141,24 @@ async def get_fcl_freight_rate_lifecycle(filters):
         ],
         [
             {
-                "action_type": "stale_rates",
-                "rates_count": stale_rate_statistics["stale_rates"],
+                "action_type": "idle_rates",
+                "rates_count": stale_rate_statistics["idle_rates"],
             },
         ],
     ]
 
-    return dict(searches=search_to_book_statistics["spot_search"], cards=statistics)
+    return dict(
+        mode_wise_rate_count=mode_wise_rate_count,
+        searches=search_to_book_statistics["spot_search"],
+        cards=statistics,
+    )
 
 
 async def get_stale_rate_statistics(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT count(DISTINCT rate_id) as stale_rates FROM brahmastra.fcl_freight_rate_statistics WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""
+        """SELECT count(DISTINCT rate_id) as idle_rates FROM brahmastra.fcl_freight_rate_statistics WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""
     ]
 
     if where:
@@ -225,6 +229,22 @@ async def get_search_to_book_and_feedback_statistics(filters, where):
 
     if charts := jsonable_encoder(clickhouse.execute(" ".join(queries), filters)):
         return charts[0]
+
+
+async def get_mode_wise_rate_count(filters, where):
+    clickhouse = ClickHouse()
+
+    queries = [
+        """SELECT parent_mode,COUNT(DISTINCT rate_id) as rate_count from brahmastra.fcl_freight_rate_statistics"""
+    ]
+
+    if where:
+        queries.append(f" WHERE {where} AND is_deleted = false")
+
+    queries.append("GROUP BY parent_mode")
+
+    if charts := jsonable_encoder(clickhouse.execute(" ".join(queries), filters)):
+        return charts
 
 
 def filter_out_of_range_value(val):

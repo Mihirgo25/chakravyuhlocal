@@ -34,7 +34,7 @@ def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, p
         queries.append(where)
         queries.append("AND accuracy != -1 and accuracy != 0")
 
-    get_add_group_and_order_by(queries, grouping,sort_by,sort_type)
+    add_group_by_and_order_by(queries, grouping,sort_by,sort_type)
     
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
@@ -53,7 +53,7 @@ def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, p
     )
 
 
-def get_add_group_and_order_by(queries, grouping,sort_by,sort_type):
+def add_group_by_and_order_by(queries, grouping,sort_by,sort_type):
     queries.append("GROUP BY")
     queries.append(",".join(grouping))
     queries.append(
