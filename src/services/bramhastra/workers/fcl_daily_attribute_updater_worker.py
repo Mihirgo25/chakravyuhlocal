@@ -4,7 +4,6 @@ from services.bramhastra.client import ClickHouse
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
-from fastapi.encoders import jsonable_encoder
 from playhouse.postgres_ext import ServerSide
 import sentry_sdk
 
@@ -22,6 +21,7 @@ class FclDailyAttributeUpdaterWorker:
                 FclFreightRateAudit.extended_from_object_id.alias("parent_rate_id"),
                 FclFreightRateAudit.rate_sheet_id,
                 FclFreightRateAudit.bulk_operation_id,
+                FclFreightRateAudit.created_at,
             ).where(
                 FclFreightRateAudit.created_at
                 > datetime.utcnow() - timedelta(hours=27),
@@ -29,26 +29,20 @@ class FclDailyAttributeUpdaterWorker:
                 FclFreightRateAudit.action_name == "create",
             )
             for fcl_freight_rate_audit in ServerSide(query):
-                query = [
-                    f"ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name}"
-                ]
-
-                audit = dict(rate_id=fcl_freight_rate_audit.rate_id)
-                update = []
+                params = dict()
                 for key in keys:
                     if getattr(fcl_freight_rate_audit, key):
-                        update.append(f"{key} = %({key})s")
-                        audit[key] = getattr(fcl_freight_rate_audit, key)
-                if len(audit) == 1:
+                        params[key] = getattr(fcl_freight_rate_audit, key)
+
+                if not params:
                     continue
 
-                query.append("UPDATE")
+                params["updated_at"] = fcl_freight_rate_audit.created_at
 
-                query.append(",".join(update))
-                query.append(
-                    f"WHERE (id,version) IN (SELECT id, MAX(version) AS max_version FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE rate_id = %(rate_id)s GROUP BY id)"
-                )
-                self.clickhouse.execute(f" ".join(query), jsonable_encoder(audit))
+                FclFreightRateStatistic.update(**params).where(
+                    FclFreightRateStatistic.rate_id == fcl_freight_rate_audit.rate_id
+                ).execute()
 
         except Exception as e:
+            print(e)
             sentry_sdk.capture_exception(e)
