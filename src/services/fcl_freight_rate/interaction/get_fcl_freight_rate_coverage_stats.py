@@ -24,36 +24,29 @@ STATISTICS = {
 def get_fcl_freight_rate_coverage_stats(filters = {}):
         statistics = STATISTICS.copy()
         ## Query to get Daily Stats
-        daily_query = get_daily_query()
+        daily_query = get_daily_query(filters)
         ## Query to get Weekly Detials
-        weekly_query = get_weekly_query()
+        weekly_query = get_weekly_query(filters)
 
-        if filters:
-                if type(filters) != dict:
-                        filters = json.loads(filters)
+        statistics = build_daily_details(daily_query,statistics)
+        statistics = build_weekly_details(weekly_query,statistics)
 
-                # GET FILTERS
-                direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+        return statistics
 
-                # APPLY DIRECT FILTERS for Daily and Weekly
-                daily_query = get_filters(direct_filters, daily_query, FclFreightRateJobs)
-                weekly_query = get_filters(direct_filters, weekly_query, FclFreightRateJobs)
+def apply_filters_for_query(query,filters):
+    if filters:
+        if type(filters) != dict:
+            filters = json.loads(filters)
 
-                # APPLY INDIRECT FILTERS for Daily and Weekly
-                daily_query = apply_indirect_filters(daily_query, indirect_filters)
-                weekly_query = apply_indirect_filters(weekly_query, indirect_filters)
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+        query = get_filters(direct_filters, query, FclFreightRateJobs)
+        query = apply_indirect_filters(query, indirect_filters)
 
-        daily_statistics = build_daily_details(daily_query)
-        weekly_statistics = build_weekly_details(weekly_query)
-
-        return daily_statistics,weekly_statistics
+    return query
 
 
-# TODAY'S TASKS
-# a. Whatever Jobs created today
-# b. Whatever Jobs that is still active
-def get_daily_query():
-    stats = FclFreightRateJobs.select(
+def get_daily_query(filters):
+    query = FclFreightRateJobs.select(
          FclFreightRateJobs.status,
          FclFreightRateJobs.origin_port_id,
          FclFreightRateJobs.destination_port_id,
@@ -63,10 +56,11 @@ def get_daily_query():
          ).where(
               FclFreightRateJobs.created_at.cast('date') == datetime.now().date()
         )
-    return stats
 
-# WEEKLY DETAILS : Whatever Jobs created in past 7 days
-def get_weekly_query():
+    query = apply_filters_for_query(query,filters)
+    return query
+
+def get_weekly_query(filters):
     query = FclFreightRateJobs.select(
          FclFreightRateJobs.status,
          FclFreightRateJobs.origin_port_id,
@@ -77,9 +71,10 @@ def get_weekly_query():
     ).where(
             FclFreightRateJobs.created_at.cast('date') >= datetime.now().date()-timedelta(days=7)
     )
+    query = apply_filters_for_query(query,filters)
     return query
 
-def build_daily_details(query):
+def build_daily_details(query,statistics):
     daily_stats_query = query.select(
           FclFreightRateJobs.status,
           fn.COUNT(FclFreightRateJobs.id).alias('count')
@@ -87,14 +82,13 @@ def build_daily_details(query):
           FclFreightRateJobs.status
     )
 
-    daily_stats = {}
     daily_results = json_encoder(list(daily_stats_query.dicts()))
     for data in daily_results:
-        daily_stats[data['status']] = data['count']
+        statistics[data['status']] = data['count']
 
-    return daily_stats
+    return statistics
 
-def build_weekly_details(query):
+def build_weekly_details(query,statistics):
     weekly_stats_query = query.select(
           FclFreightRateJobs.status,
           fn.COUNT(FclFreightRateJobs.id).alias('count'),
@@ -132,8 +126,10 @@ def build_weekly_details(query):
         total_completed_per_day = total_dict[date]['completed']
         weekly_stats[date] = round((total_completed_per_day/total_task_per_day * 100))
 
-    weekly_stats['total_weekly_backlog_count'] = total_weekly_backlog_count
-    return weekly_stats
+    statistics['weekly_completed_percentage'] = weekly_stats
+
+    statistics['weekly_backlog_count'] = total_weekly_backlog_count
+    return statistics
 
 def apply_indirect_filters(query, filters):
     for key in filters:
