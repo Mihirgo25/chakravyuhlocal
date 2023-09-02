@@ -29,7 +29,7 @@ def create_fcl_freight_rate_job(request, source):
             'rate_id' : data.get('rate_id'),
         }
         init_key = f'{str(params.get("origin_port_id"))}:{str(params["destination_port_id"] or "")}:{str(params["shipping_line_id"])}:{str(params["service_provider_id"] or "")}:{str(params["container_size"])}:{str(params["container_type"])}:{str(params["commodity"])}:{str(params["source"])}:{str(params["rate_type"])}:{str(params["rate_id"] or "")}'
-        fcl_freight_rate_job = FclFreightRateJobs.select().where(FclFreightRateJobs.init_key == init_key, FclFreightRateJobs.status == ['backlog', 'pending']).first()
+        fcl_freight_rate_job = FclFreightRateJobs.select().where(FclFreightRateJobs.init_key == init_key, FclFreightRateJobs.status in ['backlog', 'pending']).first()
         params['init_key'] = init_key
 
         if not fcl_freight_rate_job:
