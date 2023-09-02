@@ -23,7 +23,7 @@ def set_jobs_mapping(jobs_id, data):
     audit_id = FclFreightRateJobsMapping.create(
         source_id=data.get("rate_id"),
         job_id= jobs_id,
-        closed_by_id = data.get("performed_by_id"),
+        performed_by_id = data.get("performed_by_id"),
         data = data.get('data')
     )
     return audit_id
