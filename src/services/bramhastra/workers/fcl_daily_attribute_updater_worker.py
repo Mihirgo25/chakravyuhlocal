@@ -29,6 +29,7 @@ class FclDailyAttributeUpdaterWorker:
                 FclFreightRateAudit.rate_sheet_id,
                 FclFreightRateAudit.bulk_operation_id,
                 FclFreightRateAudit.created_at,
+                FclFreightRateAudit.action_name,
             ).where(
                 FclFreightRateAudit.created_at > datetime.utcnow() - timedelta(hours=5),
                 FclFreightRateAudit.object_type == "FclFreightRate",
@@ -42,11 +43,17 @@ class FclDailyAttributeUpdaterWorker:
                 if not params:
                     continue
 
-                params["updated_at"] = fcl_freight_rate_audit.created_at
+                if fcl_freight_rate_audit.action_name != "create":
+                    params["updated_at"] = fcl_freight_rate_audit.created_at
 
-                FclFreightRateStatistic.update(**params).where(
-                    FclFreightRateStatistic.rate_id == fcl_freight_rate_audit.rate_id
-                ).execute()
+                fcl = (
+                    FclFreightRateStatistic.update(**params)
+                    .where(
+                        FclFreightRateStatistic.rate_id
+                        == fcl_freight_rate_audit.rate_id
+                    )
+                    .execute()
+                )
 
         except Exception as e:
             print(e)
