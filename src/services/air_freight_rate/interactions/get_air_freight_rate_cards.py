@@ -330,6 +330,9 @@ def get_surcharges(requirements,rates):
         ~(AirFreightRateSurcharge.rate_not_available_entry)
     )
 
+    if requirements.get('importer_exporter_id'):
+        surcharges_query = surcharges_query.where(AirFreightRateSurcharge.importer_exporter_id == requirements['importer_exporter_id'])
+
     surcharges_results = jsonable_encoder(list(surcharges_query.dicts()))
 
     return surcharges_results
@@ -506,7 +509,6 @@ def get_air_freight_rate_cards(requirements):
         
         if requirements['commodity'] == 'special_consideration' and not requirements.get('commodity_subtype'):
             raise HTTPException(status_code=400, detail="commodity_subtype is required for special_consideration")
-        
 
         freight_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(freight_query.dicts()))
@@ -518,7 +520,7 @@ def get_air_freight_rate_cards(requirements):
 
         is_predicted = False
         freight_rates,is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
-        
+
         freight_rates = post_discard_less_relevant_rates(freight_rates)
         missing_surcharge = get_missing_surcharges(freight_rates)
         surcharges = get_surcharges(requirements,missing_surcharge)

@@ -32,13 +32,15 @@ def initialize_local_query(request):
         AirFreightRateLocal.trade_type == request.get('trade_type'),
         AirFreightRateLocal.commodity == request.get('commodity'),
         AirFreightRateLocal.commodity_type == request.get('commodity_type'),
-        ((AirFreightRateLocal.importer_exporter_id == request.get('importer_exporter_id')) | (AirFreightRateLocal.importer_exporter_id.is_null(True))),
         ~(AirFreightRateLocal.is_line_items_error_messages_present),
         ~(AirFreightRateLocal.rate_not_available_entry)
     )
 
     if request.get('airline_id'):
         query = query.where(AirFreightRateLocal.airline_id == request.get('airline_id'))
+    
+    if request.get('importer_exporter_id'):
+        query = query.where(AirFreightRateLocal.importer_exporter_id == request.get('importer_exporter_id'))
     
     return query
 
