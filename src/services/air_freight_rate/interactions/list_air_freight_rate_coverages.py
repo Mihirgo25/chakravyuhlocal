@@ -14,14 +14,6 @@ possible_direct_filters = [
 ]
 possible_indirect_filters = ["updated_at", "user_id", "date_range"]
 
-DYNAMIC_STATISTICS = {
-    'monitoring_dashboard':0,
-    'spot_search' : 0,
-    'critical_ports' : 0,
-    'expiring_rates' : 0,
-    'cancelled_shipments' : 0
-}
-
 DEFAULT_REQUIRED_FIELDS = [
     'id',
     'assigned_to',
@@ -58,7 +50,7 @@ def list_air_freight_rate_coverages(
         )
         query = get_filters(direct_filters, query, AirFreightRateJobs)
         query = apply_indirect_filters(query, indirect_filters)
-        dynamic_statisitcs, query = get_statisitcs(DYNAMIC_STATISTICS.copy(), query, filters)
+        dynamic_statisitcs, query = get_statisitcs(query, filters)
 
     if page_limit and not generate_csv_url:
         query = query.paginate(page, page_limit)
@@ -68,7 +60,8 @@ def list_air_freight_rate_coverages(
     return {"list": data, "stats": dynamic_statisitcs}
 
 
-def get_statisitcs(dynamic_statisitcs, query, filters):
+def get_statisitcs(query, filters):
+    dynamic_statisitcs = {}
     dynamic_statisitcs['monitoring_dashboard'] = query.where(AirFreightRateJobs.source == 'monitoring_dashboard').count()
     dynamic_statisitcs['spot_search'] = query.where(AirFreightRateJobs.source == 'spot_search').count()
     dynamic_statisitcs['critical_ports'] = query.where(AirFreightRateJobs.source == 'critical_ports').count()
