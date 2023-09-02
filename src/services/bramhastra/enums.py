@@ -101,3 +101,5 @@ class AirSources(Bramhastra):
     predicted = "predicted"
     rate_extension = "rate_extension"
     rate_sheet = "rate_sheet"
+    freight_look = "freight_look"
+    cargo_ai = "cargo_ai"
