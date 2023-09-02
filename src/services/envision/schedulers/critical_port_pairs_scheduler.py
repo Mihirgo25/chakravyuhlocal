@@ -4,8 +4,9 @@ from services.air_freight_rate.interactions.create_air_freight_rate_jobs import 
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
 from configs.fcl_freight_rate_constants import CRITICAL_PORTS_INDIA_VIETNAM, CRITICAL_AIRPORTS_INDIA_VIETNAM
 import datetime
-from fastapi.encoders import jsonable_encoder
 from playhouse.postgres_ext import ServerSide
+from playhouse.shortcuts import model_to_dict
+
 
 SEVEN_DAYS_AGO = datetime.datetime.now() - datetime.timedelta(days=7)
 
@@ -32,14 +33,11 @@ def critical_port_pairs_scheduler():
                     (AirFreightRate.destination_airport_id << CRITICAL_AIRPORTS_INDIA_VIETNAM)),
                     (AirFreightRate.updated_at < SEVEN_DAYS_AGO)
                 )
-    
-    fcl_data = jsonable_encoder(list(fcl_query.dicts()))
-    air_data = jsonable_encoder(list(air_query.dicts()))
-
-    for item in fcl_data:
-        item['rate_id'] = item.pop('id')
-    for item in air_data:
-        item['rate_id'] = item.pop('id')
-
-    create_fcl_freight_rate_jobs(fcl_data, 'critical_ports')
-    create_air_freight_rate_jobs(air_data, 'critical_ports')
+            
+    for rate in ServerSide(fcl_query):
+        rate_data = model_to_dict(rate)
+        create_fcl_freight_rate_jobs(rate_data, 'critical_ports')
+        
+    for rate in ServerSide(air_query):
+        rate_data = model_to_dict(rate)
+        create_air_freight_rate_jobs(rate_data, 'critical_ports')
