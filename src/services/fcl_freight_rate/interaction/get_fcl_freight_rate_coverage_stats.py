@@ -91,7 +91,7 @@ def build_daily_details(query,statistics):
 
     statistics['total'] = total_daily_count
     if total_daily_count != 0:
-        statistics['completed_percentage'] = round((statistics['completed']+statistics['aborted']/total_daily_count)*100,2)
+        statistics['completed_percentage'] = round(((statistics['completed']+statistics['aborted'])/total_daily_count)*100,2)
     return statistics
 
 def build_weekly_details(query,statistics):
@@ -130,7 +130,7 @@ def build_weekly_details(query,statistics):
     for date in total_dict:
         total_task_per_day = total_dict[date]['pending'] + total_dict[date]['completed'] + total_dict[date]['backlog'] + total_dict[date]['aborted']
         total_completed_per_day = total_dict[date]['completed']
-        weekly_stats[date] = round((total_completed_per_day/total_task_per_day * 100))
+        weekly_stats[date] = round((total_completed_per_day/total_task_per_day * 100),2)
 
     statistics['weekly_completed_percentage'] = weekly_stats
 
