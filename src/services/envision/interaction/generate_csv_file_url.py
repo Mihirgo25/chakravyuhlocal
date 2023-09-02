@@ -8,7 +8,7 @@ def generate_csv_file_url(filters):
         if type(filters) != dict:
            filters = json.loads(filters)
     
-    service_type = filters.get('service_type')
+    service_type = filters.get('service')
     required_coverage_data = []
     if service_type == 'fcl_freight':
         fcl_coverage_data = list_fcl_freight_rate_coverages(filters = filters,generate_csv_url = True)['list']
