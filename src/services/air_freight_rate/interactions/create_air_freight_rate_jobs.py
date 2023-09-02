@@ -22,13 +22,15 @@ def create_air_freight_rate_jobs(request, source):
             'source' : source,
             'rate_type' : data.get('rate_type'),
             'rate_id' : data.get('rate_id'),
-            "commodity_type":data.get("commodity_type"),
-            "commodity_sub_type":data.get("commodity_sub_type"),
-            "stacking_type":data.get("stacking_type"),
-            "shipment_type":data.get("shipment_type"),
-            "operation_type":data.get("operation_type")
+            'commodity_type': data.get('commodity_type'),
+            'commodity_sub_type': data.get('commodity_sub_type'),
+            'operation_type': data.get('operation_type'),
+            'shipment_type': data.get('shipment_type'),
+            'stacking_type': data.get('stacking_type'),
+            'price_type': data.get('price_type')
         }
-        init_key = f'{str(params.get("origin_airport_id"))}:{str(params["destination_airport_id"] or "")}:{str(params["airline_id"])}:{str(params["service_provider_id"] or "")}:{str(params["commodity"])}:{str(params["source"])}:{str(params["rate_id"])}:{str(params["rate_type"])}:{str(params["commodity_type"] or "")}:{str(params["commodity_sub_type"] or "")}:{str(params["stacking_type"] or ""):{str(params["operation_type"] or "")}}'
+        
+        init_key = f'{str(params.get("origin_airport_id"))}:{str(params["destination_airport_id"] or "")}:{str(params["airline_id"])}:{str(params["service_provider_id"] or "")}:{str(params["commodity"])}:{str(params["source"])}:{str(params["rate_id"])}:{str(params["rate_type"])}:{str(params["commodity_type"] or "")}:{str(params["commodity_sub_type"] or "")}:{str(params["stacking_type"] or "")}:{str(params["operation_type"] or "")}'
         air_freight_rate_job = AirFreightRateJobs.select().where(AirFreightRateJobs.init_key == init_key).first()
         params['init_key'] = init_key
 

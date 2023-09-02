@@ -21,9 +21,6 @@ class AirFreightRateJobs(BaseModel):
     service_provider_id = UUIDField(null=True, index=True)
     airline = BinaryJSONField(null=True)
     airline_id = UUIDField(null=True, index=True)
-    breadth = IntegerField(null=True)
-    height = IntegerField(null=True)
-    length = IntegerField(null=True)
     commodity = CharField(null=True, index=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
@@ -39,6 +36,12 @@ class AirFreightRateJobs(BaseModel):
     rate_type = TextField(null=True)
     rate_id = UUIDField(null=True)
     init_key = TextField(index=True, null=True)
+    commodity_type = CharField(null=True)
+    commodity_sub_type = CharField(null=True)
+    operation_type = CharField(null=True)
+    shipment_type = CharField(null=True)
+    stacking_type = CharField(null=True)
+    price_type = CharField(null=True)
 
     class Meta:
         table_name = 'air_freight_rate_jobs'
