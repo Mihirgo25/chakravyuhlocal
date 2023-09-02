@@ -8,7 +8,6 @@ POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_
 
 
 def delete_air_freight_rate_job(request):
-    breakpoint()
     if request.get('closing_remarks') and request.get('closing_remarks')[0] in POSSIBLE_CLOSING_REMARKS:
         update_params = {'status':'aborted'}
     else:
