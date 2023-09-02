@@ -33,18 +33,16 @@ async def get_past_count():
                 SELECT
                     origin_country_id,
                     destination_country_id,
-                    rate_id,
-                    sum(sign)
+                    rate_id
                 FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE validity_end >= toDate(now())
                 GROUP BY
                     rate_id,
                     origin_country_id,
                     destination_country_id
-                HAVING sum(sign) > 0
             )
         SELECT
             country_id,
-            dictGet('brahmastra.country_rate_count', 'rate_count', country_id) + COUNT(*) AS rate_count
+            COUNT(*) AS rate_count
         FROM
         (
             SELECT origin_country_id AS country_id

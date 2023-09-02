@@ -90,7 +90,7 @@ class LocalData(BaseModel):
 class DeleteAirFreightRateParams(BaseModel):
     id: str
     validity_id: str
-    performed_by_id: str
+    performed_by_id: str = None
     performed_by_type: str = None
     bulk_operation_id: str = None
     sourced_by_id: str = None
@@ -361,11 +361,15 @@ class UpdateFreightRateParams(BaseModel):
 
 
 class DeleteAirFreightRateLocalParams(BaseModel):
-    air_freight_rate_local_id: str
+    id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
 
 
 class DeleteAirFreightRateSurchargeParams(BaseModel):
-    air_freight_rate_surcharge_id: str
+    id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
 
 
 class CreateBulkOperationParams(BaseModel):
