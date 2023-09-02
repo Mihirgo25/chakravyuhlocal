@@ -30,11 +30,6 @@ def cancelled_shipments_scheduler():
     fcl_data = jsonable_encoder(list(fcl_query.dicts()))
     air_data = jsonable_encoder(list(air_query.dicts()))
 
-    for item in fcl_data:
-        item['rate_id'] = item.pop('id')
-    for item in air_data:
-        item['rate_id'] = item.pop('id')
-
     create_fcl_freight_rate_jobs(fcl_data, 'cancelled_shipments')
     create_air_freight_rate_jobs(air_data, 'cancelled_shipments')
 
