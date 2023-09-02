@@ -33,9 +33,9 @@ def spot_search_scheduler(is_predicted, requirements, source):
         current_count = get_current_predicted_count(requirements, source)
         if current_count>=3:
             if source == 'fcl_freight':
-                data = create_fcl_freight_rate_jobs([requirements],  'spot_search')
+                data = create_fcl_freight_rate_jobs(requirements,  'spot_search')
             elif source == 'air_freight':
-                data = create_air_freight_rate_jobs([requirements],  'spot_search')
+                data = create_air_freight_rate_jobs(requirements,  'spot_search')
             delete_init_key(requirements, source)
             return {"init_key": requirements}
         else:
