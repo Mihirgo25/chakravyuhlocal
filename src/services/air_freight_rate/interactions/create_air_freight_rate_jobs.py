@@ -36,17 +36,8 @@ def create_air_freight_rate_jobs(request, source):
 
         if not air_freight_rate_job:
             air_freight_rate_job = create_job_object(params)
-        if air_freight_rate_job.status == 'active' or (air_freight_rate_job.status == 'inactive' and air_freight_rate_job.updated_at > (datetime.now()-timedelta(days=7))):
-            continue
 
-        if not air_freight_rate_job:
-            air_freight_rate_job = AirFreightRateJobs()
-            for key in list(params.keys()):
-                setattr(air_freight_rate_job, key, params[key])
-        if air_freight_rate_job.status == 'active':
-            continue
-
-        if air_freight_rate_job.status == 'inactive' and air_freight_rate_job.updated_at > datetime.now()-timedelta(days=7):
+        if air_freight_rate_job.status in  ('backlog', 'pending') or (air_freight_rate_job.status in ('completed', 'aborted') and air_freight_rate_job.updated_at > (datetime.now()-timedelta(days=7))):
             continue
 
         user_id = task_distribution_system('AIR')
