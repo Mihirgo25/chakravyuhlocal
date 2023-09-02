@@ -159,7 +159,7 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     source: str = None
     source_id: str = None
     serial_id: int = None
-    preferred_freight_rate: float = 0
+    preferred_freight_rate: float = None
     currency: str = Field(alias="preferred_freight_rate_currency", default = 'USD')
     importer_exporter_id: str = None
     service_provider_id: str = None
@@ -170,8 +170,9 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     closed_by_id: str = None
     likes_count: int = None
     dislikes_count: int = None
+    closing_remarks: list[str]
     status: str = "active"
-    
+        
     @validator("preferred_freight_rate", pre=True)
     def convert_preferred_freight_rate(cls, v):
         if not v:
