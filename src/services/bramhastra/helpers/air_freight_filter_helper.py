@@ -61,7 +61,7 @@ def get_direct_indirect_filters(filters):
 
 def get_date_range_filter(where):
     where.append(
-        "validity_end >= %(start_date)s OR validity_start <= %(end_date)s OR (validity_end <= %(end_date)s AND validity_start >= %(start_date)s)"
+        "((validity_end >= %(start_date)s AND validity_start <= %(start_date)s) OR (validity_start <= %(end_date)s AND validity_end >= %(end_date)s) OR (validity_end <= %(end_date)s AND validity_start >= %(start_date)s))"
     )
 
 
