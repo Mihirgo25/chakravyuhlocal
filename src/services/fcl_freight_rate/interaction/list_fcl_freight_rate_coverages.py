@@ -3,13 +3,17 @@ import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from libs.json_encoder import json_encoder
-from datetime import datetime
+from datetime import datetime, timedelta
+STRING_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
+
+
 
 possible_direct_filters = [
     "origin_port_id",
     "destination_port_id",
     "shipping_line_id",
     "commodity",
+    "status"
 ]
 possible_indirect_filters = ["updated_at", "user_id", "date_range"]
 
@@ -98,9 +102,10 @@ def apply_updated_at_filter(query, filters):
 
 
 def apply_date_range_filter(query, filters):
-    start_date = filters["date_range"]["startDate"]
-    end_date = filters["date_range"]["endDate"]
-    query = query.where(FclFreightRateJobs.updated_at.between(start_date, end_date))
+    start_date = datetime.strptime(filters["date_range"]["startDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
+    end_date = datetime.strptime(filters["date_range"]["endDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
+    query = query.where(FclFreightRateJobs.created_at.cast("date") >= start_date.date(), FclFreightRateJobs.created_at.cast("date") <= end_date.date())
+    print(query)
     return query
 
 

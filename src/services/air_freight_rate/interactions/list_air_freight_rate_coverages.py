@@ -1,9 +1,13 @@
 from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
-from services.envision.helpers.csv_link_generator import get_csv_url
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from libs.json_encoder import json_encoder
+from datetime import datetime, timedelta
+
+
+
+STRING_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
 
 possible_direct_filters = [
     "origin_airport",
@@ -105,6 +109,8 @@ def apply_updated_at_filter(query, filters):
     query = query.where(AirFreightRateJobs.updated_at > filters["updated_at"])
     return query
 
-
 def apply_date_range_filter(query, filters):
+    start_date = datetime.strptime(filters["date_range"]["startDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
+    end_date = datetime.strptime(filters["date_range"]["endDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
+    query = query.where(AirFreightRateJobs.created_at.cast("date") >= start_date.date(), AirFreightRateJobs.created_at.cast("date") <= end_date.date())
     return query
