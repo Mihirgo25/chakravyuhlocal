@@ -344,14 +344,14 @@ class FclFreightRate(BaseModel):
         raise HTTPException(status_code=400, detail="line_items contains duplicates")
 
 
-      fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
+      fcl_freight_charges_dict = FCL_FREIGHT_CHARGES.get()
 
       invalid_line_items = [code for code in codes if code.strip() not in fcl_freight_charges_dict.keys()]
 
       if invalid_line_items:
           raise HTTPException(status_code=400, detail="line_items {} are invalid".format(", ".join(invalid_line_items)))
 
-      fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
+      fcl_freight_currencies = FCL_FREIGHT_CURRENCIES.get()
 
       currencies = [currency for currency in fcl_freight_currencies]
       line_item_currencies = [item['currency'] for item in line_items]
@@ -657,7 +657,7 @@ class FclFreightRate(BaseModel):
 
     def possible_origin_local_charge_codes(self):
       self.port = self.origin_port
-      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
       charge_codes = {}
       port = self.origin_port
@@ -674,7 +674,7 @@ class FclFreightRate(BaseModel):
 
     def possible_destination_local_charge_codes(self):
       self.port = self.destination_port
-      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
       port = self.destination_port
       main_port = self.destination_main_port
@@ -689,7 +689,7 @@ class FclFreightRate(BaseModel):
       return charge_codes
 
     def possible_charge_codes(self):
-      fcl_freight_charges = FCL_FREIGHT_CHARGES
+      fcl_freight_charges = FCL_FREIGHT_CHARGES.get()
 
       charge_codes = {}
       shipping_line_id = self.shipping_line_id

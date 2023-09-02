@@ -129,7 +129,7 @@ def get_query_results(query):
 
 
 def build_line_item_object(line_item, requirements):
-    code_config = HAULAGE_FREIGHT_CHARGES[line_item["code"]]
+    code_config = HAULAGE_FREIGHT_CHARGES.get()[line_item["code"]]
 
     # checking if additional_service is required in line item
     is_additional_service = code_config["tags"]
@@ -240,7 +240,7 @@ def build_response_object(result, requirements):
                 line_item["quantity"] = requirements["containers_count"]
                 line_item["unit"] = "per_trailer"
                 line_item["price"] = line_item["total_price"] / line_item["quantity"]
-                code_config = HAULAGE_FREIGHT_CHARGES[line_item["code"]]
+                code_config = HAULAGE_FREIGHT_CHARGES.get()[line_item["code"]]
                 line_item["name"] = code_config["name"]
         else:
             line_item = build_line_item_object(line_item, requirements)

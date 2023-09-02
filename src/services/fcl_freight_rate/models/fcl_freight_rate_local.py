@@ -204,7 +204,7 @@ class FclFreightRateLocal(BaseModel):
         container_type = self.container_type
         commodity = self.commodity
 
-        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
         charge_codes = {}
         for code, config in fcl_freight_local_charges_dict.items():
@@ -238,7 +238,7 @@ class FclFreightRateLocal(BaseModel):
         t.execute()
 
     def detail(self):
-        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
         free_day_ids = []
 

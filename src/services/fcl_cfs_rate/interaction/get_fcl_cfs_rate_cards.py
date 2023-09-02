@@ -140,7 +140,7 @@ def add_cfs_charges(result, response_object, request):
     return True
 
 def build_line_item_object(line_item, request):
-    code_config = FCL_CFS_CHARGES.get(line_item["code"])
+    code_config = FCL_CFS_CHARGES.get().get(line_item["code"])
 
     if not code_config:
         return None

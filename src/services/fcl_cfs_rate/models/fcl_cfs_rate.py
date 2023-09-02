@@ -99,7 +99,7 @@ class FclCfsRate(BaseModel):
     def possible_cfs_charge_codes(self):
         self.set_location()
         location = self.location
-        fcl_cfs_charges = FCL_CFS_CHARGES
+        fcl_cfs_charges = FCL_CFS_CHARGES.get()
         filtered_charge_codes = {}
         for code, config in fcl_cfs_charges.items():
             if (
@@ -243,7 +243,7 @@ class FclCfsRate(BaseModel):
             grouped_charge_codes[line_item.get("code")].append(line_item)
  
         for code, line_items in grouped_charge_codes.items():
-            code_config = FCL_CFS_CHARGES.get(code)
+            code_config = FCL_CFS_CHARGES.get().get(code)
 
             if code_config is None:
                 self.line_items_error_messages[code] = ['is invalid']

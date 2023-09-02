@@ -3,6 +3,7 @@ from micro_services.global_client import GlobalClient
 from micro_services.discover_client import get_instance_url
 from rms_utils.get_money_exchange_for_fcl_fallback import get_money_exchange_for_fcl_fallback
 from libs.cached_money_exchange import get_money_exchange_from_rd, set_money_exchange_to_rd
+from libs.get_charges_yml import get_charge_from_rd, set_charge_to_rd
 
 class CommonApiClient:
     def __init__(self):
@@ -28,7 +29,18 @@ class CommonApiClient:
         
         resp = get_money_exchange_for_fcl_fallback(**data)
         return resp
-
+    
+    def get_charge(self, charge_name):
+        cached_resp = get_charge_from_rd(charge_name)
+        if cached_resp:
+            return cached_resp
+        resp = self.client.request('GET', f'common/charge-code/get-charge-codes?serviceChargeType={charge_name}',{}, {}, timeout=5)
+        if isinstance(resp, dict):
+            set_charge_to_rd(charge_name, resp)
+            return resp
+        
+        return None  
+    
     def create_communication(self, data = {}):
         return self.client.request('POST','communication/create_communication',data, timeout=60)
 

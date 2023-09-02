@@ -104,7 +104,7 @@ class AirFreightRateBulkOperation(BaseModel):
             if str(t["markup_type"]).lower() == "percent":
                 return
 
-            currencies = AIR_FREIGHT_CURRENCIES
+            currencies = AIR_FREIGHT_CURRENCIES.get()
 
             if t["markup_currency"] not in currencies:
                 raise HTTPException(
@@ -125,7 +125,7 @@ class AirFreightRateBulkOperation(BaseModel):
         if str(data["markup_type"]).lower() == "percent":
             return
 
-        currencies = AIR_FREIGHT_CURRENCIES
+        currencies = AIR_FREIGHT_CURRENCIES.get()
 
         if data["markup_currency"] not in currencies:
             raise HTTPException(status_code=400, detail="currency is invalid")
@@ -151,12 +151,12 @@ class AirFreightRateBulkOperation(BaseModel):
                 status_code=400, detail="min_price_markup_type is invalid"
             )
 
-        charge_codes = AIR_FREIGHT_LOCAL_CHARGES
+        charge_codes = AIR_FREIGHT_LOCAL_CHARGES.get()
 
         if data["line_item_code"] not in charge_codes:
             raise HTTPException(status_code=400, detail="line_item_code is invalid")
 
-        currencies = AIR_FREIGHT_CURRENCIES
+        currencies = AIR_FREIGHT_CURRENCIES.get()
 
         if (
             str(data["markup_type"]).lower() == "net"
@@ -203,7 +203,7 @@ class AirFreightRateBulkOperation(BaseModel):
             raise HTTPException(status_code=400, detail="slabs is invalid")
 
         slab_currency = [slab["currency"] for slab in slabs]
-        currencies = AIR_FREIGHT_CURRENCIES
+        currencies = AIR_FREIGHT_CURRENCIES.get()
 
         if len(list(set(slab_currency).difference(currencies))) > 0:
             raise HTTPException(status_code=400, detail="slab currency is invalid")

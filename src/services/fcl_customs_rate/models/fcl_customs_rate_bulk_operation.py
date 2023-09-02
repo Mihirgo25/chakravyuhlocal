@@ -55,7 +55,7 @@ class FclCustomsRateBulkOperation(BaseModel):
         if data['markup_type'] not in markup_types:
             raise HTTPException(status_code=400,detail='Invalid Markup Type')
         
-        fcl_customs_charges_dict = FCL_CUSTOMS_CHARGES
+        fcl_customs_charges_dict = FCL_CUSTOMS_CHARGES.get()
 
         charge_codes = fcl_customs_charges_dict.keys()
 
@@ -65,7 +65,7 @@ class FclCustomsRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = FCL_FREIGHT_CURRENCIES
+        currencies = FCL_FREIGHT_CURRENCIES.get()
 
         if data['markup_currency'] not in currencies:
             raise HTTPException(status_code=400, detail='markup currency is invalid')

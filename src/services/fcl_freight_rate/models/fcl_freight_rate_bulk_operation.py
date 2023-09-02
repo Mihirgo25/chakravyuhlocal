@@ -131,7 +131,7 @@ class FclFreightRateBulkOperation(BaseModel):
             if not rate_sheet_id:
                 raise HTTPException(status_code=400, detail='Invalid Rate sheet serial id') 
             
-        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
+        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES.get()
 
         charge_codes = fcl_freight_charges_dict.keys()
 
@@ -154,7 +154,7 @@ class FclFreightRateBulkOperation(BaseModel):
         if data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
         
-        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
+        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES.get()
 
         charge_codes = fcl_freight_charges_dict.keys()
 
@@ -184,7 +184,7 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_add_freight_line_item_data(self):
         data = self.data
 
-        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
+        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES.get()
 
         code_config = fcl_freight_charges_dict[data['code']]
         if not code_config:

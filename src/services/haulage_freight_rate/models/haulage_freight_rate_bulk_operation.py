@@ -56,7 +56,7 @@ class HaulageFreightRateBulkOperation(BaseModel):
         if data.get('markup_type') not in markup_types:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
         
-        haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES
+        haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES.get()
 
         charge_codes = haulage_freight_charges_dict.keys()
 
@@ -66,7 +66,7 @@ class HaulageFreightRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = FCL_FREIGHT_CURRENCIES
+        currencies = FCL_FREIGHT_CURRENCIES.get()
 
         if data.get('markup_currency') not in currencies:
             raise HTTPException(status_code=400, detail='markup_currency is invalid')

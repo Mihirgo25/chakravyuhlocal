@@ -355,7 +355,7 @@ class AirFreightRate(BaseModel):
         return not self.last_rate_available_date
 
     def possible_charge_codes(self):
-      air_freight_charges = AIR_FREIGHT_CHARGES
+      air_freight_charges = AIR_FREIGHT_CHARGES.get()
 
       charge_codes = {}
       commodity = self.commodity

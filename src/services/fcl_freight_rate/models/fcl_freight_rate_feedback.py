@@ -119,7 +119,7 @@ class FclFreightRateFeedback(BaseModel):
     #     if not self.preferred_freight_rate_currency:
     #         return True
 
-    #     fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
+    #     fcl_freight_currencies = FCL_FREIGHT_CURRENCIES.get()
 
     #     if self.preferred_freight_rate_currency in fcl_freight_currencies:
     #         return True
