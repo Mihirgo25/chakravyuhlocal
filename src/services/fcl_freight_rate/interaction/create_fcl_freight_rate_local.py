@@ -76,7 +76,7 @@ def execute_transaction_code(request):
 
     fcl_freight_local = FclFreightRateLocal.select().where(
         FclFreightRateLocal.port_id == row['port_id'],
-        FclFreightRateLocal.terminal_id == request.get('terminal_id'),
+        FclFreightRateLocal.terminal_id == row['terminal_id'],
         FclFreightRateLocal.trade_type ==row['trade_type'],
         FclFreightRateLocal.main_port_id == row['main_port_id'],
         FclFreightRateLocal.container_size== row['container_size'],
