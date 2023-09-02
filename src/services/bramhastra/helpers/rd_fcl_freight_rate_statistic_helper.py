@@ -105,7 +105,7 @@ class RevenueDesk:
     def set_original_rate(self):
         self.set_original_statistics_id()
 
-        fcl = FclFreightRateStatistic.select(
+        if fcl := FclFreightRateStatistic.select(
             FclFreightRateStatistic.id,
             FclFreightRateStatistic.rate_id,
             FclFreightRateStatistic.validity_id,
@@ -118,9 +118,7 @@ class RevenueDesk:
         ).where(
             FclFreightRateStatistic.id == self.original_fcl_freight_rate_statistic_id,
             FclFreightRateStatistic.sign == 1,
-        )
-        
-        if fcl:
+        ):
             self.original_booked_rate = jsonable_encoder(fcl.dicts().get())
 
     def set_stats_hash(self):
