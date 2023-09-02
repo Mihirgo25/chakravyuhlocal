@@ -19,6 +19,7 @@ DYNAMIC_STATISTICS = {
     'spot_search' : 0,
     'critical_ports' : 0,
     'expiring_rates' : 0,
+    'cancelled_shipments' : 0
 }
 
 DEFAULT_REQUIRED_FIELDS = [
@@ -71,6 +72,7 @@ def get_statisitcs(dynamic_statisitcs, query, filters):
     dynamic_statisitcs['spot_search'] = query.where(AirFreightRateJobs.source == 'spot_search').count()
     dynamic_statisitcs['critical_ports'] = query.where(AirFreightRateJobs.source == 'critical_ports').count()
     dynamic_statisitcs['expiring_rates'] = query.where(AirFreightRateJobs.source == 'expiring_rates').count()
+    dynamic_statisitcs['cancelled_shipments'] = query.where(AirFreightRateJobs.source == 'cancelled_shipments').count()
     query = query.where(AirFreightRateJobs.source == filters['source'])
     return dynamic_statisitcs, query
 
