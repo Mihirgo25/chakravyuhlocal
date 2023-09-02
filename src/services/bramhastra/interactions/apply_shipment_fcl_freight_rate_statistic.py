@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.post_fcl_freight_helper import Shipment
+from services.bramhastra.helpers.shipment_fcl_freight_rate_statistic_helper import Shipment
 from configs.env import APP_ENV
 
 

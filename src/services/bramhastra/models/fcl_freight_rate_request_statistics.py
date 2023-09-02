@@ -2,6 +2,7 @@ from peewee import Model, UUIDField, CharField, IntegerField, BigIntegerField, B
 from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField, ArrayField
+from services.bramhastra.enums import ImportTypes
 
 
 class BaseModel(Model):
@@ -42,6 +43,21 @@ class FclFreightRateRequestStatistic(BaseModel):
     updated_at = DateTimeTZField(default=datetime.utcnow())
     sign = IntegerField(default=1)
     version = IntegerField(default=1)
+    operation_created_at = DateTimeTZField(default=datetime.utcnow())
+    operation_updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
+
+    def save(self, *args, **kwargs):
+        self.operation_updated_at = datetime.utcnow()
+        return super(FclFreightRateRequestStatistic, self).save(*args, **kwargs)
+
+    CLICK_KEYS = [
+        "origin_continent_id",
+        "origin_country_id",
+        "origin_port_id",
+        "rate_request_id",
+    ]
+
+    IMPORT_TYPE = ImportTypes.csv.value
 
     class Meta:
         table_name = "fcl_freight_rate_request_statistics"

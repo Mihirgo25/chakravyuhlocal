@@ -44,25 +44,24 @@ docs = {
     "redoc_url": None if APP_ENV == "production" else "/redoc",
     "openapi_url": None if APP_ENV == "production" else "/openapi.json",
     "debug": True,
-    'dependencies': [Depends(get_db)],
     "swagger_ui_parameters": {"docExpansion": None},
 }
 
 app = FastAPI(**docs)
 
 
-app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router, tags=['Fcl Freight Rate'])
-app.include_router(prefix = "/fcl_freight_rate", router=ftl_freight_router, tags=['Ftl Freight Rate'])
-app.include_router(prefix="/fcl_freight_rate", router=envision_router, tags=['Predictions'])
-app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router, tags=['Chakravyuh'])
-app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Trailer Freight Rate'])
-app.include_router(prefix="/fcl_freight_rate", router=nandi_router, tags=['Error Detection (Nandi)'])
-app.include_router(prefix = "/haulage_freight_rate", router=haulage_freight_router, tags=['Haulage Freight Rate'])
-app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'])
-app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags = ['Fcl Customs Rate'])
-app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'])
-app.include_router(prefix = "/air_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'])
-app.include_router(prefix = "/fcl_freight_rate",router = bramhastra, tags = ['Brahmastra'])
+app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router, tags=['Fcl Freight Rate'], dependencies=[Depends(get_db)])
+app.include_router(prefix = "/fcl_freight_rate", router=ftl_freight_router, tags=['Ftl Freight Rate'], dependencies=[Depends(get_db)])
+app.include_router(prefix="/fcl_freight_rate", router=envision_router, tags=['Predictions'], dependencies=[Depends(get_db)])
+app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router, tags=['Chakravyuh'], dependencies=[Depends(get_db)])
+app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Trailer Freight Rate'], dependencies=[Depends(get_db)])
+app.include_router(prefix="/fcl_freight_rate", router=nandi_router, tags=['Error Detection (Nandi)'], dependencies=[Depends(get_db)])
+app.include_router(prefix = "/haulage_freight_rate", router=haulage_freight_router, tags=['Haulage Freight Rate'], dependencies=[Depends(get_db)])
+app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'], dependencies=[Depends(get_db)])
+app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags = ['Fcl Customs Rate'], dependencies=[Depends(get_db)])
+app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'], dependencies=[Depends(get_db)])
+app.include_router(prefix = "/air_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'], dependencies=[Depends(get_db)])
+app.include_router(prefix = "/fcl_freight_rate",router = bramhastra, tags = ['Brahmastra'], dependencies=[Depends(get_db)])
 
 
 app.add_middleware(
@@ -105,8 +104,9 @@ if APP_ENV != "production":
 
 @app.on_event("startup")
 def startup():
-    if db.is_closed():
-        db.connect()
+    pass
+    # if db.is_closed():
+    #     db.connect()
     # insert_wagon_type()
     # insert_dbcargo_rates()
     # insert_france_germany_rates()
@@ -124,8 +124,9 @@ def startup():
 
 @app.on_event("shutdown")
 def shutdown():
-    if not db.is_closed():
-        db.close()
+    pass
+    # if not db.is_closed():
+    #     db.close()
 
 
 @app.get("/",tags = ["Health Checks"])

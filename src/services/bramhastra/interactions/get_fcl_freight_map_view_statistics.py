@@ -18,25 +18,27 @@ LOCATION_KEYS = {
 
 def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, page):
     clickhouse = ClickHouse()
+    
+    sort_by = filter_sort(sort_by)
 
     grouping = set()
 
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},floor(abs(AVG(accuracy)),2) as accuracy,count(DISTINCT rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
+        f'SELECT {",".join(grouping)},FLOOR(ABS(AVG(accuracy)),2) as total_accuracy,count(DISTINCT rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
     ]
 
     if where := get_direct_indirect_filters(filters):
         queries.append(" WHERE ")
         queries.append(where)
+        queries.append("AND accuracy != -1 and accuracy != 0")
 
     get_add_group_and_order_by(queries, grouping,sort_by,sort_type)
     
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
     )
-
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     if statistics:
@@ -55,7 +57,7 @@ def get_add_group_and_order_by(queries, grouping,sort_by,sort_type):
     queries.append("GROUP BY")
     queries.append(",".join(grouping))
     queries.append(
-        f"HAVING sum(sign) > 0 ORDER BY {sort_by} {sort_type}"
+        f"ORDER BY {sort_by} {sort_type}"
     )
 
 
@@ -75,7 +77,7 @@ def alter_filters_for_map_view(filters, grouping):
             ]["id"]
             filters.pop("destination")
         else:
-            grouping.add(f"destination_{filters['origin']['type']}_id")
+            grouping.add(f"destination_{HEIRARCHY[1]}_id")
         filters.pop("origin")
 
 
@@ -120,11 +122,20 @@ def add_location_objects(statistics):
     for statistic in statistics:
         update_statistic = dict()
         remove = None
+        if not statistic:
+            continue
         for k, v in statistic.items():
             if k in LOCATION_KEYS:
                 remove = k
                 location = locations.get(v)
+                if location is None:
+                    continue
                 for key, value in location.items():
                     update_statistic[f"{k[:12]}{key}"] = value
         statistic.pop(remove)
         statistic.update(update_statistic)
+        
+    
+def filter_sort(sort_by):
+    return 'total_accuracy' if sort_by == 'accuracy' else sort_by
+    

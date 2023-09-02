@@ -305,6 +305,6 @@ def validate_value_props(v_props):
     return True
 
 def send_stats(action,request,freight,port_to_region_id_mapping):
-    from services.bramhastra.celery import send_rate_stats_in_delay
+    from services.bramhastra.celery import send_fcl_rate_stats_in_delay
     request['port_to_region_id_mapping'] = port_to_region_id_mapping
-    send_rate_stats_in_delay.apply_async(kwargs = {'action':action,'request':request,'freight':freight},queue = 'statistics')
+    send_fcl_rate_stats_in_delay.apply_async(kwargs = {'action':action,'request':request,'freight':freight},queue = 'statistics')

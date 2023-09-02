@@ -44,7 +44,7 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
     validity_created_at DateTime DEFAULT now(),
     validity_updated_at DateTime DEFAULT now(),
     commodity FixedString(256),
-    container_size FixedString(10),
+    container_size String,
     container_type FixedString(256),
     containers_count UInt8 DEFAULT 0,
     origin_local_id UUID,
@@ -98,11 +98,14 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
     performed_by_id UUID,
     performed_by_type FixedString(256),
     rate_sheet_id UUID,
-    bulk_operation_id UUID
+    bulk_operation_id UUID,
+    operation_created_at DateTime,
+    operation_updated_at DateTime,
+    is_deleted Bool DEFAULT false
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,rate_id,validity_id)
-ORDER BY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,rate_id,validity_id,rate_deviation_from_booking_rate);
+PRIMARY KEY (is_deleted ,origin_continent_id,origin_country_id,origin_port_id,rate_id,validity_id)
+ORDER BY (is_deleted, origin_continent_id,origin_country_id,origin_port_id,rate_id,validity_id,bookings_created);
 
 CREATE TABLE brahmastra.stale_fcl_freight_rate_statistics
 (
@@ -150,7 +153,7 @@ CREATE TABLE brahmastra.stale_fcl_freight_rate_statistics
     validity_created_at DateTime DEFAULT now(),
     validity_updated_at DateTime DEFAULT now(),
     commodity FixedString(256),
-    container_size FixedString(10),
+    container_size String,
     container_type FixedString(256),
     containers_count UInt8 DEFAULT 0,
     origin_local_id UUID,
@@ -204,6 +207,9 @@ CREATE TABLE brahmastra.stale_fcl_freight_rate_statistics
     performed_by_id UUID,
     performed_by_type FixedString(256),
     rate_sheet_id UUID,
-    bulk_operation_id UUID
+    bulk_operation_id UUID,
+    operation_created_at DateTime,
+    operation_updated_at DateTime,
+    is_deleted Bool DEFAULT false
 )
 ENGINE = File(CSV);

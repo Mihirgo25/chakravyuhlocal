@@ -38,22 +38,25 @@ REQUIRED_FILTERS = {
 
 
 def get_direct_indirect_filters(filters):
+    if filters is None:
+        return
     for k, v in REQUIRED_FILTERS.items():
         if k not in filters:
             filters[k] = v
     where = []
     get_date_range_filter(where)
 
-    for key, value in filters.items():
-        if key in POSSIBLE_DIRECT_FILTERS and value:
-            if type(value) == list and value:
-                where.append(f"{key} IN %({key})s")
-            elif value:
-                where.append(f"{key} = %({key})s")
-        if key in POSSIBLE_INDIRECT_FILTERS and value:
-            eval(f"get_{key}_filter(where)")
-        if key in COUNT_FILTERS:
-            where.append(f"{key} != 0")
+    if filters:
+        for key, value in filters.items():
+            if key in POSSIBLE_DIRECT_FILTERS and value:
+                if type(value) == list and value:
+                    where.append(f"{key} IN %({key})s")
+                elif value:
+                    where.append(f"{key} = %({key})s")
+            if key in POSSIBLE_INDIRECT_FILTERS and value:
+                eval(f"get_{key}_filter(where)")
+            if key in COUNT_FILTERS:
+                where.append(f"{key} != 0")
 
     if where:
         return " AND ".join(where)
