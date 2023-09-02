@@ -327,11 +327,9 @@ def get_surcharges(requirements,rates):
         AirFreightRateSurcharge.commodity == requirements['commodity'],
         AirFreightRateSurcharge.airline_id << airline_ids,
         AirFreightRateSurcharge.service_provider_id << service_provider_ids,
-        ~(AirFreightRateSurcharge.rate_not_available_entry)
+        ~(AirFreightRateSurcharge.rate_not_available_entry),
+        ((AirFreightRateSurcharge.importer_exporter_id == requirements.get('importer_exporter_id')) | (AirFreightRateSurcharge.importer_exporter_id.is_null(True)))
     )
-
-    if requirements.get('importer_exporter_id'):
-        surcharges_query = surcharges_query.where(AirFreightRateSurcharge.importer_exporter_id == requirements['importer_exporter_id'])
 
     surcharges_results = jsonable_encoder(list(surcharges_query.dicts()))
 
