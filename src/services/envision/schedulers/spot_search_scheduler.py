@@ -29,9 +29,6 @@ def delete_init_key(requirements, source):
 
 
 def spot_search_scheduler(is_predicted, requirements, source):
-    # requirements = requirements['requirements']
-    # is_predicted = is_predicted['is_predicted']
-    # source = source['source']
     if is_predicted:
         current_count = get_current_predicted_count(requirements, source)
         if current_count>=3:
