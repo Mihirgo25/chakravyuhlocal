@@ -65,7 +65,7 @@ from playhouse.postgres_ext import ServerSide
 # Supply Tools
 
 from services.envision.schedulers.cancelled_shipments_scheduler import cancelled_shipments_scheduler
-from services.envision.schedulers.expired_shipments_scheduler import expired_shipments_scheduler
+from services.envision.schedulers.expiring_rates_scheduler import expiring_rates_scheduler
 from services.envision.schedulers.spot_search_scheduler import spot_search_scheduler
 
 CELERY_CONFIG = {
@@ -172,17 +172,17 @@ celery.conf.beat_schedule = {
     },
     'supply_tool_cancelled_shipments':{
         'task': 'celery_worker.cancelled_shipments_in_delay',
-        'schedule':crontab(hour='*/5'),
+        'schedule':crontab(hour=20, minute=30),
         'options': {'queue': 'fcl_freight_rate'}
     },
-    'supply_tool_expired_shipments':{
-        'task': 'celery_worker.expired_shipments_in_delay',
-        'schedule':crontab(hour='*/5'),
+    'supply_tool_expiring_rates':{
+        'task': 'celery_worker.expiring_rates_in_delay',
+        'schedule':crontab(hour=17, minute=30),
         'options': {'queue': 'fcl_freight_rate'}
     },
     'smt_critical_port_pairs': {
         'task': 'celery_worker.smt_critical_port_pairs_delay',
-        'schedule': crontab(hour='*/5'),
+        'schedule': crontab(hour=00, minute=30),
         'options': {'queue': 'fcl_freight_rate'}
         }
 }
@@ -911,19 +911,9 @@ def cancelled_shipments_in_delay(self):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True, max_retries=3)
-def expired_shipments_in_delay(self):
+def expiring_rates_in_delay(self):
     try:
-        expired_shipments_scheduler()
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, retry_backoff=True, max_retries=3)
-def expired_shipments_in_delay(self):
-    try:
-        expired_shipments_scheduler()
+        expiring_rates_scheduler()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
