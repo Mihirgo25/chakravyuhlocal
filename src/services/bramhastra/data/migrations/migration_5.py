@@ -101,8 +101,8 @@ def execute(date):
             FclFreightRateAudit.object_id.alias("rate_id")
         )
         .where(
-            FclFreightRateAudit.updated_at >= fro,
-            FclFreightRateAudit.updated_at <= to,
+            FclFreightRateAudit.created_at >= fro,
+            FclFreightRateAudit.created_at <= to,
             FclFreightRateAudit.object_type == "FclFreightRate",
             FclFreightRateAudit.action_name.in_(["create", "update"]),
         )
