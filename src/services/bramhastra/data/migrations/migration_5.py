@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 def generate_batch_intervals():
     start_date_str = "2023-04-01"
     start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
-    end_date = datetime.now()
+    end_date = datetime.strptime("2023-04-30", "%Y-%m-%d")
     batch_intervals = []
 
     current_date = start_date
