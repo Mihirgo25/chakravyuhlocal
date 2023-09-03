@@ -25,9 +25,9 @@ def generate_batch_intervals():
     current_date = start_date
     while current_date <= end_date:
         batch_intervals.append(
-            {"fro": current_date, "to": current_date + timedelta(days=14)}
+            {"fro": current_date, "to": current_date + timedelta(days=4)}
         )
-        current_date += timedelta(days=15)
+        current_date += timedelta(days=5)
 
     return batch_intervals
 
