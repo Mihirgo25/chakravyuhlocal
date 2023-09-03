@@ -14,7 +14,14 @@ class FclDailyAttributeUpdaterWorker:
 
     def execute(self):
         try:
-            keys = {"parent_rate_id", "rate_sheet_id", "bulk_operation_id"}
+            keys = {
+                "parent_rate_id",
+                "rate_sheet_id",
+                "bulk_operation_id",
+                "performed_by_id",
+                "performed_by_type",
+                "source",
+            }
 
             query = FclFreightRateAudit.select(
                 FclFreightRateAudit.object_id.alias("rate_id"),
@@ -22,11 +29,13 @@ class FclDailyAttributeUpdaterWorker:
                 FclFreightRateAudit.rate_sheet_id,
                 FclFreightRateAudit.bulk_operation_id,
                 FclFreightRateAudit.created_at,
+                FclFreightRateAudit.action_name,
+                FclFreightRateAudit.performed_by_id,
+                FclFreightRateAudit.performed_by_id,
+                FclFreightRateAudit.source,
             ).where(
-                FclFreightRateAudit.created_at
-                > datetime.utcnow() - timedelta(hours=27),
+                FclFreightRateAudit.created_at > datetime.utcnow() - timedelta(hours=5),
                 FclFreightRateAudit.object_type == "FclFreightRate",
-                FclFreightRateAudit.action_name == "create",
             )
             for fcl_freight_rate_audit in ServerSide(query):
                 params = dict()
@@ -37,11 +46,17 @@ class FclDailyAttributeUpdaterWorker:
                 if not params:
                     continue
 
-                params["updated_at"] = fcl_freight_rate_audit.created_at
+                if fcl_freight_rate_audit.action_name != "create":
+                    params["updated_at"] = fcl_freight_rate_audit.created_at
 
-                FclFreightRateStatistic.update(**params).where(
-                    FclFreightRateStatistic.rate_id == fcl_freight_rate_audit.rate_id
-                ).execute()
+                fcl = (
+                    FclFreightRateStatistic.update(**params)
+                    .where(
+                        FclFreightRateStatistic.rate_id
+                        == fcl_freight_rate_audit.rate_id
+                    )
+                    .execute()
+                )
 
         except Exception as e:
             print(e)
