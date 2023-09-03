@@ -154,7 +154,7 @@ def execute(date):
                 if key not in COLUMNS:
                     del audit_row[key]
 
-            audit_row = {k: audit_row[k] for k in COLUMNS if k != "id"}
+            audit_row = {k: audit_row.get(k) for k in COLUMNS if k != "id"}
 
             audits.append(audit_row)
 
