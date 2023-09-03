@@ -53,8 +53,8 @@ class RevenueDesk:
             == get_identifier(
                 request.selected_for_preference.rate_id,
                 request.selected_for_preference.validity_id,
-            ).first()
-        )
+            )
+        ).first()
 
         fcl_freight_rate_statistic.updated_at = request.created_at
 

@@ -229,7 +229,7 @@ class Shipment(BaseModel):
     serial_id: int = None
     importer_exporter_id: str = None
     shipment_type: str = None
-    services: list[str] = None
+    services: list[str] = []
     source: str = None
     source_id: str = None
     state: str = None
