@@ -167,7 +167,7 @@ celery.conf.beat_schedule = {
     },
     'fcl_daily_attribute_updater':{
         'task': 'services.bramhastra.celery.fcl_daily_attribute_updater_worker',
-        'schedule': crontab(hour=22, minute=30),
+        'schedule': crontab(minute=0, hour='*/3'),
         'options': {'queue': 'statistics'}
     },
     'smt_cancelled_shipments':{
@@ -185,11 +185,11 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=00, minute=30),
         'options': {'queue': 'fcl_freight_rate'}
     },
-    'smt_update_jobs_status': {
-        'task': 'celery_worker.smt_update_jobs_status_delay',
-        'schedule': crontab(hour=18, minute=00),
-        'options': {'queue': 'fcl_freight_rate'}
-        }
+    # 'smt_update_jobs_status': {
+    #     'task': 'celery_worker.smt_update_jobs_status_delay',
+    #     'schedule': crontab(hour=18, minute=00),
+    #     'options': {'queue': 'fcl_freight_rate'}
+    #     }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)

@@ -159,7 +159,7 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     source: str = None
     source_id: str = None
     serial_id: int = None
-    preferred_freight_rate: float = 0
+    preferred_freight_rate: float = None
     currency: str = Field(alias="preferred_freight_rate_currency", default = 'USD')
     importer_exporter_id: str = None
     service_provider_id: str = None
@@ -170,8 +170,9 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     closed_by_id: str = None
     likes_count: int = None
     dislikes_count: int = None
+    closing_remarks: list[str]
     status: str = "active"
-    
+        
     @validator("preferred_freight_rate", pre=True)
     def convert_preferred_freight_rate(cls, v):
         if not v:
@@ -228,7 +229,7 @@ class Shipment(BaseModel):
     serial_id: int = None
     importer_exporter_id: str = None
     shipment_type: str = None
-    services: list[str] = None
+    services: list[str] = []
     source: str = None
     source_id: str = None
     state: str = None
@@ -410,14 +411,14 @@ class FclSelectedForBooking(BaseModel):
 
 
 class FclSelectedForPreference(BaseModel):
-    rate_id: str
-    validity_id: str
-    given_priority: int
+    rate_id: str = None
+    validity_id: str = None
+    given_priority: int = 1
 
 
 class ApplyRevenueDeskFclFreightStatistics(BaseModel):
-    shipment_id: str
-    shipment_fcl_freight_service_id: str
+    shipment_id: str = None
+    shipment_fcl_freight_service_id: str = None
     rate_id: str = None
     validities: list[str] = None
     selected_for_booking: FclSelectedForBooking = None
