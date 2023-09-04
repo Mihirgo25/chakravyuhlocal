@@ -1375,7 +1375,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
             del filters['service_provider_id']
-        
+
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -1427,7 +1427,7 @@ class FclFreightRateBulkOperation(BaseModel):
                             for t in line_items_seperation[f"Default_{code}"]:
                                 local_line_items.append(t)
                             local['data']['line_items'] = local_line_items
-                            
+
                         if "Default_{}".format(code) in line_items_seperation and code in line_items_seperation:
                             matching_line_items = [t for t in local['data']['line_items'] if t['code'] == code]
                             local_line_items = [item for item in local_line_items if item not in matching_line_items]
@@ -1436,16 +1436,16 @@ class FclFreightRateBulkOperation(BaseModel):
                             for t in line_items_seperation[code]:
                                 local_line_items.append(t)
                             local['data']['line_items'] = local_line_items
-                            
+
                         if not "Default_{}".format(code) in line_items_seperation and code in line_items_seperation:
-                            matching_conditions_line_items = [t for t in local['data']['line_items'] if t['code'] == code and t['conditions']]
+                            matching_conditions_line_items = [t for t in local['data']['line_items'] if t['code'] == code and t.get('conditions')]
                             local_line_items = [item for item in local_line_items if item not in matching_conditions_line_items]
                             for t in line_items_seperation[code]:
                                 local_line_items.append(t)
                             local['data']['line_items'] = local_line_items
-                    
+
                     completed_codes.append(code)
-            
+
             if new_line_items:
                 for items in new_line_items:
                     local['data']['line_items'].append(items)
@@ -1461,12 +1461,8 @@ class FclFreightRateBulkOperation(BaseModel):
             total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
-            
+
         data['total_affected_rates'] = total_affected_rates
         self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()
-        
-
-        
-

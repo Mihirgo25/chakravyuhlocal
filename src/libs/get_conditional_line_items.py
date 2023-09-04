@@ -24,7 +24,7 @@ def get_filtered_line_items(rate:dict, line_items:list):
         else:
             if not charge_code in item_conditions_mapping:
                 new_line_items.append(item)
-                
+
     for key,data in item_conditions_mapping.items():
         sorted_data = sorted(data, key=lambda x: (x[2], x[1]), reverse=True)
         if sorted_data:
@@ -66,7 +66,7 @@ def evaluate_conditions(rate, operator, values):
 
 def check_condition(rate, condition):
     key = condition['condition_key']
-    operator = condition['operator'].lower()
+    operator = condition['operand'].lower()
     operand = condition['condition_value']
     if operator == "in":
         if rate.get(key) in operand:

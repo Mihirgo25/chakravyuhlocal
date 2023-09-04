@@ -49,7 +49,8 @@ def initialize_local_query(request):
         FclFreightRateLocal.main_port_id,
         FclFreightRateLocal.shipping_line_id,
         FclFreightRateLocal.data,
-        FclFreightRateLocal.rate_type
+        FclFreightRateLocal.rate_type,
+        FclFreightRateLocal.commodity,
         ).where(
         FclFreightRateLocal.port_id == request['port_id'], 
         FclFreightRateLocal.container_size == request['container_size'], 
