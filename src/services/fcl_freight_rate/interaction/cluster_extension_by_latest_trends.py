@@ -49,11 +49,13 @@ async def update_cluster_extension_by_latest_trends(request):
     shipping_line_gri_mapping = {}
     
     query = (FclFreightRate
-                .select(FclFreightRate.id, FclFreightRate.shipping_line_id, FclFreightRate.validities) 
+                .select(FclFreightRate.id,FclFreightRate.container_size, FclFreightRate.shipping_line_id, FclFreightRate.validities) 
                 .where(
                     FclFreightRate.updated_at > start_time,
                     FclFreightRate.updated_at < end_time,
                     FclFreightRate.origin_port_id == origin_port_id,
+                    FclFreightRate.commodity == request['commodity'],
+                    FclFreightRate.container_type == request['container_type'],
                     FclFreightRate.destination_port_id == destination_port_id,
                     ~ FclFreightRate.rate_not_available_entry,
                     ~FclFreightRate.mode.in_(['predicted', 'rate_extension'])     
@@ -70,8 +72,8 @@ async def update_cluster_extension_by_latest_trends(request):
         shipping_line_ids = []
         
         for rate in rates:
-            rate_ids.append(str(rate['id'])) 
-            shipping_line_ids.append(str(rate['shipping_line_id']))
+            rate_ids.append(rate['id']) 
+            shipping_line_ids.append(rate['shipping_line_id'])
             
             price = 0
             for validity in rate['validities']:
@@ -90,12 +92,14 @@ async def update_cluster_extension_by_latest_trends(request):
                             
             
                 
-        # * standard_average_price for each unique shipping line
+
         response = await list_fcl_freight_rate_statistics(get_filters(start_time, "average_price", rate_ids, shipping_line_ids), 1, 1, False)
         
+        if not response.get('list'):
+            continue  
         
-        
-        # * average price for each shipping_line_id (groupby shipping_line_id)
+        prev_avg_mapping = response['list']
+
         shipping_line_totals = {}
         shipping_line_counts = {}
 
@@ -116,7 +120,7 @@ async def update_cluster_extension_by_latest_trends(request):
         # * shipping_line_id gri percentage mapping
         for shipping_line_id in average_prices.keys(): 
             cur = average_prices[shipping_line_id]
-            prev = response[shipping_line_id]
+            prev = prev_avg_mapping[shipping_line_id]
             
             if prev and cur:
                 gri_perc = ((cur - prev) / prev) * 100 
@@ -149,7 +153,7 @@ async def update_cluster_extension_by_latest_trends(request):
     UPDATED_SHIPPING_LINES = shipping_line_gri_mapping.keys()
     TO_BE_UPDATED_SHIPPING_LINES = [id for id in MAIN_SHIPPING_LINE_IDS if id not in UPDATED_SHIPPING_LINES]  
     
-    if min_decrease_percent <= overall_gri_avg <= max_increase_percent:
+    if overall_gri_avg and (min_decrease_percent <= overall_gri_avg <= max_increase_percent):
         request["markup"] = overall_gri_avg
         request["shipping_line_id"] = TO_BE_UPDATED_SHIPPING_LINES
         request["rate_type"] = "market_place"
