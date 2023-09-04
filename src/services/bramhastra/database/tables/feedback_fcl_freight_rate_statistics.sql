@@ -16,6 +16,7 @@ CREATE TABLE brahmastra.feedback_fcl_freight_rate_statistics
     currency FixedString(3),
     feedbacks Array(String),
     closing_remarks Array(String),
+    is_rate_added Bool DEFAULT false,
     service_provider_id UUID,
     feedback_type FixedString(256),
     closed_by_id  UUID,

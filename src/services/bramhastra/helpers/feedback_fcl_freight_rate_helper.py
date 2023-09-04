@@ -3,7 +3,11 @@ from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
 )
 from services.bramhastra.helpers.common_statistic_helper import get_identifier
 from micro_services.client import common
-from services.bramhastra.enums import FeedbackAction
+from services.bramhastra.enums import (
+    FeedbackAction,
+    FclFeedbackClosingRemarks,
+    FclFeedbackStatus,
+)
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
@@ -72,6 +76,19 @@ class Feedback:
         if fcl_freight_rate_statistic:
             self.params["fcl_freight_rate_statistic_id"] = fcl_freight_rate_statistic.id
 
+            if self.params.get("status") == FclFeedbackStatus.inactive.value:
+                self.increment_keys.add(
+                    FclFreightRateStatistic.feedback_recieved_count.name
+                )
+                if self.params.get(
+                    FeedbackFclFreightRateStatistic.closing_remarks.name
+                ) and FclFeedbackClosingRemarks.rate_added.value in self.params.get(
+                    FeedbackFclFreightRateStatistic.closing_remarks.name
+                ):
+                    self.increment_keys.add(
+                        FclFreightRateStatistic.dislikes_rate_reverted_count.name
+                    )
+                    
             for key in self.increment_keys:
                 setattr(
                     fcl_freight_rate_statistic,
@@ -102,6 +119,9 @@ class Feedback:
             )
             .first()
         )
+        
+        if FclFeedbackClosingRemarks.rate_added.value in self.increment_keys:
+            feedback.is_rate_added = True
 
         if feedback:
             for key in self.params.keys():

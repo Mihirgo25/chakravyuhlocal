@@ -5,6 +5,7 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 )
 from datetime import date, timedelta, datetime
 import math
+from services.bramhastra.enums import FclModes
 
 POSSIBLE_DIRECT_FILTERS = {
     "origin_port_id",
@@ -69,6 +70,8 @@ async def get_fcl_freight_rate_lifecycle(filters):
 
     stale_rate_statistics = await get_stale_rate_statistics(filters.copy(), where)
 
+    feedback_statistics = await get_feedback_statistics(filters.copy(), where)
+
     statistics = [
         [
             {
@@ -126,16 +129,16 @@ async def get_fcl_freight_rate_lifecycle(filters):
             },
             {
                 "action_type": "feedback_received",
-                "rates_count": search_to_book_statistics["feedback_recieved"],
+                "rates_count": feedback_statistics["feedback_recieved"],
                 "drop": filter_out_of_range_value(
-                    search_to_book_statistics["feedback_recieved_percentage"]
+                    feedback_statistics["feedback_recieved_percentage"]
                 ),
             },
             {
                 "action_type": "rates_reverted",
-                "rates_count": search_to_book_statistics["dislikes_rate_reverted"],
+                "rates_count": feedback_statistics["dislikes_rate_reverted"],
                 "drop": filter_out_of_range_value(
-                    search_to_book_statistics["dislikes_rate_reverted_percentage"]
+                    feedback_statistics["dislikes_rate_reverted_percentage"]
                 ),
             },
         ],
@@ -215,10 +218,6 @@ async def get_search_to_book_and_feedback_statistics(filters, where):
         FLOOR((1-SUM(so1_visit_count)/revenue_desk_visit),2)*100 AS so1_visit_percentage,
         SUM(dislikes_count) as dislikes,
         FLOOR((1-SUM(dislikes_count)/spot_search),2)*100 AS dislikes_percentage,
-        SUM(feedback_recieved_count) AS feedback_recieved,
-        FLOOR((1-SUM(feedback_recieved_count)/dislikes),2)*100 AS feedback_recieved_percentage,
-        SUM(dislikes_rate_reverted_count) as dislikes_rate_reverted,
-        FLOOR((1-SUM(dislikes_rate_reverted_count)/feedback_recieved),2)*100 AS dislikes_rate_reverted_percentage
         FROM brahmastra.fcl_freight_rate_statistics
         """
     ]
@@ -229,6 +228,44 @@ async def get_search_to_book_and_feedback_statistics(filters, where):
 
     if charts := jsonable_encoder(clickhouse.execute(" ".join(queries), filters)):
         return charts[0]
+
+
+async def get_feedback_statistics(filters, where):
+    clickhouse = ClickHouse()
+
+    query_1 = [
+        f""" 
+        WITH rates_reverted_count (
+        COUNT(source) as dislikes_rate_reverted
+        FROM brahmastra.fcl_freight_rate_statistics WHERE source = '{FclModes.disliked_rate.value}'""
+        """
+    ]
+
+    query_2 = [
+        """),feedback_received AS (SELECT SUM(feedback_recieved_count) AS feedback_recieved,
+        FLOOR((1-SUM(feedback_recieved_count)/dislikes),2)*100 AS feedback_recieved_percentage
+        FROM brahmastra.fcl_freight_rate_statistics"""
+    ]
+
+    query_3 = """SELECT  
+        feedback_recieved,
+        feedback_recieved_percentage,
+        SUM(rates_reverted_count) as dislikes_rate_reverted,
+        FLOOR((1-SUM(rates_reverted_count)/feedback_recieved),2)*100 AS dislikes_rate_reverted_percentage
+        FROM feedback_received,rates_reverted_count
+    """
+
+    if where:
+        query_1.append(f" AND {where}")
+        query_2.append(f"WHERE {where}")
+
+    query_1.extend(query_2)
+
+    query_1.extend(query_3)
+
+    charts = jsonable_encoder(clickhouse.execute(" ".join(query_1), filters))
+
+    return charts
 
 
 async def get_mode_wise_rate_count(filters, where):

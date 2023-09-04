@@ -1,4 +1,4 @@
-from peewee import Model, UUIDField, CharField, IntegerField, BigIntegerField
+from peewee import Model, UUIDField, CharField, IntegerField, BigIntegerField, BooleanField
 from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField, ArrayField,FloatField
@@ -27,6 +27,7 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     currency = CharField(null = True)
     feedbacks = ArrayField(CharField, null=True)
     closing_remarks = ArrayField(CharField, null=True)
+    is_rate_added = BooleanField(default = False)
     service_provider_id = UUIDField(null=True, index = True)
     feedback_type = CharField()
     closed_by_id = UUIDField(null=True, index = True)

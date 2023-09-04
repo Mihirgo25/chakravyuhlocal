@@ -103,3 +103,12 @@ class AirSources(Bramhastra):
     rate_sheet = "rate_sheet"
     freight_look = "freight_look"
     cargo_ai = "cargo_ai"
+    
+
+class FclFeedbackClosingRemarks(Bramhastra):
+    rate_added = "rate_added"
+
+class FclFeedbackStatus(Bramhastra):
+    active = "active"
+    inactive = "inactive"
+    
