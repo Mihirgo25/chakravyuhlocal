@@ -2,7 +2,8 @@ from fastapi import HTTPException
 from datetime import datetime
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
-from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES, COGOXPRESS,SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS,DEFAULT_NOT_APPLICABLE_LINE_ITEMS
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES, COGOXPRESS
+from services.air_freight_rate.constants.air_freight_rate_constants import SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING, DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_operators
 from database.rails_db import get_eligible_orgs
@@ -128,11 +129,12 @@ def add_surcharge_object(freight_rate,response_object,requirements,chargeable_we
 
 def build_surcharge_line_item_object(line_item,requirements,chargeable_weight,freight_rate):
     surcharge_charges = AIR_FREIGHT_SURCHARGES.get(line_item['code'])
-    not_required_charges = DEFAULT_NOT_APPLICABLE_LINE_ITEMS
-    
-    if requirements['origin_airport_id'] in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS and freight_rate['airline_id'] in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS.get(requirements['origin_airport_id'])['airlines']:
-        not_required_charges = SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS[requirements['origin_airport_id']]['not_eligible_line_items']
-    if not surcharge_charges or line_item['code'] in not_required_charges:
+
+    required_charges = DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL
+
+    if(freight_rate['airline_id'] in SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING):
+        required_charges = SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING[requirements['airline_id']]['eligible_line_items']
+    if not surcharge_charges or line_item['code'] not in required_charges:
         return
 
     line_item = {key:val for key,val in line_item.items() if key in ['code','price','min_price','currency','remarks','unit']}

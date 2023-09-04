@@ -4,7 +4,7 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
 import json
-from services.air_freight_rate.constants.air_freight_rate_constants import SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS,DEFAULT_NOT_APPLICABLE_LINE_ITEMS
+from services.air_freight_rate.constants.air_freight_rate_constants import SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING, DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL
 
 
 possible_direct_filters = ['id','origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'service_provider_id', 'airline_id', 'is_line_items_info_messages_present', 'commodity', 'is_line_items_error_messages_present', 'operation_type','procured_by_id']
@@ -34,14 +34,13 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
 
 def get_eligible_charge_codes(surcharges):
     for surcharge in surcharges:
-        not_required_charge_codes = DEFAULT_NOT_APPLICABLE_LINE_ITEMS
-        if surcharge['origin_airport_id'] in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS and surcharge['airline_id'] in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS.get(surcharge['origin_airport_id'])['airlines']:
-            not_required_charge_codes = SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS[surcharge['origin_airport_id']]['not_eligible_line_items']
+        required_charge_codes = DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL
+        if surcharge['airline_id'] in SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING:
+            required_charge_codes = SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING[surcharge['airline_id']]['eligible_line_items']
         new_line_items = []
         for line_item in surcharge['line_items']:
-            if line_item['code'] in not_required_charge_codes:
-                continue
-            new_line_items.append(line_item)
+            if line_item['code'] in required_charge_codes:
+                new_line_items.append(line_item)
         surcharge['line_items'] = new_line_items
     return surcharges
 
