@@ -4,8 +4,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.bramhastra.interactions.list_fcl_freight_rate_statistics import list_fcl_freight_rate_statistics
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
 from micro_services.client import common
-from services.fcl_freight_rate.models.fcl_freight_location_cluster import FclFreightLocationCluster
-from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
+from fastapi.encoders import jsonable_encoder
 
 MAIN_SHIPPING_LINE_IDS = []
 
@@ -27,55 +26,57 @@ def get_shipping_line_dict():
 
 async def get_cluster_extension_gri_worker(request):
     today = request.get("start_time")
+    start_time, end_time = today - timedelta(hours = 6), today
     
     origin_port_id = request["origin_port_id"]
     destination_port_id = request["destination_port_id"]
     
-    min_range, max_range = -5, 10
+    min_decrease_percent, max_increase_percent = -5, 10
+    min_decrease_amount, max_increase_amount = -5, 10 # ? what are the default values
     
     query = (ClusterExtensionGriWorker
-            .select(ClusterExtensionGriWorker.min_range, ClusterExtensionGriWorker.max_range)
+            .select(ClusterExtensionGriWorker.min_decrease_percent, ClusterExtensionGriWorker.max_increase_percent, ClusterExtensionGriWorker.min_decrease_amount, ClusterExtensionGriWorker.max_increase_amount)
             .where((ClusterExtensionGriWorker.destination_port_id == destination_port_id) &
             (ClusterExtensionGriWorker.origin_port_id == origin_port_id)))
 
-    
     record = query.get()
 
     if record:
-        min_range = record.min_range
-        max_range = record.max_range
+        min_decrease_percent = record.min_decrease_percent
+        max_increase_percent = record.max_increase_percent
+        min_decrease_amount = record.min_decrease_amount
+        max_increase_amount = record.max_increase_amount
 
-        
+
     shipping_line_gri_mapping = {}
     
-    for container_size in ["20", "40", "40HC"]:
-    
-        start_time, end_time = today - timedelta(hours = 6), today
-
-        query = (FclFreightRate
+    query = (FclFreightRate
                 .select(FclFreightRate.id, FclFreightRate.shipping_line_id, FclFreightRate.validities) 
                 .where(
                     FclFreightRate.updated_at > start_time,
                     FclFreightRate.updated_at < end_time,
                     FclFreightRate.origin_port_id == origin_port_id,
                     FclFreightRate.destination_port_id == destination_port_id,
-                    FclFreightRate.container_size == container_size,
-                    FclFreightRate.last_rate_available_date >= datetime.now().date(),
+                    FclFreightRate.rate_not_available_entry == False,
                     ~FclFreightRate.mode.in_(['predicted', 'rate_extension'])     
                 ))  
+    
+    freight_rates = jsonable_encoder(list(query.dicts()))
+    
+    for container_size in ["20", "40", "40HC"]:
         
-        records = query.execute()
+        rates = [rate for rate in freight_rates if rate["container_size"] == container_size]  
         
         prices = []
         rate_ids = []
         shipping_line_ids = []
         
-        for record in records:
-            rate_ids.append(str(record.id)) 
-            shipping_line_ids.append(str(record.shipping_line_id))
+        for rate in rates:
+            rate_ids.append(str(rate['id'])) 
+            shipping_line_ids.append(str(rate['shipping_line_id']))
             
             price = 0
-            for validity in record.validities:
+            for validity in rate['validities']:
                 if validity["currency"] != "USD":
                     data = {
                         "from_currency" : validity["currency"],
@@ -87,7 +88,7 @@ async def get_cluster_extension_gri_worker(request):
                 else:
                     price += validity["price"]
                     
-            prices.append(price)   
+            prices.append(price / len(rate['validities']))   
                             
             
                 
@@ -120,7 +121,7 @@ async def get_cluster_extension_gri_worker(request):
             prev = response[shipping_line_id]
             
             if prev and cur:
-                gri_perc = ((cur - prev) / cur) * 100 
+                gri_perc = ((cur - prev) / prev) * 100 
                 if shipping_line_id in shipping_line_gri_mapping.keys():
                     shipping_line_gri_mapping[shipping_line_id][container_size] = gri_perc
                 else:
@@ -133,7 +134,7 @@ async def get_cluster_extension_gri_worker(request):
     for key, sub_dict in shipping_line_gri_mapping.items():
         values = []
         for sub_key in sub_dict:
-            if sub_key in {"20", "40", "40HC"}: 
+            if sub_dict[sub_key]: 
                 values.append(sub_dict[sub_key])
         if values:  
             average_value = sum(values) / len(values)
@@ -148,52 +149,21 @@ async def get_cluster_extension_gri_worker(request):
     
     
     UPDATED_SHIPPING_LINES = shipping_line_gri_mapping.keys()
-    TO_BE_UPDATED_SHIPPING_LINES = [id for id in MAIN_SHIPPING_LINE_IDS if id not in UPDATED_SHIPPING_LINES]
+    TO_BE_UPDATED_SHIPPING_LINES = [id for id in MAIN_SHIPPING_LINE_IDS if id not in UPDATED_SHIPPING_LINES]  
     
-    
-    # * location_ids for origin_port_id
-    cluster_id_origin = FclFreightLocationCluster.get(FclFreightLocationCluster.base_port_id == request["origin_port_id"]).id
-    
-    
-    query = (FclFreightLocationClusterMapping
-            .select(FclFreightLocationClusterMapping.location_id)
-            .where(FclFreightLocationClusterMapping.cluster_id == cluster_id_origin))      
-    
-    records = query.execute()  
-    
-    ports_for_base_origin_port_id = [record.location_id for record in records]
-    
-    
-    
-    # * location_ids for destination_port_id
-    cluster_id_destination = FclFreightLocationCluster.get(FclFreightLocationCluster.base_port_id == request["destination_port_id"]).id
-    
-    query = (FclFreightLocationClusterMapping
-            .select(FclFreightLocationClusterMapping.location_id)
-            .where(FclFreightLocationClusterMapping.cluster_id == cluster_id_destination))      
-    
-    records = query.execute()  
-    
-    ports_for_destination_port_id = [record.location_id for record in records]    
-    
-    # ? how to calculate overall_gri for performing bulk operations
-     # * what i understands
-     # * taking average of "20", "40" and "40HC" for each shipping_line_id and 
-     # * then taking average of average calculated for each shipping_line_id
-    # ? from which table we'll get min_range and max_range and on what basis
-    
-    if min_range <= overall_gri_avg <= max_range:
+    if min_decrease_percent <= overall_gri_avg <= max_increase_percent:
         request["markup"] = overall_gri_avg
         request["shipping_line_id"] = TO_BE_UPDATED_SHIPPING_LINES
         request["rate_type"] = "market_place"
         request["exclude_service_provider_types"] = ["nvocc"]
-        # * request["container_size"] = container_size
+        request["min_decrease_amount"] = min_decrease_amount
+        request["max_increase_amount"] = max_increase_amount
         
         rate_extension_via_bulk_operation(request)
 
         request.pop('shipping_line_id')
-        request['origin_port_id'] = ports_for_base_origin_port_id
-        request['destination_port_id'] = ports_for_destination_port_id
+        request['origin_port_id'] = request.pop('origin_secondary_ports', [])
+        request['destination_port_id'] = request.pop('destination_secondary_ports', [])
 
         rate_extension_via_bulk_operation(request)
         
