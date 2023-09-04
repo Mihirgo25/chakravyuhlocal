@@ -6,7 +6,7 @@ import datetime
 from playhouse.postgres_ext import ServerSide
 from playhouse.shortcuts import model_to_dict
 
-DAYS_TO_EXPIRE = datetime.datetime.now() + datetime.timedelta(days=7)
+DAYS_TO_EXPIRE = datetime.datetime.now().date() + datetime.timedelta(days=7)
 
 def expiring_rates_scheduler():
     services = ['fcl_freight', 'air_freight']
