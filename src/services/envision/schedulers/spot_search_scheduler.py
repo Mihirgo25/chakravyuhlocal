@@ -2,7 +2,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_jobs import c
 from services.air_freight_rate.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
 from database.db_session import rd
 
-current_processing_line = "spot_search_count"
+current_processing_key = "spot_search_count"
 
 def build_init_key(requirements, source):
     if source == 'fcl_freight':
@@ -15,17 +15,17 @@ def build_init_key(requirements, source):
 def get_current_predicted_count(requirements, source):
     if rd:
         try:
-            cached_response = rd.hget(current_processing_line, build_init_key(requirements, source))
+            cached_response = rd.hget(current_processing_key, build_init_key(requirements, source))
             return int(cached_response)
         except:
             return 0
 
 def set_predicted_count(requirements, count, source):
     if rd:
-        rd.hset(current_processing_line, build_init_key(requirements, source), int(count)+1)
+        rd.hset(current_processing_key, build_init_key(requirements, source), int(count)+1)
 
 def delete_init_key(requirements, source):
-    rd.delete(build_init_key(requirements, source))
+    rd.hdel(current_processing_key, build_init_key(requirements, source))
 
 
 def spot_search_scheduler(is_predicted, requirements, source):
