@@ -46,10 +46,3 @@ def spot_search_scheduler(is_predicted, requirements, source):
         if current_count:
             delete_init_key(requirements, source)
             return {"init_key": requirements}
-
-
-
-
-
-
-
