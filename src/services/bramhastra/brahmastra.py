@@ -45,7 +45,6 @@ If models are not send it will run for all available models present in the click
 If `arjun` is not the user, old duplicate entries won't be cleared. We recommend using `arjun` as user to clear these entries once in a while for better performance.
 """
 
-
 class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
         self.models = models or [
@@ -55,37 +54,20 @@ class Brahmastra:
         ]
         self.__clickhouse = ClickHouse()
         self.on_startup = None
+        self.non_stale = {FclFreightRateRequestStatistic}
 
     def __optimize_and_send_data_to_stale_tables(
-        self, model: peewee.Model, pass_to_stale: bool = False, optimize: bool = False
+        self, model: peewee.Model, optimize_stale: bool
     ):
-        if self.on_startup:
+        if self.on_startup or model not in self.non_stale:
             return
-        
-        columns = [field for field in model._meta.fields.keys()]
-        fields = ",".join(columns)
 
-        if pass_to_stale:
-            query = f"""
-            INSERT INTO brahmastra.stale_{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 
-            WITH LatestVersions AS (
-                SELECT
-                id,max(version) as version
-                FROM
-                brahmastra.{model._meta.table_name}
-                GROUP BY id
-            )
-            SELECT {fields} FROM brahmastra.{model._meta.table_name} WHERE (id, version) NOT IN (
-            SELECT id,version
-            FROM LatestVersions)"""
-            self.__clickhouse.execute(query)
-
-        if optimize:
+        if optimize_stale:
             self.__clickhouse.execute(
-                f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}"
+                f"OPTIMIZE TABLE brahmastra.stale_{model._meta.table_name}"
             )
 
-    def __get_clickhouse_row(self, model, row):
+    def __get_clickhouse_row(self, model, row, fields):
         params = dict()
         where = []
         for key in model.CLICK_KEYS:
@@ -96,7 +78,7 @@ class Brahmastra:
             where.append(f"{key} = %({key})s")
 
         old_row = self.__clickhouse.execute(
-            f"SELECT * from brahmastra.{model._meta.table_name} WHERE {' AND '.join(where)}",
+            f"SELECT {fields} from brahmastra.{model._meta.table_name} WHERE {' AND '.join(where)}",
             params,
         )
 
@@ -168,7 +150,7 @@ class Brahmastra:
                         {field: getattr(row, field) for field in columns}
                     )
 
-                    if old_data := self.__get_clickhouse_row(model, row):
+                    if old_data := self.__get_clickhouse_row(model, row, fields):
                         data["version"] = old_data["version"] + 1
                         rows.append(json_encoder_for_clickhouse(old_data))
 
@@ -187,9 +169,14 @@ class Brahmastra:
                 except Exception:
                     pass
 
-                query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
+                query_1 = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
+                
+                if model not in self.non_stale:
+                    query_2 = f"INSERT INTO brahmastra.stale_{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
 
-                self.__clickhouse.execute(query)
+                self.__clickhouse.execute(query_1)
+                
+                self.__clickhouse.execute(query_2)
 
                 status = BrahmastraTrackStatus.completed.value
 
@@ -215,7 +202,7 @@ class Brahmastra:
         )
 
     def used_by(
-        self, arjun: bool, on_startup: bool = False, optimize: bool = False
+        self, arjun: bool, on_startup: bool = False, optimize_stale: bool = True
     ) -> None:
         if APP_ENV == AppEnv.production.value:
             self.on_startup = on_startup
@@ -223,7 +210,7 @@ class Brahmastra:
             for model in self.models:
                 self.__build_query_and_insert_to_clickhouse(model)
                 if arjun:
-                    self.__optimize_and_send_data_to_stale_tables(model, optimize=False)
+                    self.__optimize_and_send_data_to_stale_tables(model, optimize_stale)
 
                 print(f"done with {model._meta.table_name}")
 

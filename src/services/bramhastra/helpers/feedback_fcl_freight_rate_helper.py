@@ -119,9 +119,6 @@ class Feedback:
             )
             .first()
         )
-        
-        if FclFeedbackClosingRemarks.rate_added.value in self.increment_keys:
-            feedback.is_rate_added = True
 
         if feedback:
             for key in self.params.keys():

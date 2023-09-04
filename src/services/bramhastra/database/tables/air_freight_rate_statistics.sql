@@ -208,4 +208,6 @@ CREATE TABLE brahmastra.stale_air_freight_rate_statistics
     operation_updated_at DateTime,
     is_deleted Bool DEFAULT false
 )
-ENGINE = File(CSV);
+ENGINE = VersionedCollapsingMergeTree(sign, version)
+PRIMARY KEY (is_deleted,origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,rate_id,validity_id)
+ORDER BY (is_deleted,origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,rate_id,validity_id,rate_deviation_from_booking_rate,updated_at);

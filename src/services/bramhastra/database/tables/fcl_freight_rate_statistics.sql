@@ -212,4 +212,6 @@ CREATE TABLE brahmastra.stale_fcl_freight_rate_statistics
     operation_updated_at DateTime,
     is_deleted Bool DEFAULT false
 )
-ENGINE = File(CSV);
+ENGINE = VersionedCollapsingMergeTree(sign, version)
+PRIMARY KEY (is_deleted ,origin_continent_id,origin_country_id,origin_port_id,rate_id,validity_id)
+ORDER BY (is_deleted, origin_continent_id,origin_country_id,origin_port_id,rate_id,validity_id,bookings_created);
