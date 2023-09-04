@@ -29,7 +29,7 @@ from services.bramhastra.models.air_freight_rate_statistic import (
     AirFreightRateStatistic,
 )
 from services.bramhastra.models.fcl_freight_rate_request_statistics import (
-       FclFreightRateRequestStatistic
+    FclFreightRateRequestStatistic,
 )
 import os
 
@@ -48,15 +48,22 @@ If `arjun` is not the user, old duplicate entries won't be cleared. We recommend
 
 class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
-        self.models = models or [FclFreightRateStatistic, AirFreightRateStatistic,FclFreightRateRequestStatistic]
+        self.models = models or [
+            FclFreightRateStatistic,
+            AirFreightRateStatistic,
+            FclFreightRateRequestStatistic,
+        ]
         self.__clickhouse = ClickHouse()
         self.on_startup = None
 
     def __optimize_and_send_data_to_stale_tables(
-        self, model: peewee.Model, pass_to_stale: bool = True
+        self, model: peewee.Model, pass_to_stale: bool = True, optimize: bool = False
     ):
         if self.on_startup:
             return
+        
+        columns = [field for field in model._meta.fields.keys()]
+        fields = ",".join(columns)
 
         if pass_to_stale:
             query = f"""
@@ -68,11 +75,15 @@ class Brahmastra:
                 brahmastra.{model._meta.table_name}
                 GROUP BY id
             )
-            SELECT * FROM brahmastra.{model._meta.table_name} WHERE (id, version) NOT IN (
+            SELECT {fields} FROM brahmastra.{model._meta.table_name} WHERE (id, version) NOT IN (
             SELECT id,version
             FROM LatestVersions)"""
             self.__clickhouse.execute(query)
-        self.__clickhouse.execute(f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}")
+
+        if optimize:
+            self.__clickhouse.execute(
+                f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}"
+            )
 
     def __get_clickhouse_row(self, model, row):
         params = dict()
@@ -147,7 +158,9 @@ class Brahmastra:
                 rows = []
                 count = 0
                 for row in ServerSide(
-                    model.select().where(model.updated_at >= brahmastra_track.last_updated_at)
+                    model.select().where(
+                        model.updated_at >= brahmastra_track.last_updated_at
+                    )
                 ):
                     print(count)
                     count += 1
@@ -168,7 +181,7 @@ class Brahmastra:
                 dataframe.to_csv(file_path, index=False)
 
                 url = upload_media_file(file_path)
-                
+
                 try:
                     os.remove(file_path)
                 except Exception:
@@ -201,16 +214,16 @@ class Brahmastra:
             f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
         )
 
-    def used_by(self, arjun: bool, on_startup: bool = False) -> None:
+    def used_by(
+        self, arjun: bool, on_startup: bool = False, optimize: bool = False
+    ) -> None:
         if APP_ENV == AppEnv.production.value:
             self.on_startup = on_startup
 
             for model in self.models:
                 self.__build_query_and_insert_to_clickhouse(model)
                 if arjun:
-                    self.__optimize_and_send_data_to_stale_tables(
-                        model, pass_to_stale=False
-                    )
+                    self.__optimize_and_send_data_to_stale_tables(model, optimize=False)
 
                 print(f"done with {model._meta.table_name}")
 
