@@ -185,11 +185,11 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=00, minute=30),
         'options': {'queue': 'fcl_freight_rate'}
     },
-    'smt_update_jobs_status': {
-        'task': 'celery_worker.smt_update_jobs_status_delay',
-        'schedule': crontab(hour=18, minute=00),
-        'options': {'queue': 'fcl_freight_rate'}
-        }
+    # 'smt_update_jobs_status': {
+    #     'task': 'celery_worker.smt_update_jobs_status_delay',
+    #     'schedule': crontab(hour=18, minute=00),
+    #     'options': {'queue': 'fcl_freight_rate'}
+    #     }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
