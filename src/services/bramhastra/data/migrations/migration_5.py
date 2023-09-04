@@ -1,33 +1,36 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from playhouse.postgres_ext import ServerSide
-from configs.definitions import ROOT_DIR
-import pandas as pd
 from services.bramhastra.enums import Fcl
-from pathlib import Path
-from services.bramhastra.client import json_encoder_for_clickhouse, ClickHouse
+from services.bramhastra.client import ClickHouse
 from micro_services.client import common
 from services.bramhastra.models.fcl_freight_rate_audit_statistic import (
     FclFreightRateAuditStatistic,
 )
+from configs.env import *
 from database.create_clicks import Clicks
-from services.rate_sheet.interactions.upload_file import upload_media_file
 from joblib import delayed, Parallel, cpu_count
 from datetime import datetime, timedelta
+from database.db_support import get_db
 
 
 def generate_batch_intervals():
-    start_date_str = "2023-04-01"
+    start_date_str = "2023-07-01"
     start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
-    end_date = datetime.strptime("2023-04-30", "%Y-%m-%d")
+    end_date = datetime.strptime("2023-09-30", "%Y-%m-%d")
     batch_intervals = []
 
     current_date = start_date
     while current_date <= end_date:
         batch_intervals.append(
-            {"fro": current_date, "to": current_date + timedelta(days=4)}
+            {"fro": current_date, "to": current_date + timedelta(days=2)}
         )
-        current_date += timedelta(days=5)
+        current_date += timedelta(days=3)
+        
+    # batch_intervals = [{
+    #     "fro": datetime.strptime("2023-07-01", "%Y-%m-%d"),
+    #     "to": datetime.strptime("2023-09-30", "%Y-%m-%d")
+    # }]
 
     return batch_intervals
 
@@ -46,37 +49,54 @@ class ParallelJobs:
         return res
 
 
-path = Path(f"{ROOT_DIR}/services/bramhastra/data/migrations/temp")
-
-path.mkdir(parents=True, exist_ok=True)
-
-PATH = str(path)
-
 KEYS_TO_KEEP = ["code", "currency", "price", "unit"]
-
-clicks = Clicks(models=[FclFreightRateAuditStatistic], ignore_oltp=True)
-
-
-clicks.delete()
-clicks.create()
 
 COLUMNS = [field for field in FclFreightRateAuditStatistic._meta.fields.keys()]
 
 FIELDS = ",".join(COLUMNS)
 
-def main():
+global counter
+counter = 1
+
+
+def reset():
+    clicks = Clicks(models=[FclFreightRateAuditStatistic])
+ 
+    try:
+        FclFreightRateAuditStatistic._meta.database.execute_sql(f"drop table {FclFreightRateAuditStatistic._meta.table_name}")
+    except:
+        pass
+    
+    clicks.delete()
+
+    clicks.create()
+
+
+def main(db = get_db()):
+    
+    reset()
+    
     p = ParallelJobs()
 
-    p.parallel_function(generate_batch_intervals(), execute)
+    batches = generate_batch_intervals()
+    
+    breakpoint()
+    
+    p.parallel_function(batches,execute)
+    
+    for batch in batches:
+        execute(batch)
+
+    print(
+        "------------------------- SENDING TO CLICKHOUSE -------------------------------"
+    )
+
+    send_to_clickhouse()
+
 
 def execute(date):
     fro = date.get("fro")
     to = date.get("to")
-
-    csv_path = (
-        PATH
-        + f"""/{fro.strftime("%Y-%m-%d")}_{to.strftime("%Y-%m-%d")}_fcl.csv""".strip()
-    )
 
     query = (
         FclFreightRateAudit.select(
@@ -98,7 +118,7 @@ def execute(date):
             FclFreightRateAudit.performed_by_type,
             FclFreightRateAudit.data,
             FclFreightRateAudit.created_at,
-            FclFreightRateAudit.object_id.alias("rate_id")
+            FclFreightRateAudit.object_id.alias("rate_id"),
         )
         .where(
             FclFreightRateAudit.created_at >= fro,
@@ -112,8 +132,6 @@ def execute(date):
     rows = []
 
     for audit in ServerSide(query.dicts()):
-        audit = json_encoder_for_clickhouse(audit)
-
         audits = []
 
         data = audit.get("data", {})
@@ -153,28 +171,61 @@ def execute(date):
             for key in COLUMNS:
                 if key not in COLUMNS:
                     del audit_row[key]
+                    
+            global counter
 
-            audit_row = {k: audit_row.get(k) for k in COLUMNS if k != "id"}
+            audit_row["id"] = counter
+
+            audit_row = {k: audit_row.get(k) for k in COLUMNS}
 
             audits.append(audit_row)
 
+            counter += 1
+
         rows.extend(audits)
 
-    if not rows:
-        return
+        if len(rows) == 20000:
+                FclFreightRateAuditStatistic.insert_many(rows).execute()
+                rows = []
 
-    df = pd.DataFrame(columns=COLUMNS, data=rows)
+    if rows:
+        FclFreightRateAuditStatistic.insert_many(rows).execute()
 
-    df.to_csv(csv_path, index=False)
 
-    url = upload_media_file(csv_path)
+def send_to_clickhouse():
+    click = ClickHouse()
 
-    clickhouse = ClickHouse()
+    columns = [field for field in FclFreightRateAuditStatistic._meta.fields.keys()]
+    fields = ",".join(columns)
 
-    query = f"INSERT INTO brahmastra.{FclFreightRateAuditStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {FIELDS} FROM s3('{url}')"
+    BATCH_SIZE = 100000
 
-    clickhouse.execute(query)
+    min = 1
+    max = BATCH_SIZE
+
+    total_count = FclFreightRateAuditStatistic.select(
+        FclFreightRateAuditStatistic.id
+    ).count()
+
+    while True:
+        click.execute(
+            f"INSERT INTO brahmastra.{FclFreightRateAuditStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightRateAuditStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE id <= {max} AND id >= {min}"
+        )
+
+        print(f"Done from {min} to {max} where total is {total_count}")
+
+        min += BATCH_SIZE
+        max += BATCH_SIZE
+
+        if max > total_count:
+            break
+
+    click.execute(
+        f"INSERT INTO brahmastra.{FclFreightRateAuditStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightRateAuditStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE id > {min}"
+    )
+
+    print(f"sending remaing data")
+
 
 if __name__ == "__main__":
     main()
-    path.rmdir()
