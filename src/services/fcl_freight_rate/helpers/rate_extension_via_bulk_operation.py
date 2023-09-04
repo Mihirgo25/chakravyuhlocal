@@ -54,6 +54,7 @@ def get_add_freight_rate_params(request):
     data["markup"] = request.get("markup")
     data["max_increase_amount"] = request.get("max_increase_amount")
     data["min_increase_amount"] = request.get("min_increase_amount")
+    data["affect_market_price"] = False
     
     params = {}
     params["performed_by_type"] = "agent"

@@ -569,8 +569,9 @@ class FclFreightRateBulkOperation(BaseModel):
 
 
 
-    def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id, affect_market_price):
+    def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
+        affect_market_price = data['affect_market_price']
         fcl_freight_rates = list(batch_query.dicts())
         
         validity_start = datetime.strptime(data['validity_start'], '%Y-%m-%d')
@@ -668,7 +669,7 @@ class FclFreightRateBulkOperation(BaseModel):
         
         
         
-    def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None, affect_market_price=True):
+    def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
                         
@@ -724,7 +725,7 @@ class FclFreightRateBulkOperation(BaseModel):
         while(offset < total_count):
             batch_query = query.offset(offset).limit(BATCH_SIZE)
             offset += BATCH_SIZE
-            count, total_affected_rates = self.perform_batch_add_freight_rate_markup_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id, affect_market_price)
+            count, total_affected_rates = self.perform_batch_add_freight_rate_markup_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
         
         data['total_affected_rates'] = total_affected_rates
         self.progress = 100 if count == total_count else  get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
