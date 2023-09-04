@@ -22,6 +22,8 @@ class ClusterExtensionGriWorker(BaseModel):
     commodity= CharField(index=True, null=True)
     performed_by_id=UUIDField(index=True,null=True)
     performed_by=BinaryJSONField(null=True)
+    min_decrease_amount =FloatField(index=True,null=True)
+    max_increase_amount = FloatField(index=True,null=True)
     min_decrease_percent =FloatField(index=True,null=True)
     max_increase_percent = FloatField(index=True,null=True)
     manual_gri=FloatField(index=True,null=True)
