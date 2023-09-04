@@ -239,15 +239,3 @@ CRITICAL_PORTS_INDIA_VIETNAM = [
     'c2d6fb91-2875-4d73-b12b-dd1b78fdfe8a',
     '76fdeee3-1c7f-4f6e-a5d2-2a729445f2d9'
 ]
-
-CRITICAL_AIRPORTS_INDIA_VIETNAM=[
-  '676b663a-cab8-48dd-a6da-d28c6ee3f20c',
-  '06b9cf22-74bf-496b-ab6d-8dcb67489233',
-  '2f6f6dbc-c10b-4d1d-b9fd-e89298fb487c',
-  '7391cac2-e8db-467f-a59b-574d01dd7e7c',
-  'aa0e7e59-cbb9-43b2-98ce-1f992ae7ab19',
-  'aeb6e88f-4379-4398-bf9e-18f91c78e1f3',
-  '093f1fb6-feab-448a-a683-7dc7984734e0',
-  '2b436d09-40a3-4c0e-a07a-ebb0db38f164',
-  'a7da60eb-4f72-439c-b400-ac386b3d9d83'
-]
