@@ -46,13 +46,14 @@ def get_add_freight_rate_params(request):
         "origin_main_port_id": request.get("origin_port_id"),
         "destination_main_port_id": request.get("destination_port_id"),
         "container_size": request.get("container_size"),
-        "commodity": "general"
+        "commodity": request.get("commodity"),
+        "container_type": request.get("container_type")
     }
     data["line_item_code"] = "BAS"
     data["markup_type"] = "percentage"
     data["markup"] = request.get("markup")
-    data["max_markup_amount"] = request.get("max_markup_amount")
-    data["min_markup_amount"] = request.get("min_markup_amount")
+    data["max_increase_amount"] = request.get("max_increase_amount")
+    data["min_increase_amount"] = request.get("min_increase_amount")
     
     params = {}
     params["performed_by_type"] = "agent"

@@ -849,8 +849,8 @@ class AddFreightRateMarkup(BaseModel):
     rates_less_than_price: float = None
     tag: str = None
     affect_market_price:bool=True
-    min_markup_amount: float=None 
-    max_markup_amount: float=None 
+    min_increase_amount: float=None 
+    max_increase_amount: float=None 
 
 
 class AddLocalRateMarkup(BaseModel):

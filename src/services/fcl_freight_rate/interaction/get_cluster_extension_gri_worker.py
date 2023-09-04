@@ -59,7 +59,9 @@ async def get_cluster_extension_gri_worker(request):
                     FclFreightRate.updated_at < end_time,
                     FclFreightRate.origin_port_id == origin_port_id,
                     FclFreightRate.destination_port_id == destination_port_id,
-                    FclFreightRate.container_size == container_size
+                    FclFreightRate.container_size == container_size,
+                    FclFreightRate.last_rate_available_date >= datetime.now().date(),
+                    ~FclFreightRate.mode.in_(['predicted', 'rate_extension'])     
                 ))  
         
         records = query.execute()
@@ -183,6 +185,8 @@ async def get_cluster_extension_gri_worker(request):
     if min_range <= overall_gri_avg <= max_range:
         request["markup"] = overall_gri_avg
         request["shipping_line_id"] = TO_BE_UPDATED_SHIPPING_LINES
+        request["rate_type"] = "market_place"
+        request["exclude_service_provider_types"] = ["nvocc"]
         # * request["container_size"] = container_size
         
         rate_extension_via_bulk_operation(request)
