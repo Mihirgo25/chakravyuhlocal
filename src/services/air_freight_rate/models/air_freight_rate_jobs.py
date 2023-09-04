@@ -40,6 +40,7 @@ class AirFreightRateJobs(BaseModel):
     operation_type = CharField(null=True)
     stacking_type = CharField(null=True)
     price_type = CharField(null=True)
+    serial_id = BigIntegerField(constraints=[SQL(" DEFAULT nextval('air_freight_rate_jobs_serial_id_seq')")],)
 
     class Meta:
         table_name = 'air_freight_rate_jobs'

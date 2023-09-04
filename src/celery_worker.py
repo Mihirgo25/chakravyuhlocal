@@ -49,7 +49,6 @@ from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notific
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
 from services.extensions.interactions.create_freight_look_surcharge_rates import create_surcharge_rate_api
 from services.air_freight_rate.estimators.relate_airlines import RelateAirline
-from services.envision.schedulers.critical_port_pairs_scheduler import critical_port_pairs_scheduler
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -63,10 +62,11 @@ from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreight
 from playhouse.postgres_ext import ServerSide
 
 # Supply Tools
-
+from services.envision.schedulers.critical_port_pairs_scheduler import critical_port_pairs_scheduler
 from services.envision.schedulers.cancelled_shipments_scheduler import cancelled_shipments_scheduler
 from services.envision.schedulers.expiring_rates_scheduler import expiring_rates_scheduler
 from services.envision.schedulers.spot_search_scheduler import spot_search_scheduler
+from services.envision.schedulers.update_jobs_status import update_jobs_status
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -183,6 +183,11 @@ celery.conf.beat_schedule = {
     'smt_critical_port_pairs': {
         'task': 'celery_worker.smt_critical_port_pairs_delay',
         'schedule': crontab(hour=00, minute=30),
+        'options': {'queue': 'fcl_freight_rate'}
+    },
+    'smt_update_jobs_status': {
+        'task': 'celery_worker.smt_update_jobs_status_delay',
+        'schedule': crontab(hour=18, minute=00),
         'options': {'queue': 'fcl_freight_rate'}
         }
 }
@@ -924,6 +929,16 @@ def expiring_rates_in_delay(self):
 def smt_critical_port_pairs_delay(self):
     try:
         critical_port_pairs_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind=True, max_retries=3, retry_backoff = True)
+def smt_update_jobs_status_delay(self):
+    try:
+        update_jobs_status()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
