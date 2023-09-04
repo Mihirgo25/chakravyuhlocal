@@ -88,10 +88,11 @@ def build_daily_details(query,statistics):
     for data in daily_results:
         total_daily_count += data['count']
         statistics[data['status']] = data['count']
+    statistics['completed'] = statistics['completed']+statistics['aborted']
 
     statistics['total'] = total_daily_count
     if total_daily_count != 0:
-        statistics['completed_percentage'] = round(((statistics['completed']+statistics['aborted'])/total_daily_count)*100,2)
+        statistics['completed_percentage'] = round(((statistics['completed'])/total_daily_count)*100,2)
     return statistics
 
 def build_weekly_details(query,statistics):
