@@ -1,5 +1,6 @@
 from datetime import date, timedelta, datetime
 from math import ceil
+from services.bramhastra.enums import FclFilterTypes
 
 POSSIBLE_DIRECT_FILTERS = {
     "origin_port_id",
@@ -39,14 +40,20 @@ REQUIRED_FILTERS = {
 }
 
 
-def get_direct_indirect_filters(filters):
+def get_direct_indirect_filters(filters,date = "validity_range"):
     if filters is None:
         return
     for k, v in REQUIRED_FILTERS.items():
         if k not in filters:
             filters[k] = v
+    
     where = []
-    get_date_range_filter(where)
+    
+    if date == FclFilterTypes.validity_range.value:
+        get_date_range_filter(where)
+    
+    if date == FclFilterTypes.time_series.values:
+        get_time_series_filter(where)
 
     if filters:
         for key, value in filters.items():
@@ -62,6 +69,12 @@ def get_direct_indirect_filters(filters):
 
     if where:
         return " AND ".join(where)
+    
+
+def get_time_series_filter(where):
+    where.append(
+        "(updated_at >= %(start_date)s AND updated_at <= %(end_date)s)"
+    )
 
 
 def get_date_range_filter(where):

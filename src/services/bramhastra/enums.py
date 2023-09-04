@@ -112,3 +112,7 @@ class FclFeedbackStatus(Bramhastra):
     active = "active"
     inactive = "inactive"
     
+
+class FclFilterTypes(Bramhastra):
+    validity_range = "validity_range"
+    time_series = "time_series"

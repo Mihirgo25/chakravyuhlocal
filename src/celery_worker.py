@@ -158,8 +158,8 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=16, minute=00),
         'options': {'queue': 'low'}
     },
-    'fcl_daily_attribute_updater':{
-        'task': 'services.bramhastra.celery.fcl_daily_attribute_updater_worker',
+    'fcl_daily_attributer_updater':{
+        'task': 'services.bramhastra.celery.fcl_daily_attributer_updater_in_delay',
         'schedule': crontab(minute=0, hour='*/3'),
         'options': {'queue': 'statistics'}
     }

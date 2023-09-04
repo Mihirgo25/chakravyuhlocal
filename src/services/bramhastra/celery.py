@@ -6,7 +6,7 @@ def brahmastra_in_delay(self):
     # using this until we get all queries right
     try:
         brahmastra=Brahmastra()
-        brahmastra.used_by(arjun = True)
+        brahmastra.used_by(arjun = False)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -27,7 +27,7 @@ def cache_data_worker_in_delay(self):
         
         
 @celery.task(bind=True,retry_backoff=True,max_retries=5)
-def fcl_extended_object_worker_in_delay(self):
+def fcl_daily_attributer_updater_in_delay(self):
     try:
         # this sets parent_rate_id for rates created via extensions
         from services.bramhastra.workers.fcl_daily_attribute_updater_worker import FclDailyAttributeUpdaterWorker

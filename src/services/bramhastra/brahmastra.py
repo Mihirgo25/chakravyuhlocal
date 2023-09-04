@@ -57,7 +57,7 @@ class Brahmastra:
         self.on_startup = None
 
     def __optimize_and_send_data_to_stale_tables(
-        self, model: peewee.Model, pass_to_stale: bool = True, optimize: bool = False
+        self, model: peewee.Model, pass_to_stale: bool = False, optimize: bool = False
     ):
         if self.on_startup:
             return
@@ -70,7 +70,7 @@ class Brahmastra:
             INSERT INTO brahmastra.stale_{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 
             WITH LatestVersions AS (
                 SELECT
-                id,max(version)
+                id,max(version) as version
                 FROM
                 brahmastra.{model._meta.table_name}
                 GROUP BY id
