@@ -1,4 +1,4 @@
-from peewee import Model, UUIDField, CharField, IntegerField, BigIntegerField, BooleanField
+from peewee import Model, UUIDField, CharField, IntegerField, BigIntegerField
 from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField, ArrayField,FloatField
