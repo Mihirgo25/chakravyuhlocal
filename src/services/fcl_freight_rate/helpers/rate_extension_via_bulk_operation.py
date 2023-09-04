@@ -43,9 +43,8 @@ def get_extend_freight_rate_params(request):
 def get_add_freight_rate_params(request):
     data = {}
     data["filters"] = {
-        "origin_main_port_id": request.get("origin_port_id"),
-        "destination_main_port_id": request.get("destination_port_id"),
-        "container_size": request.get("container_size"),
+        "origin_port_id": request.get("origin_port_id"),
+        "destination_port_id": request.get("destination_port_id"),
         "commodity": request.get("commodity"),
         "container_type": request.get("container_type")
     }

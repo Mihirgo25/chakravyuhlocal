@@ -6,7 +6,7 @@ from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import 
 from micro_services.client import common
 from fastapi.encoders import jsonable_encoder
 
-MAIN_SHIPPING_LINE_IDS = []
+MAIN_SHIPPING_LINE_IDS = ['c3649537-0c4b-4614-b313-98540cffcf40']
 
 def get_filters(start_time, query_type, rate_ids, shipping_line_ids):
     return {
@@ -154,6 +154,7 @@ async def update_cluster_extension_by_latest_trends(request):
     TO_BE_UPDATED_SHIPPING_LINES = [id for id in MAIN_SHIPPING_LINE_IDS if id not in UPDATED_SHIPPING_LINES]  
     
     if overall_gri_avg and (min_decrease_percent <= overall_gri_avg <= max_increase_percent):
+        request['source'] = 'cluster_extension_worker'
         request["markup"] = overall_gri_avg
         request["shipping_line_id"] = TO_BE_UPDATED_SHIPPING_LINES
         request["rate_type"] = "market_place"
