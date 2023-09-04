@@ -25,9 +25,11 @@ POSSIBLE_DIRECT_FILTERS = {
     "parent_mode",
     "sourced_by_id",
     "procured_by_id",
+    "rate_id",
+    
 }
 
-POSSIBLE_INDIRECT_FILTERS = {"stale_rate"}
+POSSIBLE_INDIRECT_FILTERS = {"stale_rate","rate_updated_at_less_than"}
 
 COUNT_FILTERS = {"dislikes_count", "checkout_count"}
 
@@ -65,6 +67,11 @@ def get_direct_indirect_filters(filters):
 def get_date_range_filter(where):
     where.append(
         "((validity_end >= %(start_date)s AND validity_start <= %(start_date)s) OR (validity_start <= %(end_date)s AND validity_end >= %(end_date)s) OR (validity_end <= %(end_date)s AND validity_start >= %(start_date)s))"
+    )
+    
+def get_rate_updated_at_less_than_filter(where):
+    where.append(
+        "rate_updated_at < %(rate_updated_at_less_than)s"
     )
 
 

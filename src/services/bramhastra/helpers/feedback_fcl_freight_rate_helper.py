@@ -76,11 +76,10 @@ class Feedback:
         if fcl_freight_rate_statistic:
             self.params["fcl_freight_rate_statistic_id"] = fcl_freight_rate_statistic.id
 
-            self.increment_keys.add(
-                FclFreightRateStatistic.feedback_recieved_count.name
-            )
-
             if self.params.get("status") == FclFeedbackStatus.inactive.value:
+                self.increment_keys.add(
+                    FclFreightRateStatistic.feedback_recieved_count.name
+                )
                 if self.params.get(
                     FeedbackFclFreightRateStatistic.closing_remarks.name
                 ) and FclFeedbackClosingRemarks.rate_added.value in self.params.get(

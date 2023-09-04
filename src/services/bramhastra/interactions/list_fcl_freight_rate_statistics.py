@@ -120,9 +120,11 @@ async def list_fcl_freight_rate_statistics(
 async def use_average_price_filter(
     filters, page_limit, page, is_service_object_required
 ):
+    group_by = filters.get("group_by") or DEFAULT_PARAMS
+    
     clickhouse = ClickHouse()
 
-    grouping = {k for k in DEFAULT_PARAMS if k in filters}
+    grouping = {k for k in group_by if k in filters}
 
     if not grouping:
         grouping = DEFAULT_SELECT_KEYS.copy()
