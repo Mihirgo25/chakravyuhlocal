@@ -8,7 +8,7 @@ POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_
 
 
 def delete_fcl_freight_rate_job(request):
-    if request.get('closing_remarks') and request.get('closing_remarks')[0] in POSSIBLE_CLOSING_REMARKS:
+    if request.get('closing_remarks') and request.get('closing_remarks') in POSSIBLE_CLOSING_REMARKS:
         update_params = {'status':'aborted'}
     else:
         update_params = {'status':'completed'}
@@ -23,7 +23,7 @@ def set_jobs_mapping(jobs_id, data):
     audit_id = FclFreightRateJobsMapping.create(
         source_id=data.get("rate_id"),
         job_id= jobs_id,
-        closed_by_id = data.get("performed_by_id"),
+        performed_by_id = data.get("performed_by_id"),
         data = data.get('data')
     )
     return audit_id

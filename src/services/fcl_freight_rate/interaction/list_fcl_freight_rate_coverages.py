@@ -56,11 +56,10 @@ def list_fcl_freight_rate_coverages(filters = {}, page_limit = 10, page = 1, sor
 
 def get_statisitcs(query, filters):
     dynamic_statisitcs = {}
-    dynamic_statisitcs['monitoring_dashboard'] = query.where(FclFreightRateJobs.source == 'monitoring_dashboard').count() or 0
-    dynamic_statisitcs['spot_search'] = query.where(FclFreightRateJobs.source == 'spot_search').count() or 0
-    dynamic_statisitcs['critical_ports'] = query.where(FclFreightRateJobs.source == 'critical_ports').count() or 0
-    dynamic_statisitcs['expiring_rates'] = query.where(FclFreightRateJobs.source == 'expiring_rates').count() or 0
-    dynamic_statisitcs['cancelled_shipments'] = query.where(FclFreightRateJobs.source == 'cancelled_shipments').count() or 0
+    dynamic_statisitcs['spot_search'] = query.where(FclFreightRateJobs.source == 'spot_search').count() 
+    dynamic_statisitcs['critical_ports'] = query.where(FclFreightRateJobs.source == 'critical_ports').count()
+    dynamic_statisitcs['expiring_rates'] = query.where(FclFreightRateJobs.source == 'expiring_rates').count()
+    dynamic_statisitcs['cancelled_shipments'] = query.where(FclFreightRateJobs.source == 'cancelled_shipments').count() 
     query = query.where(FclFreightRateJobs.source == filters['source'])
     return dynamic_statisitcs, query
     
@@ -94,6 +93,7 @@ def apply_indirect_filters(query, filters):
 
 def apply_user_id_filter(query, filters):
     query = query.where(FclFreightRateJobs.assigned_to_id == filters["user_id"])
+    return query
 
 
 def apply_updated_at_filter(query, filters):

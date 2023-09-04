@@ -144,10 +144,16 @@ def apply_indirect_filters(query, filters):
     return query
 
 def apply_date_range_filter(query, filters):
-    query = query.where(
-         FclFreightRateJobs.created_at.cast('date') >= filters['date_range']['startDate'],
-         FclFreightRateJobs.created_at.cast('date') <= filters['date_range']['endDate'],
-         )
+    if not filters["date_range"]["startDate"]:
+        start_date = datetime.now() - timedelta(days=7)
+    else:
+        start_date = datetime.strptime(filters["date_range"]["startDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
+    if not filters["date_range"]["endDate"]:
+        
+        end_date = datetime.now() 
+    else:
+        end_date = datetime.strptime(filters["date_range"]["endDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
+    query = query.where(FclFreightRateJobs.created_at.cast("date") >= start_date.date(), FclFreightRateJobs.created_at.cast("date") <= end_date.date())
     return query
 
 def apply_user_id_filter(query, filters):
