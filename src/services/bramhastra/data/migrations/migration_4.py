@@ -15,6 +15,7 @@ from services.bramhastra.database.dictionaries.country_rate_count import (
     CountryRateCount,
 )
 from services.bramhastra.models.fcl_freight_rate_request_statistics import FclFreightRateRequestStatistic
+from services.bramhastra.models.fcl_freight_rate_audit_statistic import FclFreightRateAuditStatistic
 
 
 def main():
@@ -29,7 +30,7 @@ def main():
     from database.create_clicks import Clicks
 
     Clicks(
-        dictionaries = [CountryRateCount],models=[AirFreightRateStatistic, FclFreightRateStatistic,FclFreightRateRequestStatistic], ignore_oltp=True
+        dictionaries = [CountryRateCount],models=[FclFreightRateAuditStatistic,AirFreightRateStatistic, FclFreightRateStatistic,FclFreightRateRequestStatistic], ignore_oltp=True
     ).create()
 
     WorkerLog.delete().execute()
