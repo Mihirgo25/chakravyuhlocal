@@ -30,9 +30,22 @@ async def get_cluster_extension_gri_worker(request):
     
     origin_port_id = request["origin_port_id"]
     destination_port_id = request["destination_port_id"]
-    container_type = request["container_type"]
-    commodity = request["commodity"]
     
+    min_range, max_range = -5, 10
+    
+    query = (ClusterExtensionGriWorker
+            .select(ClusterExtensionGriWorker.min_range, ClusterExtensionGriWorker.max_range)
+            .where((ClusterExtensionGriWorker.destination_port_id == destination_port_id) &
+            (ClusterExtensionGriWorker.origin_port_id == origin_port_id)))
+
+    
+    record = query.get()
+
+    if record:
+        min_range = record.min_range
+        max_range = record.max_range
+
+        
     shipping_line_gri_mapping = {}
     
     for container_size in ["20", "40", "40HC"]:
@@ -113,6 +126,24 @@ async def get_cluster_extension_gri_worker(request):
                     shipping_line_gri_mapping[shipping_line_id][container_size] = gri_perc
                     
     
+    shipping_line_avg_mapping = {}
+
+    for key, sub_dict in shipping_line_gri_mapping.items():
+        values = []
+        for sub_key in sub_dict:
+            if sub_key in {"20", "40", "40HC"}: 
+                values.append(sub_dict[sub_key])
+        if values:  
+            average_value = sum(values) / len(values)
+            shipping_line_avg_mapping[key] = average_value
+            
+    
+    overall_gri_avg = 0  
+    for key in shipping_line_avg_mapping.keys():
+        overall_gri_avg += shipping_line_avg_mapping[key]
+    
+    overall_gri_avg /= len(shipping_line_avg_mapping)
+    
     
     UPDATED_SHIPPING_LINES = shipping_line_gri_mapping.keys()
     TO_BE_UPDATED_SHIPPING_LINES = [id for id in MAIN_SHIPPING_LINE_IDS if id not in UPDATED_SHIPPING_LINES]
@@ -152,7 +183,7 @@ async def get_cluster_extension_gri_worker(request):
     if min_range <= overall_gri_avg <= max_range:
         request["markup"] = overall_gri_avg
         request["shipping_line_id"] = TO_BE_UPDATED_SHIPPING_LINES
-        request["container_size"] = container_size
+        # * request["container_size"] = container_size
         
         rate_extension_via_bulk_operation(request)
 
