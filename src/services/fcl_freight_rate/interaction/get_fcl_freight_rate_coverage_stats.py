@@ -4,7 +4,6 @@ from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
-import time
 from peewee import fn
 from playhouse.postgres_ext import SQL
 
