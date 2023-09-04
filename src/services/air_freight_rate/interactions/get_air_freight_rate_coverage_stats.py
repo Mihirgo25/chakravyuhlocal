@@ -131,7 +131,8 @@ def build_weekly_details(query,statistics):
     for date in total_dict:
         total_task_per_day = total_dict[date]['pending'] + total_dict[date]['completed'] + total_dict[date]['backlog'] + total_dict[date]['aborted']
         total_completed_per_day = total_dict[date]['completed'] + total_dict[date]['aborted']
-        weekly_stats[date] = round((total_completed_per_day/total_task_per_day * 100),2)
+        if total_task_per_day != 0:
+            weekly_stats[date] = round((total_completed_per_day/total_task_per_day * 100),2)
 
     statistics['weekly_completed_percentage'] = weekly_stats
 
@@ -151,8 +152,8 @@ def apply_date_range_filter(query, filters):
     else:
         start_date = datetime.strptime(filters["date_range"]["startDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
     if not filters["date_range"]["endDate"]:
-        
-        end_date = datetime.now() 
+
+        end_date = datetime.now()
     else:
         end_date = datetime.strptime(filters["date_range"]["endDate"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
     query = query.where(AirFreightRateJobs.created_at.cast("date") >= start_date.date(), AirFreightRateJobs.created_at.cast("date") <= end_date.date())
