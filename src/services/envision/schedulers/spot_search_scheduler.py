@@ -25,7 +25,7 @@ def set_predicted_count(requirements, count, source):
         rd.hset(current_processing_key, build_init_key(requirements, source), int(count)+1)
 
 def delete_init_key(requirements, source):
-    rd.hdel([build_init_key(requirements, source)])
+    rd.hdel(current_processing_key, build_init_key(requirements, source))
 
 
 def spot_search_scheduler(is_predicted, requirements, source):
