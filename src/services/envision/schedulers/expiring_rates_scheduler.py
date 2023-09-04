@@ -19,9 +19,9 @@ def expiring_rates_scheduler():
     
     for service in services:
         if service == "fcl_freight":
-            fcl_query = FclFreightRate.select(*[getattr(FclFreightRate, col) for col in required_columns['fcl_freight']]).where(FclFreightRate.last_rate_available_date <= DAYS_TO_EXPIRE)
+            fcl_query = FclFreightRate.select(*[getattr(FclFreightRate, col) for col in required_columns['fcl_freight']]).where(FclFreightRate.last_rate_available_date <= DAYS_TO_EXPIRE, FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.rate_type != 'cogo_assured')
         if service == 'air_freight':
-            air_query = AirFreightRate.select(*[getattr(AirFreightRate, col) for col in required_columns['air_freight']]).where(AirFreightRate.last_rate_available_date <= DAYS_TO_EXPIRE)
+            air_query = AirFreightRate.select(*[getattr(AirFreightRate, col) for col in required_columns['air_freight']]).where(AirFreightRate.last_rate_available_date <= DAYS_TO_EXPIRE, AirFreightRate.source != 'predicted')
     
     for rate in ServerSide(fcl_query):
         rate_data = model_to_dict(rate)
