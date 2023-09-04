@@ -1,6 +1,3 @@
-from services.fcl_freight_rate.interaction.get_cluster_extension_gri_worker import (
-    get_cluster_extension_gri_worker,
-)
 from services.fcl_freight_rate.models.fcl_freight_location_cluster import (
     FclFreightLocationCluster,
 )
