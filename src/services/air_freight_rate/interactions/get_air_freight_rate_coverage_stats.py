@@ -4,8 +4,9 @@ from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
-import time
 from peewee import fn
+from playhouse.postgres_ext import SQL
+
 
 possible_direct_filters = ['origin_airport_id','destination_airport_id','airline_id','commodity']
 possible_indirect_filters = ['date_range', 'user_id']
@@ -99,11 +100,12 @@ def build_weekly_details(query,statistics):
     weekly_stats_query = query.select(
           AirFreightRateJobs.status,
           fn.COUNT(AirFreightRateJobs.id).alias('count'),
-          AirFreightRateJobs.created_at.cast('date')
+          AirFreightRateJobs.created_at.cast('date').alias('created_at'),
      ).group_by(
           AirFreightRateJobs.status,
           AirFreightRateJobs.created_at.cast('date')
     )
+    weekly_stats_query = weekly_stats_query.order_by(SQL('created_at DESC'))
     weekly_results = json_encoder(list(weekly_stats_query.dicts()))
     weekly_stats = {}
 
