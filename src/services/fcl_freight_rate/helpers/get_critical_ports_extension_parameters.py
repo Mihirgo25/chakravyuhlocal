@@ -5,6 +5,7 @@ from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping impor
     FclFreightLocationClusterMapping,
 )
 import datetime
+from fastapi.encoders import jsonable_encoder
 
 INDIA_CRITICAL_PORTS = [
     "eb187b38-51b2-4a5e-9f3c-978033ca1ddf",
@@ -58,23 +59,25 @@ def get_critical_ports_extension_parameters():
     )
     starttime = datetime.datetime.now()
 
-    location_mappings = FclFreightLocationClusterMapping.select(
+    query = FclFreightLocationClusterMapping.select(
         FclFreightLocationClusterMapping.location_id,
         FclFreightLocationCluster.base_port_id,
-    ).join(FclFreightLocationCluster).execute()
+    ).join(FclFreightLocationCluster)
+    
+    location_mappings = jsonable_encoder(list(query.dicts()))
 
     extension_parameters = []
     for combo in india_combinations + vietnam_combinations:
         origin_secondary_ports = [
-            str(mapping.location_id)
+            mapping['location_id']
             for mapping in location_mappings
-            if str(mapping.base_port_id) == combo["origin_port_id"]
+            if mapping['base_port_id'] == combo["origin_port_id"]
         ]
         
         destination_secondary_ports = [
-            str(mapping.location_id)
+            mapping['location_id']
             for mapping in location_mappings
-            if str(mapping.base_port_id) == combo["destination_port_id"]
+            if mapping['base_port_id'] == combo["destination_port_id"]
         ]
 
         request_data = {
