@@ -50,7 +50,7 @@ class Rate:
         self.params = []
         self.origin_pricing_zone_map_id = None
         self.destination_pricing_zone_map_id = None
-        self.increment_keys = {}
+        self.increment_keys = set()
 
     def create(self, row) -> None:
         FclFreightRateStatistic.create(**row)
