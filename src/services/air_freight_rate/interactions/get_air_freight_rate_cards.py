@@ -112,8 +112,8 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
 
 def add_surcharge_object(freight_rate,response_object,requirements,chargeable_weight):
     
-    if freight_rate['price_type'] == 'all_in':
-        return True
+    # if freight_rate['price_type'] == 'all_in':
+    #     return True
     response_object['surcharge'] = {
         'line_items':[]
     }
@@ -133,7 +133,7 @@ def build_surcharge_line_item_object(line_item,requirements,chargeable_weight,fr
     required_charges = DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL
 
     if(freight_rate['airline_id'] in SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING):
-        required_charges = SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING[requirements['airline_id']]['eligible_line_items']
+        required_charges = SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING[freight_rate['airline_id']]['eligible_line_items']
     if not surcharge_charges or line_item['code'] not in required_charges:
         return
 
