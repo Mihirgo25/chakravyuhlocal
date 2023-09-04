@@ -22,6 +22,7 @@ from services.fcl_freight_rate.interaction.add_local_rates_on_country import add
 from services.fcl_freight_rate.helpers.get_critical_ports_extension_parameters import get_critical_ports_extension_parameters
 from kombu import Exchange, Queue
 from celery.schedules import crontab
+import asyncio
 from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
@@ -879,7 +880,9 @@ def air_freight_airline_factors_in_delay(self):
 def cluster_extension_by_latest_trends_worker(self):
     try:
         critical_port_pairs = get_critical_ports_extension_parameters()
-        with concurrent.futures.ThreadPoolExecutor(max_workers = 1) as executor:
-            futures = [executor.submit(update_cluster_extension_by_latest_trends, request) for request in critical_port_pairs]
+       
+        for request in critical_port_pairs:
+            asyncio.run(update_cluster_extension_by_latest_trends(request))
+        
     except Exception as exc:
             pass
