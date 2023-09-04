@@ -25,7 +25,7 @@ def create_fcl_freight_rate_job(request, source):
         'source' : source,
         'rate_type' : request.get('rate_type'),
     }
-    init_key = f'{str(params.get("origin_port_id"))}:{str(params["destination_port_id"] or "")}:{str(params["shipping_line_id"])}:{str(params["service_provider_id"] or "")}:{str(params["container_size"])}:{str(params["container_type"])}:{str(params["commodity"])}:{str(params["source"])}:{str(params["rate_type"])}'
+    init_key = f'{str(params.get("origin_port_id"))}:{str(params.get("destination_port_id") or "")}:{str(params.get("shipping_line_id"))}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size"))}:{str(params.get("container_type"))}:{str(params.get("commodity"))}:{str(params.get("rate_type"))}'
     fcl_freight_rate_job = FclFreightRateJobs.select().where(FclFreightRateJobs.init_key == init_key, FclFreightRateJobs.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 

@@ -22,6 +22,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "id",
     "assigned_to",
     "closed_by",
+    "closed_by_id",
     "closing_remarks",
     "commodity",
     "container_size",

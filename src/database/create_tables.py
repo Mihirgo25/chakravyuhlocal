@@ -12,6 +12,8 @@ class Table:
     def create_tables(self,models):
         try:
             db.create_tables(models)
+            db.execute_sql('CREATE SEQUENCE air_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;')
+            db.execute_sql('CREATE SEQUENCE fcl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;')
             db.close()
             print("created table")
         except:
