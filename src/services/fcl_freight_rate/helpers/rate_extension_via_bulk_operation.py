@@ -1,4 +1,5 @@
 from configs.env import DEFAULT_USER_ID
+from datetime import datetime, timedelta
 ACTION_NAMES_FOR_SOURCES = {
     "flash_booking": "extend_freight_rate",
     "cluster_extension_worker": "add_freight_rate",
@@ -6,6 +7,7 @@ ACTION_NAMES_FOR_SOURCES = {
 
 def rate_extension_via_bulk_operation(request):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
+
     source = request.get("source")
     if source in ACTION_NAMES_FOR_SOURCES:
         bulk_operation_params = eval("get_"+ACTION_NAMES_FOR_SOURCES[source]+"_params"+"(request)")
@@ -46,13 +48,16 @@ def get_add_freight_rate_params(request):
         "origin_port_id": request.get("origin_port_id"),
         "destination_port_id": request.get("destination_port_id"),
         "commodity": request.get("commodity"),
-        "container_type": request.get("container_type")
+        "container_type": request.get("container_type"),
     }
     data["line_item_code"] = "BAS"
+    data["tag"] = "trend_gri"
     data["markup_type"] = "percentage"
     data["markup"] = request.get("markup")
+    data["validity_start"] = datetime.now().date()
+    data["validity_end"] = datetime.now().date() + timedelta(days=2)
     data["max_increase_amount"] = request.get("max_increase_amount")
-    data["min_increase_amount"] = request.get("min_increase_amount")
+    data["min_decrease_amount"] = request.get("min_decrease_amount")
     data["affect_market_price"] = False
     
     params = {}
@@ -60,6 +65,6 @@ def get_add_freight_rate_params(request):
     params["performed_by_id"] = DEFAULT_USER_ID
     params["procured_by_id"] = DEFAULT_USER_ID
     params["sourced_by_id"] = DEFAULT_USER_ID
-    params["extend_freight_rate"] = data
+    params["add_freight_rate_markup"] = data
     
     return params

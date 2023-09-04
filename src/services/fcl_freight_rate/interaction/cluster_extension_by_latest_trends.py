@@ -62,11 +62,8 @@ async def update_cluster_extension_by_latest_trends(request):
                 ))  
     
     freight_rates = jsonable_encoder(list(query.dicts()))
-    
     for container_size in ["20", "40", "40HC"]:
-        
         rates = [rate for rate in freight_rates if rate["container_size"] == container_size]  
-        
         prices = []
         rate_ids = []
         shipping_line_ids = []
@@ -89,9 +86,6 @@ async def update_cluster_extension_by_latest_trends(request):
                     price += validity["price"]
                     
             prices.append(price / len(rate['validities']))   
-                            
-            
-                
 
         response = await list_fcl_freight_rate_statistics(get_filters(start_time, "average_price", rate_ids, shipping_line_ids), 1, 1, False)
         
@@ -117,7 +111,6 @@ async def update_cluster_extension_by_latest_trends(request):
             count = shipping_line_counts[shipping_id]
             average_prices[shipping_id] = total / count 
             
-        # * shipping_line_id gri percentage mapping
         for shipping_line_id in average_prices.keys(): 
             cur = average_prices[shipping_line_id]
             prev = prev_avg_mapping[shipping_line_id]
@@ -157,6 +150,7 @@ async def update_cluster_extension_by_latest_trends(request):
         request['source'] = 'cluster_extension_worker'
         request["markup"] = overall_gri_avg
         request["shipping_line_id"] = TO_BE_UPDATED_SHIPPING_LINES
+        request['source'] = "cluster_extension_worker"
         request["rate_type"] = "market_place"
         request["exclude_service_provider_types"] = ["nvocc"]
         request["min_decrease_amount"] = min_decrease_amount
