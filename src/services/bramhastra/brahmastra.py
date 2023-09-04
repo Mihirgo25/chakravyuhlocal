@@ -57,12 +57,12 @@ class Brahmastra:
         self.non_stale = {FclFreightRateRequestStatistic}
 
     def __optimize_and_send_data_to_stale_tables(
-        self, model: peewee.Model, optimize_stale: bool
+        self, model: peewee.Model, optimize: bool
     ):
         if self.on_startup or model in self.non_stale:
             return
 
-        if optimize_stale:
+        if optimize:
             self.__clickhouse.execute(
                 f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}"
             )
@@ -201,7 +201,7 @@ class Brahmastra:
         )
 
     def used_by(
-        self, arjun: bool, on_startup: bool = False, optimize_stale: bool = True
+        self, arjun: bool, on_startup: bool = False, optimize: bool = True
     ) -> None:
         if APP_ENV == AppEnv.production.value:
             self.on_startup = on_startup
@@ -209,7 +209,7 @@ class Brahmastra:
             for model in self.models:
                 self.__build_query_and_insert_to_clickhouse(model)
                 if arjun:
-                    self.__optimize_and_send_data_to_stale_tables(model, optimize_stale)
+                    self.__optimize_and_send_data_to_stale_tables(model, optimize)
 
                 print(f"done with {model._meta.table_name}")
 

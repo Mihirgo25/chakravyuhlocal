@@ -6,7 +6,7 @@ def brahmastra_in_delay(self):
     # using this until we get all queries right
     try:
         brahmastra=Brahmastra()
-        brahmastra.used_by(arjun = False)
+        brahmastra.used_by(arjun = True)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
