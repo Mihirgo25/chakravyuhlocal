@@ -32,14 +32,12 @@ async def update_cluster_extension_by_latest_trends(request):
     destination_port_id = request["destination_port_id"]
     
     min_decrease_percent, max_increase_percent = -5, 10
-    min_decrease_amount, max_increase_amount = -5, 10 # ? what are the default values
-    
-    query = (ClusterExtensionGriWorker
+    min_decrease_amount, max_increase_amount = -100, 500 
+
+    record = (ClusterExtensionGriWorker
             .select(ClusterExtensionGriWorker.min_decrease_percent, ClusterExtensionGriWorker.max_increase_percent, ClusterExtensionGriWorker.min_decrease_amount, ClusterExtensionGriWorker.max_increase_amount)
             .where((ClusterExtensionGriWorker.destination_port_id == destination_port_id) &
-            (ClusterExtensionGriWorker.origin_port_id == origin_port_id)))
-
-    record = query.get()
+            (ClusterExtensionGriWorker.origin_port_id == origin_port_id))).limit(1).first()
 
     if record:
         min_decrease_percent = record.min_decrease_percent
@@ -57,7 +55,7 @@ async def update_cluster_extension_by_latest_trends(request):
                     FclFreightRate.updated_at < end_time,
                     FclFreightRate.origin_port_id == origin_port_id,
                     FclFreightRate.destination_port_id == destination_port_id,
-                    FclFreightRate.rate_not_available_entry == False,
+                    ~ FclFreightRate.rate_not_available_entry,
                     ~FclFreightRate.mode.in_(['predicted', 'rate_extension'])     
                 ))  
     
