@@ -172,7 +172,7 @@ class RevenueDesk:
                     self.rate_stats_hash.get("average_booking_rate")
                     - self.rate.get("standard_price")
                 )
-                / self.rate_stats_hash.get("average_booking_rate")
+                / (self.rate_stats_hash.get("average_booking_rate") or 1)
             )
         ) * 100
         self.original_rate_stats_hash[key] = (
@@ -182,7 +182,7 @@ class RevenueDesk:
                     self.original_booked_rate.get("standard_price")
                     - self.rate.get("standard_price")
                 )
-                / self.original_booked_rate.get("standard_price")
+                / (self.original_booked_rate.get("standard_price") or 1)
             )
             * 100
             if self.original_booked_rate.get("standard_price") != 0
