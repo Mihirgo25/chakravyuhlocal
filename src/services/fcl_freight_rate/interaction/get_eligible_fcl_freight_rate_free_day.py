@@ -75,8 +75,8 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates=None,sort_by_s
         query = query.where(FclFreightRateFreeDay.free_limit == filters['free_limit'])
 
     if 'validity_start' in filters and 'validity_end' in filters:
-        query = query.where(FclFreightRateFreeDay.validity_start <= filters['validity_start'], 
-                            FclFreightRateFreeDay.validity_end >= filters['validity_end']
+        query = query.where(FclFreightRateFreeDay.validity_start.cast('date') <= filters['validity_start'], 
+                            FclFreightRateFreeDay.validity_end.cast('date') >= filters['validity_end']
                 )
         
     data = jsonable_encoder(list(query.dicts()))

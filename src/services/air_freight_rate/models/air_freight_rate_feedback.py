@@ -329,7 +329,7 @@ class AirFreightRateFeedback(BaseModel):
             common.create_communication(notification_data)
 
 
-    def send_closed_notifications_to_user_feedback(self):
+    def send_closed_notifications_to_user(self):
            
            params = {
                'spot_search_id':str(self.source_id),

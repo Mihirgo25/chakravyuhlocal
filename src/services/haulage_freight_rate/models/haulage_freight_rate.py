@@ -4,7 +4,6 @@ from database.db_session import db
 from playhouse.postgres_ext import BinaryJSONField, ArrayField, DateTimeField
 from fastapi import HTTPException
 from micro_services.client  import maps, common
-from services.haulage_freight_rate.interactions.update_haulage_freight_rate_platform_prices import update_haulage_freight_rate_platform_prices
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from configs.global_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_TYPES, TRANSPORT_MODES, TRIP_TYPES, HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS, TRAILER_TYPES
@@ -279,7 +278,10 @@ class HaulageFreightRate(BaseModel):
             mandatory_line_items = [line_item for line_item in rates.get('line_items') if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
 
             for prices in mandatory_line_items:
+                if prices['currency']!=currency:
                     sum = sum + int(common.get_money_exchange_for_fcl({'price': prices["price"], 'from_currency': prices['currency'], 'to_currency':currency})['price'])
+                else:
+                    sum = sum + int(prices["price"])
 
             if sum and result > sum:
                 result = sum
@@ -304,11 +306,15 @@ class HaulageFreightRate(BaseModel):
         result = 0
 
         for line_item in line_items:
-            result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
+            if line_item['currency']!= currency:
+                result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
+            else:
+                result = result + int(line_item["price"])
         return result
     
     def update_platform_prices_for_other_service_providers(self):
-        data = {
+        from services.haulage_freight_rate.haulage_celery_worker import update_haulage_rate_platform_prices_delay
+        request = {
         "origin_location_id": self.origin_location_id,
         "destination_location_id": self.destination_location_id,
         "container_size": self.container_size,
@@ -322,8 +328,8 @@ class HaulageFreightRate(BaseModel):
         "shipping_line_id": self.shipping_line_id,
         "haulage_type": self.haulage_type
         }
+        update_haulage_rate_platform_prices_delay.apply_async(kwargs = {'request':request}, queue = 'low')
 
-        update_haulage_freight_rate_platform_prices(data)
 
     def update_line_item_messages(self,possible_charge_codes):
 

@@ -12,14 +12,18 @@ class BaseModel(Model):
 class FclFreightRateProperties(BaseModel):
     id = BigAutoField(index=True,primary_key=True)
     rate_id = UUIDField(index=True,unique=True)
-    created_at = DateTimeField(null=True)
-    updated_at = DateTimeField(null=True)
-    value_props = BinaryJSONField(default=json.dumps([{"name": "confirmed_space_and_inventory", "free_limit": None}]))
+    created_at = DateTimeField(default=datetime.datetime.now())
+    updated_at = DateTimeField(default=datetime.datetime.now())
+    value_props = BinaryJSONField(default=[{"name": "confirmed_space_and_inventory", "free_limit": None}])
     t_n_c = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     available_inventory = IntegerField(default=100)
     used_inventory = IntegerField(default=0)
     shipment_count = IntegerField(default=0)
     volume_count = IntegerField(default=0)
+    
+    def save(self, *args, **kwargs):      
+        self.updated_at = datetime.datetime.now()
+        return super(FclFreightRateProperties, self).save(*args, **kwargs)
 
     class Meta:
         db_table = "fcl_freight_rate_properties"

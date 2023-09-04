@@ -101,3 +101,5 @@ geopy==2.3.0
 scikit-learn==1.2.2
 beautifulsoup4==4.12.2 
 gunicorn==20.1.0
+nltk==3.8.1 
+clickhouse-driver==0.2.6

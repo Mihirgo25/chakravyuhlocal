@@ -43,6 +43,9 @@ def execute_transaction_code(request):
         raise HTTPException(
             status_code=500, detail="Freight rate request updation failed"
         )
+                
+    from services.bramhastra.celery import send_request_stats_in_delay
+    send_request_stats_in_delay.apply_async(kwargs = {'action':'update','object':request},queue = 'statistics')
 
     create_audit(request, object.id)
 

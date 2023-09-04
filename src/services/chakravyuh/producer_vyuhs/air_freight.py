@@ -1,7 +1,7 @@
 from fastapi.encoders import jsonable_encoder
 from configs.env import DEFAULT_USER_ID
 from services.air_freight_rate.constants.air_freight_rate_constants import COGOXPRESS
-from datetime import datetime
+from datetime import datetime, timedelta
 from configs.transformation_constants import HANDLING_TYPE_FACTORS, PACKING_TYPE_FACTORS, OPERATION_TYPE_FACTORS
 from services.air_freight_rate.models.air_freight_location_cluster import AirFreightLocationCluster
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
@@ -9,12 +9,14 @@ from services.air_freight_rate.models.air_freight_airline_factor import AirFreig
 from micro_services.client import maps
 from services.air_freight_rate.helpers.get_matching_weight_slab import get_matching_slab
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+
 
 class AirFreightVyuh():
     def __init__(self, rate:dict={}):
         self.rate = rate
 
-    def get_cluster_combination(self):
+    def get_cluster_combination(self,base_to_base):
         origin_airport_id = self.rate['origin_airport_id']
         destination_airport_id = self.rate['destination_airport_id']
 
@@ -36,14 +38,21 @@ class AirFreightVyuh():
             if cluster['base_airport_id'] == destination_airport_id:
                 destination_cluster_id = cluster['id']
 
-        origin_locations = [origin_airport_id]
-        destination_locations = [ destination_airport_id]
+        origin_locations = []
+        destination_locations = [ ]
         cluster_ids = []
         if origin_cluster_id:
             cluster_ids.append(origin_cluster_id)
+        else:
+            origin_locations.append(origin_airport_id)
         
         if destination_cluster_id:
             cluster_ids.append(destination_cluster_id)
+        else:
+            destination_locations.append(destination_airport_id)
+        
+        if base_to_base and (not origin_cluster_id or not destination_cluster_id):
+            return [],[]
         if cluster_ids:
             location_mappings = AirFreightLocationClusterMapping.select(
                 AirFreightLocationClusterMapping.location_id,
@@ -66,19 +75,18 @@ class AirFreightVyuh():
         airlines = maps.get_airlines_for_route(data)['airline_ids']
 
         return airlines
-    def get_rate_combinations_to_extend(self):
+    def get_rate_combinations_to_extend(self,base_to_base):
         HANDLING_TYPES = []
         PACKING_TYPES = []
         OPERATION_TYPES = []
         extended_rates = []
-        origin_locations,destination_locations = self.get_cluster_combination()
+        origin_locations,destination_locations = self.get_cluster_combination(base_to_base)
         for origin_airport_id in origin_locations:
             for destination_airport_id in destination_locations:
-                if self.rate['airline_id'] in self.get_airlines_for_airport_pair(origin_airport_id,destination_airport_id):
-                    rate = jsonable_encoder(self.rate)
-                    rate['origin_airport_id'] = origin_airport_id
-                    rate['destination_airport_id'] = destination_airport_id
-                    extended_rates.append(rate)
+                rate = jsonable_encoder(self.rate)
+                rate['origin_airport_id'] = origin_airport_id
+                rate['destination_airport_id'] = destination_airport_id
+                extended_rates.append(rate)
         
         return extended_rates
     
@@ -101,126 +109,147 @@ class AirFreightVyuh():
             AirFreightRate.stacking_type == requirement['stacking_type'],
             AirFreightRate.source != 'predicted',
             AirFreightRate.rate_type == 'market_place',
-           ~AirFreightRate.rate_not_available_entry
+           ~AirFreightRate.rate_not_available_entry,
+            AirFreightRate.importer_exporter_id == requirement.get('importer_exporter_id')
         )
         existing_system_rates = jsonable_encoder(list(existing_system_rates_query.dicts()))
         return existing_system_rates    
     
-    def get_validities_to_create(self,rate_validity,to_add_validity_start,to_add_validity_end):
+    def get_validities_to_create(self,rate_validity,to_add_validity_start,to_add_validity_end,rate_id):
         validities_to_create = []
         validity_start = datetime.fromisoformat(rate_validity['validity_start']).date()
         validity_end = datetime.fromisoformat(rate_validity['validity_end']).date()
-        if (to_add_validity_start < validity_start and to_add_validity_end < validity_start) or (to_add_validity_start > validity_end and to_add_validity_end > validity_end):
-            """
-            Case 1: No overlap
-                ---------- 
-                            -----------
-                        OR
-                            -----------
-                ----------
-            """
-            validities_to_create.append({
-                'validity_start': datetime.combine(to_add_validity_start,datetime.min.time()),
-                'validity_end': datetime.combine(to_add_validity_end,datetime.min.time())
-            })
-        if validity_start > to_add_validity_start and validity_end < to_add_validity_end:
-            """
-            Case 2: 
-            Current Validity :     -------------
-            New Validity     :  ---------------------
-            """
-            start_validity = {
-                'validity_start': datetime.combine(to_add_validity_start,datetime.min.time()),
-                'validity_end': datetime.combine(validity_start,datetime.min.time())
-            }
-            end_validity = {
-                'validity_start': datetime.combine(validity_end,datetime.min.time()),
-                'validity_end': datetime.combine(to_add_validity_end,datetime.min.time())
-            }
-            validities_to_create =  validities_to_create + [start_validity, end_validity]
-        elif validity_start > to_add_validity_start and validity_end > to_add_validity_end:
-            """
-            Case 3: 
-            Current Validity :     -------------
-            New Validity     :  ---------
-            """
-            validities_to_create.append({
-                'validity_start': datetime.combine(to_add_validity_start,datetime.min.time()),
-                'validity_end': datetime.combine(validity_start,datetime.min.time())
+
+        audit = AirFreightRateAudit.select(AirFreightRateAudit.id).where(
+            AirFreightRateAudit.object_id == rate_id,
+            AirFreightRateAudit.validity_id == rate_validity['id'],
+            AirFreightRateAudit.updated_at >= datetime.now().date() - timedelta(days=7),
+            AirFreightRateAudit.performed_by_id != DEFAULT_USER_ID
+        )
+        if audit.exists():
+            if (to_add_validity_start < validity_start and to_add_validity_end < validity_start) or (to_add_validity_start > validity_end and to_add_validity_end > validity_end):
+                """
+                Case 1: No overlap
+                    ---------- 
+                                -----------
+                            OR
+                                -----------
+                    ----------
+                """
+                validities_to_create.append({
+                    'validity_start': datetime.combine(to_add_validity_start,datetime.min.time()),
+                    'validity_end': datetime.combine(to_add_validity_end,datetime.min.time())
                 })
-        elif validity_end > to_add_validity_start and validity_end < to_add_validity_end:
-            """
-            Case 4: 
-            Current Validity :     -------------
-            New Validity     :           ---------------
-            """
+            if validity_start > to_add_validity_start and validity_end < to_add_validity_end:
+                """
+                Case 2: 
+                Current Validity :     -------------
+                New Validity     :  ---------------------
+                """
+                start_validity = {
+                    'validity_start': datetime.combine(to_add_validity_start,datetime.min.time()),
+                    'validity_end': datetime.combine(validity_start,datetime.min.time())
+                }
+                end_validity = {
+                    'validity_start': datetime.combine(validity_end,datetime.min.time()),
+                    'validity_end': datetime.combine(to_add_validity_end,datetime.min.time())
+                }
+                validities_to_create =  validities_to_create + [start_validity, end_validity]
+            elif validity_start > to_add_validity_start and validity_end > to_add_validity_end:
+                """
+                Case 3: 
+                Current Validity :     -------------
+                New Validity     :  ---------
+                """
+                validities_to_create.append({
+                    'validity_start': datetime.combine(to_add_validity_start,datetime.min.time()),
+                    'validity_end': datetime.combine(validity_start,datetime.min.time())
+                    })
+            elif validity_end > to_add_validity_start and validity_end < to_add_validity_end:
+                """
+                Case 4: 
+                Current Validity :     -------------
+                New Validity     :           ---------------
+                """
+                validities_to_create.append({
+                    'validity_start': datetime.combine(validity_end,datetime.min.time()),
+                    'validity_end': datetime.combine(to_add_validity_end,datetime.min.time())
+                })
+        else:
             validities_to_create.append({
-                'validity_start': datetime.combine(validity_end,datetime.min.time()),
+                'validity_start': datetime.combine(to_add_validity_start,datetime.min.time()),
                 'validity_end': datetime.combine(to_add_validity_end,datetime.min.time())
-            })
+                })
         return validities_to_create
 
-    def get_eligible_validities_to_create(self, requirement,validities_to_create):
+    def get_eligible_validities_to_create(self, requirement,validities_to_create,base_to_base):
 
         existing_system_rates = self.get_existing_system_rates(requirement)
         to_add_validity_start = self.rate['validity_start'].date()
         to_add_validity_end = self.rate['validity_end'].date()
+
+        if base_to_base and len(existing_system_rates)==0:
+            return []
         if len(existing_system_rates) == 0:
             return validities_to_create
 
         cogo_freight_rates_for_current_sl = []
 
         validities_to_create = []
+        if self.rate['airline_id'] in self.get_airlines_for_airport_pair(requirement.get('origin_airport_id'),requirement.get('destination_airport_id')):
+            for esr in existing_system_rates:
+                rate_validities = esr['validities'] or []
+                if rate_validities and esr['service_provider_id'] == COGOXPRESS and esr['airline_id'] == requirement['airline_id'] and not esr['cogo_entity_id']:
+                    
+                    cogo_freight_rates_for_current_sl.append(esr)
 
-        for esr in existing_system_rates:
-            rate_validities = esr['validities'] or []
-            if rate_validities and esr['service_provider_id'] == COGOXPRESS and esr['airline_id'] == requirement['airline_id'] and not esr['cogo_entity_id']:
-                
-                cogo_freight_rates_for_current_sl.append(esr)
+                    for rate_validity in rate_validities:
+                        validities_to_create = self.get_validities_to_create(
+                            rate_validity,
+                            to_add_validity_start,
+                            to_add_validity_end,
+                            esr['id']
+                        )
 
-                for rate_validity in rate_validities:
-                    validities_to_create = self.get_validities_to_create(
-                        rate_validity,
-                        to_add_validity_start,
-                        to_add_validity_end
-                    )
-
-                break 
+                    break 
         return validities_to_create
     
-    def create_air_freight_rate_to_validities(self,rate_to_create):
+    def create_air_freight_rate_to_validities(self,rate_to_create,base_to_base):
 
         validity_start = self.rate['validity_start']
         validity_end = self.rate['validity_end']
         validities_to_create = [{ 'validity_start': validity_start, 'validity_end': validity_end }]
 
-        validities_to_create = self.get_eligible_validities_to_create(rate_to_create,validities_to_create)
-        rate_to_create['weight_slabs'] = self.get_weight_slabs(rate_to_create)
+        validities_to_create = self.get_eligible_validities_to_create(rate_to_create,validities_to_create,base_to_base)
+        rate_to_create['weight_slabs'] = self.get_weight_slabs(rate_to_create,base_to_base)
         for validity in validities_to_create:
             rate_to_create = rate_to_create | validity
             rate_to_create['extension_not_required'] = True
             try:
-                create_air_freight_rate(rate_to_create)
+                id =create_air_freight_rate(rate_to_create)
             except:
                 raise
 
 
-    def extend_rate(self, source = 'rate_extension'):
+    def extend_rate(self,base_to_base=False, source = 'rate_extension'):
 
         if self.rate['source'] == 'predicted':
             return True
 
-        rates_to_create = self.get_rate_combinations_to_extend()
+        rates_to_create = self.get_rate_combinations_to_extend(base_to_base)
         # queue need to change to air_freight_rate
         for rate_to_create in rates_to_create:
             rate_to_create = rate_to_create | { 'source': 'rate_extension', 'service_provider_id': COGOXPRESS, "sourced_by_id": DEFAULT_USER_ID, "procured_by_id": DEFAULT_USER_ID, "performed_by_id": DEFAULT_USER_ID }
-            self.create_air_freight_rate_to_validities(rate_to_create)
+            del rate_to_create['cogo_entity_id']
+            self.create_air_freight_rate_to_validities(rate_to_create,base_to_base)
 
         return True
 
-    def get_weight_slabs(self,rate):
+    def get_weight_slabs(self,rate,base_to_base):
 
         weight_slabs = rate['weight_slabs']
+        if base_to_base:
+            return weight_slabs
 
         original_rate_handling_type = self.rate['stacking_type']
         original_rate_packing_type = self.rate['shipment_type']
