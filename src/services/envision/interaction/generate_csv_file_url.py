@@ -3,26 +3,26 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_coverages impor
 from services.air_freight_rate.interactions.list_air_freight_rate_coverages import list_air_freight_rate_coverages
 import copy
 import json
+from fastapi.exceptions import HTTPException
+
 def generate_csv_file_url(filters):
+    import services.envision.interaction.generate_csv_file_url as generate_csv_file_url_object
     if filters:
         if type(filters) != dict:
            filters = json.loads(filters)
     
     service_type = filters.get('service')
     required_coverage_data = []
-    if service_type == 'fcl_freight':
-        fcl_coverage_data = list_fcl_freight_rate_coverages(filters = filters,generate_csv_url = True)['list']
-        required_coverage_data =  get_fcl_coverage_required_data(fcl_coverage_data)
-    else:
-        air_coverage_data = list_air_freight_rate_coverages(filters = filters, generate_csv_url = True)['list']   
-        required_coverage_data = get_air_coverage_required_data(air_coverage_data)
+    if service_type in ['air_freight','fcl_freight']:
+        coverage_data = getattr(generate_csv_file_url_object,"list_{}_rate_coverages".format(service_type))(filters = filters, generate_csv_url = True)['list']
+        required_coverage_data = getattr(generate_csv_file_url_object,"get_{}_coverage_required_data".format(service_type))(coverage_data)                                
+        csv_url =  get_csv_url(service_type, required_coverage_data)
+        return {'url': csv_url}
     
-    csv_url =  get_csv_url(service_type, required_coverage_data)
-    
-    return {'url': csv_url}
+    raise HTTPException(status_code=400, detail='Invalid Service Type')
     
 
-def get_fcl_coverage_required_data(fcl_coverage_data):
+def get_fcl_freight_coverage_required_data(fcl_coverage_data):
     list_of_fcl_coverage_data = []
     for coverage_data in fcl_coverage_data:
         required_data = {}
@@ -36,7 +36,7 @@ def get_fcl_coverage_required_data(fcl_coverage_data):
         list_of_fcl_coverage_data.append(copy.deepcopy(required_data))
     return list_of_fcl_coverage_data
 
-def get_air_coverage_required_data(air_coverage_data):
+def get_air_freight_coverage_required_data(air_coverage_data):
     list_of_air_coverage_data = []
     for coverage_data in air_coverage_data:
         required_data = {}
