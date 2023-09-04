@@ -8,7 +8,7 @@ from playhouse.shortcuts import model_to_dict
 from playhouse.postgres_ext import ServerSide
 
 
-SEVEN_DAYS_AGO = datetime.today()-timedelta(7)
+SEVEN_DAYS_AGO = datetime.today().date() - timedelta(days=7)
 
 def cancelled_shipments_scheduler():
     services = ['fcl_freight', 'air_freight']
