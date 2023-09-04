@@ -24,7 +24,7 @@ def get_shipping_line_dict():
         "40HC": None
     }
 
-async def get_cluster_extension_gri_worker(request):
+async def update_cluster_extension_by_latest_trends(request):
     today = request.get("start_time")
     start_time, end_time = today - timedelta(hours = 6), today
     

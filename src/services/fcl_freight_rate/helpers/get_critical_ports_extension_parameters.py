@@ -73,6 +73,12 @@ def get_critical_ports_extension_parameters():
             for mapping in location_mappings
             if str(mapping.base_port_id) == combo["origin_port_id"]
         ]
+        
+        destination_secondary_ports = [
+            str(mapping.location_id)
+            for mapping in location_mappings
+            if str(mapping.base_port_id) == combo["destination_port_id"]
+        ]
 
         request_data = {
             "start_time": starttime,
@@ -81,6 +87,7 @@ def get_critical_ports_extension_parameters():
             "container_type": "standard",
             "commodity": "general",
             "origin_secondary_ports": origin_secondary_ports,
+            "destination_secondary_ports": destination_secondary_ports,
         }
         extension_parameters.append(request_data)
 
