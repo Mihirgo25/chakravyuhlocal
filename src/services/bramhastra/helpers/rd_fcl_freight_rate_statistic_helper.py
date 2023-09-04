@@ -31,13 +31,17 @@ class RevenueDesk:
 
     def update_rd_visit_count(self, request):
         for validity_id in request.validities:
-            fcl_freight_rate_statistic = FclFreightRateStatistic.select().where(
-                FclFreightRateStatistic.identifier
-                == get_identifier(request.rate_id, validity_id)
-            ).first()
+            fcl_freight_rate_statistic = (
+                FclFreightRateStatistic.select()
+                .where(
+                    FclFreightRateStatistic.identifier
+                    == get_identifier(request.rate_id, validity_id)
+                )
+                .first()
+            )
 
             self.increment_keys = {"revenue_desk_visit_count"}
-            
+
             fcl_freight_rate_statistic.updated_at = request.created_at
 
             if fcl_freight_rate_statistic:
@@ -49,16 +53,15 @@ class RevenueDesk:
             == get_identifier(
                 request.selected_for_preference.rate_id,
                 request.selected_for_preference.validity_id,
-            ).first()
-        )
-        
+            )
+        ).first()
+
         fcl_freight_rate_statistic.updated_at = request.created_at
 
         self.increment_keys = {"so1_visit_count"}
 
-        total_priority = (
-            fcl_freight_rate_statistic.total_priority
-            + request.selected_for_preference.given_priority
+        total_priority = (fcl_freight_rate_statistic.total_priority or 1) + (
+            request.selected_for_preference.given_priority or 1
         )
 
         update_params = dict(total_priority=total_priority)
@@ -157,8 +160,7 @@ class RevenueDesk:
                 - self.original_rate_stats_hash.get("average_booking_rate")
             )
             ** 2
-            / self.original_booked_rate.get("booking_rate_count")
-            + 1
+            / (self.original_booked_rate.get("booking_rate_count") + 1)
         ) ** 0.5
         self.rate_stats_hash[key] = 0
 
@@ -187,9 +189,11 @@ class RevenueDesk:
             else 100
         )
 
-    def set_rate_stats(self,created_at):
-        fcl_freight_rate_statistic = FclFreightRateStatistic.select().where(
-            FclFreightRateStatistic.identifier == get_identifier(**self.rate)
+    def set_rate_stats(self, created_at):
+        fcl_freight_rate_statistic = (
+            FclFreightRateStatistic.select()
+            .where(FclFreightRateStatistic.identifier == get_identifier(**self.rate))
+            .first()
         )
 
         self.rate = jsonable_encoder(model_to_dict(fcl_freight_rate_statistic))
@@ -200,30 +204,33 @@ class RevenueDesk:
             if key in self.rate
         }
 
-        if fcl_freight_rate_statistic:
-            self.increment_rd_rate_stats(
-                fcl_freight_rate_statistic, self.rate_stats_hash
-            )
-            fcl_freight_rate_statistic.updated_at = created_at
-
         self.set_original_rate()
         if (
             self.original_booked_rate["rate_id"] == self.original_booked_rate["rate_id"]
         ) and (self.original_booked_rate["validity_id"] == self.rate["validity_id"]):
             return
         self.set_stats_hash()
-
-        fcl_freight_rate_statistic = FclFreightRateStatistic.select().where(
-            FclFreightRateStatistic.identifier
-            == get_identifier(
-                self.original_booked_rate.get("rate_id"),
-                self.original_booked_rate.get("validity_id"),
+        
+        if fcl_freight_rate_statistic:
+            self.increment_rd_rate_stats(
+                fcl_freight_rate_statistic, self.rate_stats_hash
             )
+            fcl_freight_rate_statistic.updated_at = created_at
+
+        fcl_freight_rate_statistic = (
+            FclFreightRateStatistic.select()
+            .where(
+                FclFreightRateStatistic.identifier
+                == get_identifier(
+                    self.original_booked_rate.get("rate_id"),
+                    self.original_booked_rate.get("validity_id"),
+                )
+            )
+            .first()
         )
 
         if fcl_freight_rate_statistic:
             fcl_freight_rate_statistic.updated_at = created_at
-            
             self.increment_rd_rate_stats(
                 fcl_freight_rate_statistic, self.original_rate_stats_hash
             )
@@ -232,5 +239,6 @@ class RevenueDesk:
         for key in self.increment_keys:
             setattr(row, key, getattr(row, key) + 1)
         for k, v in update_object.items():
-            setattr(row, k, v)
+            if v is not None:
+                setattr(row, k, v)
         row.save()
