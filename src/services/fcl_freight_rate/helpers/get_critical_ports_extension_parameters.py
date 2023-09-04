@@ -28,12 +28,13 @@ def generate_combinations(base_port_ids, critical_ports):
     
     return combinations
 
-def cluster_extension_gri_worker():
+def get_critical_ports_extension_parameters():
     all_base_port_ids = fetch_all_base_port_ids()
     india_combinations = generate_combinations(all_base_port_ids, INDIA_CRITICAL_PORTS)
     vietnam_combinations = generate_combinations(all_base_port_ids, VIETNAM_CRITICAL_PORTS)
-    
     starttime = datetime.datetime.now()
+    
+    extension_parameters = []
     for combo in india_combinations + vietnam_combinations:
         request_data = {
             "start_time": starttime, 
@@ -42,4 +43,6 @@ def cluster_extension_gri_worker():
             "container_type": "standard",
             "commodity": "general" 
         }
-        get_cluster_extension_gri_worker(request_data)
+        extension_parameters.append(request_data)
+    
+    return extension_parameters

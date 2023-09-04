@@ -12,12 +12,14 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
+from services.fcl_freight_rate.interaction.get_cluster_extension_gri_worker import get_cluster_extension_gri_worker
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
 from services.haulage_freight_rate.schedulers.electricity_price_scheduler import electricity_price_scheduler
 from services.fcl_freight_rate.interaction.add_local_rates_on_country import add_local_rates_on_country
+from services.fcl_freight_rate.helpers.get_critical_ports_extension_parameters import get_critical_ports_extension_parameters
 from kombu import Exchange, Queue
 from celery.schedules import crontab
 from datetime import datetime,timedelta
@@ -152,6 +154,11 @@ celery.conf.beat_schedule = {
         'task': 'services.bramhastra.celery.brahmastra_in_delay',
         'schedule': crontab(minute=0, hour='*/2'),
         'options': {'queue': 'statistics'}
+    },
+    'cluster_extension_gri_worker':{
+        'task': 'celery_worker.cluster_extension_gri_worker',
+        'schedule': crontab(hour='*/6'),
+        'options': {'queue': 'fcl_freight_rate'}
     },
     'cache_data_worker':{
         'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
@@ -866,3 +873,13 @@ def air_freight_airline_factors_in_delay(self):
             pass
         else:
             raise self.retry(exc= exc) 
+
+
+@celery.task(bind = True,retry_backoff=True,max_retries=3)
+def cluster_extension_gri_worker(self):
+    try:
+        critical_port_pairs = get_critical_ports_extension_parameters()
+        with concurrent.futures.ThreadPoolExecutor(max_workers = 1) as executor:
+            futures = [executor.submit(get_cluster_extension_gri_worker, request) for request in critical_port_pairs]
+    except Exception as exc:
+            pass
