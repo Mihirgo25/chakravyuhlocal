@@ -15,6 +15,8 @@ def create_or_update_worker(request_data):
         'destination_port_id': request_data['destination_port_id'],
         'min_decrease_percent': request_data['min_decrease_percent'],
         'max_increase_percent': request_data['max_increase_percent'],
+        'min_decrease_amount': request_data['min_decrease_percent'],
+        'max_increase_amount': request_data['max_increase_percent'],
         'manual_gri':request_data['manual_gri'],
         'commodity': 'general',
         'status': 'done',
