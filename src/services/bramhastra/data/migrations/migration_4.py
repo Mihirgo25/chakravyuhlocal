@@ -71,6 +71,9 @@ def execute_fcl(click):
     )
     print("done cogo assured origin india")
     click.execute(
+        f"INSERT INTO brahmastra.{FclFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE rate_type = 'cogo_assured' AND origin_country_id != '{INDIAN_LOCATION_ID}'"
+    )
+    click.execute(
         f"INSERT INTO brahmastra.stale_{FclFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE rate_type = 'cogo_assured' AND origin_country_id != '{INDIAN_LOCATION_ID}'"
     )
     print("done cogo assured non origin india")

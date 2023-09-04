@@ -59,12 +59,12 @@ class Brahmastra:
     def __optimize_and_send_data_to_stale_tables(
         self, model: peewee.Model, optimize_stale: bool
     ):
-        if self.on_startup or model not in self.non_stale:
+        if self.on_startup or model in self.non_stale:
             return
 
         if optimize_stale:
             self.__clickhouse.execute(
-                f"OPTIMIZE TABLE brahmastra.stale_{model._meta.table_name}"
+                f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}"
             )
 
     def __get_clickhouse_row(self, model, row, fields):
@@ -173,10 +173,9 @@ class Brahmastra:
                 
                 if model not in self.non_stale:
                     query_2 = f"INSERT INTO brahmastra.stale_{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
-
+                    self.__clickhouse.execute(query_2)
+                     
                 self.__clickhouse.execute(query_1)
-                
-                self.__clickhouse.execute(query_2)
 
                 status = BrahmastraTrackStatus.completed.value
 

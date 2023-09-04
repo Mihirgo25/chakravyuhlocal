@@ -27,7 +27,6 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     currency = CharField(null = True)
     feedbacks = ArrayField(CharField, null=True)
     closing_remarks = ArrayField(CharField, null=True)
-    is_rate_added = BooleanField(default = False)
     service_provider_id = UUIDField(null=True, index = True)
     feedback_type = CharField()
     closed_by_id = UUIDField(null=True, index = True)
