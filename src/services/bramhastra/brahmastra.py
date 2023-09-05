@@ -42,8 +42,8 @@ Brahmastra(models).used_by(arjun=True)
 
 Options:
 If models are not send it will run for all available models present in the clickhouse system
-If `arjun` is not the user, old duplicate entries won't be cleared. We recommend using `arjun` as user to clear these entries once in a while for better performance.
 """
+
 
 class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
@@ -125,7 +125,6 @@ class Brahmastra:
                     model.select(model.updated_at)
                     .where(model.updated_at > brahmastra_track.last_updated_at)
                     .order_by(model.updated_at.desc())
-                    .limit(1)
                     .first()
                 )
 
@@ -170,11 +169,11 @@ class Brahmastra:
                     pass
 
                 query_1 = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
-                
+
                 if model not in self.non_stale:
                     query_2 = f"INSERT INTO brahmastra.stale_{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
                     self.__clickhouse.execute(query_2)
-                     
+
                 self.__clickhouse.execute(query_1)
 
                 status = BrahmastraTrackStatus.completed.value
@@ -211,7 +210,7 @@ class Brahmastra:
                 if arjun:
                     self.__optimize_and_send_data_to_stale_tables(model, optimize)
 
-                print(f"done with {model._meta.table_name}")
+                print(f">----->> {model._meta.table_name}")
 
     def get_track(self, model):
         if (

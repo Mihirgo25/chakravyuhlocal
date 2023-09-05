@@ -80,10 +80,6 @@ def main(db = get_db()):
 
     batches = generate_batch_intervals()
     
-    breakpoint()
-    
-    p.parallel_function(batches,execute)
-    
     for batch in batches:
         execute(batch)
 
@@ -183,10 +179,11 @@ def execute(date):
             counter += 1
 
         rows.extend(audits)
-
-        if len(rows) == 20000:
-                FclFreightRateAuditStatistic.insert_many(rows).execute()
-                rows = []
+        
+        if len(rows) >= 20000:
+            FclFreightRateAuditStatistic.insert_many(rows).execute()
+            rows = []
+                
 
     if rows:
         FclFreightRateAuditStatistic.insert_many(rows).execute()

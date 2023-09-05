@@ -75,6 +75,8 @@ from services.bramhastra.constants import INDIAN_LOCATION_ID
 from rms_utils.auth import authorize_token
 from fastapi import HTTPException
 import sentry_sdk
+from datetime import datetime, timedelta
+from libs.rate_limiter import rate_limiter
 
 bramhastra = APIRouter()
 
@@ -439,6 +441,44 @@ def get_air_freight_rate_trends_api(
         return JSONResponse(
             status_code=auth_response.get("status_code"), content=auth_response
         )
+
+    try:
+        response = get_air_freight_rate_trends(filters)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@rate_limiter.add(max_requests=10, time_window=3600)
+@bramhastra.get("/get_air_freight_rate_trends_for_public", tags = ["Public"])
+def get_fcl_freight_rate_trends_api(
+    filters: Annotated[Json, Query()] = {},
+):
+    filters["end_date"] = datetime.now() - timedelta(days=15)
+
+    try:
+        response = get_fcl_freight_rate_trends(filters)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@rate_limiter.add(max_requests=10, time_window=3600)
+@bramhastra.get("/get_air_freight_rate_trends_for_public", tags = ["Public"])
+def get_air_freight_rate_trends_api(
+    filters: Annotated[Json, Query()] = {},
+):
+    filters["end_date"] = datetime.now() - timedelta(days=15)
 
     try:
         response = get_air_freight_rate_trends(filters)

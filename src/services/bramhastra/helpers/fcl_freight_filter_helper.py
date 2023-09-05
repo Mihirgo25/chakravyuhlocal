@@ -30,7 +30,7 @@ POSSIBLE_DIRECT_FILTERS = {
     
 }
 
-POSSIBLE_INDIRECT_FILTERS = {"stale_rate","rate_updated_at_less_than"}
+POSSIBLE_INDIRECT_FILTERS = {"stale_rate","rate_updated_at_less_than","validity_end_greater_than","validity_end_less_than"}
 
 COUNT_FILTERS = {"dislikes_count", "checkout_count"}
 
@@ -52,7 +52,7 @@ def get_direct_indirect_filters(filters,date = "validity_range"):
     if date == FclFilterTypes.validity_range.value:
         get_date_range_filter(where)
     
-    if date == FclFilterTypes.time_series.values:
+    if date == FclFilterTypes.time_series.value:
         get_time_series_filter(where)
 
     if filters:
@@ -85,6 +85,16 @@ def get_date_range_filter(where):
 def get_rate_updated_at_less_than_filter(where):
     where.append(
         "rate_updated_at < %(rate_updated_at_less_than)s"
+    )
+    
+def get_validity_end_greater_than_filter(where):
+    where.append(
+        "validity_end > %(validity_end_greater_than)s"
+    )
+
+def get_validity_end_less_than_filter(where):
+    where.append(
+        "validity_end < %(validity_end_less_than)s"
     )
 
 
