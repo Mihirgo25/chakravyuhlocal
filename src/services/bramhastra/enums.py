@@ -116,3 +116,7 @@ class FclFeedbackStatus(Bramhastra):
 class FclFilterTypes(Bramhastra):
     validity_range = "validity_range"
     time_series = "time_series"
+    
+
+class FclChargeCodes(Bramhastra):
+    BAS = "BAS"
