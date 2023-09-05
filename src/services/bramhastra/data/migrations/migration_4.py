@@ -16,10 +16,16 @@ from services.bramhastra.database.dictionaries.country_rate_count import (
 )
 from services.bramhastra.models.fcl_freight_rate_request_statistics import FclFreightRateRequestStatistic
 from services.bramhastra.models.fcl_freight_rate_audit_statistic import FclFreightRateAuditStatistic
+from database.db_session import db
 
 
 def main():
     print("running migration")
+    
+    try:
+        db.create_tables([FclFreightRateAuditStatistic])
+    except Exception:
+        pass
 
     click = ClickHouse()
 
