@@ -256,7 +256,6 @@ SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING = {
     'd0bd6e8d-a1cb-4ac1-bac8-b9e8385be05a':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
     '9dcb7e37-b2ec-4b90-a147-9bfd5b5a0bd5':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_ELECTRONIC},
     '4bf070b3-887a-42b4-8db4-6b6e058fa160':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
-    # '33(null)'
     'e73711ed-aec7-4556-a293-418206a1192b':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
     '0c346d67-7e7c-4958-ac86-86ed1d2e6b73':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
     '8c825d3f-f41d-41fb-a563-7d764166b06d':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
@@ -287,7 +286,6 @@ SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING = {
     '9ed04b0a-5df4-413d-a2d8-e4c5a39a3f08':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
     '9fd89682-c72e-4211-8b85-30778c992078':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
     '0aaf9a9b-aeeb-4dec-a9fd-dcc145930d63':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
-    # '64(null)'
     '6352cdbc-17dc-4ae8-88a1-9ebd2797fb7c':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
     'bcde4d86-b053-469b-b802-5c412aef6047':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
     'b74f0b9f-529f-48e1-ac14-8cc45c4a5ae5':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
@@ -295,6 +293,5 @@ SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING = {
     '3c5425c7-0bc5-438b-9dfc-530de874c9d8':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
     '1e512052-bb4e-4075-b5d9-61a3e1d5de5a':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
     '4c62ac52-f9b9-47a4-8623-fca32101a46e':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL},
-    # '72(null)'
     '12804c93-a745-4c8b-a296-0d4ebf89c25a':{'eligible_line_items':DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL}
 }
