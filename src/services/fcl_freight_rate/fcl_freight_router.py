@@ -434,12 +434,12 @@ def get_fcl_freight_local_data(
 def get_fcl_freight_local_rate_cards_data(
     trade_type: str,
     port_id: str,
-    terminal_id: str,
     country_id: str,
     container_size: str,
     container_type: str,
     containers_count: int,
     bls_count: int,
+    terminal_id: str = None,
     commodity: str = None,
     shipping_line_id: str = None,
     service_provider_id: str = None,
