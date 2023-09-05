@@ -140,7 +140,6 @@ class RevenueDesk:
             (
                 self.original_booked_rate.get("average_booking_rate")
                 * self.original_booked_rate.get("booking_rate_count")
-                or 1
             )
             + self.rate.get("standard_price")
         ) / (self.original_booked_rate.get("booking_rate_count") + 1)
@@ -148,7 +147,6 @@ class RevenueDesk:
             (
                 self.rate.get("average_booking_rate")
                 * self.rate.get("booking_rate_count")
-                or 1
             )
             + self.rate.get("standard_price")
         ) / (self.rate.get("booking_rate_count") + 1)
@@ -165,7 +163,7 @@ class RevenueDesk:
         self.rate_stats_hash[key] = 0
 
     def set_accuracy(self, key):
-        self.rate_stats_hash[key] = (
+        self.rate_stats_hash[key] = round((
             1
             - (
                 abs(
@@ -174,17 +172,16 @@ class RevenueDesk:
                 )
                 / (self.rate_stats_hash.get("average_booking_rate") or 1)
             )
-        ) * 100
+        ) * 100, 2)
         self.original_rate_stats_hash[key] = (
-            (
+            round( (
                 1
                 - abs(
                     self.original_booked_rate.get("standard_price")
                     - self.rate.get("standard_price")
                 )
                 / (self.original_booked_rate.get("standard_price") or 1)
-            )
-            * 100
+            ) * 100, 2)
             if self.original_booked_rate.get("standard_price") != 0
             else 100
         )
@@ -206,7 +203,7 @@ class RevenueDesk:
 
         self.set_original_rate()
         if (
-            self.original_booked_rate["rate_id"] == self.original_booked_rate["rate_id"]
+            self.original_booked_rate["rate_id"] == self.rate["rate_id"]
         ) and (self.original_booked_rate["validity_id"] == self.rate["validity_id"]):
             return
         self.set_stats_hash()
@@ -231,6 +228,7 @@ class RevenueDesk:
 
         if fcl_freight_rate_statistic:
             fcl_freight_rate_statistic.updated_at = created_at
+            self.increment_keys.remove("so1_select_count")
             self.increment_rd_rate_stats(
                 fcl_freight_rate_statistic, self.original_rate_stats_hash
             )
