@@ -32,27 +32,28 @@ def main():
                 .first()
             )
             for line_item in validity.get("line_items", []):
-                if line_item.get("code") == "BAS":
-                    fcl_freight_rate_statistic.bas_price = line_item["price"]
-                    fcl_freight_rate_statistic.bas_currency = line_item["currency"]
-                    if line_item["currency"] == Fcl.default_currency.value:
-                        fcl_freight_rate_statistic.bas_standard_price = line_item[
-                            "price"
-                        ]
-                    else:
-                        fcl_freight_rate_statistic.bas_standard_price = (
-                            common.get_money_exchange_for_fcl(
-                                {
-                                    "from_currency": line_item["currency"],
-                                    "to_currency": Fcl.default_currency.value,
-                                    "price": line_item["price"],
-                                }
-                            ).get("price", line_item["price"])
-                        )
+                if fcl_freight_rate_statistic:
+                    if line_item.get("code") == "BAS":
+                        fcl_freight_rate_statistic.bas_price = line_item.get("price") or 0
+                        fcl_freight_rate_statistic.bas_currency = line_item.get("currency")
+                        if line_item["currency"] == Fcl.default_currency.value:
+                            fcl_freight_rate_statistic.bas_standard_price = line_item.get(
+                                "price"
+                            ) or 0
+                        else:
+                            fcl_freight_rate_statistic.bas_standard_price = (
+                                common.get_money_exchange_for_fcl(
+                                    {
+                                        "from_currency": line_item["currency"],
+                                        "to_currency": Fcl.default_currency.value,
+                                        "price": line_item["price"],
+                                    }
+                                ).get("price", line_item["price"])
+                            )
 
-            fcl_freight_rate_statistic.save()
-            
-            count+=1
+                fcl_freight_rate_statistic.save()
+                
+                count+=1
 
 
 if __name__ == "__main__":
