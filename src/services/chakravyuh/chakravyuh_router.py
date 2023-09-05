@@ -137,8 +137,8 @@ def create_air_clusters_api(request:MigrationOfCluster):
 @chakravyuh_router.post('/update_charges_yml')
 def update_charges_yml_data(serviceChargeType: str):
     try:
-        response =  update_charges_yml(serviceChargeType)
-        return JSONResponse(status_code=200, content={"success": True, "message": response})
+        data =  update_charges_yml(serviceChargeType)
+        return JSONResponse(status_code=200, content={"success": True, "message": data})
     except HTTPException as e:
         raise
     except Exception as e:
