@@ -17,8 +17,8 @@ class BaseModel(Model):
 
 class FclFreightRateJobsMapping(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    source = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
-    source_id = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=UUIDField, null=True)
+    source =  TextField(index=True, null=True)
+    source_id = UUIDField(index=True, null=True)
     job_id = ForeignKeyField(FclFreightRateJobs,to_field="id")
     data = BinaryJSONField(null=True)
     performed_by_id = UUIDField(index=True, null=True)
