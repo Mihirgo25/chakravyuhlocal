@@ -69,7 +69,7 @@ from services.fcl_freight_rate.workers.fcl_freight_cancelled_shipments_scheduler
 from services.fcl_freight_rate.workers.fcl_freight_expiring_rates_scheduler import fcl_freight_expiring_rates_scheduler
 from services.fcl_freight_rate.workers.fcl_freight_spot_search_predicted_rates_scheduler import fcl_freight_spot_search_predicted_rates_scheduler
 
-from services.envision.schedulers.update_jobs_status import update_jobs_status
+from services.fcl_freight_rate.workers.update_fcl_freight_job_status import update_fcl_freight_job_status
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -203,9 +203,14 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=00, minute=50),
         'options': {'queue': 'fcl_freight_rate'}
     },
-    # 'smt_update_jobs_status': {
-    #     'task': 'celery_worker.smt_update_jobs_status_delay',
+    # 'update_fcl_job_status': {
+    #     'task': 'celery_worker.update_fcl_freight_job_status_delay',
     #     'schedule': crontab(hour=18, minute=00),
+    #     'options': {'queue': 'fcl_freight_rate'}
+    # },
+    # 'update_air_job_status': {
+    #     'task': 'services.air_freight_rate.air_celery_worker.update_air_freight_jobs_status_delay',
+    #     'schedule': crontab(hour=18, minute=20),
     #     'options': {'queue': 'fcl_freight_rate'}
     #     }
 }
@@ -955,9 +960,9 @@ def fcl_freight_critical_port_pairs_delay(self):
             raise self.retry(exc= exc)
         
 @celery.task(bind=True, max_retries=3, retry_backoff = True)
-def smt_update_jobs_status_delay(self):
+def update_fcl_freight_job_status_delay(self):
     try:
-        update_jobs_status()
+        update_fcl_freight_job_status()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
