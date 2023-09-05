@@ -135,5 +135,5 @@ def apply_date_range_filter(query, filters):
 
 
 def apply_source_filter(query, filters):
-    query = query.where(FclFreightRateJobs.source.contains(filters["source"]))
+    query = query.where(FclFreightRateJobs.sources.contains(filters["source"]))
     return query
