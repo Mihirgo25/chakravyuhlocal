@@ -123,6 +123,9 @@ class AirFreightRateStatistic(BaseModel):
     operation_created_at = DateTimeTZField(default = datetime.utcnow())
     operation_updated_at = DateTimeTZField(default = datetime.utcnow())
     is_deleted = BooleanField(index = True,default = False)
+    net_net_price = FloatField(default = 0)
+    net_net_price_currency = CharField(max_length = 3)
+    net_net_standard_price = FloatField(default = 0)
     
     def save(self, *args, **kwargs):
         self.updated_at = datetime.utcnow()
