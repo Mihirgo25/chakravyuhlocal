@@ -320,7 +320,8 @@ def get_surcharges(requirements,rates):
     surcharges_query = AirFreightRateSurcharge.select(
         AirFreightRateSurcharge.line_items,
         AirFreightRateSurcharge.airline_id,
-        AirFreightRateSurcharge.service_provider_id
+        AirFreightRateSurcharge.service_provider_id,
+        AirFreightRateSurcharge.importer_exporter_id
     ).where(
         AirFreightRateSurcharge.origin_airport_id == requirements['origin_airport_id'],
         AirFreightRateSurcharge.destination_airport_id == requirements['destination_airport_id'],
@@ -346,9 +347,9 @@ def discard_noneligible_airlines(freight_rates):
 def get_matching_surchages(freight_rate,surcharges):
     cogo_express = None
     for surcharge in surcharges:
-        if surcharge['airline_id'] == freight_rate['airline_id'] and surcharge['service_provider_id'] == COGOXPRESS:
+        if surcharge['airline_id'] == freight_rate['airline_id'] and surcharge['service_provider_id'] == COGOXPRESS and surcharge.get('importer_exporter_id') == freight_rate.get('importer_exporter_id'):
             cogo_express = surcharge['line_items']
-        if surcharge['airline_id'] == freight_rate['airline_id'] and surcharge['service_provider_id'] == freight_rate['service_provider_id']:
+        if surcharge['airline_id'] == freight_rate['airline_id'] and surcharge['service_provider_id'] == freight_rate['service_provider_id'] and surcharge.get('importer_exporter_id') == freight_rate.get('importer_exporter_id'):
             return {'line_items':surcharge['line_items']}
     if cogo_express:
         return {'line_items':cogo_express}
@@ -360,7 +361,6 @@ def fill_missing_surcharges(freight_rates,surcharges):
         if is_missing_surcharge(freight_rate):
             freight_rate['freight_surcharge'] = get_matching_surchages(freight_rate,surcharges)
         new_freight_rates.append(freight_rate)
-    
     return new_freight_rates
 
 def discard_noneligible_lsps(freight_rates):
