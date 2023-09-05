@@ -111,8 +111,8 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
 
 def add_surcharge_object(freight_rate,response_object,requirements,chargeable_weight):
     
-    # if freight_rate['price_type'] == 'all_in':
-    #     return True
+    if freight_rate['price_type'] == 'all_in':
+        return True
     response_object['surcharge'] = {
         'line_items':[]
     }
