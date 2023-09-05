@@ -4,7 +4,8 @@ from micro_services.discover_client import get_instance_url
 from rms_utils.get_money_exchange_for_fcl_fallback import get_money_exchange_for_fcl_fallback
 from libs.cached_money_exchange import get_money_exchange_from_rd, set_money_exchange_to_rd
 from libs.get_charges_yml import get_charge_from_rd, set_charge_to_rd
-
+import os
+import yaml
 class CommonApiClient:
     def __init__(self):
         self.client=GlobalClient(url = str(get_instance_url('common')),headers={
@@ -21,9 +22,9 @@ class CommonApiClient:
             return { "price": cached_resp }
         
         resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 5)
-        if isinstance(resp,dict) and resp.get('price'):
+        if isinstance(resp,dict) and resp.get('price') is not None:
             conversion_rate = resp.get('rate') or resp['price']/float(data['price'])
-            
+            self.client.url.set('https://api-mustangs2.dev.cogoport.io')
             set_money_exchange_to_rd(data.get('from_currency'), data.get('to_currency'), conversion_rate)
             return resp
         
@@ -34,7 +35,21 @@ class CommonApiClient:
         cached_resp = get_charge_from_rd(charge_name)
         if cached_resp:
             return cached_resp
-        resp = self.client.request('GET', f'common/charge-code/get-charge-codes?serviceChargeType={charge_name}',{}, {}, timeout=5)
+        request_url = self.client.url.get()
+        self.client.url.set('https://api-mustangs2.dev.cogoport.io')
+        resp = self.client.request('GET', f'charge-code/get-charge-codes?serviceChargeType={charge_name}',{}, {}, timeout=5)
+        self.client.url.set(request_url)
+        if isinstance(resp,dict):
+            set_charge_to_rd(charge_name, resp)
+            return resp
+            
+        def load_ymls( file):
+            with open(file, 'r') as f:
+                data = yaml.safe_load(f)
+            return data
+        ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+        resp = load_ymls(os.path.join(ROOT_DIR, "charges", "{}.yml".format(charge_name)))
+
         if isinstance(resp, dict):
             set_charge_to_rd(charge_name, resp)
             return resp
@@ -64,4 +79,9 @@ class CommonApiClient:
     
     def update_spot_negotiation_locals_rate(self,data = {}):
         return self.client.request('POST','spot_negotiation/update_spot_negotiation_locals_rate',data)
-        
+    
+    def list_revenue_desk_show_rates(self,data = {}):
+        return self.client.request('GET','list_revenue_desk_show_rates',data)
+    
+    def get_saas_air_schedules(self, data={}):
+        return self.client.request('GET', 'get_saas_air_schedule', data)
