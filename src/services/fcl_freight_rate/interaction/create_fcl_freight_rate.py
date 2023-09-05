@@ -69,7 +69,7 @@ def create_fcl_freight_rate_data(request):
       return create_fcl_freight_rate(request)
 
 def create_fcl_freight_rate(request):
-    from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay, update_fcl_freight_rate_feedback_in_delay
+    from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay, update_fcl_freight_rate_feedback_in_delay, update_fcl_jobs_delay
     action = 'update'
     request = { key: value for key, value in request.items() if value }
     row = {
@@ -190,7 +190,9 @@ def create_fcl_freight_rate(request):
             raise
         
     # adjust_cogoassured_price(row, request)    
-    
+    if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
+        update_fcl_jobs_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
+
     create_audit(request, freight.id)
     
     if not request.get('importer_exporter_id') and not request.get("rate_not_available_entry"):

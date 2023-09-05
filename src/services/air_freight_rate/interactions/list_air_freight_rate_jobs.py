@@ -46,7 +46,7 @@ DEFAULT_REQUIRED_FIELDS = [
 ]
 
 
-def list_air_freight_rate_coverages(
+def list_air_freight_rate_jobs(
     filters={},
     page_limit=10,
     page=1,

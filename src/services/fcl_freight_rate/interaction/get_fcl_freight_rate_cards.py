@@ -918,13 +918,13 @@ def get_fcl_freight_rate_cards(requirements):
                 other_rates.append(rate)   
          
         selected_cogo_assured = get_cogo_assured_with_locals(cogo_assured_rates)
-        spot_search_scheduler_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements, "source": "fcl_freight"}, queue='critical')
         if is_predicted:
             fcl_freight_vyuh = FclFreightVyuh(other_rates, requirements)
             other_rates = fcl_freight_vyuh.apply_dynamic_pricing()
         
         all_rates = other_rates + selected_cogo_assured 
         all_rates = build_response_list(all_rates, requirements)
+        spot_search_scheduler_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements, "source": "fcl_freight"}, queue='critical')
         return {
             "list" : all_rates
         }

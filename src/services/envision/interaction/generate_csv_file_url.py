@@ -1,6 +1,6 @@
 from services.envision.helpers.csv_link_generator import get_csv_url
-from services.fcl_freight_rate.interaction.list_fcl_freight_rate_coverages import list_fcl_freight_rate_coverages
-from services.air_freight_rate.interactions.list_air_freight_rate_coverages import list_air_freight_rate_coverages
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_jobs import list_fcl_freight_rate_jobs
+from services.air_freight_rate.interactions.list_air_freight_rate_jobs import list_air_freight_rate_jobs
 import copy
 import json
 from fastapi.exceptions import HTTPException

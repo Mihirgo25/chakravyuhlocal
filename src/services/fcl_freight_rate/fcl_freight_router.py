@@ -94,8 +94,8 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import g
 from configs.fcl_freight_rate_constants import COGO_ASSURED_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID, COGO_ASSURED_SHIPPING_LINE_ID
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_deviations import list_fcl_freight_rate_deviations
 from services.fcl_freight_rate.interaction.create_fcl_freight_location_cluster import create_fcl_freight_location_cluster
-from services.fcl_freight_rate.interaction.get_fcl_freight_rate_coverage_stats import get_fcl_freight_rate_coverage_stats
-from services.fcl_freight_rate.interaction.list_fcl_freight_rate_coverages import list_fcl_freight_rate_coverages
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_job_stats import get_fcl_freight_rate_job_stats
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_jobs import list_fcl_freight_rate_jobs
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_job import delete_fcl_freight_rate_job
 from libs.rate_limiter import rate_limiter
 from configs.env import DEFAULT_USER_ID
@@ -1915,8 +1915,8 @@ def create_fcl_freight_location_cluster_func(request: FclLocationCluster):
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
-@fcl_freight_router.get("/get_fcl_freight_rate_coverage_stats")
-def get_fcl_freight_rate_coverage_stats_api(
+@fcl_freight_router.get("/get_fcl_freight_rate_job_stats")
+def get_fcl_freight_rate_job_stats_api(
     filters: str = None,
     resp: dict = Depends(authorize_token)
 ):
@@ -1924,7 +1924,7 @@ def get_fcl_freight_rate_coverage_stats_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = get_fcl_freight_rate_coverage_stats(filters)
+        data = get_fcl_freight_rate_job_stats(filters)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
@@ -1932,8 +1932,8 @@ def get_fcl_freight_rate_coverage_stats_api(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-@fcl_freight_router.get("/list_fcl_freight_rate_coverages")
-def list_fcl_freight_rate_coverages_api(
+@fcl_freight_router.get("/list_fcl_freight_rate_jobs")
+def list_fcl_freight_rate_jobs_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
@@ -1946,7 +1946,7 @@ def list_fcl_freight_rate_coverages_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_fcl_freight_rate_coverages(filters, page_limit, page, sort_by, sort_type, includes)
+        data = list_fcl_freight_rate_jobs(filters, page_limit, page, sort_by, sort_type, includes)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise

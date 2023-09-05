@@ -23,7 +23,7 @@ STATISTICS = {
             'weekly_backlog_count' : 0
         }
 
-def get_air_freight_rate_coverage_stats(filters = {}):
+def get_air_freight_rate_job_stats(filters = {}):
         statistics = STATISTICS.copy()
         ## Query to get Daily Stats
         daily_query = get_daily_query(filters)

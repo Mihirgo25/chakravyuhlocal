@@ -48,6 +48,8 @@ from services.air_freight_rate.workers.send_expired_air_freight_rate_notificatio
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
 from services.extensions.interactions.create_freight_look_surcharge_rates import create_surcharge_rate_api
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_job import update_fcl_freight_rate_job
+from services.air_freight_rate.interactions.update_air_freight_rate_job import update_air_freight_rate_job
 from services.air_freight_rate.estimators.relate_airlines import RelateAirline
 # Rate Producers
 
@@ -939,6 +941,26 @@ def smt_critical_port_pairs_delay(self):
 def smt_update_jobs_status_delay(self):
     try:
         update_jobs_status()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind=True, max_retries=1, retry_backoff = True)
+def update_fcl_freight_rate_jobs_delay(self, request, id):
+    try:
+        update_fcl_freight_rate_job(request, id)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind=True, max_retries=1, retry_backoff = True)
+def update_air_freight_rate_jobs_delay(self, request, id):
+    try:
+        update_air_freight_rate_job(request, id)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
