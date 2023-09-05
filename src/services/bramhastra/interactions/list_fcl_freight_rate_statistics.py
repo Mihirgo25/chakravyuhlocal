@@ -130,7 +130,7 @@ async def use_average_price_filter(
     select = ",".join(grouping)
 
     queries = [
-        f"SELECT {select},AVG(standard_price) as average_standard_price FROM brahmastra.fcl_freight_rate_statistics"
+        f"SELECT {select},AVG(standard_price) as average_standard_price FROM brahmastra.stale_fcl_freight_rate_statistics"
     ]
 
     if where := get_direct_indirect_filters(filters):
