@@ -89,12 +89,12 @@ def get_rate_updated_at_less_than_filter(where):
     
 def get_validity_end_greater_than_filter(where):
     where.append(
-        "validity_end > %(validity_end_strictly_greater_than)s"
+        "validity_end > %(validity_end_greater_than)s"
     )
 
 def get_validity_end_less_than_filter(where):
     where.append(
-        "validity_end < %(validity_end_strictly_less_than)s"
+        "validity_end < %(validity_end_less_than)s"
     )
 
 
