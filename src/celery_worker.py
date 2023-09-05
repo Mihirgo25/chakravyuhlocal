@@ -64,10 +64,11 @@ from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreight
 from playhouse.postgres_ext import ServerSide
 
 # Supply Tools
-from services.envision.schedulers.critical_port_pairs_scheduler import critical_port_pairs_scheduler
-from services.envision.schedulers.cancelled_shipments_scheduler import cancelled_shipments_scheduler
-from services.envision.schedulers.expiring_rates_scheduler import expiring_rates_scheduler
-from services.envision.schedulers.spot_search_scheduler import spot_search_scheduler
+from services.fcl_freight_rate.workers.fcl_freight_critical_port_pairs_scheduler import fcl_freight_critical_port_pairs_scheduler
+from services.fcl_freight_rate.workers.fcl_freight_cancelled_shipments_scheduler import fcl_freight_cancelled_shipments_scheduler
+from services.fcl_freight_rate.workers.fcl_freight_expiring_rates_scheduler import fcl_freight_expiring_rates_scheduler
+from services.fcl_freight_rate.workers.fcl_freight_spot_search_predicted_rates_scheduler import fcl_freight_spot_search_predicted_rates_scheduler
+
 from services.envision.schedulers.update_jobs_status import update_jobs_status
 
 CELERY_CONFIG = {
@@ -172,19 +173,34 @@ celery.conf.beat_schedule = {
         'schedule': crontab(minute=0, hour='*/3'),
         'options': {'queue': 'statistics'}
     },
-    'smt_cancelled_shipments':{
-        'task': 'celery_worker.cancelled_shipments_in_delay',
+    'fcl_cancelled_shipments':{
+        'task': 'celery_worker.fcl_freight_cancelled_shipments_in_delay',
         'schedule':crontab(hour=20, minute=30),
         'options': {'queue': 'fcl_freight_rate'}
     },
-    'smt_expiring_rates':{
-        'task': 'celery_worker.expiring_rates_in_delay',
+    'air_cancelled_shipments':{
+        'task': 'services.air_freight_rate.air_celery_worker.air_freight_cancelled_shipments_in_delay',
+        'schedule':crontab(hour=20, minute=50),
+        'options': {'queue': 'fcl_freight_rate'}
+    },
+    'fcl_freight_expiring_rates':{
+        'task': 'celery_worker.fcl_freight_expiring_rates_in_delay',
         'schedule':crontab(hour=17, minute=30),
         'options': {'queue': 'fcl_freight_rate'}
     },
-    'smt_critical_port_pairs': {
-        'task': 'celery_worker.smt_critical_port_pairs_delay',
+    'air_freight_expiring_rates':{
+        'task': 'services.air_freight_rate.air_celery_worker.air_freight_expiring_rates_in_delay',
+        'schedule':crontab(hour=17, minute=50),
+        'options': {'queue': 'fcl_freight_rate'}
+    },
+    'fcl_freight_critical_port_pairs': {
+        'task': 'celery_worker.fcl_freight_critical_port_pairs_delay',
         'schedule': crontab(hour=00, minute=30),
+        'options': {'queue': 'fcl_freight_rate'}
+    },
+    'air_freight_critical_port_pairs': {
+        'task': 'services.air_freight_rate.air_celery_worker.air_freight_critical_port_pairs_delay',
+        'schedule': crontab(hour=00, minute=50),
         'options': {'queue': 'fcl_freight_rate'}
     },
     # 'smt_update_jobs_status': {
@@ -195,6 +211,7 @@ celery.conf.beat_schedule = {
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
+celery.autodiscover_tasks(['services.air_freight_rate.air_celery_worker'], force=True)
 
 
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
@@ -898,9 +915,9 @@ def air_freight_airline_factors_in_delay(self):
 
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def spot_search_scheduler_delay(self, is_predicted, requirements, source):
+def fcl_freight_spot_search_predicted_rates_scheduler_delay(self, is_predicted, requirements):
     try:
-        return spot_search_scheduler(is_predicted, requirements, source)
+        return fcl_freight_spot_search_predicted_rates_scheduler(is_predicted, requirements)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -908,9 +925,9 @@ def spot_search_scheduler_delay(self, is_predicted, requirements, source):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True, max_retries=3)
-def cancelled_shipments_in_delay(self):
+def fcl_freight_cancelled_shipments_in_delay(self):
     try:
-        cancelled_shipments_scheduler()
+        fcl_freight_cancelled_shipments_scheduler()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -918,9 +935,9 @@ def cancelled_shipments_in_delay(self):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True, max_retries=3)
-def expiring_rates_in_delay(self):
+def fcl_freight_expiring_rates_in_delay(self):
     try:
-        expiring_rates_scheduler()
+        fcl_freight_expiring_rates_scheduler()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -928,9 +945,9 @@ def expiring_rates_in_delay(self):
             raise self.retry(exc= exc)
 
 @celery.task(bind=True, max_retries=3, retry_backoff = True)
-def smt_critical_port_pairs_delay(self):
+def fcl_freight_critical_port_pairs_delay(self):
     try:
-        critical_port_pairs_scheduler()
+        fcl_freight_critical_port_pairs_scheduler()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
