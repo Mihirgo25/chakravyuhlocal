@@ -52,7 +52,7 @@ def get_direct_indirect_filters(filters,date = "validity_range"):
     if date == FclFilterTypes.validity_range.value:
         get_date_range_filter(where)
     
-    if date == FclFilterTypes.time_series.values:
+    if date == FclFilterTypes.time_series.value:
         get_time_series_filter(where)
 
     if filters:
