@@ -9,7 +9,7 @@ ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 def get_csv_url(service, lists):
     
     csv_file_name = generate_file_name(service)
-    csv_file_path = os.path.join(ROOT_DIR,'tmp','coverage_stats')
+    csv_file_path = os.path.join(ROOT_DIR,'tmp','job_stats')
     os.makedirs(csv_file_path, exist_ok=True)
     df = pd.DataFrame(lists)
     file_path = f"{csv_file_path}/{csv_file_name}"

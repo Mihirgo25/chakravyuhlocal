@@ -42,7 +42,7 @@ DEFAULT_REQUIRED_FIELDS = [
 ]
 
 
-def list_fcl_freight_rate_coverages(
+def list_fcl_freight_rate_jobs(
     filters={},
     page_limit=10,
     page=1,

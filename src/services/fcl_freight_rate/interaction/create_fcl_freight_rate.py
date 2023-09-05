@@ -190,8 +190,8 @@ def create_fcl_freight_rate(request):
             raise
         
     # adjust_cogoassured_price(row, request)    
-    
-    update_fcl_jobs_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
+    if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
+        update_fcl_jobs_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
 
     create_audit(request, freight.id)
     

@@ -520,7 +520,6 @@ def get_air_freight_rate_cards(requirements):
         is_predicted = False
         
         freight_rates,is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
-        spot_search_scheduler_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements, "source": "air_freight"}, queue='critical')
         freight_rates = post_discard_less_relevant_rates(freight_rates)
         missing_surcharge = get_missing_surcharges(freight_rates)
         surcharges = get_surcharges(requirements,missing_surcharge)
@@ -529,7 +528,8 @@ def get_air_freight_rate_cards(requirements):
         apply_density_matching = not is_predicted
 
         freight_rates = build_response_list(freight_rates,requirements, apply_density_matching)
-
+        
+        spot_search_scheduler_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements, "source": "air_freight"}, queue='critical')
         return {
             'list': freight_rates
         }
