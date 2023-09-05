@@ -948,9 +948,9 @@ def smt_update_jobs_status_delay(self):
             raise self.retry(exc= exc)
 
 @celery.task(bind=True, max_retries=1, retry_backoff = True)
-def update_fcl_jobs_delay(self, request):
+def update_fcl_jobs_delay(self, request, id):
     try:
-        update_fcl_job(request)
+        update_fcl_job(request, id)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -958,9 +958,9 @@ def update_fcl_jobs_delay(self, request):
             raise self.retry(exc= exc)
 
 @celery.task(bind=True, max_retries=1, retry_backoff = True)
-def update_air_jobs_delay(self, request):
+def update_air_jobs_delay(self, request, id):
     try:
-        update_air_job(request)
+        update_air_job(request, id)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
