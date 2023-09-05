@@ -99,10 +99,7 @@ CREATE TABLE brahmastra.air_freight_rate_statistics
     performed_by_type FixedString(256),
     operation_created_at DateTime,
     operation_updated_at DateTime,
-    is_deleted Bool DEFAULT false,
-    net_net_price Float64,
-    net_net_price_currency FixedString(3),
-    net_net_standard_price Float64
+    is_deleted Bool DEFAULT false
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (is_deleted,origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,airline_id,rate_id,validity_id)
@@ -209,10 +206,7 @@ CREATE TABLE brahmastra.stale_air_freight_rate_statistics
     performed_by_type FixedString(256),
     operation_created_at DateTime,
     operation_updated_at DateTime,
-    is_deleted Bool DEFAULT false,
-    net_net_price Float64,
-    net_net_price_currency FixedString(3),
-    net_net_standard_price Float64
+    is_deleted Bool DEFAULT false
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (is_deleted,origin_continent_id,origin_country_id,origin_region_id,origin_airport_id,airline_id,rate_id,validity_id)
