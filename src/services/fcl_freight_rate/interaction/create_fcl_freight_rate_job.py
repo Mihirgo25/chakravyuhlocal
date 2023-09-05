@@ -8,11 +8,11 @@ from fastapi.encoders import jsonable_encoder
 from database.db_session import db
 
 
-def create_fcl_freight_rate_jobs(request, source):
-    with db.atomic():
-      return create_fcl_freight_rate_job(request, source)
-
 def create_fcl_freight_rate_job(request, source):
+    with db.atomic():
+      return execute_transaction_code(request, source)
+
+def execute_transaction_code(request, source):
     request = jsonable_encoder(request)
     params = {
         'origin_port_id' : request.get('origin_port_id'),

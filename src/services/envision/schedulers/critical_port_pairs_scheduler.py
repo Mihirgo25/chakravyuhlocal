@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
+from services.air_freight_rate.interactions.create_air_freight_rate_job import create_air_freight_rate_job
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
 from configs.fcl_freight_rate_constants import CRITICAL_PORTS_INDIA_VIETNAM, DEFAULT_RATE_TYPE
 from services.air_freight_rate.constants.air_freight_rate_constants import CRITICAL_AIRPORTS_INDIA_VIETNAM
 import datetime
@@ -45,10 +45,10 @@ def critical_port_pairs_scheduler():
                     AirFreightRate.source != 'predicted'
                 )
             
-    for rate in ServerSide(fcl_query):
+    for rate in (fcl_query):
         rate_data = model_to_dict(rate)
-        create_fcl_freight_rate_jobs(rate_data, 'critical_ports')
+        create_fcl_freight_rate_job(rate_data, 'critical_ports')
         
-    for rate in ServerSide(air_query):
+    for rate in (air_query):
         rate_data = model_to_dict(rate)
-        create_air_freight_rate_jobs(rate_data, 'critical_ports')
+        create_air_freight_rate_job(rate_data, 'critical_ports')

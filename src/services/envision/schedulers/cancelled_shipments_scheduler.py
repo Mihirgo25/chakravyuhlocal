@@ -1,7 +1,7 @@
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime, timedelta
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
-from services.air_freight_rate.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
+from services.air_freight_rate.interactions.create_air_freight_rate_job import create_air_freight_rate_job
 from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
 from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 from playhouse.shortcuts import model_to_dict
@@ -32,10 +32,10 @@ def cancelled_shipments_scheduler():
                 
     for rate in ServerSide(fcl_query):
         rate_data = model_to_dict(rate)
-        create_fcl_freight_rate_jobs(rate_data, 'cancelled_shipments')
+        create_fcl_freight_rate_job(rate_data, 'cancelled_shipments')
         
     for rate in ServerSide(air_query):
         rate_data = model_to_dict(rate)
-        create_air_freight_rate_jobs(rate_data, 'cancelled_shipments')
+        create_air_freight_rate_job(rate_data, 'cancelled_shipments')
 
 

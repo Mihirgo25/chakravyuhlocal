@@ -2,7 +2,6 @@ from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRat
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
-from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
 
 
@@ -16,7 +15,7 @@ possible_direct_filters = [
     "status",
     "serial_id"
 ]
-possible_indirect_filters = ["updated_at", "user_id", "date_range"]
+possible_indirect_filters = ["source", "updated_at", "user_id", "start_date"]
 
 DEFAULT_REQUIRED_FIELDS = [
     "id",
@@ -64,7 +63,7 @@ def list_air_freight_rate_jobs(
         )
         query = get_filters(direct_filters, query, AirFreightRateJobs)
         query = apply_indirect_filters(query, indirect_filters)
-        dynamic_statisitcs, query = get_statisitcs(query, filters)
+        dynamic_statisitcs = get_statisitcs(query)
 
     if page_limit and not generate_csv_url:
         query = query.paginate(page, page_limit)
@@ -74,23 +73,10 @@ def list_air_freight_rate_jobs(
     return {"list": data, "stats": dynamic_statisitcs}
 
 
-def get_statisitcs(query, filters):
+def get_statisitcs(query):
     dynamic_statisitcs = {}
-    dynamic_statisitcs["spot_search"] = query.where(
-        AirFreightRateJobs.source == "spot_search"
-    ).count()
-    dynamic_statisitcs["critical_ports"] = query.where(
-        AirFreightRateJobs.source == "critical_ports"
-    ).count()
-    dynamic_statisitcs["expiring_rates"] = query.where(
-        AirFreightRateJobs.source == "expiring_rates"
-    ).count()
-    dynamic_statisitcs["cancelled_shipments"] = query.where(
-        AirFreightRateJobs.source == "cancelled_shipments"
-    ).count()
-
-    query = query.where(AirFreightRateJobs.source == filters["source"])
-    return dynamic_statisitcs, query
+    
+    return dynamic_statisitcs
 
 
 def get_data(query):

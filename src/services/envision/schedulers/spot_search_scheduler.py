@@ -1,5 +1,5 @@
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate_jobs import create_fcl_freight_rate_jobs
-from services.air_freight_rate.interactions.create_air_freight_rate_jobs import create_air_freight_rate_jobs
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
+from services.air_freight_rate.interactions.create_air_freight_rate_job import create_air_freight_rate_job
 from database.db_session import rd
 
 current_processing_key = "spot_search_count"
@@ -33,9 +33,9 @@ def spot_search_scheduler(is_predicted, requirements, source):
         current_count = get_current_predicted_count(requirements, source)
         if current_count>=3:
             if source == 'fcl_freight':
-                data = create_fcl_freight_rate_jobs(requirements,  'spot_search')
+                data = create_fcl_freight_rate_job(requirements,  'spot_search')
             elif source == 'air_freight':
-                data = create_air_freight_rate_jobs(requirements,  'spot_search')
+                data = create_air_freight_rate_job(requirements,  'spot_search')
             delete_init_key(requirements, source)
             return {"init_key": requirements}
         else:

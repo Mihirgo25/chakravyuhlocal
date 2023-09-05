@@ -9,12 +9,12 @@ from database.db_session import db
 
 
 
-def create_air_freight_rate_jobs(request, source):
-    with db.atomic():
-      return create_air_freight_rate_job(request, source)
-
-
 def create_air_freight_rate_job(request, source):
+    with db.atomic():
+      return execute_transaction_code(request, source)
+
+
+def execute_transaction_code(request, source):
 
     request = jsonable_encoder(request)
 
