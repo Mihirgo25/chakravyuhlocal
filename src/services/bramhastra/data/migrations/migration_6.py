@@ -51,7 +51,7 @@ def main():
                                 ).get("price", line_item["price"])
                             )
 
-                fcl_freight_rate_statistic.save()
+                    fcl_freight_rate_statistic.save()
                 
                 count+=1
 
