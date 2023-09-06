@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.cluster_extension_gri_worker import Cluste
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from database.db_session import db
 
-def create_cluster_extension_gri_worker(request):
+def create_critical_port_trend_index(request):
     with db.atomic():
         return execute_transaction_code(request)
 

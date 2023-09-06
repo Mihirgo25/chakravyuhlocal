@@ -24,25 +24,6 @@ def fetch_all_base_port_ids():
     ]
     return [port for port in all_ports if port not in (CRITICAL_PORTS_INDIA_VIETNAM)]
 
-
-def generate_combinations(base_port_ids, critical_ports):
-    combinations = []
-
-    for port in critical_ports:
-        for base_port in base_port_ids:
-            combinations.append(
-                {"origin_port_id": port, "destination_port_id": base_port}
-            )
-
-    for base_port in base_port_ids:
-        for port in critical_ports:
-            combinations.append(
-                {"origin_port_id": base_port, "destination_port_id": port}
-            )
-
-    return combinations
-
-
 def get_critical_ports_extension_parameters():
     all_base_port_ids = fetch_all_base_port_ids()
     start_time = datetime.now()
