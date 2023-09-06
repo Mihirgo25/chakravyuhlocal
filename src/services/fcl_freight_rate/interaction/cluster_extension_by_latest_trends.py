@@ -1,10 +1,17 @@
 from datetime import datetime, timedelta
-from services.fcl_freight_rate.models.cluster_extension_gri_worker import ClusterExtensionGriWorker
+from services.fcl_freight_rate.models.cluster_extension_gri_worker import (
+    ClusterExtensionGriWorker,
+)
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from services.bramhastra.interactions.list_fcl_freight_rate_statistics import list_fcl_freight_rate_statistics
-from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
+from services.bramhastra.interactions.list_fcl_freight_rate_statistics import (
+    list_fcl_freight_rate_statistics,
+)
+from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import (
+    rate_extension_via_bulk_operation,
+)
 from micro_services.client import common
 from fastapi.encoders import jsonable_encoder
+
 
 def get_filters(start_time, query_type, rate_ids):
     return {
@@ -12,86 +19,79 @@ def get_filters(start_time, query_type, rate_ids):
         "query_type": query_type,
         "rate_id": rate_ids,
         "validity_end_greater_than": datetime.now().date() + timedelta(days=1),
-        "group_by": ["shipping_line_id"]
+        "group_by": ["shipping_line_id"],
     }
-    
+
+
 def get_shipping_line_dict():
-    return {
-        "20": None,
-        "40": None,
-        "40HC": None
-    }
+    return {"20": None, "40": None, "40HC": None}
+
 
 async def update_cluster_extension_by_latest_trends(request):
     start_time = request.get("start_time")
-    
     origin_port_id = request["origin_port_id"]
     destination_port_id = request["destination_port_id"]
-    
-    min_decrease_percent, max_increase_percent = -100, 100
-    min_decrease_amount, max_increase_amount = -1000, 5000 
 
-    record = (ClusterExtensionGriWorker
-            .select(ClusterExtensionGriWorker.approval_status,ClusterExtensionGriWorker.min_decrease_percent, ClusterExtensionGriWorker.max_increase_percent, ClusterExtensionGriWorker.min_decrease_amount, ClusterExtensionGriWorker.max_increase_amount)
-            .where((ClusterExtensionGriWorker.destination_port_id == destination_port_id) &
-            (ClusterExtensionGriWorker.origin_port_id == origin_port_id))).limit(1).first()
+    (
+        min_decrease_percent,
+        max_increase_percent,
+        min_decrease_amount,
+        max_increase_amount,
+        approval_status,
+    ) = get_record_details(origin_port_id, destination_port_id)
 
-    if not record.approval_status:
+    if not approval_status:
         return
-    
-    if record:
-        min_decrease_percent = record.min_decrease_percent
-        max_increase_percent = record.max_increase_percent
-        min_decrease_amount = record.min_decrease_amount
-        max_increase_amount = record.max_increase_amount
 
+    freight_rates = get_freight_rates(request)
 
     shipping_line_gri_mapping = {}
-    
-    query = (FclFreightRate
-                .select(FclFreightRate.id,FclFreightRate.container_size, FclFreightRate.shipping_line_id, FclFreightRate.validities) 
-                .where(
-                    FclFreightRate.updated_at > start_time,
-                    FclFreightRate.origin_port_id == origin_port_id,
-                    FclFreightRate.commodity == request['commodity'],
-                    FclFreightRate.container_type == request['container_type'],
-                    FclFreightRate.destination_port_id == destination_port_id,
-                    ~ FclFreightRate.rate_not_available_entry,
-                    ~FclFreightRate.mode.in_(['predicted', 'rate_extension'])     
-                ))  
-    freight_rates = jsonable_encoder(list(query.dicts()))
     for container_size in ["20", "40", "40HC"]:
-        rates = [rate for rate in freight_rates if rate["container_size"] == container_size]  
+        rates = [
+            rate for rate in freight_rates if rate["container_size"] == container_size
+        ]
         if not rates:
             continue
         prices = []
         rate_ids = []
         shipping_line_ids = []
-        
+
         for rate in rates:
-            rate_ids.append(rate['id']) 
-            shipping_line_ids.append(rate['shipping_line_id'])
-            
+            rate_ids.append(rate["id"])
+            shipping_line_ids.append(rate["shipping_line_id"])
+
             price = 0
-            for validity in rate['validities']:
+            for validity in rate["validities"]:
                 if validity["currency"] != "USD":
                     data = {
-                        "from_currency" : validity["currency"],
+                        "from_currency": validity["currency"],
                         "to_currency": "USD",
-                        "price": validity["price"]
-                    }                    
+                        "price": validity["price"],
+                    }
                     price_in_USD = common.get_money_exchange_for_fcl(data)["price"]
                     price += price_in_USD
                 else:
                     price += validity["price"]
-                    
-            prices.append(price / len(rate['validities']))   
 
-        response = await list_fcl_freight_rate_statistics(get_filters(datetime.now() - timedelta(minutes=5), "average_price", rate_ids), 1000, 1, False)
-        
-        if not response.get('list'):
-            continue  
-        prev_avg_mapping = {row['shipping_line_id'] : row['average_standard_price'] for row in response['list'] if row.get('shipping_line_id')}
+            prices.append(price / len(rate["validities"]))
+
+        response = await list_fcl_freight_rate_statistics(
+            get_filters(
+                datetime.now() - timedelta(minutes=5), "average_price", rate_ids
+            ),
+            1000,
+            1,
+            False,
+        )
+
+        if not response.get("list"):
+            continue
+
+        prev_avg_mapping = {
+            row["shipping_line_id"]: row["average_standard_price"]
+            for row in response["list"]
+            if row.get("shipping_line_id")
+        }
 
         shipping_line_totals = {}
         shipping_line_counts = {}
@@ -107,57 +107,121 @@ async def update_cluster_extension_by_latest_trends(request):
         for shipping_id in shipping_line_totals:
             total = shipping_line_totals[shipping_id]
             count = shipping_line_counts[shipping_id]
-            average_prices[shipping_id] = total / count 
-            
-        for shipping_line_id in average_prices.keys(): 
+            average_prices[shipping_id] = total / count
+
+        for shipping_line_id in average_prices.keys():
             cur = average_prices[shipping_line_id]
             prev = prev_avg_mapping.get(shipping_line_id)
             if prev and cur:
-                gri_perc = ((cur - prev) / prev) * 100 
+                gri_perc = ((cur - prev) / prev) * 100
                 if shipping_line_id in shipping_line_gri_mapping.keys():
-                    shipping_line_gri_mapping[shipping_line_id][container_size] = gri_perc
+                    shipping_line_gri_mapping[shipping_line_id][
+                        container_size
+                    ] = gri_perc
                 else:
-                    shipping_line_gri_mapping[shipping_line_id] = get_shipping_line_dict()
-                    shipping_line_gri_mapping[shipping_line_id][container_size] = gri_perc
+                    shipping_line_gri_mapping[
+                        shipping_line_id
+                    ] = get_shipping_line_dict()
+                    shipping_line_gri_mapping[shipping_line_id][
+                        container_size
+                    ] = gri_perc
     shipping_line_avg_mapping = {}
 
     for key, sub_dict in shipping_line_gri_mapping.items():
         values = []
         for sub_key in sub_dict:
-            if sub_dict[sub_key]: 
+            if sub_dict[sub_key]:
                 values.append(sub_dict[sub_key])
-        if values:  
+        if values:
             average_value = sum(values) / len(values)
             shipping_line_avg_mapping[key] = average_value
 
     if not shipping_line_avg_mapping:
-        return   
-    
-    overall_gri_avg = 0  
+        return
+
+    overall_gri_avg = 0
     for key in shipping_line_avg_mapping.keys():
         overall_gri_avg += shipping_line_avg_mapping[key]
 
     overall_gri_avg /= len(shipping_line_avg_mapping.keys())
     overall_gri_avg = min(overall_gri_avg, 100)
- 
-    if overall_gri_avg and (min_decrease_percent <= overall_gri_avg <= max_increase_percent):
-        request['source'] = 'cluster_extension_worker'
+
+    if overall_gri_avg and (
+        min_decrease_percent <= overall_gri_avg <= max_increase_percent
+    ):
+        request["source"] = "cluster_extension_worker"
         request["markup"] = overall_gri_avg
-        
+
         request["min_decrease_amount"] = min_decrease_amount
         request["max_increase_amount"] = max_increase_amount
-        request['filters'] = {
-                "origin_port_id": request.get("origin_port_id"),
-                "destination_port_id": request.get("destination_port_id"),
-                "rate_type": "market_place",
-                "updated_at_less_than": start_time.isoformat()
-            }
+        request["filters"] = {
+            "origin_port_id": request.get("origin_port_id"),
+            "destination_port_id": request.get("destination_port_id"),
+            "rate_type": "market_place",
+            "updated_at_less_than": start_time.isoformat(),
+        }
         rate_extension_via_bulk_operation(request)
-        request['filters'] = {
-                "origin_port_id": request.get("origin_secondary_ports"),
-                "destination_port_id": request.get("destination_secondary_ports"),
-                "rate_type": "market_place",
-                "updated_at_less_than": start_time.isoformat()
-            }
+        request["filters"] = {
+            "origin_port_id": request.get("origin_secondary_ports"),
+            "destination_port_id": request.get("destination_secondary_ports"),
+            "rate_type": "market_place",
+            "updated_at_less_than": start_time.isoformat(),
+        }
         rate_extension_via_bulk_operation(request)
-        
+
+
+def get_record_details(origin_port_id, destination_port_id):
+    min_decrease_percent, max_increase_percent = -100, 100
+    min_decrease_amount, max_increase_amount = -1000, 5000
+    approval_status = True
+
+    record = (
+        (
+            ClusterExtensionGriWorker.select(
+                ClusterExtensionGriWorker.approval_status,
+                ClusterExtensionGriWorker.min_decrease_percent,
+                ClusterExtensionGriWorker.max_increase_percent,
+                ClusterExtensionGriWorker.min_decrease_amount,
+                ClusterExtensionGriWorker.max_increase_amount,
+            ).where(
+                (ClusterExtensionGriWorker.destination_port_id == destination_port_id)
+                & (ClusterExtensionGriWorker.origin_port_id == origin_port_id)
+            )
+        )
+        .limit(1)
+        .first()
+    )
+
+    if record:
+        min_decrease_percent = record.min_decrease_percent
+        max_increase_percent = record.max_increase_percent
+        min_decrease_amount = record.min_decrease_amount
+        max_increase_amount = record.max_increase_amount
+        approval_status = record.approval_status
+
+    return (
+        min_decrease_percent,
+        max_increase_percent,
+        min_decrease_amount,
+        max_increase_amount,
+        approval_status,
+    )
+
+
+def get_freight_rates(request):
+    query = FclFreightRate.select(
+        FclFreightRate.id,
+        FclFreightRate.container_size,
+        FclFreightRate.shipping_line_id,
+        FclFreightRate.validities,
+    ).where(
+        FclFreightRate.updated_at > request["start_time"],
+        FclFreightRate.origin_port_id == request["origin_port_id"],
+        FclFreightRate.commodity == request["commodity"],
+        FclFreightRate.container_type == request["container_type"],
+        FclFreightRate.destination_port_id == request["destination_port_id"],
+        FclFreightRate.last_rate_available_date
+        > datetime.now().date() + timedelta(days=1),
+        ~FclFreightRate.mode.in_(["predicted", "rate_extension"]),
+    )
+    return jsonable_encoder(list(query.dicts()))
