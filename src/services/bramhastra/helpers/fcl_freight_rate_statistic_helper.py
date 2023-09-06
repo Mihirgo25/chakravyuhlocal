@@ -66,7 +66,10 @@ class Rate:
         )
         
         if not fcl_freight_rate_statistic:
-            FclFreightRateStatistic.create(**row)
+            try:
+                self.create(row)
+            except:
+                pass
             return
 
         for k, v in row.items():
