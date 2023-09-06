@@ -161,7 +161,8 @@ class Shipment:
                         new_row.save()
                         first_row = True
                 for k, v in stat.items():
-                    setattr(shipment, k, v)
+                    if v:
+                        setattr(shipment, k, v)
                 shipment.save()
             else:
                 ShipmentFclFreightRateStatistic.create(**stat)
@@ -220,7 +221,7 @@ class Shipment:
 
         for shipment_fcl_freight_rate_statistic in shipment_fcl_freight_rate_statistics:
             for k, v in update_params.items():
-                if k in avoid_keys:
+                if k in avoid_keys and not v:
                     continue
                 setattr(shipment_fcl_freight_rate_statistic, k, v)
             shipment_fcl_freight_rate_statistic.save()
@@ -230,7 +231,8 @@ class Shipment:
             for key in self.increment_keys:
                 setattr(row, key, getattr(row, key) + 1)
         for k, v in update_object.items():
-            setattr(row, k, v)
+            if v:
+                setattr(row, k, v)
         row.save()
 
     def get_rate_details_from_initial_quotation(self, source_id):

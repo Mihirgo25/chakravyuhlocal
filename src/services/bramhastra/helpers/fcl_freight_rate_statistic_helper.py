@@ -15,7 +15,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import (
     FclFreightRateFeedback,
 )
 from services.bramhastra.constants import FCL_MODE_MAPPINGS
-from services.bramhastra.enums import FclModes, Fcl
+from services.bramhastra.enums import FclModes, Fcl, FclChargeCodes
 from services.bramhastra.helpers.common_statistic_helper import get_identifier
 
 UPDATE_EXCLUDE_ITEMS = {
@@ -50,7 +50,7 @@ class Rate:
         self.params = []
         self.origin_pricing_zone_map_id = None
         self.destination_pricing_zone_map_id = None
-        self.increment_keys = {}
+        self.increment_keys = set()
 
     def create(self, row) -> None:
         FclFreightRateStatistic.create(**row)
@@ -73,6 +73,26 @@ class Rate:
 
     def set_new_stats(self) -> int:
         return FclFreightRateStatistic.insert_many(self.params).execute()
+
+    def delete_latest_stat(self) -> None:
+        params = dict(is_deleted=True)
+        exc_params = UPDATE_EXCLUDE_ITEMS.copy()
+        exc_params.add("validities")
+
+        params.update(
+            {
+                key: value
+                for key, value in dict(self.freight).items()
+                if key not in exc_params
+            }
+        )
+
+        try:
+            FclFreightRateStatistic.update(**params).where(
+                FclFreightRateStatistic.rate_id == str(self.freight.rate_id)
+            ).execute()
+        except Exception as e:
+            raise e
 
     def set_existing_stats(self) -> None:
         for row in self.params:
@@ -109,6 +129,21 @@ class Rate:
 
         for validity in self.freight.validities:
             param = freight.copy()
+            for line_item in validity.line_items:
+                if line_item.code == FclChargeCodes.BAS.value:
+                    param["bas_price"] = line_item.price
+                    param["bas_currency"] = line_item.currency
+                    if line_item.currency == Fcl.default_currency.value:
+                        param["bas_standard_price"] = line_item.price
+                    else:
+                        param["bas_standard_price"] = common.get_money_exchange_for_fcl(
+                            {
+                                "from_currency": line_item.currency,
+                                "to_currency": Fcl.default_currency.value,
+                                "price": param["bas_price"],
+                            }
+                        ).get("price", param["bas_price"])
+
             param.update(validity.dict(exclude={"line_items"}))
             param["identifier"] = get_identifier(param["rate_id"], param["validity_id"])
             param["origin_pricing_zone_map_id"] = self.origin_pricing_zone_map_id

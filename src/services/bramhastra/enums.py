@@ -94,3 +94,29 @@ class BrahmastraTrackStatus(Bramhastra):
     
 class BrahmastraTrackModuleTypes(Bramhastra):
     table = "table"
+    
+
+class AirSources(Bramhastra):
+    manual = "manual"
+    predicted = "predicted"
+    rate_extension = "rate_extension"
+    rate_sheet = "rate_sheet"
+    freight_look = "freight_look"
+    cargo_ai = "cargo_ai"
+    
+
+class FclFeedbackClosingRemarks(Bramhastra):
+    rate_added = "rate_added"
+
+class FclFeedbackStatus(Bramhastra):
+    active = "active"
+    inactive = "inactive"
+    
+
+class FclFilterTypes(Bramhastra):
+    validity_range = "validity_range"
+    time_series = "time_series"
+    
+
+class FclChargeCodes(Bramhastra):
+    BAS = "BAS"
