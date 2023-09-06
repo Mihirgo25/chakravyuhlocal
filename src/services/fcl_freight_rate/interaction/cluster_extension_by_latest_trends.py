@@ -9,6 +9,7 @@ from services.bramhastra.interactions.list_fcl_freight_rate_statistics import (
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import (
     rate_extension_via_bulk_operation,
 )
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from micro_services.client import common
 from fastapi.encoders import jsonable_encoder
 
@@ -35,8 +36,8 @@ async def update_cluster_extension_by_latest_trends(request):
     (
         min_decrease_percent,
         max_increase_percent,
-        min_decrease_amount,
-        max_increase_amount,
+        min_decrease_markup,
+        max_increase_markup,
         approval_status,
     ) = get_record_details(origin_port_id, destination_port_id)
 
@@ -152,8 +153,8 @@ async def update_cluster_extension_by_latest_trends(request):
         request["source"] = "cluster_extension_worker"
         request["markup"] = overall_gri_avg
 
-        request["min_decrease_amount"] = min_decrease_amount
-        request["max_increase_amount"] = max_increase_amount
+        request["min_decrease_markup"] = min_decrease_markup
+        request["max_increase_markup"] = max_increase_markup
         request["filters"] = {
             "origin_port_id": request.get("origin_port_id"),
             "destination_port_id": request.get("destination_port_id"),
@@ -172,7 +173,7 @@ async def update_cluster_extension_by_latest_trends(request):
 
 def get_record_details(origin_port_id, destination_port_id):
     min_decrease_percent, max_increase_percent = -100, 100
-    min_decrease_amount, max_increase_amount = -1000, 5000
+    min_decrease_markup, max_increase_markup = -1000, 5000
     approval_status = True
 
     record = (
@@ -181,8 +182,8 @@ def get_record_details(origin_port_id, destination_port_id):
                 ClusterExtensionGriWorker.approval_status,
                 ClusterExtensionGriWorker.min_decrease_percent,
                 ClusterExtensionGriWorker.max_increase_percent,
-                ClusterExtensionGriWorker.min_decrease_amount,
-                ClusterExtensionGriWorker.max_increase_amount,
+                ClusterExtensionGriWorker.min_decrease_markup,
+                ClusterExtensionGriWorker.max_increase_markup,
             ).where(
                 (ClusterExtensionGriWorker.destination_port_id == destination_port_id)
                 & (ClusterExtensionGriWorker.origin_port_id == origin_port_id)
@@ -195,15 +196,15 @@ def get_record_details(origin_port_id, destination_port_id):
     if record:
         min_decrease_percent = record.min_decrease_percent
         max_increase_percent = record.max_increase_percent
-        min_decrease_amount = record.min_decrease_amount
-        max_increase_amount = record.max_increase_amount
+        min_decrease_markup = record.min_decrease_markup
+        max_increase_markup = record.max_increase_markup
         approval_status = record.approval_status
 
     return (
         min_decrease_percent,
         max_increase_percent,
-        min_decrease_amount,
-        max_increase_amount,
+        min_decrease_markup,
+        max_increase_markup,
         approval_status,
     )
 
@@ -222,6 +223,7 @@ def get_freight_rates(request):
         FclFreightRate.destination_port_id == request["destination_port_id"],
         FclFreightRate.last_rate_available_date
         > datetime.now().date() + timedelta(days=1),
-        ~FclFreightRate.mode.in_(["predicted", "rate_extension"]),
+        FclFreightRate.mode.not_in(["predicted", "rate_extension"]),
+        FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
     )
     return jsonable_encoder(list(query.dicts()))

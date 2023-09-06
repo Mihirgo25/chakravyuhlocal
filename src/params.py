@@ -849,8 +849,8 @@ class AddFreightRateMarkup(BaseModel):
     rates_less_than_price: float = None
     tag: str = None
     affect_market_price: bool=True
-    min_decrease_amount: float=None 
-    max_increase_amount: float=None 
+    min_decrease_markup: float=None 
+    max_increase_markup: float=None 
 
 
 class AddLocalRateMarkup(BaseModel):
@@ -968,14 +968,13 @@ class FclLocationCluster(BaseModel):
 class CreateClusterExtensionGriWorker(BaseModel):
     performed_by_id: str = None
     performed_by_type: str = None
-    container_type: str
-    container_size: str
     origin_port_id: str
     destination_port_id: str
-    min_decrease_percent: float= None
-    max_increase_percent: float= None
-    min_decrease_amount: float= None
-    max_increase_amount: float= None
-    manual_gri: float=None
+    min_decrease_percent: float = -100
+    max_increase_percent: float = 100
+    min_decrease_markup: float = -1000
+    max_increase_markup: float = 1000
+    manual_gri: float = None
+    approval_status: bool = True
 
     

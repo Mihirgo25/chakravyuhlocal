@@ -52,8 +52,8 @@ def get_add_freight_rate_params(request):
     data["markup_currency"] = "USD"
     data["validity_start"] = datetime.now() - timedelta(days=3)
     data["validity_end"] = datetime.now() + timedelta(days=60)
-    data["max_increase_amount"] = request.get("max_increase_amount")
-    data["min_decrease_amount"] = request.get("min_decrease_amount")
+    data["max_increase_markup"] = request.get("max_increase_markup")
+    data["min_decrease_markup"] = request.get("min_decrease_markup")
     data["affect_market_price"] = False
     data["rate_sheet_serial_id"] = None
     data["apply_to_extended_rates"] = False
