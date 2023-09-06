@@ -26,7 +26,7 @@ class CriticalPortTrendIndex(BaseModel):
     manual_gri=FloatField(null=True)
     approval_status=BooleanField(default=True)
     created_at = DateTimeField(default=datetime.datetime.now)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeField(index=True, default=datetime.datetime.now)
 
     class Meta:
         table_name = 'critical_port_trend_indexes'
