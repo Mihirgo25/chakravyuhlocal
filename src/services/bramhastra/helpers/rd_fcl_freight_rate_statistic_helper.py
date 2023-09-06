@@ -59,18 +59,19 @@ class RevenueDesk:
             )
             .first()
         )
-
-        fcl_freight_rate_statistic.updated_at = request.created_at
-
-        self.increment_keys = {"so1_visit_count"}
-
-        total_priority = (fcl_freight_rate_statistic.total_priority or 1) + (
-            request.selected_for_preference.given_priority or 1
-        )
-
-        update_params = dict(total_priority=total_priority)
-
+        
         if fcl_freight_rate_statistic:
+
+            fcl_freight_rate_statistic.updated_at = request.created_at
+
+            self.increment_keys = {"so1_visit_count"}
+
+            total_priority = (fcl_freight_rate_statistic.total_priority or 1) + (
+                request.selected_for_preference.given_priority or 1
+            )
+
+            update_params = dict(total_priority=total_priority)
+
             self.increment_rd_rate_stats(fcl_freight_rate_statistic, update_params)
 
     def set_current_rate(self, params):
