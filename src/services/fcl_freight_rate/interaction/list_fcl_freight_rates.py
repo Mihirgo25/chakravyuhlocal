@@ -288,12 +288,12 @@ def apply_validity_end_less_than_filter(query,filters):
   return query
 
 def apply_updated_at_greater_than_filter(query, filters):
-  query = query.where(FclFreightRate.updated_at.cast('date') >= datetime.fromisoformat(filters['updated_at_greater_than']).date())
+  query = query.where(FclFreightRate.updated_at >= datetime.fromisoformat(filters['updated_at_greater_than']))
   return query
 
 
 def apply_updated_at_less_than_filter(query,filters):
-  query = query.where(FclFreightRate.updated_at.cast('date') <= datetime.fromisoformat(filters['updated_at_less_than']).date())
+  query = query.where(FclFreightRate.updated_at <= datetime.fromisoformat(filters['updated_at_less_than']))
   return query
 
 def apply_procured_by_id_filter(query, filters):
