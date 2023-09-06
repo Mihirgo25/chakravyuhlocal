@@ -1,32 +1,29 @@
 from services.fcl_freight_rate.models.cluster_extension_gri_worker import ClusterExtensionGriWorker
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from database.db_session import db
 
 def create_cluster_extension_gri_worker(request):
-    worker_object = create_or_update_worker(request)
-    
-    return {'id': worker_object.id, 'status': 'created'}
+    with db.atomic():
+        return execute_transaction_code(request)
 
-def create_or_update_worker(request_data):
- 
-    worker_data = {
-        'container_type': request_data['container_type'],
-        'container_size': request_data['container_size'],
-        'origin_port_id': request_data['origin_port_id'],
-        'destination_port_id': request_data['destination_port_id'],
-        'min_decrease_percent': request_data['min_decrease_percent'],
-        'max_increase_percent': request_data['max_increase_percent'],
-        'min_decrease_amount': request_data['min_decrease_percent'],
-        'max_increase_amount': request_data['max_increase_percent'],
-        'manual_gri':request_data['manual_gri'],
-        'commodity': 'general',
-        'status': 'done',
-        'performed_by_id': request_data.get('performed_by_id'),
-        'performed_by_type': request_data.get('performed_by_type')
+
+def execute_transaction_code(request_data):
+    create_params = {
+        "origin_port_id": request_data["origin_port_id"],
+        "destination_port_id": request_data["destination_port_id"],
+        "min_decrease_percent": request_data["min_decrease_percent"],
+        "max_increase_percent": request_data["max_increase_percent"],
+        "min_decrease_markup": request_data["min_decrease_percent"],
+        "max_increase_markup": request_data["max_increase_percent"],
+        "manual_gri": request_data.get("manual_gri"),
+        "approval_status": request_data.get("approval_status"),
+        "performed_by_id": request_data.get("performed_by_id"),
+        "performed_by_type": request_data.get("performed_by_type"),
     }
-    
-    new_worker_object = ClusterExtensionGriWorker(**worker_data)    
+
+    new_worker_object = ClusterExtensionGriWorker(**create_params)
     get_multiple_service_objects(new_worker_object)
     new_worker_object.set_locations()
     new_worker_object.save()
-    
-    return new_worker_object
+
+    return {id: str(new_worker_object.id)}
