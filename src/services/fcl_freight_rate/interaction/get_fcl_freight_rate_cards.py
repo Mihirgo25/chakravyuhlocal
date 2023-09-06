@@ -885,7 +885,8 @@ def get_fcl_freight_rate_cards(requirements):
         }]
     """
     try:
-        freight_rates = initialize_freight_query(requirements, get_cogo_assured=True)
+        initial_query = initialize_freight_query(requirements, get_cogo_assured=True)
+        freight_rates = jsonable_encoder(list(initial_query.dicts()))
         
         cogo_assured_rates, supply_rates = break_rates(freight_rates)
         
