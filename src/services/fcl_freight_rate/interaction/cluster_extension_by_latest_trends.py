@@ -39,113 +39,118 @@ async def update_cluster_extension_by_latest_trends(request):
         min_decrease_markup,
         max_increase_markup,
         approval_status,
+        manual_gri,
     ) = get_record_details(origin_port_id, destination_port_id)
 
     if not approval_status:
         return
 
-    freight_rates = get_freight_rates(request)
+    if manual_gri:
+        overall_gri_avg = manual_gri
+    else:
+        freight_rates = get_freight_rates(request)
+        shipping_line_gri_mapping = {}
+        for container_size in ["20", "40", "40HC"]:
+            rates = [
+                rate
+                for rate in freight_rates
+                if rate["container_size"] == container_size
+            ]
+            if not rates:
+                continue
+            prices = []
+            rate_ids = []
+            shipping_line_ids = []
 
-    shipping_line_gri_mapping = {}
-    for container_size in ["20", "40", "40HC"]:
-        rates = [
-            rate for rate in freight_rates if rate["container_size"] == container_size
-        ]
-        if not rates:
-            continue
-        prices = []
-        rate_ids = []
-        shipping_line_ids = []
+            for rate in rates:
+                rate_ids.append(rate["id"])
+                shipping_line_ids.append(rate["shipping_line_id"])
 
-        for rate in rates:
-            rate_ids.append(rate["id"])
-            shipping_line_ids.append(rate["shipping_line_id"])
+                price = 0
+                for validity in rate["validities"]:
+                    if validity["currency"] != "USD":
+                        data = {
+                            "from_currency": validity["currency"],
+                            "to_currency": "USD",
+                            "price": validity["price"],
+                        }
+                        price_in_USD = common.get_money_exchange_for_fcl(data)["price"]
+                        price += price_in_USD
+                    else:
+                        price += validity["price"]
 
-            price = 0
-            for validity in rate["validities"]:
-                if validity["currency"] != "USD":
-                    data = {
-                        "from_currency": validity["currency"],
-                        "to_currency": "USD",
-                        "price": validity["price"],
-                    }
-                    price_in_USD = common.get_money_exchange_for_fcl(data)["price"]
-                    price += price_in_USD
+                prices.append(price / len(rate["validities"]))
+
+            response = await list_fcl_freight_rate_statistics(
+                get_filters(
+                    datetime.now() - timedelta(minutes=5), "average_price", rate_ids
+                ),
+                1000,
+                1,
+                False,
+            )
+
+            if not response.get("list"):
+                continue
+
+            prev_avg_mapping = {
+                row["shipping_line_id"]: row["average_standard_price"]
+                for row in response["list"]
+                if row.get("shipping_line_id")
+            }
+
+            shipping_line_totals = {}
+            shipping_line_counts = {}
+            for shipping_id, price in zip(shipping_line_ids, prices):
+                if shipping_id not in shipping_line_totals:
+                    shipping_line_totals[shipping_id] = price
+                    shipping_line_counts[shipping_id] = 1
                 else:
-                    price += validity["price"]
+                    shipping_line_totals[shipping_id] += price
+                    shipping_line_counts[shipping_id] += 1
 
-            prices.append(price / len(rate["validities"]))
+            average_prices = {}
+            for shipping_id in shipping_line_totals:
+                total = shipping_line_totals[shipping_id]
+                count = shipping_line_counts[shipping_id]
+                average_prices[shipping_id] = total / count
 
-        response = await list_fcl_freight_rate_statistics(
-            get_filters(
-                datetime.now() - timedelta(minutes=5), "average_price", rate_ids
-            ),
-            1000,
-            1,
-            False,
-        )
+            for shipping_line_id in average_prices.keys():
+                cur = average_prices[shipping_line_id]
+                prev = prev_avg_mapping.get(shipping_line_id)
+                if prev and cur:
+                    gri_perc = ((cur - prev) / prev) * 100
+                    if shipping_line_id in shipping_line_gri_mapping.keys():
+                        shipping_line_gri_mapping[shipping_line_id][
+                            container_size
+                        ] = gri_perc
+                    else:
+                        shipping_line_gri_mapping[
+                            shipping_line_id
+                        ] = get_shipping_line_dict()
+                        shipping_line_gri_mapping[shipping_line_id][
+                            container_size
+                        ] = gri_perc
+        shipping_line_avg_mapping = {}
 
-        if not response.get("list"):
-            continue
+        for key, sub_dict in shipping_line_gri_mapping.items():
+            values = []
+            for sub_key in sub_dict:
+                if sub_dict[sub_key]:
+                    values.append(sub_dict[sub_key])
+            if values:
+                average_value = sum(values) / len(values)
+                shipping_line_avg_mapping[key] = average_value
 
-        prev_avg_mapping = {
-            row["shipping_line_id"]: row["average_standard_price"]
-            for row in response["list"]
-            if row.get("shipping_line_id")
-        }
+        if not shipping_line_avg_mapping:
+            return
 
-        shipping_line_totals = {}
-        shipping_line_counts = {}
-        for shipping_id, price in zip(shipping_line_ids, prices):
-            if shipping_id not in shipping_line_totals:
-                shipping_line_totals[shipping_id] = price
-                shipping_line_counts[shipping_id] = 1
-            else:
-                shipping_line_totals[shipping_id] += price
-                shipping_line_counts[shipping_id] += 1
+        overall_gri_avg = 0
+        for key in shipping_line_avg_mapping.keys():
+            overall_gri_avg += shipping_line_avg_mapping[key]
 
-        average_prices = {}
-        for shipping_id in shipping_line_totals:
-            total = shipping_line_totals[shipping_id]
-            count = shipping_line_counts[shipping_id]
-            average_prices[shipping_id] = total / count
-
-        for shipping_line_id in average_prices.keys():
-            cur = average_prices[shipping_line_id]
-            prev = prev_avg_mapping.get(shipping_line_id)
-            if prev and cur:
-                gri_perc = ((cur - prev) / prev) * 100
-                if shipping_line_id in shipping_line_gri_mapping.keys():
-                    shipping_line_gri_mapping[shipping_line_id][
-                        container_size
-                    ] = gri_perc
-                else:
-                    shipping_line_gri_mapping[
-                        shipping_line_id
-                    ] = get_shipping_line_dict()
-                    shipping_line_gri_mapping[shipping_line_id][
-                        container_size
-                    ] = gri_perc
-    shipping_line_avg_mapping = {}
-
-    for key, sub_dict in shipping_line_gri_mapping.items():
-        values = []
-        for sub_key in sub_dict:
-            if sub_dict[sub_key]:
-                values.append(sub_dict[sub_key])
-        if values:
-            average_value = sum(values) / len(values)
-            shipping_line_avg_mapping[key] = average_value
-
-    if not shipping_line_avg_mapping:
-        return
-
-    overall_gri_avg = 0
-    for key in shipping_line_avg_mapping.keys():
-        overall_gri_avg += shipping_line_avg_mapping[key]
-
-    overall_gri_avg /= len(shipping_line_avg_mapping.keys())
-    overall_gri_avg = min(overall_gri_avg, 100)
+        overall_gri_avg /= len(shipping_line_avg_mapping.keys())
+        overall_gri_avg = min(overall_gri_avg, 100)
 
     if overall_gri_avg and (
         min_decrease_percent <= overall_gri_avg <= max_increase_percent
@@ -173,25 +178,22 @@ async def update_cluster_extension_by_latest_trends(request):
 
 def get_record_details(origin_port_id, destination_port_id):
     min_decrease_percent, max_increase_percent = -100, 100
-    min_decrease_markup, max_increase_markup = -1000, 5000
-    approval_status = True
+    min_decrease_markup, max_increase_markup = -1000, 1000
+    approval_status, manual_gri = True, None
 
     record = (
-        (
-            ClusterExtensionGriWorker.select(
-                ClusterExtensionGriWorker.approval_status,
-                ClusterExtensionGriWorker.min_decrease_percent,
-                ClusterExtensionGriWorker.max_increase_percent,
-                ClusterExtensionGriWorker.min_decrease_markup,
-                ClusterExtensionGriWorker.max_increase_markup,
-            ).where(
-                (ClusterExtensionGriWorker.destination_port_id == destination_port_id)
-                & (ClusterExtensionGriWorker.origin_port_id == origin_port_id)
-            )
+        ClusterExtensionGriWorker.select(
+            ClusterExtensionGriWorker.approval_status,
+            ClusterExtensionGriWorker.manual_gri,
+            ClusterExtensionGriWorker.min_decrease_percent,
+            ClusterExtensionGriWorker.max_increase_percent,
+            ClusterExtensionGriWorker.min_decrease_markup,
+            ClusterExtensionGriWorker.max_increase_markup,
+        ).where(
+            (ClusterExtensionGriWorker.destination_port_id == destination_port_id)
+            & (ClusterExtensionGriWorker.origin_port_id == origin_port_id)
         )
-        .limit(1)
-        .first()
-    )
+    ).first()
 
     if record:
         min_decrease_percent = record.min_decrease_percent
@@ -199,6 +201,11 @@ def get_record_details(origin_port_id, destination_port_id):
         min_decrease_markup = record.min_decrease_markup
         max_increase_markup = record.max_increase_markup
         approval_status = record.approval_status
+        manual_gri = record.manual_gri
+
+        if manual_gri:
+            record.manual_gri = None
+            record.save()
 
     return (
         min_decrease_percent,
@@ -206,6 +213,7 @@ def get_record_details(origin_port_id, destination_port_id):
         min_decrease_markup,
         max_increase_markup,
         approval_status,
+        manual_gri,
     )
 
 
