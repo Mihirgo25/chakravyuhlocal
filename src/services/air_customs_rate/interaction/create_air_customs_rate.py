@@ -57,7 +57,8 @@ def get_create_object_params(request):
       'commodity_type' : request.get('commodity_type'),
       'commodity_sub_type' : request.get('commodity_sub_type'),
       'rate_type' : request.get('rate_type',DEFAULT_RATE_TYPE),
-      'importer_exporter_id' : request.get('importer_exporter_id')
+      'importer_exporter_id' : request.get('importer_exporter_id'),
+      'source': request.get('source')
     }
 
 def create_audit(request, customs_rate_id):

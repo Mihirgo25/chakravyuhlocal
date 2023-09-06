@@ -95,6 +95,7 @@ class CreateAirCustomsRate(BaseModel):
   bulk_operation_id: str = None
   rate_type: str = 'market_place'
   mode: str = 'manual'
+  source: str = 'manual'
 
 class DeleteAirCustomsRateFeedback(BaseModel):
  air_customs_rate_feedback_ids: list[str]
@@ -118,6 +119,7 @@ class UpdateAirCustomsRate(BaseModel):
   performed_by_type: str = None
   line_items: list[AirCustomsLineItems] = None
   mode: str = 'manual'
+  source: str = 'manual'
 
 class DeleteAirCustomsRate(BaseModel):
   id: str
