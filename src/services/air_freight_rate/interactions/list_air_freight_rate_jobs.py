@@ -11,7 +11,6 @@ from peewee import fn
 from playhouse.postgres_ext import SQL, Case
 
 
-STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
 
 possible_direct_filters = [
     "origin_airport_id",
@@ -22,6 +21,26 @@ possible_direct_filters = [
 possible_indirect_filters = ["updated_at", "user_id", "start_date", "end_date"]
 
 uncommon_filters = ['serial_id', 'status']
+
+STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+
+STATISTICS = {
+    "pending": 0,
+    "backlog": 0,
+    "completed": 0,
+    "aborted": 0,
+    "completed_percentage": 0,
+    "total": 0,
+    "weekly_backlog_count": 0,
+}
+DYNAMIC_STATISTICS = {
+   "critical_ports": 0,
+   "expiring_rates": 0,
+   "spot_search": 0,
+   "cancelled_shipments": 0,
+}
+
+
 
 DEFAULT_REQUIRED_FIELDS = [
     "id",
@@ -49,18 +68,6 @@ DEFAULT_REQUIRED_FIELDS = [
     "serial_id",
     "price_type",
 ]
-STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
-
-STATISTICS = {
-    "pending": 0,
-    "backlog": 0,
-    "completed": 0,
-    "aborted": 0,
-    "completed_percentage": 0,
-    "total": 0,
-    "weekly_backlog_count": 0,
-}
-
 
 def list_air_freight_rate_jobs(
     filters={},
@@ -73,7 +80,7 @@ def list_air_freight_rate_jobs(
 ):
     query = includes_filters(includes)
     statisitcs = STATISTICS.copy()
-    dynamic_statisitcs = {}
+    dynamic_statistics = DYNAMIC_STATISTICS.copy()
 
     if filters:
         if type(filters) != dict:
@@ -98,7 +105,7 @@ def list_air_freight_rate_jobs(
         
         #remaining filters
         if filters.get("source"):
-            dynamic_statisitcs = get_statisitcs(query, filters)
+            dynamic_statistics = get_statisitcs(query, filters, dynamic_statistics)
 
 
     if generate_csv_url:
@@ -113,7 +120,7 @@ def list_air_freight_rate_jobs(
 
     return {
         "list": data,
-        "dynamic_statisitcs": dynamic_statisitcs,
+        "dynamic_statistics": dynamic_statistics,
         "statisitcs": statisitcs,
     }
 
@@ -179,13 +186,12 @@ def apply_end_date_filter(query, filters):
 
 
 
-def get_statisitcs(query, filters):
+def get_statisitcs(query, filters, dynamic_statistics):
     subquery = (AirFreightRateJobs.select(fn.UNNEST(AirFreightRateJobs.sources).alias('element')).alias('elements'))
     stats_query = AirFreightRateJobs.select(subquery.c.element, fn.COUNT(subquery.c.element).alias('count')).from_(subquery).group_by(subquery.c.element).order_by(fn.COUNT(subquery.c.element).desc())
     data = list(stats_query.dicts())
-    dynamic_statisitcs = {}
     for stats in data:
-        dynamic_statisitcs[stats['element']] = stats['count']
+        dynamic_statistics[stats['element']] = stats['count']
     
     query = apply_source_filter(query, filters)
     applicable_filters ={}
@@ -193,7 +199,7 @@ def get_statisitcs(query, filters):
         if filters.get(key):
             applicable_filters[key] = filters[key]
     query = get_filters(applicable_filters, query, AirFreightRateJobs)
-    return dynamic_statisitcs
+    return dynamic_statistics
 
 
 def build_daily_details(query, statistics):
