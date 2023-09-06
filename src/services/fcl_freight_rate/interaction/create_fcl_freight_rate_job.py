@@ -21,7 +21,7 @@ def execute_transaction_code(request, source):
         'container_size' : request.get('container_size'),
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
-        'source' : [source],
+        'sources' : [source],
         'rate_type' : request.get('rate_type'),
     }
     init_key = f'{str(params.get("origin_port_id"))}:{str(params.get("destination_port_id") or "")}:{str(params.get("shipping_line_id"))}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size"))}:{str(params.get("container_type"))}:{str(params.get("commodity"))}:{str(params.get("rate_type"))}'
@@ -34,7 +34,7 @@ def execute_transaction_code(request, source):
         previous_source = fcl_freight_rate_job.sources
         fcl_freight_rate_job.sources = previous_source + [source]
         fcl_freight_rate_job.save()
-        set_jobs_mapping(fcl_freight_rate_job.id, request)
+        set_jobs_mapping(fcl_freight_rate_job.id, request, params.get('sources'))
         return {"id": fcl_freight_rate_job.id}
 
     user_id = task_distribution_system('FCL')
@@ -43,7 +43,7 @@ def execute_transaction_code(request, source):
     fcl_freight_rate_job.status = 'pending'
     fcl_freight_rate_job.set_locations()
     fcl_freight_rate_job.save()
-    set_jobs_mapping(fcl_freight_rate_job.id, request)
+    set_jobs_mapping(fcl_freight_rate_job.id, request, params.get('sources'))
     get_multiple_service_objects(fcl_freight_rate_job)
 
     return {"id": fcl_freight_rate_job.id}
