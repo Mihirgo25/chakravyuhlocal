@@ -136,7 +136,7 @@ async def use_average_price_filter(
     if where := get_direct_indirect_filters(filters):
         queries.append("WHERE")
         queries.append(where)
-        queries.append("sign = 1 AND bas_standard_price != 0")
+        queries.append("sign = 1 AND bas_standard_price > 0")
 
     queries.append(f"GROUP BY {select}")
 
