@@ -1,6 +1,4 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.interactions.create_air_freight_rate_job import create_air_freight_rate_job
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
 import datetime
 from playhouse.postgres_ext import ServerSide

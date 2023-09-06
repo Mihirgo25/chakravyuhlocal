@@ -1,8 +1,7 @@
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
-from services.air_freight_rate.interactions.create_air_freight_rate_job import create_air_freight_rate_job
 from database.db_session import rd
 
-current_processing_key = "spot_search_count"
+current_processing_key = "spot_search_count_fcl"
 
 def build_init_key(requirements):
     init_key = f'{str(requirements["origin_port_id"])}:{str(requirements["destination_port_id"])}:{str(requirements["container_size"])}:{str(requirements["container_type"])}:{str(requirements["commodity"] or "")}'
