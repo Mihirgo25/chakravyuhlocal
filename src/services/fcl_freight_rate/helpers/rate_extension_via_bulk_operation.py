@@ -44,22 +44,21 @@ def get_extend_freight_rate_params(request):
 
 def get_add_freight_rate_params(request):
     data = {}
-    data["filters"] = {
-        "origin_port_id": request.get("origin_port_id"),
-        "destination_port_id": request.get("destination_port_id"),
-        "commodity": request.get("commodity"),
-        "container_type": request.get("container_type"),
-    }
+    data["filters"] = request.get('filters') or {}
     data["line_item_code"] = "BAS"
-    data["tag"] = "trend_gri"
-    data["markup_type"] = "percentage"
+    data["tag"] = "trend_GRI"
+    data["markup_type"] = "percent"
     data["markup"] = request.get("markup")
-    data["validity_start"] = datetime.now().date()
-    data["validity_end"] = datetime.now().date() + timedelta(days=2)
+    data["markup_currency"] = "USD"
+    data["validity_start"] = datetime.now() - timedelta(days=3)
+    data["validity_end"] = datetime.now() + timedelta(days=60)
     data["max_increase_amount"] = request.get("max_increase_amount")
     data["min_decrease_amount"] = request.get("min_decrease_amount")
     data["affect_market_price"] = False
-    
+    data["rate_sheet_serial_id"] = None
+    data["apply_to_extended_rates"] = False
+    data["rates_greater_than_price"] = None
+    data["rates_less_than_price"] = None
     params = {}
     params["performed_by_type"] = "agent"
     params["performed_by_id"] = DEFAULT_USER_ID
