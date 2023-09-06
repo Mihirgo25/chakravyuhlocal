@@ -42,9 +42,8 @@ class RevenueDesk:
 
             self.increment_keys = {"revenue_desk_visit_count"}
 
-            fcl_freight_rate_statistic.updated_at = request.created_at
-
             if fcl_freight_rate_statistic:
+                fcl_freight_rate_statistic.updated_at = request.created_at
                 self.increment_rd_rate_stats(fcl_freight_rate_statistic)
 
     def update_selected_for_preference_count(self, request):
@@ -200,6 +199,9 @@ class RevenueDesk:
             .where(FclFreightRateStatistic.identifier == get_identifier(**self.rate))
             .first()
         )
+        
+        if not fcl_freight_rate_statistic:
+            return
 
         self.rate = jsonable_encoder(model_to_dict(fcl_freight_rate_statistic))
 
