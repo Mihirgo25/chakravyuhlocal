@@ -6,15 +6,13 @@ from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import 
 from micro_services.client import common
 from fastapi.encoders import jsonable_encoder
 
-MAIN_SHIPPING_LINE_IDS = ['c3649537-0c4b-4614-b313-98540cffcf40']
-
-def get_filters(start_time, query_type, rate_ids, shipping_line_ids):
+def get_filters(start_time, query_type, rate_ids):
     return {
         "updated_at_less_than": start_time,
         "query_type": query_type,
         "rate_id": rate_ids,
-        "shipping_line_id": shipping_line_ids,
-        "group_by": "shipping_line_id"
+        "validity_end_greater_than": datetime.now().date() + timedelta(days=1),
+        "group_by": ["shipping_line_id"]
     }
     
 def get_shipping_line_dict():
@@ -25,14 +23,13 @@ def get_shipping_line_dict():
     }
 
 async def update_cluster_extension_by_latest_trends(request):
-    today = request.get("start_time")
-    start_time, end_time = today - timedelta(hours = 6), today
+    start_time = request.get("start_time")
     
     origin_port_id = request["origin_port_id"]
     destination_port_id = request["destination_port_id"]
     
-    min_decrease_percent, max_increase_percent = -5, 10
-    min_decrease_amount, max_increase_amount = -100, 500 
+    min_decrease_percent, max_increase_percent = -100, 100
+    min_decrease_amount, max_increase_amount = -1000, 5000 
 
     record = (ClusterExtensionGriWorker
             .select(ClusterExtensionGriWorker.min_decrease_percent, ClusterExtensionGriWorker.max_increase_percent, ClusterExtensionGriWorker.min_decrease_amount, ClusterExtensionGriWorker.max_increase_amount)
@@ -52,7 +49,6 @@ async def update_cluster_extension_by_latest_trends(request):
                 .select(FclFreightRate.id,FclFreightRate.container_size, FclFreightRate.shipping_line_id, FclFreightRate.validities) 
                 .where(
                     FclFreightRate.updated_at > start_time,
-                    FclFreightRate.updated_at < end_time,
                     FclFreightRate.origin_port_id == origin_port_id,
                     FclFreightRate.commodity == request['commodity'],
                     FclFreightRate.container_type == request['container_type'],
@@ -60,10 +56,11 @@ async def update_cluster_extension_by_latest_trends(request):
                     ~ FclFreightRate.rate_not_available_entry,
                     ~FclFreightRate.mode.in_(['predicted', 'rate_extension'])     
                 ))  
-    
     freight_rates = jsonable_encoder(list(query.dicts()))
     for container_size in ["20", "40", "40HC"]:
         rates = [rate for rate in freight_rates if rate["container_size"] == container_size]  
+        if not rates:
+            continue
         prices = []
         rate_ids = []
         shipping_line_ids = []
@@ -87,16 +84,14 @@ async def update_cluster_extension_by_latest_trends(request):
                     
             prices.append(price / len(rate['validities']))   
 
-        response = await list_fcl_freight_rate_statistics(get_filters(start_time, "average_price", rate_ids, shipping_line_ids), 1, 1, False)
+        response = await list_fcl_freight_rate_statistics(get_filters(datetime.now() - timedelta(minutes=5), "average_price", rate_ids), 1000, 1, False)
         
         if not response.get('list'):
             continue  
-        
-        prev_avg_mapping = response['list']
+        prev_avg_mapping = {row['shipping_line_id'] : row['average_standard_price'] for row in response['list'] if row.get('shipping_line_id')}
 
         shipping_line_totals = {}
         shipping_line_counts = {}
-
         for shipping_id, price in zip(shipping_line_ids, prices):
             if shipping_id not in shipping_line_totals:
                 shipping_line_totals[shipping_id] = price
@@ -113,8 +108,7 @@ async def update_cluster_extension_by_latest_trends(request):
             
         for shipping_line_id in average_prices.keys(): 
             cur = average_prices[shipping_line_id]
-            prev = prev_avg_mapping[shipping_line_id]
-            
+            prev = prev_avg_mapping.get(shipping_line_id)
             if prev and cur:
                 gri_perc = ((cur - prev) / prev) * 100 
                 if shipping_line_id in shipping_line_gri_mapping.keys():
@@ -122,8 +116,6 @@ async def update_cluster_extension_by_latest_trends(request):
                 else:
                     shipping_line_gri_mapping[shipping_line_id] = get_shipping_line_dict()
                     shipping_line_gri_mapping[shipping_line_id][container_size] = gri_perc
-                    
-    
     shipping_line_avg_mapping = {}
 
     for key, sub_dict in shipping_line_gri_mapping.items():
@@ -134,33 +126,35 @@ async def update_cluster_extension_by_latest_trends(request):
         if values:  
             average_value = sum(values) / len(values)
             shipping_line_avg_mapping[key] = average_value
-            
+
+    if not shipping_line_avg_mapping:
+        return   
     
     overall_gri_avg = 0  
     for key in shipping_line_avg_mapping.keys():
         overall_gri_avg += shipping_line_avg_mapping[key]
-    
-    overall_gri_avg /= len(shipping_line_avg_mapping)
-    
-    
-    UPDATED_SHIPPING_LINES = shipping_line_gri_mapping.keys()
-    TO_BE_UPDATED_SHIPPING_LINES = [id for id in MAIN_SHIPPING_LINE_IDS if id not in UPDATED_SHIPPING_LINES]  
-    
+
+    overall_gri_avg /= len(shipping_line_avg_mapping.keys())
+    overall_gri_avg = min(overall_gri_avg, 100)
+ 
     if overall_gri_avg and (min_decrease_percent <= overall_gri_avg <= max_increase_percent):
         request['source'] = 'cluster_extension_worker'
         request["markup"] = overall_gri_avg
-        request["shipping_line_id"] = TO_BE_UPDATED_SHIPPING_LINES
-        request['source'] = "cluster_extension_worker"
-        request["rate_type"] = "market_place"
-        request["exclude_service_provider_types"] = ["nvocc"]
+        
         request["min_decrease_amount"] = min_decrease_amount
         request["max_increase_amount"] = max_increase_amount
-        
+        request['filters'] = {
+                "origin_port_id": request.get("origin_port_id"),
+                "destination_port_id": request.get("destination_port_id"),
+                "rate_type": "market_place",
+                "updated_at_less_than": start_time.isoformat()
+            }
         rate_extension_via_bulk_operation(request)
-
-        request.pop('shipping_line_id')
-        request['origin_port_id'] = request.pop('origin_secondary_ports', [])
-        request['destination_port_id'] = request.pop('destination_secondary_ports', [])
-
+        request['filters'] = {
+                "origin_port_id": request.get("origin_secondary_ports"),
+                "destination_port_id": request.get("destination_secondary_ports"),
+                "rate_type": "market_place",
+                "updated_at_less_than": start_time.isoformat()
+            }
         rate_extension_via_bulk_operation(request)
         
