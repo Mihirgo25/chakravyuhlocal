@@ -91,8 +91,7 @@ async def update_cluster_extension_by_latest_trends(request):
             shipping_line_mapping = {}
             for shipping_id, price in zip(shipping_line_ids, prices):
                 if shipping_id not in shipping_line_mapping:
-                    shipping_line_mapping[shipping_id]["price"] = price
-                    shipping_line_mapping[shipping_id]["total"] = 1
+                    shipping_line_mapping[shipping_id] = {"price": price, "total": 1}
                 else:
                     shipping_line_mapping[shipping_id]["price"] += price
                     shipping_line_mapping[shipping_id]["total"] += 1
@@ -166,7 +165,7 @@ async def update_cluster_extension_by_latest_trends(request):
 
 def get_record_details(origin_port_id, destination_port_id):
     min_decrease_percent, max_increase_percent = -2, 5
-    min_decrease_markup, max_increase_markup = -200, 500
+    min_decrease_markup, max_increase_markup = -20, 50
     approval_status, manual_gri = True, None
 
     record = (

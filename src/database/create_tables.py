@@ -16,7 +16,7 @@ from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
 )
 from services.chakravyuh.models.worker_log import WorkerLog
 from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
-
+from services.fcl_freight_rate.models.critical_port_trend_indexes import CriticalPortTrendIndex
 
 
 class Table:
@@ -41,6 +41,7 @@ if __name__ == "__main__":
         ShipmentFclFreightRateStatistic,
         CheckoutFclFreightRateStatistic,
         WorkerLog,
+        CriticalPortTrendIndex
     ]
 
     Table().create_tables(models)
