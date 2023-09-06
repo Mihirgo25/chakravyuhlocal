@@ -67,6 +67,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "stacking_type",
     "serial_id",
     "price_type",
+    "sources"
 ]
 
 def list_air_freight_rate_jobs(
@@ -171,15 +172,17 @@ def apply_source_filter(query, filters):
 
 
 def apply_start_date_filter(query, filters):
+    start_date = datetime.strptime(filters["start_date"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
     query = query.where(
-        AirFreightRateJobs.created_at.cast("date") >= filters["start_date"].date()
+        AirFreightRateJobs.created_at.cast("date") >= start_date.date()
     )
     return query
 
 
 def apply_end_date_filter(query, filters):
+    end_date = datetime.strptime(filters["start_date"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
     query = query.where(
-        AirFreightRateJobs.created_at.cast("date") <= filters["end_date"].date()
+        AirFreightRateJobs.created_at.cast("date") <= end_date.date()
     )
     return query
 

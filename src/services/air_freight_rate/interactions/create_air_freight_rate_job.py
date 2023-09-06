@@ -41,10 +41,11 @@ def execute_transaction_code(request, source):
     if not air_freight_rate_job:
         air_freight_rate_job = create_job_object(params)
     else:
-        previous_source = air_freight_rate_job.sources
-        air_freight_rate_job.sources = previous_source + [source]
-        air_freight_rate_job.save()
-        set_jobs_mapping(air_freight_rate_job.id, request, source)
+        previous_sources = air_freight_rate_job.sources
+        if source not in previous_sources:
+            air_freight_rate_job.sources = previous_sources + [source]
+            air_freight_rate_job.save()
+            set_jobs_mapping(air_freight_rate_job.id, request, source)
         return {"id": air_freight_rate_job.id}
 
     user_id = task_distribution_system('AIR')

@@ -68,6 +68,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "destination_port_id",
     "serial_id",
     "container_type",
+    "sources"
 ]
 
 def list_fcl_freight_rate_jobs(
@@ -171,15 +172,17 @@ def apply_source_filter(query, filters):
 
 
 def apply_start_date_filter(query, filters):
+    start_date = datetime.strptime(filters["start_date"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
     query = query.where(
-        FclFreightRateJobs.created_at.cast("date") >= filters["start_date"].date()
+        FclFreightRateJobs.created_at.cast("date") >= start_date.date()
     )
     return query
 
 
 def apply_end_date_filter(query, filters):
+    end_date = datetime.strptime(filters["start_date"],STRING_FORMAT) + timedelta(hours=5, minutes=30)
     query = query.where(
-        FclFreightRateJobs.created_at.cast("date") <= filters["end_date"].date()
+        FclFreightRateJobs.created_at.cast("date") <= end_date.date()
     )
     return query
 

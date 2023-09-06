@@ -31,10 +31,11 @@ def execute_transaction_code(request, source):
     if not fcl_freight_rate_job:
         fcl_freight_rate_job = create_job_object(params)
     else:
-        previous_source = fcl_freight_rate_job.sources
-        fcl_freight_rate_job.sources = previous_source + [source]
-        fcl_freight_rate_job.save()
-        set_jobs_mapping(fcl_freight_rate_job.id, request, params.get('sources'))
+        previous_sources = fcl_freight_rate_job.sources
+        if source not in previous_sources:
+            fcl_freight_rate_job.sources = previous_sources + [source]
+            fcl_freight_rate_job.save()
+            set_jobs_mapping(fcl_freight_rate_job.id, request, source)
         return {"id": fcl_freight_rate_job.id}
 
     user_id = task_distribution_system('FCL')
@@ -43,7 +44,7 @@ def execute_transaction_code(request, source):
     fcl_freight_rate_job.status = 'pending'
     fcl_freight_rate_job.set_locations()
     fcl_freight_rate_job.save()
-    set_jobs_mapping(fcl_freight_rate_job.id, request, params.get('sources'))
+    set_jobs_mapping(fcl_freight_rate_job.id, request, source)
     get_multiple_service_objects(fcl_freight_rate_job)
 
     return {"id": fcl_freight_rate_job.id}
