@@ -137,7 +137,6 @@ async def update_cluster_extension_by_latest_trends(request):
             overall_gri_avg += shipping_line_avg_mapping[key]
 
         overall_gri_avg /= len(shipping_line_avg_mapping.keys())
-        overall_gri_avg = min(overall_gri_avg, 100)
 
     if overall_gri_avg and (
         min_decrease_percent <= overall_gri_avg <= max_increase_percent
