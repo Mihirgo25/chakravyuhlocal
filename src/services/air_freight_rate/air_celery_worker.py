@@ -8,8 +8,8 @@ from services.air_freight_rate.workers.air_freight_critical_port_pairs_scheduler
 from services.air_freight_rate.workers.air_freight_expiring_rates_scheduler import (
     air_freight_expiring_rates_scheduler,
 )
-from services.air_freight_rate.workers.air_freight_spot_search_predicted_rates_scheduler import (
-    air_freight_spot_predicted_rates_search_scheduler,
+from services.air_freight_rate.workers.create_jobs_for_predicted_air_freight_rate import (
+    create_jobs_for_predicted_air_freight_rate,
 )
 from services.air_freight_rate.workers.update_air_freight_job_status import (
     update_air_freight_job_status,
@@ -18,7 +18,6 @@ from services.air_freight_rate.interactions.update_air_freight_rate_job import (
     update_air_freight_rate_job,
 )
 from celery.schedules import crontab
-from datetime import datetime, timedelta
 
 
 tasks = {
@@ -48,7 +47,7 @@ for name, task_info in tasks.items():
     celery.conf.beat_schedule[name] = task_info
 
 
-@celery.task(bind=True, retry_backoff=True, max_retries=3)
+@celery.task(bind=True, retry_backoff=True, max_retries=1)
 def air_freight_cancelled_shipments_in_delay(self):
     try:
         air_freight_cancelled_shipments_scheduler()
@@ -59,7 +58,7 @@ def air_freight_cancelled_shipments_in_delay(self):
             raise self.retry(exc=exc)
 
 
-@celery.task(bind=True, max_retries=3, retry_backoff=True)
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
 def air_freight_critical_port_pairs_delay(self):
     try:
         air_freight_critical_port_pairs_scheduler()
@@ -70,7 +69,7 @@ def air_freight_critical_port_pairs_delay(self):
             raise self.retry(exc=exc)
 
 
-@celery.task(bind=True, retry_backoff=True, max_retries=3)
+@celery.task(bind=True, retry_backoff=True, max_retries=1)
 def air_freight_expiring_rates_in_delay(self):
     try:
         air_freight_expiring_rates_scheduler()
@@ -81,12 +80,12 @@ def air_freight_expiring_rates_in_delay(self):
             raise self.retry(exc=exc)
 
 
-@celery.task(bind=True, max_retries=5, retry_backoff=True)
-def air_freight_spot_search_predicted_rates_scheduler_delay(
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def create_jobs_for_predicted_air_freight_rate_delay(
     self, is_predicted, requirements
 ):
     try:
-        return air_freight_spot_predicted_rates_search_scheduler(
+        return create_jobs_for_predicted_air_freight_rate(
             is_predicted, requirements
         )
     except Exception as exc:
@@ -96,7 +95,7 @@ def air_freight_spot_search_predicted_rates_scheduler_delay(
             raise self.retry(exc=exc)
 
 
-@celery.task(bind=True, max_retries=3, retry_backoff=True)
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
 def update_air_freight_jobs_status_delay(self):
     try:
         update_air_freight_job_status()

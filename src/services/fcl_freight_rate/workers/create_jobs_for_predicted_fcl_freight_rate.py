@@ -5,7 +5,7 @@ from database.db_session import rd
 current_processing_key = "spot_search_count"
 
 def build_init_key(requirements):
-    init_key = f'{str(requirements.get("origin_airport_id"))}:{str(requirements["destination_airport_id"] or "")}:{str(requirements["airline_id"])}:{str(requirements["commodity"])}:{str(requirements["commodity_type"] or "")}:{str(requirements.get("commodity_sub_type") or "")}::{str(requirements.get("stacking_type") or "")}:{str(requirements.get("operation_type") or "")}'
+    init_key = f'{str(requirements["origin_port_id"])}:{str(requirements["destination_port_id"])}:{str(requirements["container_size"])}:{str(requirements["container_type"])}:{str(requirements["commodity"] or "")}'
     return init_key
 
 
@@ -25,11 +25,11 @@ def delete_init_key(requirements):
     rd.hdel(current_processing_key, build_init_key(requirements))
 
 
-def air_freight_spot_predicted_rates_search_scheduler(is_predicted, requirements):
+def create_jobs_for_predicted_fcl_freight_rate(is_predicted, requirements):
     if is_predicted:
         current_count = get_current_predicted_count(requirements)
         if current_count>=3:
-            data = create_air_freight_rate_job(requirements,  'spot_search')
+            data = create_fcl_freight_rate_job(requirements,  'spot_search')
             delete_init_key(requirements)
             return {"init_key": requirements}
         else:
