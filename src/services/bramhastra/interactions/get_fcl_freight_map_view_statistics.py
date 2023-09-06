@@ -131,7 +131,8 @@ def add_location_objects(statistics):
                 remove = k
                 location = locations.get(v)
                 if location is None:
-                    indices_to_remove.add(index)
+                    if k == "destination_region_id":
+                        indices_to_remove.add(index)
                     continue
                 for key, value in location.items():
                     update_statistic[f"{k[:12]}{key}"] = value

@@ -35,7 +35,9 @@ class Clicks:
                 self.click.client.execute(f'drop table brahmastra.stale_{model._meta.table_name}')
             except:
                 print('Table does not exist:',model._meta.table_name)
-        self.click.drop_dictionaries(self.dictionaries)
+        
+        if self.dictionaries:
+            self.click.drop_dictionaries(self.dictionaries)
         
 
 
