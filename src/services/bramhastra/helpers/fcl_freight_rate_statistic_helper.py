@@ -64,6 +64,10 @@ class Rate:
             )
             .first()
         )
+        
+        if not fcl_freight_rate_statistic:
+            FclFreightRateStatistic.create(**row)
+            return
 
         for k, v in row.items():
             if k not in UPDATE_EXCLUDE_ITEMS and v:
