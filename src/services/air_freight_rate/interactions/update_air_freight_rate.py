@@ -25,8 +25,6 @@ def execute(request):
     validity_object = {}
     for validity in validities:
         if validity['id']==request.get('validity_id'):
-            validity_object = validity
-
             if request.get('validity_start') and request.get('validity_end'):
 
                 if validate_validity_object(request['validity_start'],request['validity_end']):
@@ -45,6 +43,7 @@ def execute(request):
                                   request.get('available_volume') or validity['available_volume'],request.get('available_gross_weight') or validity['available_gross_weight'],
                                   object.rate_type,request.get('likes_count') or validity['likes_count'],request.get('dislikes_count') or validity['dislikes_count']
                                   )
+            validity_object = jsonable_encoder(validity)
             
     if request.get('weight_slabs'):
         object.weight_slabs = sorted(request.get('weight_slabs'), key=lambda x: x['lower_limit'])

@@ -112,7 +112,7 @@ class AirFreightRateBulkOperation(BaseModel):
                 status_code=400, detail="Markup Currency Is Invalid"
             )
                
-        if data.get('rates_greater_than_price')!=None and data.get('rates_greater_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
+        if data.get('rates_greater_than_price')!=None and data.get('rates_less_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
             raise HTTPException(status_code=400, detail='Greater than price cannot be greater than Less than price')
         
         if data.get('rate_sheet_serial_id'):
@@ -286,6 +286,8 @@ class AirFreightRateBulkOperation(BaseModel):
                 
 
             slabs = get_weight_slabs(freight['validity']['weight_slabs'],weight_slabs,data)
+            if not slabs:
+                continue
             for slab in slabs:
                 if data["markup_type"].lower() == "percent":
                     markup = (
