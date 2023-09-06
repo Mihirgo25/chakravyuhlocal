@@ -20,6 +20,13 @@ DEFAULT_PARAMS = {
     "rate_type",
 }
 
+DEFAULT_AGGREGATE_PARAMS = {
+    "spot_search_count": "SUM(spot_search_count)",
+    "checkout_count": "SUM(checkout_count)",
+    "bookings_created": "SUM(bookings_created)",
+    "rate_deviation_from_booking_rate": "MAX(ABS(rate_deviation_from_booking_rate))",
+}
+
 DEFAULT_SELECT_KEYS = {
     "origin_port_id",
     "destination_port_id",
@@ -100,7 +107,10 @@ async def get_locations(ids):
 async def list_fcl_freight_rate_statistics(
     filters, page_limit, page, is_service_object_required
 ):
-    if "query_type" in filters and filters.get("query_type") not in ALLOWABLE_QUERY_TYPES:
+    if (
+        "query_type" in filters
+        and filters.get("query_type") not in ALLOWABLE_QUERY_TYPES
+    ):
         raise ValueError("invalid type")
     return await eval(
         f"use_{filters.get('query_type') or DEFAULT_QUERY_TYPE}_filter(filters, page_limit, page,is_service_object_required)"
@@ -110,20 +120,23 @@ async def list_fcl_freight_rate_statistics(
 async def use_average_price_filter(
     filters, page_limit, page, is_service_object_required
 ):
-    clickhouse = ClickHouse()
+    grouping = filters.get("group_by") or DEFAULT_PARAMS
     
-    grouping = {k for k in DEFAULT_PARAMS if k in filters}
+    clickhouse = ClickHouse()
 
     if not grouping:
         grouping = DEFAULT_SELECT_KEYS.copy()
 
     select = ",".join(grouping)
 
-    queries = [f"SELECT {select},AVG(standard_price) as average_standard_price FROM brahmastra.fcl_freight_rate_statistics"]
+    queries = [
+        f"SELECT {select},AVG(standard_price) as average_standard_price FROM brahmastra.stale_fcl_freight_rate_statistics"
+    ]
 
     if where := get_direct_indirect_filters(filters):
         queries.append("WHERE")
         queries.append(where)
+        queries.append("sign = 1")
 
     queries.append(f"GROUP BY {select}")
 
@@ -132,7 +145,7 @@ async def use_average_price_filter(
     )
 
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
-    
+
     if statistics and is_service_object_required:
         await add_service_objects(statistics)
 
@@ -150,22 +163,22 @@ async def use_default_filter(filters, page_limit, page, is_service_object_requir
 
     select = ",".join(DEFAULT_PARAMS)
 
+    aggregate_select = ",".join(
+        [f"{v} AS aggregate_{k}" for k, v in DEFAULT_AGGREGATE_PARAMS.items()]
+    )
+
     queries = [
-        f"""SELECT {select},rate_deviation_from_booking_rate from brahmastra.fcl_freight_rate_statistics"""
+        f"""SELECT {select},{aggregate_select} from brahmastra.fcl_freight_rate_statistics"""
     ]
 
     if where := get_direct_indirect_filters(filters):
         queries.append("WHERE")
         queries.append(where)
 
+    queries.append(f"GROUP BY {select}")
+    
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
-    )
-
-    queries.insert(0, "WITH list AS (")
-
-    queries.append(
-        f") SELECT {select},MAX(ABS(rate_deviation_from_booking_rate)) as deviation FROM list GROUP BY {select}"
     )
 
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))

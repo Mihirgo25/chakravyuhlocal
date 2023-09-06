@@ -31,34 +31,41 @@ class RevenueDesk:
 
     def update_rd_visit_count(self, request):
         for validity_id in request.validities:
-            fcl_freight_rate_statistic = FclFreightRateStatistic.select().where(
-                FclFreightRateStatistic.identifier
-                == get_identifier(request.rate_id, validity_id)
-            ).first()
+            fcl_freight_rate_statistic = (
+                FclFreightRateStatistic.select()
+                .where(
+                    FclFreightRateStatistic.identifier
+                    == get_identifier(request.rate_id, validity_id)
+                )
+                .first()
+            )
 
             self.increment_keys = {"revenue_desk_visit_count"}
-            
+
             fcl_freight_rate_statistic.updated_at = request.created_at
 
             if fcl_freight_rate_statistic:
                 self.increment_rd_rate_stats(fcl_freight_rate_statistic)
 
     def update_selected_for_preference_count(self, request):
-        fcl_freight_rate_statistic = FclFreightRateStatistic.select().where(
-            FclFreightRateStatistic.identifier
-            == get_identifier(
-                request.selected_for_preference.rate_id,
-                request.selected_for_preference.validity_id,
-            ).first()
+        fcl_freight_rate_statistic = (
+            FclFreightRateStatistic.select()
+            .where(
+                FclFreightRateStatistic.identifier
+                == get_identifier(
+                    request.selected_for_preference.rate_id,
+                    request.selected_for_preference.validity_id,
+                )
+            )
+            .first()
         )
-        
+
         fcl_freight_rate_statistic.updated_at = request.created_at
 
         self.increment_keys = {"so1_visit_count"}
 
-        total_priority = (
-            fcl_freight_rate_statistic.total_priority
-            + request.selected_for_preference.given_priority
+        total_priority = (fcl_freight_rate_statistic.total_priority or 1) + (
+            request.selected_for_preference.given_priority or 1
         )
 
         update_params = dict(total_priority=total_priority)
@@ -137,7 +144,6 @@ class RevenueDesk:
             (
                 self.original_booked_rate.get("average_booking_rate")
                 * self.original_booked_rate.get("booking_rate_count")
-                or 1
             )
             + self.rate.get("standard_price")
         ) / (self.original_booked_rate.get("booking_rate_count") + 1)
@@ -145,51 +151,53 @@ class RevenueDesk:
             (
                 self.rate.get("average_booking_rate")
                 * self.rate.get("booking_rate_count")
-                or 1
             )
             + self.rate.get("standard_price")
         ) / (self.rate.get("booking_rate_count") + 1)
 
     def set_rate_deviation_from_booking_rate(self, key):
-        self.original_rate_stats_hash[key] = (
-            (
-                self.original_booked_rate.get("standard_price")
-                - self.original_rate_stats_hash.get("average_booking_rate")
-            )
-            ** 2
-            / self.original_booked_rate.get("booking_rate_count")
-            + 1
-        ) ** 0.5
+        self.original_rate_stats_hash[key] = self.rate.get(
+            "standard_price"
+        ) - self.original_booked_rate.get("standard_price")
         self.rate_stats_hash[key] = 0
 
     def set_accuracy(self, key):
-        self.rate_stats_hash[key] = (
-            1
-            - (
-                abs(
-                    self.rate_stats_hash.get("average_booking_rate")
-                    - self.rate.get("standard_price")
-                )
-                / self.rate_stats_hash.get("average_booking_rate")
-            )
-        ) * 100
-        self.original_rate_stats_hash[key] = (
+        self.rate_stats_hash[key] = round(
             (
                 1
-                - abs(
-                    self.original_booked_rate.get("standard_price")
-                    - self.rate.get("standard_price")
+                - (
+                    abs(
+                        self.rate_stats_hash.get("average_booking_rate")
+                        - self.rate.get("standard_price")
+                    )
+                    / (self.rate_stats_hash.get("average_booking_rate") or 1)
                 )
-                / self.original_booked_rate.get("standard_price")
             )
-            * 100
+            * 100,
+            2,
+        )
+        self.original_rate_stats_hash[key] = (
+            round(
+                (
+                    1
+                    - abs(
+                        self.original_booked_rate.get("standard_price")
+                        - self.rate.get("standard_price")
+                    )
+                    / (self.original_booked_rate.get("standard_price") or 1)
+                )
+                * 100,
+                2,
+            )
             if self.original_booked_rate.get("standard_price") != 0
             else 100
         )
 
-    def set_rate_stats(self,created_at):
-        fcl_freight_rate_statistic = FclFreightRateStatistic.select().where(
-            FclFreightRateStatistic.identifier == get_identifier(**self.rate)
+    def set_rate_stats(self, created_at):
+        fcl_freight_rate_statistic = (
+            FclFreightRateStatistic.select()
+            .where(FclFreightRateStatistic.identifier == get_identifier(**self.rate))
+            .first()
         )
 
         self.rate = jsonable_encoder(model_to_dict(fcl_freight_rate_statistic))
@@ -200,30 +208,34 @@ class RevenueDesk:
             if key in self.rate
         }
 
+        self.set_original_rate()
+        if (self.original_booked_rate["rate_id"] == self.rate["rate_id"]) and (
+            self.original_booked_rate["validity_id"] == self.rate["validity_id"]
+        ):
+            return
+        self.set_stats_hash()
+
         if fcl_freight_rate_statistic:
             self.increment_rd_rate_stats(
                 fcl_freight_rate_statistic, self.rate_stats_hash
             )
             fcl_freight_rate_statistic.updated_at = created_at
 
-        self.set_original_rate()
-        if (
-            self.original_booked_rate["rate_id"] == self.original_booked_rate["rate_id"]
-        ) and (self.original_booked_rate["validity_id"] == self.rate["validity_id"]):
-            return
-        self.set_stats_hash()
-
-        fcl_freight_rate_statistic = FclFreightRateStatistic.select().where(
-            FclFreightRateStatistic.identifier
-            == get_identifier(
-                self.original_booked_rate.get("rate_id"),
-                self.original_booked_rate.get("validity_id"),
+        fcl_freight_rate_statistic = (
+            FclFreightRateStatistic.select()
+            .where(
+                FclFreightRateStatistic.identifier
+                == get_identifier(
+                    self.original_booked_rate.get("rate_id"),
+                    self.original_booked_rate.get("validity_id"),
+                )
             )
+            .first()
         )
 
         if fcl_freight_rate_statistic:
             fcl_freight_rate_statistic.updated_at = created_at
-            
+            self.increment_keys.remove("so1_select_count")
             self.increment_rd_rate_stats(
                 fcl_freight_rate_statistic, self.original_rate_stats_hash
             )
@@ -232,5 +244,6 @@ class RevenueDesk:
         for key in self.increment_keys:
             setattr(row, key, getattr(row, key) + 1)
         for k, v in update_object.items():
-            setattr(row, k, v)
+            if v is not None:
+                setattr(row, k, v)
         row.save()

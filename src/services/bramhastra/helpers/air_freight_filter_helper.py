@@ -25,12 +25,12 @@ POSSIBLE_DIRECT_FILTERS = {
     "shipment_type",
     "stacking_type",
     "rate_type",
-    "mode",
+    "source",
     "sourced_by_id",
     "procured_by_id",
 }
 
-POSSIBLE_INDIRECT_FILTERS = {"stale_rate"}
+POSSIBLE_INDIRECT_FILTERS = {"stale_rate","weight_slabs"}
 
 COUNT_FILTERS = {"dislikes_count", "checkout_count"}
 
@@ -61,12 +61,16 @@ def get_direct_indirect_filters(filters):
 
 def get_date_range_filter(where):
     where.append(
-        "((validity_end <= %(end_date)s AND validity_end >= %(start_date)s) OR (validity_start >= %(start_date)s AND validity_start <= %(end_date)s))"
+        "((validity_end >= %(start_date)s AND validity_start <= %(start_date)s) OR (validity_start <= %(end_date)s AND validity_end >= %(end_date)s) OR (validity_end <= %(end_date)s AND validity_start >= %(start_date)s))"
     )
 
 
 def get_stale_rates_filter(where):
     where.append("checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0")
+    
+
+def get_weight_slabs_filter(where):
+    where.append("lower_limit >= %(lower_limit)s AND upper_limit <= %(upper_limit)s")
 
 
 def add_pagination_data(clickhouse, queries, filters, page, page_limit):

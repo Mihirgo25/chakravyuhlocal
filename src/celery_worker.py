@@ -150,7 +150,7 @@ celery.conf.beat_schedule = {
     },
     'brahmastra':{
         'task': 'services.bramhastra.celery.brahmastra_in_delay',
-        'schedule': crontab(minute=0, hour='*/2'),
+        'schedule': crontab(minute=0, hour='*/1'),
         'options': {'queue': 'statistics'}
     },
     'cache_data_worker':{
@@ -158,9 +158,9 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=16, minute=00),
         'options': {'queue': 'low'}
     },
-    'fcl_daily_attribute_updater':{
-        'task': 'services.bramhastra.celery.fcl_daily_attribute_updater_worker',
-        'schedule': crontab(hour=22, minute=30),
+    'fcl_daily_attributer_updater':{
+        'task': 'services.bramhastra.celery.fcl_daily_attributer_updater_in_delay',
+        'schedule': crontab(minute=0, hour='*/3'),
         'options': {'queue': 'statistics'}
     }
 }
