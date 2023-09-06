@@ -1,8 +1,14 @@
 from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
+from services.air_freight_rate.helpers.generate_csv_file_url_for_air import (
+    generate_csv_file_url_for_air,
+)
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
+from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
+from peewee import fn
+from playhouse.postgres_ext import SQL
 
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
@@ -13,9 +19,9 @@ possible_direct_filters = [
     "airline_id",
     "commodity",
     "status",
-    "serial_id"
+    "serial_id",
 ]
-possible_indirect_filters = ["source", "updated_at", "user_id", "start_date"]
+possible_indirect_filters = ["updated_at", "user_id", "start_date", "end_date"]
 
 DEFAULT_REQUIRED_FIELDS = [
     "id",
@@ -43,6 +49,17 @@ DEFAULT_REQUIRED_FIELDS = [
     "serial_id",
     "price_type",
 ]
+STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+
+STATISTICS = {
+    "pending": 0,
+    "backlog": 0,
+    "completed": 0,
+    "aborted": 0,
+    "completed_percentage": 0,
+    "total": 0,
+    "weekly_backlog_count": 0,
+}
 
 
 def list_air_freight_rate_jobs(
@@ -54,7 +71,9 @@ def list_air_freight_rate_jobs(
     generate_csv_url=False,
     includes={},
 ):
-    query = get_query(sort_by, sort_type, includes)
+    query = includes_filters(includes)
+    dynamic_statisitcs = STATISTICS.copy()
+
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -63,27 +82,121 @@ def list_air_freight_rate_jobs(
         )
         query = get_filters(direct_filters, query, AirFreightRateJobs)
         query = apply_indirect_filters(query, indirect_filters)
+        if filters.get("daily_stats"):
+            statisitcs = build_daily_details(query, dynamic_statisitcs)
+        if filters.get("weekly_stats"):
+            statisitcs = build_weekly_details(query, dynamic_statisitcs)
         dynamic_statisitcs = get_statisitcs(query)
 
-    if page_limit and not generate_csv_url:
+    query = get_query(sort_by, sort_type, query)
+
+    if generate_csv_url:
+        return generate_csv_file_url_for_air(query)
+
+    if page_limit:
         query = query.paginate(page, page_limit)
 
     data = get_data(query)
 
-    return {"list": data, "stats": dynamic_statisitcs}
+    return {
+        "list": data,
+        "dynamic_statisitcs": dynamic_statisitcs,
+        "statisitcs": statisitcs,
+    }
 
 
 def get_statisitcs(query):
     dynamic_statisitcs = {}
-    
+    # apply source filter
     return dynamic_statisitcs
+
+
+def build_daily_details(query, statistics):
+    print(query)
+    query = query.where(
+        AirFreightRateJobs.created_at.cast("date") == datetime.now().date()
+    )
+    daily_stats_query = query.select(
+        AirFreightRateJobs.status, fn.COUNT(AirFreightRateJobs.id).alias("count")
+    ).group_by(AirFreightRateJobs.status)
+
+    total_daily_count = 0
+    daily_results = json_encoder(list(daily_stats_query.dicts()))
+    for data in daily_results:
+        total_daily_count += data["count"]
+        statistics[data["status"]] = data["count"]
+    statistics["completed"] = statistics["completed"] + statistics["aborted"]
+
+    statistics["total"] = total_daily_count
+    if total_daily_count != 0:
+        statistics["completed_percentage"] = round(
+            ((statistics["completed"]) / total_daily_count) * 100, 2
+        )
+    return statistics
+
+
+def build_weekly_details(query, statistics):
+    query = query.where(
+        AirFreightRateJobs.created_at.cast("date")
+        >= datetime.now().date() - timedelta(days=7)
+    )
+    weekly_stats_query = query.select(
+        AirFreightRateJobs.status,
+        fn.COUNT(AirFreightRateJobs.id).alias("count"),
+        AirFreightRateJobs.created_at.cast("date").alias("created_at"),
+    ).group_by(AirFreightRateJobs.status, AirFreightRateJobs.created_at.cast("date"))
+    print(weekly_stats_query)
+    weekly_stats_query = weekly_stats_query.order_by(SQL("created_at DESC"))
+    weekly_results = json_encoder(list(weekly_stats_query.dicts()))
+    weekly_stats = {}
+
+    total_dict = {}
+    total_weekly_backlog_count = 0
+
+    for item in weekly_results:
+        created_at = item["created_at"]
+        status = item["status"]
+        count = item["count"]
+
+        if created_at not in total_dict:
+            total_dict[created_at] = {
+                "pending": 0,
+                "completed": 0,
+                "backlog": 0,
+                "aborted": 0,
+            }
+
+        if status == "backlog":
+            total_weekly_backlog_count += count
+
+        total_dict[created_at][status] = count
+
+    for date in total_dict:
+        total_task_per_day = (
+            total_dict[date]["pending"]
+            + total_dict[date]["completed"]
+            + total_dict[date]["backlog"]
+            + total_dict[date]["aborted"]
+        )
+        total_completed_per_day = (
+            total_dict[date]["completed"] + total_dict[date]["aborted"]
+        )
+        if total_task_per_day != 0:
+            weekly_stats[date] = round(
+                (total_completed_per_day / total_task_per_day * 100), 2
+            )
+
+    statistics["weekly_completed_percentage"] = weekly_stats
+
+    statistics["weekly_backlog_count"] = total_weekly_backlog_count
+    return statistics
 
 
 def get_data(query):
     return list(query.dicts())
 
 
-def get_query(sort_by, sort_type, includes):
+def includes_filters(includes):
     if includes:
         fcl_all_fields = list(AirFreightRateJobs._meta.fields.keys())
         required_fcl_fields = [a for a in includes.keys() if a in fcl_all_fields]
@@ -93,11 +206,14 @@ def get_query(sort_by, sort_type, includes):
             getattr(AirFreightRateJobs, key) for key in DEFAULT_REQUIRED_FIELDS
         ]
     query = AirFreightRateJobs.select(*air_fields)
+    return query
+
+
+def get_query(sort_by, sort_type, query):
     if sort_by:
         query = query.order_by(
             eval("AirFreightRateJobs.{}.{}()".format(sort_by, sort_type))
         )
-
     return query
 
 
@@ -118,26 +234,20 @@ def apply_updated_at_filter(query, filters):
     return query
 
 
-def apply_date_range_filter(query, filters):
-    if not filters["date_range"]["startDate"]:
-        start_date = datetime.now() - timedelta(days=7)
-    else:
-        start_date = datetime.strptime(
-            filters["date_range"]["startDate"], STRING_FORMAT
-        ) + timedelta(hours=5, minutes=30)
-    if not filters["date_range"]["endDate"]:
-        end_date = datetime.now()
-    else:
-        end_date = datetime.strptime(
-            filters["date_range"]["endDate"], STRING_FORMAT
-        ) + timedelta(hours=5, minutes=30)
+def apply_source_filter(query, filters):
+    query = query.where(AirFreightRateJobs.sources.contains(filters["source"]))
+    return query
+
+
+def apply_start_date_filter(query, filters):
     query = query.where(
-        AirFreightRateJobs.created_at.cast("date") >= start_date.date(),
-        AirFreightRateJobs.created_at.cast("date") <= end_date.date(),
+        AirFreightRateJobs.created_at.cast("date") >= filters["start_date"].date()
     )
     return query
 
 
-def apply_source_filter(query, filters):
-    query = query.where(AirFreightRateJobs.sources.contains(filters["source"]))
+def apply_end_date_filter(query, filters):
+    query = query.where(
+        AirFreightRateJobs.created_at.cast("date") >= filters["end_date"].date()
+    )
     return query

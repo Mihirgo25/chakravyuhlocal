@@ -7,7 +7,6 @@ from services.envision.interaction.get_ftl_freight_predicted_rate import predict
 from services.envision.interaction.create_ftl_freight_rate_prediction_feedback import (
     create_ftl_freight_rate_feedback
 )
-from services.envision.interaction.generate_csv_file_url import generate_csv_file_url
 from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_feedback
 from services.envision.interaction.get_air_freight_predicted_rate import predict_air_freight_rate
 from services.envision.interaction.get_haulage_freight_predicted_rate import predict_haulage_freight_rate
@@ -87,20 +86,6 @@ def get_air_freight_predicted_rate(request: AirFreightRate, resp: dict = Depends
         data = create_air_freight_rate_feedback(result)
         if data:
             return JSONResponse(status_code = 200, content=json_encoder(data))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
-@envision_router.get("/generate_csv_file_url")
-def generate_csv_file_url_api(filters: str , resp: dict = Depends(authorize_token)):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-
-    try:
-        data = generate_csv_file_url(filters)
-        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
