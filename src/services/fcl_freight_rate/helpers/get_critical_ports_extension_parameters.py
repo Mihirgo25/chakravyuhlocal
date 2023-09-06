@@ -1,22 +1,18 @@
 from services.fcl_freight_rate.models.fcl_freight_location_cluster import (
     FclFreightLocationCluster,
 )
+from services.fcl_freight_rate.models.fcl_freight_rate import (
+    FclFreightRate,
+)
 from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import (
     FclFreightLocationClusterMapping,
 )
-import datetime
+from datetime import datetime, timedelta
+from configs.fcl_freight_rate_constants import (
+    CRITICAL_PORTS_INDIA_VIETNAM,
+    DEFAULT_RATE_TYPE,
+)
 from fastapi.encoders import jsonable_encoder
-
-INDIA_CRITICAL_PORTS = [
-    "eb187b38-51b2-4a5e-9f3c-978033ca1ddf",
-    "7aa6ac82-c295-497f-bfe1-90294cdfa7a9",
-    "3c843f50-867c-4b07-bb57-e61af97dabfe",
-]
-VIETNAM_CRITICAL_PORTS = [
-    "b0a48e84-48d5-438b-841a-e800fb68e439",
-    "c2d6fb91-2875-4d73-b12b-dd1b78fdfe8a",
-    "76fdeee3-1c7f-4f6e-a5d2-2a729445f2d9",
-]
 
 
 def fetch_all_base_port_ids():
@@ -26,11 +22,7 @@ def fetch_all_base_port_ids():
             FclFreightLocationCluster.base_port_id
         )
     ]
-    return [
-        port
-        for port in all_ports
-        if port not in (INDIA_CRITICAL_PORTS + VIETNAM_CRITICAL_PORTS)
-    ]
+    return [port for port in all_ports if port not in (CRITICAL_PORTS_INDIA_VIETNAM)]
 
 
 def generate_combinations(base_port_ids, critical_ports):
@@ -53,37 +45,71 @@ def generate_combinations(base_port_ids, critical_ports):
 
 def get_critical_ports_extension_parameters():
     all_base_port_ids = fetch_all_base_port_ids()
-    india_combinations = generate_combinations(all_base_port_ids, INDIA_CRITICAL_PORTS)
-    vietnam_combinations = generate_combinations(
-        all_base_port_ids, VIETNAM_CRITICAL_PORTS
-    )
-    starttime = datetime.datetime.now()
+    start_time = datetime.now()
 
-    query = FclFreightLocationClusterMapping.select(
-        FclFreightLocationClusterMapping.location_id,
-        FclFreightLocationCluster.base_port_id,
-    ).join(FclFreightLocationCluster)
-    
+    base_port_query = (
+        FclFreightRate.select(
+            FclFreightRate.origin_port_id, FclFreightRate.destination_port_id
+        )
+        .distinct()
+        .where(
+            FclFreightRate.updated_at > start_time - timedelta(hours=6),
+            (
+                (FclFreightRate.origin_port_id << CRITICAL_PORTS_INDIA_VIETNAM)
+                & (FclFreightRate.destination_port_id << all_base_port_ids)
+            )
+            | (
+                (FclFreightRate.origin_port_id << all_base_port_ids)
+                & (FclFreightRate.destination_port_id << CRITICAL_PORTS_INDIA_VIETNAM)
+            ),
+            FclFreightRate.mode.not_in(["predicted", "cluster_extension"]),
+            FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
+            FclFreightRate.commodity == "general",
+            FclFreightRate.container_type == "standard",
+            FclFreightRate.last_rate_available_date
+            > datetime.now().date() + timedelta(days=1),
+        )
+    )
+
+    all_combinations = base_port_query.execute()
+
+    if not all_combinations:
+        return []
+
+    all_updated_ports = []
+    for row in all_combinations:
+        all_updated_ports.append(str(row.origin_port_id))
+        all_updated_ports.append(str(row.destination_port_id))
+
+    query = (
+        FclFreightLocationClusterMapping.select(
+            FclFreightLocationClusterMapping.location_id,
+            FclFreightLocationCluster.base_port_id,
+        )
+        .join(FclFreightLocationCluster)
+        .where(FclFreightLocationCluster.base_port_id.in_(all_updated_ports))
+    )
+
     location_mappings = jsonable_encoder(list(query.dicts()))
 
     extension_parameters = []
-    for combo in india_combinations + vietnam_combinations:
+    for combo in all_combinations:
         origin_secondary_ports = [
-            mapping['location_id']
+            mapping["location_id"]
             for mapping in location_mappings
-            if mapping['base_port_id'] == combo["origin_port_id"]
+            if mapping["base_port_id"] == str(combo.origin_port_id)
         ]
-        
+
         destination_secondary_ports = [
-            mapping['location_id']
+            mapping["location_id"]
             for mapping in location_mappings
-            if mapping['base_port_id'] == combo["destination_port_id"]
+            if mapping["base_port_id"] == str(combo.destination_port_id)
         ]
 
         request_data = {
-            "start_time": starttime,
-            "origin_port_id": combo["origin_port_id"],
-            "destination_port_id": combo["destination_port_id"],
+            "start_time": start_time,
+            "origin_port_id": str(combo.origin_port_id),
+            "destination_port_id": str(combo.destination_port_id),
             "container_type": "standard",
             "commodity": "general",
             "origin_secondary_ports": origin_secondary_ports,

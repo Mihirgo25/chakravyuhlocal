@@ -31,7 +31,7 @@ def find_object(request):
   else:
       object = FclFreightRateLocal.select().where(
       FclFreightRateLocal.port_id == request.get("port_id"),
-      FclFreightRateLocal.main_port_id == request.get("main_port_id"),
+      FclFreightRateLocal.main_port_id == (request.get("main_port_id") or None),
       FclFreightRateLocal.trade_type == request.get("trade_type"),
       FclFreightRateLocal.container_size == request.get("container_size"),
       FclFreightRateLocal.container_type == request.get('container_type'),
