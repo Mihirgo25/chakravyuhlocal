@@ -165,8 +165,8 @@ async def update_cluster_extension_by_latest_trends(request):
 
 
 def get_record_details(origin_port_id, destination_port_id):
-    min_decrease_percent, max_increase_percent = -100, 100
-    min_decrease_markup, max_increase_markup = -1000, 1000
+    min_decrease_percent, max_increase_percent = -2, 5
+    min_decrease_markup, max_increase_markup = -200, 500
     approval_status, manual_gri = True, None
 
     record = (
