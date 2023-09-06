@@ -1763,14 +1763,13 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
         ClickHouse().execute("create database brahmastra")
 
-        models = [FclFreightRateStatistic,AirFreightRateStatistic]
+        models = [FclFreightRateStatistic,AirFreightRateStatistic,FclFreightRateRequestStatistic]
 
         dictionaries = [CountryRateCount]
 
         Clicks(models, dictionaries).create()
 
         models = [
-            FclFreightRateRequestStatistic,
             SpotSearchFclFreightRateStatistic,
             FeedbackFclFreightRateStatistic,
             ShipmentFclFreightRateStatistic,
