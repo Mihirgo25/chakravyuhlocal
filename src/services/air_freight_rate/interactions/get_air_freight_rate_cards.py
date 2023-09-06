@@ -272,8 +272,7 @@ def build_freight_object(freight_validity,required_weight,requirements):
         line_item['quantity'] = 1
     
     line_item['total_price'] = line_item['quantity']*line_item['price']
-    if line_item['min_price'] > line_item['total_price']:
-        line_item['total_price'] = line_item['min_price']
+
     line_item['name'] = 'Basic Freight'
     line_item['source'] = 'system'
     line_item,freight_object = check_and_update_min_price_line_items(line_item, freight_object,requirements)
