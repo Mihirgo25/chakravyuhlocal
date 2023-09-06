@@ -70,7 +70,7 @@ class Shipment:
         }
         
         if not self.params.buy_quotations:
-            raise ValueError("quotations not found")
+            return
         
         for buy_quotation in self.params.buy_quotations:
             if buy_quotation.service_type != ShipmentServices.fcl_freight_service.value:
@@ -86,7 +86,7 @@ class Shipment:
             shipment_copy.update(
                 buy_quotation.dict(exclude={"service_id", "service_type"})
             )
-            shipment_copy.update(shipment_services_hash.get(buy_quotation.service_id))
+            shipment_copy.update(shipment_services_hash.get(buy_quotation.service_id,{}))
             shipment_copy[
                 "fcl_freight_rate_statistic_id"
             ] = fcl_freight_rate_statistic.id
@@ -194,9 +194,7 @@ class Shipment:
         )
 
         if not shipment_fcl_freight_rate_statistics:
-            raise ValueError(
-                f"""shipment with id: { update_params.get("shipment_id")} not found"""
-            )
+            return
         old_state = shipment_fcl_freight_rate_statistics.first().state
         new_state = update_params.get("state")
 
