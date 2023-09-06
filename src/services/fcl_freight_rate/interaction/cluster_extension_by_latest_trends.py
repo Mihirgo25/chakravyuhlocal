@@ -21,6 +21,8 @@ def get_filters(start_time, query_type, rate_ids):
         "rate_id": rate_ids,
         "validity_end_greater_than": datetime.now().date() + timedelta(days=1),
         "group_by": ["shipping_line_id"],
+        "rate_type": DEFAULT_RATE_TYPE,
+        "parent_mode": "supply",
     }
 
 
@@ -66,25 +68,12 @@ async def update_cluster_extension_by_latest_trends(request):
                 rate_ids.append(rate["id"])
                 shipping_line_ids.append(rate["shipping_line_id"])
 
-                price = 0
-                for validity in rate["validities"]:
-                    if validity["currency"] != "USD":
-                        data = {
-                            "from_currency": validity["currency"],
-                            "to_currency": "USD",
-                            "price": validity["price"],
-                        }
-                        price_in_USD = common.get_money_exchange_for_fcl(data)["price"]
-                        price += price_in_USD
-                    else:
-                        price += validity["price"]
-
-                prices.append(price / len(rate["validities"]))
+                price, count = get_bas_price(rate["validities"])
+                if price and count:
+                    prices.append(price / count)
 
             response = await list_fcl_freight_rate_statistics(
-                get_filters(
-                    datetime.now() - timedelta(minutes=5), "average_price", rate_ids
-                ),
+                get_filters(start_time, "average_price", rate_ids),
                 1000,
                 1,
                 False,
@@ -99,20 +88,19 @@ async def update_cluster_extension_by_latest_trends(request):
                 if row.get("shipping_line_id")
             }
 
-            shipping_line_totals = {}
-            shipping_line_counts = {}
+            shipping_line_mapping = {}
             for shipping_id, price in zip(shipping_line_ids, prices):
-                if shipping_id not in shipping_line_totals:
-                    shipping_line_totals[shipping_id] = price
-                    shipping_line_counts[shipping_id] = 1
+                if shipping_id not in shipping_line_mapping:
+                    shipping_line_mapping[shipping_id]["price"] = price
+                    shipping_line_mapping[shipping_id]["total"] = 1
                 else:
-                    shipping_line_totals[shipping_id] += price
-                    shipping_line_counts[shipping_id] += 1
+                    shipping_line_mapping[shipping_id]["price"] += price
+                    shipping_line_mapping[shipping_id]["total"] += 1
 
             average_prices = {}
-            for shipping_id in shipping_line_totals:
-                total = shipping_line_totals[shipping_id]
-                count = shipping_line_counts[shipping_id]
+            for shipping_id in shipping_line_mapping:
+                total = shipping_line_mapping[shipping_id]["price"]
+                count = shipping_line_mapping[shipping_id]["total"]
                 average_prices[shipping_id] = total / count
 
             for shipping_line_id in average_prices.keys():
@@ -235,3 +223,30 @@ def get_freight_rates(request):
         FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
     )
     return jsonable_encoder(list(query.dicts()))
+
+
+def get_bas_price(validities=[]):
+    price, count = 0, 0
+
+    for validity in validities:
+        line_items = validity.get("line_items") or []
+        bas_code = [line_item for line_item in line_items if line_item["code"] == "BAS"]
+
+        if not bas_code:
+            continue
+
+        bas_price, bas_currency = bas_code[0]["price"], bas_code[0]["currency"]
+
+        if bas_currency != "USD":
+            data = {
+                "from_currency": bas_currency,
+                "to_currency": "USD",
+                "price": bas_price,
+            }
+            price_in_USD = common.get_money_exchange_for_fcl(data)["price"]
+            price += price_in_USD
+        else:
+            price += bas_price
+        count += 1
+
+    return price, count

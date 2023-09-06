@@ -2,7 +2,7 @@ from configs.env import DEFAULT_USER_ID
 from datetime import datetime, timedelta
 ACTION_NAMES_FOR_SOURCES = {
     "flash_booking": "extend_freight_rate",
-    "cluster_extension_worker": "add_freight_rate",
+    "cluster_extension_worker": "add_freight_rate_markup",
 }
 
 def rate_extension_via_bulk_operation(request):
@@ -42,7 +42,7 @@ def get_extend_freight_rate_params(request):
     
     return params
 
-def get_add_freight_rate_params(request):
+def get_add_freight_rate_markup_params(request):
     data = {}
     data["filters"] = request.get('filters') or {}
     data["line_item_code"] = "BAS"
