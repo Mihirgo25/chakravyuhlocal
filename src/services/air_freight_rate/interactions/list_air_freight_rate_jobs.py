@@ -136,3 +136,8 @@ def apply_date_range_filter(query, filters):
         AirFreightRateJobs.created_at.cast("date") <= end_date.date(),
     )
     return query
+
+
+def apply_source_filter(query, filters):
+    query = query.where(AirFreightRateJobs.sources.contains(filters["source"]))
+    return query

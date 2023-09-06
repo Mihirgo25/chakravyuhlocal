@@ -71,7 +71,6 @@ def list_fcl_freight_rate_jobs(
 
 def get_statisitcs(query):
     dynamic_statisitcs = {}
-
     return dynamic_statisitcs
 
 

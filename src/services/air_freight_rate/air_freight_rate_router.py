@@ -1293,7 +1293,7 @@ def list_rates_sheet_stat(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
-@air_freight_router.get("/get_air_freight_rate_job_stats_stats")
+@air_freight_router.get("/get_air_freight_rate_job_stats")
 def get_air_freight_rate_job_stats_api(
     filters: str = None,
     resp: dict = Depends(authorize_token)
