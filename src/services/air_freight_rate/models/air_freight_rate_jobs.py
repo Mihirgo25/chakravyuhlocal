@@ -43,7 +43,7 @@ class AirFreightRateJobs(BaseModel):
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_freight_rate_jobs_serial_id_seq')")],)
 
     class Meta:
-        table_name = 'air_freight_rate_jobs1'
+        table_name = 'air_freight_rate_jobs'
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
