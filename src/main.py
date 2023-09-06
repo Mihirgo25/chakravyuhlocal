@@ -104,9 +104,8 @@ if APP_ENV != "production":
 
 @app.on_event("startup")
 def startup():
-    pass
-    # if db.is_closed():
-    #     db.connect()
+    if db.is_closed():
+        db.connect()
     # insert_wagon_type()
     # insert_dbcargo_rates()
     # insert_france_germany_rates()
@@ -124,9 +123,8 @@ def startup():
 
 @app.on_event("shutdown")
 def shutdown():
-    pass
-    # if not db.is_closed():
-    #     db.close()
+    if not db.is_closed():
+        db.close()
 
 
 @app.get("/",tags = ["Health Checks"])

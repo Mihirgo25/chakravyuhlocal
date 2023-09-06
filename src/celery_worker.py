@@ -72,7 +72,8 @@ CELERY_CONFIG = {
     "accept_content": ['application/json', 'application/x-python-serialize'],
     "task_acks_late": True,
     "result_expires": 60*30,
-    "celeryd_prefetch_multiplier": 1
+    "celeryd_prefetch_multiplier": 2,
+    "celery_queue_max_length": 1000
 }
 
 if APP_ENV == 'development':
