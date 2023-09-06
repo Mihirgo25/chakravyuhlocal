@@ -8,7 +8,7 @@ from peewee import fn
 from playhouse.postgres_ext import SQL
 
 possible_direct_filters = ['origin_port_id','destination_port_id','shipping_line_id','commodity']
-possible_indirect_filters = ['date_range', 'user_id']
+possible_indirect_filters = ['start_date', 'end_date', 'user_id']
 
 STRING_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
 
@@ -24,9 +24,7 @@ STATISTICS = {
 
 def get_fcl_freight_rate_job_stats(filters = {}):
         statistics = STATISTICS.copy()
-        ## Query to get Daily Stats
         daily_query = get_daily_query(filters)
-        ## Query to get Weekly Detials
         weekly_query = get_weekly_query(filters)
 
         statistics = build_daily_details(daily_query,statistics)

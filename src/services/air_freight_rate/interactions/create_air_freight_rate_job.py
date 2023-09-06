@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
 from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobsMapping
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
@@ -9,12 +8,12 @@ from database.db_session import db
 
 
 
-def create_air_freight_rate_jobs(request, source):
-    with db.atomic():
-      return create_air_freight_rate_job(request, source)
-
-
 def create_air_freight_rate_job(request, source):
+    with db.atomic():
+      return execute_transaction_code(request, source)
+
+
+def execute_transaction_code(request, source):
 
     request = jsonable_encoder(request)
 
@@ -24,7 +23,7 @@ def create_air_freight_rate_job(request, source):
         'airline_id' : request.get('airline_id'),
         'service_provider_id' : request.get('service_provider_id'),
         'commodity' : request.get('commodity'),
-        'source' : source,
+        'source' : [source],
         'rate_type' : request.get('rate_type'),
         'rate_id' : request.get('rate_id'),
         'commodity_type': request.get('commodity_type'),
@@ -42,24 +41,28 @@ def create_air_freight_rate_job(request, source):
     if not air_freight_rate_job:
         air_freight_rate_job = create_job_object(params)
     else:
+        previous_source = air_freight_rate_job.sources
+        air_freight_rate_job.sources = previous_source + [source]
+        air_freight_rate_job.save()
+        set_jobs_mapping(air_freight_rate_job.id, request, source)
         return {"id": air_freight_rate_job.id}
 
     user_id = task_distribution_system('AIR')
     air_freight_rate_job.assigned_to_id = user_id
-    air_freight_rate_job.assigned_to = get_user(user_id)
+    air_freight_rate_job.assigned_to = get_user(user_id)[0]
     air_freight_rate_job.status = 'pending'
     air_freight_rate_job.set_locations()
     air_freight_rate_job.save()
-    set_jobs_mapping(air_freight_rate_job.id, request)
+    set_jobs_mapping(air_freight_rate_job.id, request, source)
     get_multiple_service_objects(air_freight_rate_job)
 
     return {"updated_ids": air_freight_rate_job.id}
 
-def set_jobs_mapping(jobs_id, request):
+def set_jobs_mapping(jobs_id, request, source):
     audit_id = AirFreightRateJobsMapping.create(
-        source_id=request.get("rate_id"),
+        source_id=request.get("source_id"),
         job_id= jobs_id,
-        source = 'air_freight_rate'
+        source = source
     )
     return audit_id
 

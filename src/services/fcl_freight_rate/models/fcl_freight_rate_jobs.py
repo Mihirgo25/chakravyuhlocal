@@ -29,7 +29,7 @@ class FclFreightRateJobs(BaseModel):
     container_size = CharField(null=True, index=True)
     container_type = CharField(null=True, index=True)
     commodity = CharField(null=True, index=True)
-    source = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
+    sources = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     assigned_to_id = UUIDField(index=True, null=True)
     assigned_to = BinaryJSONField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
@@ -43,7 +43,7 @@ class FclFreightRateJobs(BaseModel):
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_jobs_serial_id_seq')")],)
 
     class Meta:
-        table_name = 'fcl_freight_rate_jobs'
+        table_name = 'fcl_freight_rate_jobs1'
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

@@ -25,7 +25,7 @@ class AirFreightRateJobs(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     status = CharField(index=True, null=True)
-    source = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
+    sources = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     assigned_to_id = UUIDField(index=True, null=True)
     assigned_to = BinaryJSONField(null=True)
     closed_by_id = UUIDField(null=True, index=True)
@@ -43,7 +43,7 @@ class AirFreightRateJobs(BaseModel):
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_freight_rate_jobs_serial_id_seq')")],)
 
     class Meta:
-        table_name = 'air_freight_rate_jobs'
+        table_name = 'air_freight_rate_jobs1'
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

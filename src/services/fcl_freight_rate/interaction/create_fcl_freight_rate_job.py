@@ -1,6 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJobs
 from services.fcl_freight_rate.models.fcl_freight_rate_jobs_mapping import FclFreightRateJobsMapping
-from datetime import datetime, timedelta
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from services.envision.helpers.task_distribution_system import task_distribution_system
 from database.rails_db import get_user
@@ -8,11 +7,11 @@ from fastapi.encoders import jsonable_encoder
 from database.db_session import db
 
 
-def create_fcl_freight_rate_jobs(request, source):
-    with db.atomic():
-      return create_fcl_freight_rate_job(request, source)
-
 def create_fcl_freight_rate_job(request, source):
+    with db.atomic():
+      return execute_transaction_code(request, source)
+
+def execute_transaction_code(request, source):
     request = jsonable_encoder(request)
     params = {
         'origin_port_id' : request.get('origin_port_id'),
@@ -22,7 +21,7 @@ def create_fcl_freight_rate_job(request, source):
         'container_size' : request.get('container_size'),
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
-        'source' : source,
+        'source' : [source],
         'rate_type' : request.get('rate_type'),
     }
     init_key = f'{str(params.get("origin_port_id"))}:{str(params.get("destination_port_id") or "")}:{str(params.get("shipping_line_id"))}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size"))}:{str(params.get("container_type"))}:{str(params.get("commodity"))}:{str(params.get("rate_type"))}'
@@ -32,6 +31,10 @@ def create_fcl_freight_rate_job(request, source):
     if not fcl_freight_rate_job:
         fcl_freight_rate_job = create_job_object(params)
     else:
+        previous_source = fcl_freight_rate_job.sources
+        fcl_freight_rate_job.sources = previous_source + [source]
+        fcl_freight_rate_job.save()
+        set_jobs_mapping(fcl_freight_rate_job.id, request)
         return {"id": fcl_freight_rate_job.id}
 
     user_id = task_distribution_system('FCL')
@@ -45,11 +48,11 @@ def create_fcl_freight_rate_job(request, source):
 
     return {"id": fcl_freight_rate_job.id}
 
-def set_jobs_mapping(jobs_id, request):
+def set_jobs_mapping(jobs_id, request, source):
     audit_id = FclFreightRateJobsMapping.create(
         source_id=request.get("rate_id"),
         job_id= jobs_id,
-        source = 'fcl_freight_rate',
+        source = source
     )
     return audit_id
 
