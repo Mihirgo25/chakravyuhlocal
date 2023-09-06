@@ -43,7 +43,8 @@ def create_air_freight_rate(request):
 
     
 def create_air_freight_rate_data(request):
-    from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,extend_air_freight_rates_in_delay ,update_air_jobs_delay
+    from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,extend_air_freight_rates_in_delay
+    from services.fcl_freight_rate.fcl_celery_worker import update_fcl_freight_rate_job_on_rate_addition_delay
     
     action = "update"
     
@@ -147,8 +148,8 @@ def create_air_freight_rate_data(request):
         freight.save()
     except Exception as e:
         raise HTTPException(status_code=400, detail="Rate did not save")
-    
-    update_air_jobs_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
+    if row["mode"] in ['manual', 'flash_booking', 'missing_rate', 'disliked_rate', 'spot_negotation', 'rate_sheet'] and not request.get("is_extended") and row['rate_type'] == "market_place":
+        update_fcl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
     
     create_audit(request, freight.id,validity_id)
 

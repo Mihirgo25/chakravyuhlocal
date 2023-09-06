@@ -12,8 +12,8 @@ from services.fcl_freight_rate.workers.fcl_freight_expiring_rates_scheduler impo
 from services.fcl_freight_rate.workers.update_fcl_freight_job_status import (
     update_fcl_freight_job_status,
 )
-from services.fcl_freight_rate.interaction.update_fcl_freight_rate_job import (
-    update_fcl_freight_rate_job,
+from services.fcl_freight_rate.workers.update_fcl_freight_rate_job_on_rate_addition import (
+    update_fcl_freight_rate_job_on_rate_addition,
 )
 from services.fcl_freight_rate.workers.create_jobs_for_predicted_fcl_freight_rate import create_jobs_for_predicted_fcl_freight_rate
 from celery.schedules import crontab
@@ -77,6 +77,27 @@ def fcl_freight_critical_port_pairs_delay(self):
         else:
             raise self.retry(exc=exc)
 
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def create_jobs_for_predicted_fcl_freight_rate_delay(self, is_predicted, requirements):
+    try:
+        return create_jobs_for_predicted_fcl_freight_rate(is_predicted, requirements)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_fcl_freight_rate_job_on_rate_addition_delay(self, request, id):
+    try:
+        update_fcl_freight_rate_job_on_rate_addition(request, id)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+        
 
 @celery.task(bind=True, max_retries=3, retry_backoff=True)
 def update_fcl_freight_job_status_delay(self):
@@ -87,26 +108,5 @@ def update_fcl_freight_job_status_delay(self):
             pass
         else:
             raise self.retry(exc=exc)
-
-
-@celery.task(bind=True, max_retries=1, retry_backoff=True)
-def update_fcl_freight_rate_jobs_delay(self, request, id):
-    try:
-        update_fcl_freight_rate_job(request, id)
-    except Exception as exc:
-        if type(exc).__name__ == "HTTPException":
-            pass
-        else:
-            raise self.retry(exc=exc)
         
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def create_jobs_for_predicted_fcl_freight_rate_delay(self, is_predicted, requirements):
-    try:
-        return create_jobs_for_predicted_fcl_freight_rate(is_predicted, requirements)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
 

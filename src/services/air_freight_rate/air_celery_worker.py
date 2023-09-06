@@ -15,7 +15,7 @@ from services.air_freight_rate.workers.update_air_freight_job_status import (
     update_air_freight_job_status,
 )
 from services.air_freight_rate.interactions.update_air_freight_rate_job import (
-    update_air_freight_rate_job,
+    update_air_freight_rate_job_on_rate_addition,
 )
 from celery.schedules import crontab
 
@@ -78,6 +78,16 @@ def air_freight_expiring_rates_in_delay(self):
             pass
         else:
             raise self.retry(exc=exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_air_freight_rate_job_on_rate_addition_delay(self, request, id):
+    try:
+        update_air_freight_rate_job_on_rate_addition(request, id)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
 
 
 @celery.task(bind=True, max_retries=1, retry_backoff=True)
@@ -105,13 +115,3 @@ def update_air_freight_jobs_status_delay(self):
         else:
             raise self.retry(exc=exc)
 
-
-@celery.task(bind=True, max_retries=1, retry_backoff=True)
-def update_air_freight_rate_jobs_delay(self, request, id):
-    try:
-        update_air_freight_rate_job(request, id)
-    except Exception as exc:
-        if type(exc).__name__ == "HTTPException":
-            pass
-        else:
-            raise self.retry(exc=exc)
