@@ -23,6 +23,9 @@ possible_direct_filters = [
 ]
 possible_indirect_filters = ["source", "updated_at", "user_id", "date_range"]
 
+uncommon_filters = ['serial_id', 'status']
+
+
 DEFAULT_REQUIRED_FIELDS = [
     "id",
     "assigned_to",
@@ -68,21 +71,29 @@ def list_fcl_freight_rate_jobs(
 ):
     query = includes_filter(includes)
     statistics = STATISTICS.copy()
+    dynamic_statisitcs = {}
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
         direct_filters, indirect_filters = get_applicable_filters(
             filters, possible_direct_filters, possible_indirect_filters
         )
+        #applying direct filters
         query = get_filters(direct_filters, query, FclFreightRateJobs)
+
+        #applying indirect filters
         query = apply_indirect_filters(query, indirect_filters)
+
+        #getting daily_stats
         if filters.get("daily_stats"):
             statistics = build_daily_details(query, statistics)
 
+        #getting weekly_stats
         if filters.get("weekly_stats"):
             statistics = build_weekly_details(query, statistics)
 
-        dynamic_statisitcs = get_statisitcs(query)
+        #remaining filters
+        dynamic_statisitcs = get_statisitcs(query, filters)
 
     if generate_csv_url:
         return generate_csv_file_url_for_fcl(query)
@@ -94,7 +105,89 @@ def list_fcl_freight_rate_jobs(
 
     data = get_data(query)
 
-    return {"list": data, "stats": dynamic_statisitcs}
+    return {"list": data, "dynamic_statisitcs":dynamic_statisitcs,  "statisitcs": statistics}
+
+
+
+def get_data(query):
+    return list(query.dicts())
+
+
+def includes_filter(includes):
+    if includes:
+        fcl_all_fields = list(FclFreightRateJobs._meta.fields.keys())
+        required_fcl_fields = [a for a in includes.keys() if a in fcl_all_fields]
+        fcl_fields = [getattr(FclFreightRateJobs, key) for key in required_fcl_fields]
+    else:
+        fcl_fields = [
+            getattr(FclFreightRateJobs, key) for key in DEFAULT_REQUIRED_FIELDS
+        ]
+    query = FclFreightRateJobs.select(*fcl_fields)
+    return query
+
+
+def sort_query(sort_by, sort_type, query):
+    if sort_by:
+        query = query.order_by(
+            eval("FclFreightRateJobs.{}.{}()".format(sort_by, sort_type))
+        )
+    return query
+
+
+def apply_indirect_filters(query, filters):
+    for key in filters:
+        apply_filter_function = f"apply_{key}_filter"
+        query = eval(f"{apply_filter_function}(query, filters)")
+    return query
+
+
+def apply_user_id_filter(query, filters):
+    query = query.where(FclFreightRateJobs.assigned_to_id == filters["user_id"])
+    return query
+
+
+
+def apply_updated_at_filter(query, filters):
+    query = query.where(FclFreightRateJobs.updated_at > filters["updated_at"])
+    return query
+
+
+def apply_source_filter(query, filters):
+    query = query.where(FclFreightRateJobs.sources.contains(filters["source"]))
+    return query
+
+
+def apply_start_date_filter(query, filters):
+    query = query.where(
+        FclFreightRateJobs.created_at.cast("date") >= filters["start_date"].date()
+    )
+    return query
+
+
+def apply_end_date_filter(query, filters):
+    query = query.where(
+        FclFreightRateJobs.created_at.cast("date") <= filters["end_date"].date()
+    )
+    return query
+
+
+
+
+def get_statisitcs(query, filters):
+    subquery = (FclFreightRateJobs.select(fn.UNNEST(FclFreightRateJobs.sources).alias('element')).alias('elements'))
+    stats_query = FclFreightRateJobs.select(subquery.c.element, fn.COUNT(subquery.c.element).alias('count')).from_(subquery).group_by(subquery.c.element).order_by(fn.COUNT(subquery.c.element).desc())
+    data = list(stats_query.dicts())
+    dynamic_statisitcs = {}
+    for stats in data:
+        dynamic_statisitcs[stats['element']] = stats['count']
+    
+    query = apply_source_filter(query, filters)
+    applicable_filters ={}
+    for key in uncommon_filters:
+        if filters.get(key):
+            applicable_filters[key] = filters[key]
+    query = get_filters(applicable_filters, query, FclFreightRateJobs)
+    return dynamic_statisitcs
 
 
 def build_daily_details(query, statistics):
@@ -177,73 +270,3 @@ def build_weekly_details(query, statistics):
     return statistics
 
 
-def get_statisitcs(query):
-    dynamic_statisitcs = {}
-    return dynamic_statisitcs
-
-
-def get_data(query):
-    return list(query.dicts())
-
-
-def includes_filter(includes):
-    if includes:
-        fcl_all_fields = list(FclFreightRateJobs._meta.fields.keys())
-        required_fcl_fields = [a for a in includes.keys() if a in fcl_all_fields]
-        fcl_fields = [getattr(FclFreightRateJobs, key) for key in required_fcl_fields]
-    else:
-        fcl_fields = [
-            getattr(FclFreightRateJobs, key) for key in DEFAULT_REQUIRED_FIELDS
-        ]
-    query = FclFreightRateJobs.select(*fcl_fields)
-    return query
-
-
-def sort_query(sort_by, sort_type):
-    if sort_by:
-        query = query.order_by(
-            eval("FclFreightRateJobs.{}.{}()".format(sort_by, sort_type))
-        )
-    return query
-
-
-def apply_indirect_filters(query, filters):
-    for key in filters:
-        apply_filter_function = f"apply_{key}_filter"
-        query = eval(f"{apply_filter_function}(query, filters)")
-    return query
-
-
-def apply_user_id_filter(query, filters):
-    query = query.where(FclFreightRateJobs.assigned_to_id == filters["user_id"])
-    return query
-
-
-def apply_updated_at_filter(query, filters):
-    query = query.where(FclFreightRateJobs.updated_at > filters["updated_at"])
-    return query
-
-
-def apply_date_range_filter(query, filters):
-    if not filters["date_range"]["startDate"]:
-        start_date = datetime.now() - timedelta(days=7)
-    else:
-        start_date = datetime.strptime(
-            filters["date_range"]["startDate"], STRING_FORMAT
-        ) + timedelta(hours=5, minutes=30)
-    if not filters["date_range"]["endDate"]:
-        end_date = datetime.now()
-    else:
-        end_date = datetime.strptime(
-            filters["date_range"]["endDate"], STRING_FORMAT
-        ) + timedelta(hours=5, minutes=30)
-    query = query.where(
-        FclFreightRateJobs.created_at.cast("date") >= start_date.date(),
-        FclFreightRateJobs.created_at.cast("date") <= end_date.date(),
-    )
-    return query
-
-
-def apply_source_filter(query, filters):
-    query = query.where(FclFreightRateJobs.sources.contains(filters["source"]))
-    return query
