@@ -133,8 +133,8 @@ def initialize_query(query, request):
         )
     cargo_readiness_date = request.get("cargo_readiness_date")
     query = query.where(
-        (FtlFreightRate.validity_start <= cargo_readiness_date)
-        & (FtlFreightRate.validity_end >= cargo_readiness_date)
+        (FtlFreightRate.validity_start.cast('date') <= cargo_readiness_date)
+        & (FtlFreightRate.validity_end.cast('date') >= cargo_readiness_date)
     )
 
     return query
@@ -279,7 +279,7 @@ def build_response_object(result, request):
                     build_line_item_object(
                         request,
                         required_line_item,
-                        response_object["truck_count"],
+                        response_object["trucks_count"],
                         result.get("minimum_chargeable_weight", 0),
                     )
                     | {}
