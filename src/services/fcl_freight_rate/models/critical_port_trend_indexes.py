@@ -11,7 +11,7 @@ class BaseModel(Model):
         database = db
         only_save_dirty = True
 
-class ClusterExtensionGriWorker(BaseModel):
+class CriticalPortTrendIndex(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     origin_port_id=UUIDField(index=True,null=True)
     origin_port=BinaryJSONField(null=True)
@@ -29,7 +29,7 @@ class ClusterExtensionGriWorker(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:
-        table_name = 'cluster_extension_gri_worker'
+        table_name = 'critical_port_trend_indexes'
 
  
     def set_locations(self):

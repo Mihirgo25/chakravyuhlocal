@@ -1912,7 +1912,7 @@ def create_fcl_freight_location_cluster_func(request: FclLocationCluster):
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @fcl_freight_router.post("/create_cluster_extension_gri_worker")
-def create_critical_port_trend_index_data(request: CreateClusterExtensionGriWorker, resp: dict = Depends(authorize_token)):
+def create_critical_port_trend_index_data(request: CreateCriticalPortTrendIndex, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:

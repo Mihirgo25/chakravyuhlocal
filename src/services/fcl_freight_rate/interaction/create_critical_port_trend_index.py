@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.cluster_extension_gri_worker import ClusterExtensionGriWorker
+from services.fcl_freight_rate.models.critical_port_trend_indexes import CriticalPortTrendIndex
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from database.db_session import db
 
@@ -21,7 +21,7 @@ def execute_transaction_code(request_data):
         "performed_by_type": request_data.get("performed_by_type"),
     }
 
-    new_worker_object = ClusterExtensionGriWorker(**create_params)
+    new_worker_object = CriticalPortTrendIndex(**create_params)
     get_multiple_service_objects(new_worker_object)
     new_worker_object.set_locations()
     new_worker_object.save()

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from services.fcl_freight_rate.models.cluster_extension_gri_worker import (
-    ClusterExtensionGriWorker,
+from services.fcl_freight_rate.models.critical_port_trend_indexes import (
+    CriticalPortTrendIndex,
 )
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.bramhastra.interactions.list_fcl_freight_rate_statistics import (
@@ -182,16 +182,16 @@ def get_record_details(origin_port_id, destination_port_id):
     approval_status, manual_gri = True, None
 
     record = (
-        ClusterExtensionGriWorker.select(
-            ClusterExtensionGriWorker.approval_status,
-            ClusterExtensionGriWorker.manual_gri,
-            ClusterExtensionGriWorker.min_decrease_percent,
-            ClusterExtensionGriWorker.max_increase_percent,
-            ClusterExtensionGriWorker.min_decrease_markup,
-            ClusterExtensionGriWorker.max_increase_markup,
+        CriticalPortTrendIndex.select(
+            CriticalPortTrendIndex.approval_status,
+            CriticalPortTrendIndex.manual_gri,
+            CriticalPortTrendIndex.min_decrease_percent,
+            CriticalPortTrendIndex.max_increase_percent,
+            CriticalPortTrendIndex.min_decrease_markup,
+            CriticalPortTrendIndex.max_increase_markup,
         ).where(
-            (ClusterExtensionGriWorker.destination_port_id == destination_port_id)
-            & (ClusterExtensionGriWorker.origin_port_id == origin_port_id)
+            (CriticalPortTrendIndex.destination_port_id == destination_port_id)
+            & (CriticalPortTrendIndex.origin_port_id == origin_port_id)
         )
     ).first()
 
