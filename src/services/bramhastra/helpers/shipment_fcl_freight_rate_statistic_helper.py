@@ -12,6 +12,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
 )
 from services.bramhastra.enums import ShipmentServices
 from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.enums import Fcl
 
 
 class Shipment:
@@ -67,6 +68,10 @@ class Shipment:
             i.shipment_fcl_freight_service_id: i.dict()
             for i in self.params.fcl_freight_services
         }
+        
+        if not self.params.buy_quotations:
+            raise ValueError("quotations not found")
+        
         for buy_quotation in self.params.buy_quotations:
             if buy_quotation.service_type != ShipmentServices.fcl_freight_service.value:
                 continue
@@ -115,8 +120,12 @@ class Shipment:
             fcl_freight_rate_statistic.standard_price
             if self.action == ShipmentAction.create.value
             else common.get_money_exchange_for_fcl(
-                self.current_total_price, self.current_currency, "USD"
-            )
+                {
+                        "from_currency": self.current_currency,
+                        "to_currency": Fcl.default_currency.value,
+                        "price": self.current_total_price,
+                }
+            ).get("price", self.current_total_price)
         )
 
         rate_update_hash["booking_rate_count"] = booking_rate_count + 1
@@ -161,7 +170,8 @@ class Shipment:
                         new_row.save()
                         first_row = True
                 for k, v in stat.items():
-                    setattr(shipment, k, v)
+                    if v:
+                        setattr(shipment, k, v)
                 shipment.save()
             else:
                 ShipmentFclFreightRateStatistic.create(**stat)
@@ -220,7 +230,7 @@ class Shipment:
 
         for shipment_fcl_freight_rate_statistic in shipment_fcl_freight_rate_statistics:
             for k, v in update_params.items():
-                if k in avoid_keys:
+                if k in avoid_keys and not v:
                     continue
                 setattr(shipment_fcl_freight_rate_statistic, k, v)
             shipment_fcl_freight_rate_statistic.save()
@@ -230,7 +240,8 @@ class Shipment:
             for key in self.increment_keys:
                 setattr(row, key, getattr(row, key) + 1)
         for k, v in update_object.items():
-            setattr(row, k, v)
+            if v:
+                setattr(row, k, v)
         row.save()
 
     def get_rate_details_from_initial_quotation(self, source_id):
