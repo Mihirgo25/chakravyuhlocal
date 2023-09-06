@@ -15,6 +15,7 @@ from services.fcl_freight_rate.workers.update_fcl_freight_job_status import (
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_job import (
     update_fcl_freight_rate_job,
 )
+from services.fcl_freight_rate.workers.fcl_freight_spot_search_predicted_rates_scheduler import fcl_freight_spot_search_predicted_rates_scheduler
 from celery.schedules import crontab
 from datetime import datetime, timedelta
 
@@ -98,3 +99,15 @@ def update_fcl_freight_rate_jobs_delay(self, request, id):
             pass
         else:
             raise self.retry(exc=exc)
+        
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def fcl_freight_spot_search_predicted_rates_scheduler_delay(self, is_predicted, requirements):
+    try:
+        return fcl_freight_spot_search_predicted_rates_scheduler(is_predicted, requirements)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+

@@ -28,7 +28,7 @@ from services.fcl_freight_rate.interaction.update_fcl_rates_to_cogo_assured impo
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
 from services.chakravyuh.interaction.get_air_invoice_estimation_prediction import invoice_rates_updation
 from services.fcl_customs_rate.interaction.update_fcl_customs_rate_platform_prices import update_fcl_customs_rate_platform_prices
-from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices import update_fcl_cfs_rate_platform_prices
+from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices import update_fcl_cfs_rate_platform_prices 
 from services.extensions.interactions.create_freight_look_rates import create_air_freight_rate_api
 from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 from database.rails_db import get_past_cost_booking_data
@@ -61,8 +61,6 @@ from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as Fc
 from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreightVyuhSetter
 from playhouse.postgres_ext import ServerSide
 
-# Supply Tools
-from services.fcl_freight_rate.workers.fcl_freight_spot_search_predicted_rates_scheduler import fcl_freight_spot_search_predicted_rates_scheduler
 
 
 CELERY_CONFIG = {
@@ -878,13 +876,3 @@ def air_freight_airline_factors_in_delay(self):
         else:
             raise self.retry(exc= exc)
 
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def fcl_freight_spot_search_predicted_rates_scheduler_delay(self, is_predicted, requirements):
-    try:
-        return fcl_freight_spot_search_predicted_rates_scheduler(is_predicted, requirements)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
