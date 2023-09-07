@@ -8,6 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from playhouse.shortcuts import model_to_dict
 
 SEVEN_DAYS_AGO = datetime.datetime.now().date() - datetime.timedelta(days=7)
+TODAYS_DATE = datetime.datetime.now().date()
 
 REQUIRED_COLUMNS = ['id', 'origin_airport_id', 'origin_airport','destination_airport_id', 'destination_airport','commodity', 'airline_id', 'service_provider_id', 'commodity_type', 'commodity_sub_type', 'operation_type', 'shipment_type', 'stacking_type', 'price_type']
     
@@ -21,7 +22,10 @@ def air_freight_critical_port_pairs_scheduler():
     air_query  = AirFreightRate.select(*[getattr(AirFreightRate, col) for col in REQUIRED_COLUMNS]).where(
             ((AirFreightRate.origin_airport_id << CRITICAL_AIRPORTS_INDIA_VIETNAM) & (AirFreightRate.destination_airport_id << air_critical_ports_except_in_vn)) | ((AirFreightRate.origin_airport_id << air_critical_ports_except_in_vn) & (AirFreightRate.destination_airport_id << CRITICAL_AIRPORTS_INDIA_VIETNAM)),
             (AirFreightRate.updated_at.cast('date') < SEVEN_DAYS_AGO),
-            AirFreightRate.source != 'predicted'
+            AirFreightRate.source != 'predicted',
+             ~(AirFreightRate.rate_not_available_entry),
+             AirFreightRate.last_rate_available_date >= TODAYS_DATE,
+             AirFreightRate.rate_type == 'market_place'
         )
 
     for rate in ServerSide(air_query):

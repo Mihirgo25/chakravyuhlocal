@@ -1306,14 +1306,14 @@ def list_air_freight_rate_jobs_api(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    # try:
-    data = list_air_freight_rate_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, includes)
-    return JSONResponse(status_code=200, content=json_encoder(data))
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    try:
+        data = list_air_freight_rate_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, includes)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_freight_router.post("/delete_air_freight_rate_job")
 def delete_air_freight_rate_job_api(

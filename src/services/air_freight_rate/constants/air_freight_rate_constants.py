@@ -244,5 +244,3 @@ CRITICAL_AIRPORTS_INDIA_VIETNAM=[
   '2b436d09-40a3-4c0e-a07a-ebb0db38f164',
   'a7da60eb-4f72-439c-b400-ac386b3d9d83'
 ]
-
-EXTENSION_ENABLED_MODES = ['manual', 'flash_booking', 'missing_rate', 'disliked_rate', 'spot_negotation', 'rate_sheet']

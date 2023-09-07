@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from database.db_session import db
-from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE, EXTENSION_ENABLED_MODES
+from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from configs.global_constants import SERVICE_PROVIDER_FF
@@ -163,7 +163,7 @@ def create_air_freight_rate_data(request):
         extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': request,'base_to_base':True }, queue='fcl_freight_rate')
         
     send_stats(action,request,freight)
-    if row["source"] in EXTENSION_ENABLED_MODES  and row['rate_type'] == "market_place":
+    if row["source"] not in ["predicted", 'rate_extention']  and row['rate_type'] == "market_place":
         update_air_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
 
     freight_object = {
