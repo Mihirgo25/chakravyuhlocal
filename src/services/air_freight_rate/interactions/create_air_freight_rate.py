@@ -163,8 +163,7 @@ def create_air_freight_rate_data(request):
         extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': request,'base_to_base':True }, queue='fcl_freight_rate')
         
     send_stats(action,request,freight)
-
-    if row["mode"] in EXTENSION_ENABLED_MODES  and row['rate_type'] == "market_place":
+    if row["source"] in EXTENSION_ENABLED_MODES  and row['rate_type'] == "market_place":
         update_air_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
 
     freight_object = {

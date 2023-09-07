@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJobs
 from datetime import datetime, timedelta
 
-def update_fcl_freight_job_status():
+def update_fcl_freight_rate_jobs_to_backlog():
     
     fcl_conditions = (
         (FclFreightRateJobs.created_at >= datetime.today().date() - timedelta(days=1)),
