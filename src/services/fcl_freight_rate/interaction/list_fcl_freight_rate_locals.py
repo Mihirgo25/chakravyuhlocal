@@ -10,7 +10,7 @@ from playhouse.shortcuts import model_to_dict
 possible_direct_filters = ['id', 'port_id', 'country_id', 'terminal_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'trade_type', 'container_size', 'container_type', 'is_line_items_error_messages_present', 'is_line_items_info_messages_present', 'main_port_id', 'rate_type']
 possible_indirect_filters = ['is_detention_missing', 'is_demurrage_missing', 'is_plugin_missing', 'location_ids', 'commodity', 'procured_by_id', 'is_rate_available', 'updated_at_greater_than', 'updated_at_less_than', 'exclude_shipping_line_id']
 
-def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='updated_at', sort_type='desc', return_query=False):
+def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='updated_at', sort_type='desc', return_query=False, get_count = False):
     query = get_query(sort_by, sort_type, page, page_limit)
 
     if filters:
@@ -28,6 +28,9 @@ def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='
     if return_query:
         items = [model_to_dict(item) for item in query.execute()]
         return {'list': items}
+
+    if get_count:
+        return {'list':query.count()}
 
     data = get_data(query)
 

@@ -757,12 +757,13 @@ def list_fcl_freight_rate_locals_data(
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
     return_query: bool = False,
+    get_count: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
+        data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query, get_count)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise

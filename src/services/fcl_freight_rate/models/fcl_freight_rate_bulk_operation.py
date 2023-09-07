@@ -1371,7 +1371,7 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         total_affected_rates = 0
 
-        filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
+        filters = (data['filters'] or {})
 
         if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
             del filters['service_provider_id']
