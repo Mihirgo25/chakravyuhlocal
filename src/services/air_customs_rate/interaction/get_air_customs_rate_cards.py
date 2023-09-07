@@ -31,6 +31,8 @@ def initialize_air_customs_rate_query(request):
         AirCustomsRate.line_items,
         AirCustomsRate.service_provider_id,
         AirCustomsRate.importer_exporter_id,
+        AirCustomsRate.mode,
+        AirCustomsRate.rate_type
     ).where(
         AirCustomsRate.airport_id == request.get('airport_id'),
         AirCustomsRate.trade_type == request.get('trade_type'),

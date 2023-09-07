@@ -181,13 +181,6 @@ class AirCustomsRate(BaseModel):
         self.trade_id = self.airport.get('trade_id')
         self.continent_id = self.airport.get('continent_id')
         self.location_ids = list(filter(None, [uuid.UUID(self.airport_id),uuid.UUID(self.country_id),uuid.UUID(self.trade_id),uuid.UUID(self.continent_id)]))
-
-    def validate_service_provider_id(self):
-        if not self.service_provider_id:
-            return
-        service_provider_data = get_organization(id=self.service_provider_id)
-        if len(service_provider_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid service provider ID")
         
     def validate_trade_type(self):
         if self.trade_type and self.trade_type not in TRADE_TYPES:
@@ -201,25 +194,8 @@ class AirCustomsRate(BaseModel):
         if self.rate_type not in RATE_TYPES:
             raise HTTPException(status_code = 400, detail = 'Invalid Rate Type')
 
-    def validate_uniqueness(self):
-        uniqueness = AirCustomsRate.select(AirCustomsRate.id).where(
-            AirCustomsRate.airport_id == self.airport_id,
-            AirCustomsRate.trade_type == self.trade_type,
-            AirCustomsRate.commodity == self.commodity,
-            AirCustomsRate.service_provider_id == self.service_provider_id,
-            AirCustomsRate.importer_exporter_id == self.importer_exporter_id
-        ).count()
-
-        if self.id and uniqueness == 1:
-            return True
-        if not self.id and uniqueness == 0:
-            return True
-        return False
-
     def validate_before_save(self):
         self.validate_duplicate_line_items()
-        self.validate_service_provider_id()
         self.validate_trade_type()
         # self.validate_commodity()
         self.validate_rate_type()
-        self.validate_uniqueness()
