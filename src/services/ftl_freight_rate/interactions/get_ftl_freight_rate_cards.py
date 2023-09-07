@@ -11,6 +11,7 @@ from operator import attrgetter
 from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import FTL_FREIGHT_CHARGES
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
+from fastapi import HTTPException
 
 # [{
 #     id:
@@ -42,7 +43,7 @@ def get_ftl_freight_rate_cards(request):
     set_callback_for_request(request)
     if (
         request.get("trucks_count") is None
-        and request.get("load_selection_type") == "trucks"
+        and request.get("load_selection_type") == "truck"
     ):
         return {"list": []}
     query = select_fields()
@@ -76,7 +77,7 @@ def initialize_query(query, request):
         | (FtlFreightRate.importer_exporter_id.is_null(True))
     )
     if request.get("load_selection_type") in ["cargo_per_package", "cargo_gross"]:
-        query = query.where(FtlFreightRate.unit == "ton")
+        query = query.where(FtlFreightRate.unit == "per_ton")
     elif request.get("load_selection_type") == "truck":
         query = query.where(
             (FtlFreightRate.unit == "per_truck") | (FtlFreightRate.unit.is_null(True))
@@ -356,9 +357,11 @@ def build_line_item_object(
 def get_truck_type_and_count(request, truck_type):
     filters = {"truck_name": truck_type}
     trucks_data = list_trucks_data(filters)["list"]
-    truck_capacity = trucks_data["capacity"]
-    truck_count = math.ceil((request.get("weight") / truck_capacity))
-    return {"truck_type": truck_type, "trucks_count": truck_count}
+    if trucks_data:
+        truck_capacity = trucks_data[0]["capacity"]
+        truck_count = math.ceil((request.get("weight") / truck_capacity))
+        return {"truck_type": truck_type, "trucks_count": truck_count}
+    raise HTTPException(status_code = 400, detail = 'Truck Data Is Unavailable')
 
 
 def get_chargeable_weight(minimum_chargeable_weight, request):
