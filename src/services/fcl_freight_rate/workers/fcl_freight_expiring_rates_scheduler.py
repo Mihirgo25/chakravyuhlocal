@@ -14,7 +14,7 @@ from services.fcl_freight_rate.models.fcl_freight_location_cluster import (
 )
 from fastapi.encoders import jsonable_encoder
 
-DAYS_TO_EXPIRE = datetime.datetime.now().date() 
+DAYS_TO_EXPIRE = datetime.datetime.now().date() + datetime.timedelta(days=2)
 
 
 def fcl_freight_expiring_rates_scheduler():
@@ -58,7 +58,7 @@ def fcl_freight_expiring_rates_scheduler():
             (FclFreightRate.origin_port_id << fcl_critical_ports_except_in_vn)
             & (FclFreightRate.destination_port_id << CRITICAL_PORTS_INDIA_VIETNAM)
         ),
-        FclFreightRate.last_rate_available_date >= DAYS_TO_EXPIRE,
+        FclFreightRate.last_rate_available_date == DAYS_TO_EXPIRE,
         FclFreightRate.mode.not_in(["predicted", "cluster_extension"]),
         FclFreightRate.rate_type == "market_place",
     )

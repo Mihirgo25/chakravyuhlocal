@@ -21,11 +21,9 @@ def air_freight_critical_port_pairs_scheduler():
 
     air_query  = AirFreightRate.select(*[getattr(AirFreightRate, col) for col in REQUIRED_COLUMNS]).where(
             ((AirFreightRate.origin_airport_id << CRITICAL_AIRPORTS_INDIA_VIETNAM) & (AirFreightRate.destination_airport_id << air_critical_ports_except_in_vn)) | ((AirFreightRate.origin_airport_id << air_critical_ports_except_in_vn) & (AirFreightRate.destination_airport_id << CRITICAL_AIRPORTS_INDIA_VIETNAM)),
-            (AirFreightRate.updated_at.cast('date') < SEVEN_DAYS_AGO),
-            AirFreightRate.source != 'predicted',
-             ~(AirFreightRate.rate_not_available_entry),
-             AirFreightRate.last_rate_available_date >= TODAYS_DATE,
-             AirFreightRate.rate_type == 'market_place'
+            (AirFreightRate.updated_at.cast('date') == SEVEN_DAYS_AGO),
+            AirFreightRate.source.not_in(['predicted', 'cluster_extension']),
+            AirFreightRate.rate_type == 'market_place'
         )
 
     for rate in ServerSide(air_query):

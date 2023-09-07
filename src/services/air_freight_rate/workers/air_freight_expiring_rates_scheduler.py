@@ -56,7 +56,7 @@ def air_freight_expiring_rates_scheduler():
             (AirFreightRate.origin_airport_id << air_critical_ports_except_in_vn)
             & (AirFreightRate.destination_airport_id << CRITICAL_AIRPORTS_INDIA_VIETNAM)
         ),
-        AirFreightRate.last_rate_available_date >= DAYS_TO_EXPIRE,
+        AirFreightRate.last_rate_available_date == DAYS_TO_EXPIRE,
         ~(AirFreightRate.rate_not_available_entry),
         AirFreightRate.source.not_in(["predicted", 'rate_extention']),
         AirFreightRate.rate_type == 'market_place'

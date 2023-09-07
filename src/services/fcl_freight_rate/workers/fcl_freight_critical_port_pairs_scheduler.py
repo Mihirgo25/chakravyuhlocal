@@ -9,7 +9,6 @@ from fastapi.encoders import jsonable_encoder
 from playhouse.shortcuts import model_to_dict
 
 SEVEN_DAYS_AGO = datetime.datetime.now().date() - datetime.timedelta(days=7)
-
 TODAYS_DATE = datetime.datetime.now().date() 
 
 REQUIRED_COLUMNS = ['id', 'origin_port_id', 'origin_port', 'origin_main_port_id', 'destination_port_id', 'destination_port','destination_main_port_id',
@@ -22,11 +21,9 @@ def fcl_freight_critical_port_pairs_scheduler():
 
     fcl_query = FclFreightRate.select(*[getattr(FclFreightRate, col) for col in REQUIRED_COLUMNS]).where(
             ((FclFreightRate.origin_port_id << CRITICAL_PORTS_INDIA_VIETNAM) & (FclFreightRate.destination_port_id << fcl_critical_ports_except_in_vn)) | ((FclFreightRate.origin_port_id << fcl_critical_ports_except_in_vn) & (FclFreightRate.destination_port_id << CRITICAL_PORTS_INDIA_VIETNAM)),
-            (FclFreightRate.updated_at.cast('date') < SEVEN_DAYS_AGO),
+            (FclFreightRate.updated_at.cast('date') == SEVEN_DAYS_AGO),
             FclFreightRate.mode.not_in(['predicted', 'cluster_extension']),
-            FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
-            FclFreightRate.last_rate_available_date >= TODAYS_DATE,
-            FclFreightRate.mode.not_in(["predicted", "cluster_extension"]),
+            FclFreightRate.rate_type == 'market_place'
         )
             
     for rate in ServerSide(fcl_query):
