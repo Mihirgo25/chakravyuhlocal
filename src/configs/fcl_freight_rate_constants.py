@@ -220,3 +220,12 @@ SPECIFICITY_TYPE_HIERARCHY = {
 
 
 REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}
+
+CRITICAL_PORTS_INDIA_VIETNAM = [
+    'eb187b38-51b2-4a5e-9f3c-978033ca1ddf',
+    '7aa6ac82-c295-497f-bfe1-90294cdfa7a9',
+    '3c843f50-867c-4b07-bb57-e61af97dabfe',
+    'b0a48e84-48d5-438b-841a-e800fb68e439',
+    'c2d6fb91-2875-4d73-b12b-dd1b78fdfe8a',
+    '76fdeee3-1c7f-4f6e-a5d2-2a729445f2d9'
+]
