@@ -137,11 +137,9 @@ async def update_cluster_extension_by_latest_trends(request):
             overall_gri_avg += shipping_line_avg_mapping[key]
 
         overall_gri_avg /= len(shipping_line_avg_mapping.keys())
-        overall_gri_avg = min(overall_gri_avg, 100)
+        overall_gri_avg = max(min_decrease_percent, min(overall_gri_avg, max_increase_percent))
 
-    if overall_gri_avg and (
-        min_decrease_percent <= overall_gri_avg <= max_increase_percent
-    ):
+    if overall_gri_avg :
         request["source"] = "cluster_extension_worker"
         request["markup"] = overall_gri_avg
 
@@ -164,8 +162,8 @@ async def update_cluster_extension_by_latest_trends(request):
 
 
 def get_record_details(origin_port_id, destination_port_id):
-    min_decrease_percent, max_increase_percent = -2, 5
-    min_decrease_markup, max_increase_markup = -20, 50
+    min_decrease_percent, max_increase_percent = -3, 15
+    min_decrease_markup, max_increase_markup = -50, 100
     approval_status, manual_gri = True, None
 
     record = (
