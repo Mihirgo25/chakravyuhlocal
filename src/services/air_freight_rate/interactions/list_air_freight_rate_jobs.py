@@ -297,7 +297,7 @@ def apply_filters(query, filters):
 
 
 def apply_extra_filters(query, filters, stats):
-    if not stats:
+    if not stats and filters.get('source'):
         query = apply_source_filter(query, filters)
     applicable_filters = {}
     for key in uncommon_filters:
