@@ -2,7 +2,7 @@ from celery_worker import celery
 from services.air_freight_rate.workers.create_jobs_for_predicted_air_freight_rate import (
     create_jobs_for_predicted_air_freight_rate,
 )
-from services.air_freight_rate.workers.update_air_freight_jobs_to_backlog import (
+from services.air_freight_rate.workers.update_air_freight_rate_jobs_to_backlog import (
     update_air_freight_rate_jobs_to_backlog,
 )
 from services.air_freight_rate.workers.update_air_freight_rate_job_on_rate_addition import (

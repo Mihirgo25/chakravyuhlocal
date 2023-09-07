@@ -197,8 +197,6 @@ def create_fcl_freight_rate(request):
             raise
         
     # adjust_cogoassured_price(row, request)    
-    if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
-        update_fcl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
 
     create_audit(request, freight.id)
     
@@ -223,6 +221,9 @@ def create_fcl_freight_rate(request):
         update_fcl_freight_rate_feedback_in_delay.apply_async(kwargs={'request':{'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')}},queue='critical')
         
     send_stats(action,request,freight,port_to_region_id_mapping)
+
+    if row["mode"]  not in ["predicted", "cluster_extension"] and row['rate_type'] == "market_place":
+        update_fcl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
 
     return {"id": freight.id}
 
