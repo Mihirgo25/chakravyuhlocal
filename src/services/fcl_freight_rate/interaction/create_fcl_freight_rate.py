@@ -69,8 +69,9 @@ def create_fcl_freight_rate_data(request):
     with db.atomic() as transaction:
         try:
             return create_fcl_freight_rate(request)
-        except:
+        except Exception as e:
             transaction.rollback()
+            raise e
   
 
 def create_fcl_freight_rate(request):
