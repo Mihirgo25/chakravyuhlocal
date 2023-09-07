@@ -192,17 +192,17 @@ celery.conf.beat_schedule = {
         'schedule': crontab(minute=0, hour='*/3'),
         'options': {'queue': 'statistics'}
     },
-    "air_cancelled_shipments": {
+    "create_jobs_for_cancelled_shipments": {
         "task": "celery_worker.create_job_for_cancelled_shipments_delay",
         "schedule": crontab(hour=20, minute=30),
         "options": {"queue": "fcl_freight_rate"},
     },
-    "air_freight_expiring_rates": {
+    "create_jobs_for_expiring_rates": {
         "task": "celery_worker.create_job_for_expiring_rates_delay",
         "schedule": crontab(hour=17, minute=30),
         "options": {"queue": "fcl_freight_rate"},
     },
-    "air_freight_critical_port_pairs": {
+    "create_jobs_for_critical_port_pairs": {
         "task": "celery_worker.create_job_for_critical_port_pairs_delay",
         'schedule': crontab(hour=00, minute=30),
         "options": {"queue": "fcl_freight_rate"},
@@ -946,6 +946,7 @@ def create_job_for_cancelled_shipments_delay(self):
 @celery.task(bind=True, retry_backoff=True, max_retries=3)
 def create_job_for_expiring_rates_delay(self):
     try:
+        # may insert 8k to 10k records on odd day for each fcl and air
         fcl_freight_expiring_rates_scheduler()
         air_freight_expiring_rates_scheduler()
     except Exception as exc:
