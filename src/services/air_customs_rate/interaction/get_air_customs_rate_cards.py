@@ -127,7 +127,7 @@ def get_chargeable_weight(request):
 def group_by(query):
     grouped_query_results = {}
     for result in query:
-        key = f'{str(result["service_provider_id"] or "")}:{str(result["rate_type"])}'
+        key = f'{str(result.get("service_provider_id") or "")}:{str(result.get("rate_type") or "")}'
         if key not in grouped_query_results:
             grouped_query_results[key] = []
         grouped_query_results[key].append(result)
