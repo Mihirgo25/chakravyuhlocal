@@ -5,6 +5,7 @@ from libs.task_distribution_system import task_distribution_system
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_user
 from database.db_session import db
+from configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 
 
 
@@ -41,7 +42,7 @@ def execute_transaction_code(request, source):
         air_freight_rate_job = create_job_object(params)
     else:
         previous_sources = air_freight_rate_job.sources
-        if source not in previous_sources:
+        if source not in previous_sources and source in POSSIBLE_SOURCES_IN_JOB_MAPPINGS:
             air_freight_rate_job.sources = previous_sources + [source]
             air_freight_rate_job.save()
             set_jobs_mapping(air_freight_rate_job.id, request, source)
