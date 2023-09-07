@@ -13,8 +13,9 @@ def delete_fcl_freight_rate_job(request):
     else:
         update_params = {'status':'completed', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0]}
 
-    fcl_freight_rate_job = FclFreightRateJobs.update(update_params).where(FclFreightRateJobs.id == request['id']).execute()
-    set_jobs_mapping(request['id'], request)
+    fcl_freight_rate_job = FclFreightRateJobs.update(update_params).where(FclFreightRateJobs.id == request['id'], FclFreightRateJobs.status.not_in(['completed', 'aborted'])).execute()
+    if fcl_freight_rate_job:
+        set_jobs_mapping(request['id'], request)
 
     return {'id' : request['id']}
 
