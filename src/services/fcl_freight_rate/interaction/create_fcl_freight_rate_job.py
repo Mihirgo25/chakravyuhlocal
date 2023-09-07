@@ -27,7 +27,7 @@ def execute_transaction_code(request, source):
         'sources' : [source],
         'rate_type' : request.get('rate_type'),
     }
-    init_key = f'{str(params.get("origin_port_id"))}:{str(params.get("origin_main_port_id"))}:{str(params.get("destination_port_id") or "")}::{str(params.get("destination_main_port_id"))}:{str(params.get("shipping_line_id"))}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size"))}:{str(params.get("container_type"))}:{str(params.get("commodity"))}:{str(params.get("rate_type"))}'
+    init_key = f'{str(params.get("origin_port_id") or "")}:{str(params.get("origin_main_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("destination_main_port_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}'
     fcl_freight_rate_job = FclFreightRateJobs.select().where(FclFreightRateJobs.init_key == init_key, FclFreightRateJobs.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 

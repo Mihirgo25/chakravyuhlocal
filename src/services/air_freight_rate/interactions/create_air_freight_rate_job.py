@@ -34,7 +34,7 @@ def execute_transaction_code(request, source):
         'price_type': request.get('price_type')
     }
     
-    init_key = f'{str(params.get("origin_airport_id"))}:{str(params.get("destination_airport_id") or "")}:{str(params.get("airline_id"))}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity"))}:{str(params.get("rate_type"))}:{str(params.get("commodity_type") or "")}:{str(params.get("commodity_sub_type") or "")}:{str(params.get("stacking_type") or "")}:{str(params.get("operation_type") or "")}'
+    init_key = f'{str(params.get("origin_airport_id") or "")}:{str(params.get("destination_airport_id") or "")}:{str(params.get("airline_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("commodity_type") or "")}:{str(params.get("commodity_sub_type") or "")}:{str(params.get("stacking_type") or "")}:{str(params.get("operation_type") or "")}'
     air_freight_rate_job = AirFreightRateJobs.select().where(AirFreightRateJobs.init_key == init_key, AirFreightRateJobs.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
