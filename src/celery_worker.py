@@ -884,6 +884,8 @@ def cluster_extension_by_latest_trends_worker(self):
        
         for request in critical_port_pairs:
             asyncio.run(update_cluster_extension_by_latest_trends(request))
-        
     except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
             pass
+        else:
+            raise self.retry(exc= exc) 
