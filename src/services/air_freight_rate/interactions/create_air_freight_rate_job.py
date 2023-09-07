@@ -23,7 +23,7 @@ def execute_transaction_code(request, source):
         'airline_id' : request.get('airline_id'),
         'service_provider_id' : request.get('service_provider_id'),
         'commodity' : request.get('commodity'),
-        'source' : [source],
+        'sources' : [source],
         'rate_type' : request.get('rate_type'),
         'rate_id' : request.get('rate_id'),
         'commodity_type': request.get('commodity_type'),

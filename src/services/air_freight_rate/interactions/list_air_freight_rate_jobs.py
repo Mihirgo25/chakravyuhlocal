@@ -97,8 +97,7 @@ def list_air_freight_rate_jobs(
             statistics = build_weekly_details(query, statistics)
 
         # remaining filters
-        if filters.get("source"):
-            query, dynamic_statistics = get_statistics(
+        query, dynamic_statistics = get_statistics(
                 query, filters, dynamic_statistics
             )
 
