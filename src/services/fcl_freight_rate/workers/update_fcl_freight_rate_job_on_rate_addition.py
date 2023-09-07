@@ -3,6 +3,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_jobs_mapping import (
     FclFreightRateJobsMapping,
 )
 from database.rails_db import get_user
+from fastapi.encoders import jsonable_encoder
+
 
 
 def update_fcl_freight_rate_job_on_rate_addition(request, id):
@@ -26,17 +28,17 @@ def update_fcl_freight_rate_job_on_rate_addition(request, id):
         (getattr(FclFreightRateJobs, key) == value) for key, value in params.items()
     ]
     conditions.append(FclFreightRateJobs.status << ["pending", "backlog"])
-    affected_ids = [
+    affected_ids = jsonable_encoder([
         job.id
         for job in FclFreightRateJobs.select(FclFreightRateJobs.id).where(*conditions)
-    ]
+    ])
+
     fcl_freight_rate_job = (
         FclFreightRateJobs.update(update_params).where(*conditions).execute()
     )
     if fcl_freight_rate_job:
         for affected_id in affected_ids:
-            set_jobs_mapping(affected_id, request, id)
-
+            set_jobs_mapping(affected_id, jsonable_encoder(request), str(id))
     return {"ids": affected_ids}
 
 
@@ -45,6 +47,6 @@ def set_jobs_mapping(jobs_id, data, id):
         source_id=id,
         job_id=jobs_id,
         performed_by_id=data.get("performed_by_id"),
-        data=data.get("data"),
+        data=data,
     )
     return audit_id
