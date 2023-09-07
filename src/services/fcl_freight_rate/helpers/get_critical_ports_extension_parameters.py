@@ -26,7 +26,7 @@ def fetch_all_base_port_ids():
 
 def get_critical_ports_extension_parameters():
     all_base_port_ids = fetch_all_base_port_ids()
-    start_time = datetime.now()
+    start_time = datetime.now() - timedelta(hours=6)
 
     base_port_query = (
         FclFreightRate.select(
@@ -34,7 +34,7 @@ def get_critical_ports_extension_parameters():
         )
         .distinct()
         .where(
-            FclFreightRate.updated_at > start_time - timedelta(hours=6),
+            FclFreightRate.updated_at > start_time,
             (
                 (FclFreightRate.origin_port_id << CRITICAL_PORTS_INDIA_VIETNAM)
                 & (FclFreightRate.destination_port_id << all_base_port_ids)
