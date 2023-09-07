@@ -7,7 +7,7 @@ current_processing_key = "spot_search_count_fcl"
 
 
 def build_init_key(requirements):
-    init_key = f'{str(requirements["origin_port_id"])}:{str(requirements["destination_port_id"])}:{str(requirements["container_size"])}:{str(requirements["container_type"])}:{str(requirements["commodity"] or "")}'
+    init_key = f'{str(requirements.get("origin_port_id") or "")}:{str(requirements.get("origin_main_port_id") or "")}:{str(requirements.get("destination_port_id") or "")}:{str(requirements.get("destination_main_port_id") or "")}:{str(requirements.get("shipping_line_id") or "")}:{str(requirements.get("service_provider_id") or "")}:{str(requirements.get("container_size") or  "")}:{str(requirements.get("container_type") or "")}:{str(requirements.get("commodity") or "")}:{str(requirements.get("rate_type") or "")}'
     return init_key
 
 

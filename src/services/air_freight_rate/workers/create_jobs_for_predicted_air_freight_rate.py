@@ -7,7 +7,7 @@ current_processing_key = "spot_search_count_air"
 
 
 def build_init_key(requirements):
-    init_key = f'{str(requirements.get("origin_airport_id"))}:{str(requirements["destination_airport_id"] or "")}:{str(requirements["airline_id"])}:{str(requirements["commodity"])}:{str(requirements["commodity_type"] or "")}:{str(requirements.get("commodity_sub_type") or "")}::{str(requirements.get("stacking_type") or "")}:{str(requirements.get("operation_type") or "")}'
+    init_key = f'{str(requirements.get("origin_airport_id") or "")}:{str(requirements.get("destination_airport_id") or "")}:{str(requirements.get("airline_id") or "")}:{str(requirements.get("service_provider_id") or "")}:{str(requirements.get("commodity") or "")}:{str(requirements.get("rate_type") or "")}:{str(requirements.get("commodity_type") or "")}:{str(requirements.get("commodity_sub_type") or "")}:{str(requirements.get("stacking_type") or "")}:{str(requirements.get("operation_type") or "")}'
     return init_key
 
 
