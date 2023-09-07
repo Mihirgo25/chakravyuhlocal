@@ -159,7 +159,7 @@ celery.conf.beat_schedule = {
     },
     'cluster_extension_by_latest_trends_worker':{
         'task': 'celery_worker.cluster_extension_by_latest_trends_worker',
-        'schedule': crontab(hour='*/6'),
+        'schedule': crontab(minute=0, hour='*/6'),
         'options': {'queue': 'fcl_freight_rate'}
     },
     'cache_data_worker':{
@@ -884,6 +884,8 @@ def cluster_extension_by_latest_trends_worker(self):
        
         for request in critical_port_pairs:
             asyncio.run(update_cluster_extension_by_latest_trends(request))
-        
     except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
             pass
+        else:
+            raise self.retry(exc= exc) 
