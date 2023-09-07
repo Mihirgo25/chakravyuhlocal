@@ -50,7 +50,7 @@ def format_charts(charts, mode=None):
 def format_response(response, needed_modes):
     def get_average_for_mode(response, day, mode):
         valid_values = [
-            entry["average_price"] for entry in response if entry["mode"] == mode
+            entry["average_price"] for entry in response if entry["mode"] == mode and entry["day"] == day
         ]
         if not valid_values:
             return None

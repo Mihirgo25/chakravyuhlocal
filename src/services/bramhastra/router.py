@@ -77,6 +77,7 @@ from fastapi import HTTPException
 import sentry_sdk
 from datetime import datetime, timedelta
 from libs.rate_limiter import rate_limiter
+from services.bramhastra.enums import FclParentMode, AirSources
 
 bramhastra = APIRouter()
 
@@ -455,11 +456,12 @@ def get_air_freight_rate_trends_api(
 
 
 @rate_limiter.add(max_requests=10, time_window=3600)
-@bramhastra.get("/get_air_freight_rate_trends_for_public", tags = ["Public"])
+@bramhastra.get("/get_fcl_freight_rate_trends_for_public", tags=["Public"])
 def get_fcl_freight_rate_trends_api(
     filters: Annotated[Json, Query()] = {},
 ):
-    filters["end_date"] = datetime.now() - timedelta(days=15)
+    filters["end_date"] = (datetime.utcnow() - timedelta(days=15)).date().isoformat()
+    filters["mode"] = FclParentMode.supply.value
 
     try:
         response = get_fcl_freight_rate_trends(filters)
@@ -474,11 +476,12 @@ def get_fcl_freight_rate_trends_api(
 
 
 @rate_limiter.add(max_requests=10, time_window=3600)
-@bramhastra.get("/get_air_freight_rate_trends_for_public", tags = ["Public"])
+@bramhastra.get("/get_air_freight_rate_trends_for_public", tags=["Public"], summary = "gets air freight rates trend which are manual")
 def get_air_freight_rate_trends_api(
     filters: Annotated[Json, Query()] = {},
 ):
-    filters["end_date"] = datetime.now() - timedelta(days=15)
+    filters["end_date"] = (datetime.utcnow() - timedelta(days=15)).date().isoformat()
+    filters["source"] = AirSources.manual.value
 
     try:
         response = get_air_freight_rate_trends(filters)
