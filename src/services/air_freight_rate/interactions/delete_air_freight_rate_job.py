@@ -2,6 +2,7 @@ from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
 from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobsMapping
 from database.rails_db import get_user
+from datetime import datetime
 
 
 POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_in_rate']
@@ -9,9 +10,9 @@ POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_
 
 def delete_air_freight_rate_job(request):
     if request.get('closing_remarks') and request.get('closing_remarks') in POSSIBLE_CLOSING_REMARKS:
-        update_params = {'status':'aborted', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0]}
+        update_params = {'status':'aborted', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now()}
     else:
-        update_params = {'status':'completed', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0]}
+        update_params = {'status':'completed', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now()}
 
     air_freight_rate_job = AirFreightRateJobs.update(update_params).where(AirFreightRateJobs.id == request['id'], AirFreightRateJobs.status.not_in(['completed', 'aborted'])).execute()
     if air_freight_rate_job:

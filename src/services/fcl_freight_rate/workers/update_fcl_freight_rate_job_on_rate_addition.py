@@ -2,6 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRat
 from services.fcl_freight_rate.models.fcl_freight_rate_jobs_mapping import (
     FclFreightRateJobsMapping,
 )
+from datetime import datetime
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
 
@@ -12,6 +13,7 @@ def update_fcl_freight_rate_job_on_rate_addition(request, id):
         "status": "completed",
         "closed_by_id": request.get("performed_by_id"),
         "closed_by": get_user(request.get("performed_by_id"))[0],
+        "updated_at": datetime.now()
     }
 
     params = {

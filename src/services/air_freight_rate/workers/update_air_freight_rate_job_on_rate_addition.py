@@ -4,6 +4,8 @@ from services.air_freight_rate.models.air_freight_rate_jobs_mapping import (
 )
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
+from datetime import datetime
+
 
 
 
@@ -12,6 +14,7 @@ def update_air_freight_rate_job_on_rate_addition(request, id):
         "status": "completed",
         "closed_by_id": request.get("performed_by_id"),
         "closed_by": get_user(request.get("performed_by_id"))[0],
+        "updated_at": datetime.now()
     }
     params = {
         "origin_airport_id": request.get("origin_airport_id"),
