@@ -25,7 +25,6 @@ def execute_transaction_code(request, source):
         'commodity' : request.get('commodity'),
         'sources' : [source],
         'rate_type' : request.get('rate_type'),
-        'rate_id' : request.get('rate_id'),
         'commodity_type': request.get('commodity_type'),
         'commodity_sub_type': request.get('commodity_sub_type'),
         'operation_type': request.get('operation_type'),

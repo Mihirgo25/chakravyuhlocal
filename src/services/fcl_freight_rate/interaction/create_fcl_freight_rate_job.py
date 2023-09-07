@@ -15,7 +15,9 @@ def execute_transaction_code(request, source):
     request = jsonable_encoder(request)
     params = {
         'origin_port_id' : request.get('origin_port_id'),
+        'origin_main_port_id' : request.get('origin_main_port_id'),
         'destination_port_id' : request.get('destination_port_id'),
+        'destination_main_port_id' : request.get('destination_main_port_id'),
         'shipping_line_id' : request.get('shipping_line_id'),
         'service_provider_id' : request.get('service_provider_id'),
         'container_size' : request.get('container_size'),
@@ -24,7 +26,7 @@ def execute_transaction_code(request, source):
         'sources' : [source],
         'rate_type' : request.get('rate_type'),
     }
-    init_key = f'{str(params.get("origin_port_id"))}:{str(params.get("destination_port_id") or "")}:{str(params.get("shipping_line_id"))}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size"))}:{str(params.get("container_type"))}:{str(params.get("commodity"))}:{str(params.get("rate_type"))}'
+    init_key = f'{str(params.get("origin_port_id"))}:{str(params.get("origin_main_port_id"))}:{str(params.get("destination_port_id") or "")}::{str(params.get("destination_main_port_id"))}:{str(params.get("shipping_line_id"))}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size"))}:{str(params.get("container_type"))}:{str(params.get("commodity"))}:{str(params.get("rate_type"))}'
     fcl_freight_rate_job = FclFreightRateJobs.select().where(FclFreightRateJobs.init_key == init_key, FclFreightRateJobs.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
