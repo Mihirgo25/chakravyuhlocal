@@ -193,6 +193,8 @@ def send_feedback_delete_stats(obj):
                     FclFreightRateFeedback.status,
                     FclFreightRateFeedback.closed_by_id,
                     FclFreightRateFeedback.closing_remarks,
+                    FclFreightRateFeedback.fcl_freight_rate_id,
+                    FclFreightRateFeedback.validity_id
                 ],
             )
         )

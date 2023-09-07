@@ -1,10 +1,13 @@
 from configs.env import DEFAULT_USER_ID
+from datetime import datetime, timedelta
 ACTION_NAMES_FOR_SOURCES = {
-    "flash_booking": "extend_freight_rate"
+    "flash_booking": "extend_freight_rate",
+    "cluster_extension_worker": "add_freight_rate_markup",
 }
 
 def rate_extension_via_bulk_operation(request):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
+
     source = request.get("source")
     if source in ACTION_NAMES_FOR_SOURCES:
         bulk_operation_params = eval("get_"+ACTION_NAMES_FOR_SOURCES[source]+"_params"+"(request)")
@@ -36,5 +39,31 @@ def get_extend_freight_rate_params(request):
     params["procured_by_id"] = DEFAULT_USER_ID
     params["sourced_by_id"] = DEFAULT_USER_ID
     params["extend_freight_rate"] = data
+    
+    return params
+
+def get_add_freight_rate_markup_params(request):
+    data = {}
+    data["filters"] = request.get('filters') or {}
+    data["line_item_code"] = "BAS"
+    data["tag"] = "trend_GRI"
+    data["markup_type"] = "percent"
+    data["markup"] = request.get("markup")
+    data["markup_currency"] = "USD"
+    data["validity_start"] = datetime.now() - timedelta(days=3)
+    data["validity_end"] = datetime.now() + timedelta(days=60)
+    data["max_increase_markup"] = request.get("max_increase_markup")
+    data["min_decrease_markup"] = request.get("min_decrease_markup")
+    data["affect_market_price"] = False
+    data["rate_sheet_serial_id"] = None
+    data["apply_to_extended_rates"] = False
+    data["rates_greater_than_price"] = None
+    data["rates_less_than_price"] = None
+    params = {}
+    params["performed_by_type"] = "agent"
+    params["performed_by_id"] = DEFAULT_USER_ID
+    params["procured_by_id"] = DEFAULT_USER_ID
+    params["sourced_by_id"] = DEFAULT_USER_ID
+    params["add_freight_rate_markup"] = data
     
     return params

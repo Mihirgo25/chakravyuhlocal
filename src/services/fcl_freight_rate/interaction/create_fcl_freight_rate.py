@@ -12,6 +12,7 @@ from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+import sentry_sdk
 
 def add_rate_properties(request,freight_id):
     request["value_props"] = request.get("value_props") or DEFAULT_VALUE_PROPS
@@ -65,8 +66,12 @@ def create_fcl_freight_rate_data(request):
     # origin_port_id = str(request.get("origin_port_id"))
     # query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
     # db.execute_sql(query)
-    with db.atomic():
-      return create_fcl_freight_rate(request)
+    with db.atomic() as transaction:
+        try:
+            return create_fcl_freight_rate(request)
+        except:
+            transaction.rollback()
+  
 
 def create_fcl_freight_rate(request):
     from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay, update_fcl_freight_rate_feedback_in_delay

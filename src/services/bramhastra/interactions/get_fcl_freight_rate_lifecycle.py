@@ -5,6 +5,17 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 )
 from datetime import date, timedelta, datetime
 import math
+from services.bramhastra.enums import FclModes
+from services.bramhastra.models.fcl_freight_rate_statistic import (
+    FclFreightRateStatistic,
+)
+from services.bramhastra.models.fcl_freight_rate_request_statistics import (
+    FclFreightRateRequestStatistic,
+)
+from services.bramhastra.interactions.list_fcl_freight_rate_request_statistics import (
+    get_direct_indirect_filters as get_direct_indirect_filters_for_rate_request,
+)
+import concurrent.futures
 
 POSSIBLE_DIRECT_FILTERS = {
     "origin_port_id",
@@ -42,7 +53,10 @@ def get_direct_indirect_filters(filters):
 
     for key, value in filters.items():
         if key in POSSIBLE_DIRECT_FILTERS and value:
-            where.append(f"{key} = %({key})s")
+            if isinstance(value, str):
+                where.append(f"{key} = %({key})s")
+            elif isinstance(value, list):
+                where.append(f"{key} IN %({key})s")
         if key in POSSIBLE_INDIRECT_FILTERS and value:
             eval(f"get_{key}_filter(where)")
 
@@ -61,95 +75,90 @@ async def get_fcl_freight_rate_lifecycle(filters):
 
     mode_wise_rate_count = await get_mode_wise_rate_count(filters.copy(), where)
 
-    search_to_book_statistics = await get_search_to_book_and_feedback_statistics(
-        filters.copy(), where
-    )
-
-    missing_rates_statistics = await get_missing_rates(filters.copy(), where)
-
-    stale_rate_statistics = await get_stale_rate_statistics(filters.copy(), where)
+    lifecycle_statistics = await get_lifecycle_statistics(filters.copy(), where)
 
     statistics = [
         [
             {
                 "action_type": "checkout",
-                "rates_count": search_to_book_statistics["checkout"],
+                "rates_count": lifecycle_statistics["checkout"],
                 "drop": filter_out_of_range_value(
-                    search_to_book_statistics["checkout_percentage"]
+                    lifecycle_statistics["checkout_percentage"]
                 ),
             },
             {
                 "action_type": "booking_confirm",
-                "rates_count": search_to_book_statistics["bookings_created_count"],
+                "rates_count": lifecycle_statistics["booking_confirm"],
                 "drop": filter_out_of_range_value(
-                    search_to_book_statistics["confirmed_booking_percentage"]
+                    lifecycle_statistics["booking_confirm_percentage"]
                 ),
             },
             {
                 "action_type": "revenue_desk",
-                "rates_count": search_to_book_statistics["revenue_desk_visit"],
+                "rates_count": lifecycle_statistics["revenue_desk_visit"],
                 "drop": filter_out_of_range_value(
-                    search_to_book_statistics["revenue_desk_visit_percentage"]
+                    lifecycle_statistics["revenue_desk_visit_percentage"]
                 ),
             },
             {
                 "action_type": "so1",
-                "rates_count": search_to_book_statistics["so1_visit"],
+                "rates_count": lifecycle_statistics["so1_visit"],
                 "drop": filter_out_of_range_value(
-                    search_to_book_statistics["so1_visit_percentage"]
+                    lifecycle_statistics["so1_visit_percentage"]
                 ),
             },
         ],
         [
             {
                 "action_type": "missing_rates",
-                "rates_count": missing_rates_statistics["missing_rates"],
+                "rates_count": lifecycle_statistics["missing_rates"],
                 "drop": filter_out_of_range_value(
-                    missing_rates_statistics["missing_rates_percentage"]
+                    lifecycle_statistics["missing_rates_percentage"]
                 ),
             },
             {
                 "action_type": "rates_triggered",
-                "rates_count": missing_rates_statistics["rate_reverted"],
+                "rates_count": lifecycle_statistics["missing_rates_reverted"],
                 "drop": filter_out_of_range_value(
-                    missing_rates_statistics["rate_reverted_percentage"]
+                    lifecycle_statistics["missing_rates_reverted_percentage"]
                 ),
             },
         ],
         [
             {
                 "action_type": "dislike",
-                "rates_count": search_to_book_statistics["dislikes"],
+                "rates_count": lifecycle_statistics["dislikes"],
                 "drop": filter_out_of_range_value(
-                    search_to_book_statistics["dislikes_percentage"]
+                    lifecycle_statistics["dislikes_percentage"]
                 ),
             },
             {
                 "action_type": "feedback_received",
-                "rates_count": search_to_book_statistics["feedback_recieved"],
+                "rates_count": lifecycle_statistics["feedback_recieved"],
                 "drop": filter_out_of_range_value(
-                    search_to_book_statistics["feedback_recieved_percentage"]
+                    lifecycle_statistics["feedback_recieved_percentage"]
                 ),
             },
             {
                 "action_type": "rates_reverted",
-                "rates_count": search_to_book_statistics["dislikes_rate_reverted"],
+                "rates_count": lifecycle_statistics["dislikes_rates_reverted"],
                 "drop": filter_out_of_range_value(
-                    search_to_book_statistics["dislikes_rate_reverted_percentage"]
+                    lifecycle_statistics["dislikes_rates_reverted_percentage"]
                 ),
             },
         ],
         [
             {
                 "action_type": "idle_rates",
-                "rates_count": stale_rate_statistics["idle_rates"],
+                "rates_count": lifecycle_statistics["idle_rates"],
+                "drop": lifecycle_statistics["idle_rates_percentage"],
             },
         ],
     ]
 
     return dict(
         mode_wise_rate_count=mode_wise_rate_count,
-        searches=search_to_book_statistics["spot_search"],
+        searches=lifecycle_statistics["spot_search"],
         cards=statistics,
     )
 
@@ -158,7 +167,7 @@ async def get_stale_rate_statistics(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT count(DISTINCT rate_id) as idle_rates FROM brahmastra.fcl_freight_rate_statistics WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""
+        f"""SELECT count(DISTINCT rate_id) as idle_rates FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""
     ]
 
     if where:
@@ -169,66 +178,191 @@ async def get_stale_rate_statistics(filters, where):
         return charts[0]
 
 
-async def get_missing_rates(filters, rate_where):
-    clickhouse = ClickHouse()
-
-    where = get_direct_indirect_filters(filters)
-
-    query1 = [
-        """WITH spot_search AS (SELECT SUM(spot_search_count) AS count FROM brahmastra.fcl_freight_rate_statistics"""
+async def get_lifecycle_statistics(filters, where):
+    rates = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE is_deleted = false
+        """
     ]
 
-    query2 = [
-        """),missing_rates AS (SELECT count(id) AS count FROM brahmastra.fcl_freight_rate_request_statistics WHERE source = 'spot_search'"""
+    spot_search = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE spot_search_count > 0
+        """
     ]
-    query3 = [
-        """),rate_reverted AS (SELECT count(id) AS count FROM brahmastra.fcl_freight_rate_request_statistics WHERE is_rate_reverted = true """
+
+    checkout = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE checkout_count > 0
+        """
     ]
 
-    query4 = """) SELECT missing_rates.count as missing_rates,(1-missing_rates/spot_search.count)*100 as missing_rates_percentage,rate_reverted.count as rate_reverted,(1 - rate_reverted.count/missing_rates)*100 as rate_reverted_percentage FROM missing_rates, rate_reverted, spot_search"""
+    revenue_desk_visit = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE revenue_desk_visit_count > 0
+        """
+    ]
 
-    if where:
-        query1.append(f"WHERE {rate_where}")
-        query2.append(f"AND {where}")
-        query3.append(f"AND {where}")
+    so1_visit = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE so1_visit_count > 0
+        """
+    ]
 
-    if missing_rates := jsonable_encoder(
-        clickhouse.execute(
-            "".join([" ".join(query1), " ".join(query2), " ".join(query3), query4]),
-            filters,
-        )
-    ):
-        return missing_rates[0]
+    booking_confirm = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE shipment_confirmed_by_importer_exporter_count > 0
+        """
+    ]
 
+    dislikes = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE dislikes_count > 0
+        """
+    ]
 
-async def get_search_to_book_and_feedback_statistics(filters, where):
-    clickhouse = ClickHouse()
-    queries = [
-        """SELECT SUM(spot_search_count) as spot_search,
-        SUM(checkout_count) as checkout,
-        FLOOR((1-SUM(checkout_count)/spot_search),2)*100 AS checkout_percentage,
-        SUM(bookings_created) AS bookings_created_count,
-        FLOOR((1-SUM(bookings_created)/checkout),2)*100 AS confirmed_booking_percentage,
-        SUM(revenue_desk_visit_count) AS revenue_desk_visit,
-        FLOOR((1-SUM(revenue_desk_visit_count)/SUM(bookings_created)),2)*100 AS revenue_desk_visit_percentage,
-        SUM(so1_visit_count) AS so1_visit,
-        FLOOR((1-SUM(so1_visit_count)/revenue_desk_visit),2)*100 AS so1_visit_percentage,
-        SUM(dislikes_count) as dislikes,
-        FLOOR((1-SUM(dislikes_count)/spot_search),2)*100 AS dislikes_percentage,
-        SUM(feedback_recieved_count) AS feedback_recieved,
-        FLOOR((1-SUM(feedback_recieved_count)/dislikes),2)*100 AS feedback_recieved_percentage,
-        SUM(dislikes_rate_reverted_count) as dislikes_rate_reverted,
-        FLOOR((1-SUM(dislikes_rate_reverted_count)/feedback_recieved),2)*100 AS dislikes_rate_reverted_percentage
-        FROM brahmastra.fcl_freight_rate_statistics
+    feedback_recieved = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE feedback_recieved_count > 0
+        """
+    ]
+
+    dislikes_rates_reverted = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count from brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE source = '{FclModes.missing_rate.value}'
+        """
+    ]
+
+    missing_rates = [
+        f"""
+       SELECT COUNT(DISTINCT rate_request_id) AS count from brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_rate_reverted = false
+       """
+    ]
+
+    missing_rates_reverted = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count from brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE source = '{FclModes.missing_rate.value}'
+        """
+    ]
+
+    idle_rates = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE spot_search_count = 0 AND checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0
         """
     ]
 
     if where:
-        queries.append(" WHERE ")
-        queries.append(where)
+        rates.append(f"AND {where}")
+        spot_search.append(f"AND {where}")
+        checkout.append(f"AND {where}")
+        booking_confirm.append(f"AND {where}")
+        revenue_desk_visit.append(f"AND {where}")
+        so1_visit.append(f"AND {where}")
+        dislikes.append(f"AND {where}")
+        feedback_recieved.append(f"AND {where}")
+        dislikes_rates_reverted.append(f"AND {where}")
+        missing_rates_reverted.append(f"AND {where}")
+        idle_rates.append(f"AND {where}")
 
-    if charts := jsonable_encoder(clickhouse.execute(" ".join(queries), filters)):
-        return charts[0]
+    missing_rates_filter = filters.copy()
+
+    missing_rates_where = get_direct_indirect_filters_for_rate_request(
+        missing_rates_filter
+    )
+
+    if missing_rates_where:
+        missing_rates.append(f"AND {missing_rates_where}")
+
+    results = []
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [
+            executor.submit(ClickHouse().execute, " ".join(rates), filters),
+            executor.submit(ClickHouse().execute, " ".join(spot_search), filters),
+            executor.submit(ClickHouse().execute, " ".join(checkout), filters),
+            executor.submit(ClickHouse().execute, " ".join(booking_confirm), filters),
+            executor.submit(
+                ClickHouse().execute, " ".join(revenue_desk_visit), filters
+            ),
+            executor.submit(ClickHouse().execute, " ".join(so1_visit), filters),
+            executor.submit(ClickHouse().execute, " ".join(dislikes), filters),
+            executor.submit(ClickHouse().execute, " ".join(feedback_recieved), filters),
+            executor.submit(
+                ClickHouse().execute, " ".join(dislikes_rates_reverted), filters
+            ),
+            executor.submit(ClickHouse().execute, " ".join(missing_rates), filters),
+            executor.submit(
+                ClickHouse().execute, " ".join(missing_rates_reverted), filters
+            ),
+            executor.submit(ClickHouse().execute, " ".join(idle_rates), filters),
+        ]
+        for i in range(0, len(futures)):
+            results.append(futures[i].result()[0])
+
+    rates = results[0]
+    spot_search = results[1]
+    checkout = results[2]
+    booking_confirm = results[3]
+    revenue_desk_visit = results[4]
+    so1_visit = results[5]
+    dislikes = results[6]
+    feedback_recieved = results[7]
+    dislikes_rates_reverted = results[8]
+    missing_rates = results[9]
+    missing_rates_reverted = results[10]
+    idle_rates = results[11]
+
+    lifecycle_statistics = {
+        "rates": rates["count"],
+        "spot_search": spot_search["count"],
+        "spot_search_percentage": (1 - (spot_search["count"] / (rates["count"] or 1)))
+        * 100,
+        "checkout": checkout["count"],
+        "checkout_percentage": (1 - (checkout["count"] / (spot_search["count"] or 1)))
+        * 100,
+        "booking_confirm": booking_confirm["count"],
+        "booking_confirm_percentage": (
+            1 - (booking_confirm["count"] / (checkout["count"] or 1))
+        )
+        * 100,
+        "revenue_desk_visit": revenue_desk_visit["count"],
+        "revenue_desk_visit_percentage": (
+            1 - (revenue_desk_visit["count"] / (booking_confirm["count"] or 1))
+        )
+        * 100,
+        "so1_visit": so1_visit["count"],
+        "so1_visit_percentage": (
+            1 - (so1_visit["count"] / (revenue_desk_visit["count"] or 1))
+        )
+        * 100,
+        "dislikes": dislikes["count"],
+        "dislikes_percentage": (1 - (dislikes["count"] / (spot_search["count"] or 1)))
+        * 100,
+        "feedback_recieved": feedback_recieved["count"],
+        "feedback_recieved_percentage": (
+            1 - (feedback_recieved["count"] / (dislikes["count"] or 1))
+        )
+        * 100,
+        "dislikes_rates_reverted": dislikes_rates_reverted["count"],
+        "dislikes_rates_reverted_percentage": (
+            1 - (dislikes_rates_reverted["count"] / (spot_search["count"] or 1))
+        )
+        * 100,
+        "missing_rates": missing_rates["count"],
+        "missing_rates_percentage": (
+            1 - (missing_rates["count"] / (spot_search["count"] or 1))
+        )
+        * 100,
+        "missing_rates_reverted": missing_rates_reverted["count"],
+        "missing_rates_reverted_percentage": (
+            1 - (missing_rates_reverted["count"] / (missing_rates["count"] or 1))
+        )
+        * 100,
+        "idle_rates": idle_rates["count"],
+        "idle_rates_percentage": (1 - (idle_rates["count"] / rates["count"] or 1))
+        * 100,
+    }
+    return lifecycle_statistics
 
 
 async def get_mode_wise_rate_count(filters, where):

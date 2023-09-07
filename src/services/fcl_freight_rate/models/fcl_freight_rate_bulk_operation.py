@@ -137,9 +137,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if data['line_item_code'] not in charge_codes:
             raise HTTPException(status_code=400, detail='line_item_code is invalid')
-        
-        if str(data['markup_type']).lower() == 'percent':
-            return
+
         
         data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
@@ -567,6 +565,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
+        affect_market_price = data.get('affect_market_price', True)
         fcl_freight_rates = list(batch_query.dicts())
         
         validity_start = datetime.strptime(data['validity_start'], '%Y-%m-%d')
@@ -604,6 +603,10 @@ class FclFreightRateBulkOperation(BaseModel):
                 
                 if data['markup_type'].lower() == 'percent':
                     markup = float(data['markup'] * line_item['price']) / 100 
+                    if data.get('min_decrease_markup') and data.get('max_increase_markup'):
+                        if line_item['currency'] != data['markup_currency']:
+                            markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'] , 'to_currency': line_item['currency'] , 'price': markup}).get('price')
+                        markup = max(data['min_decrease_markup'], min(markup, data['max_increase_markup']))
                 else:
                     markup = data['markup']
                 
@@ -616,7 +619,8 @@ class FclFreightRateBulkOperation(BaseModel):
                     line_item['currency'] = data['markup_currency']
                 else:
                     line_item['price'] = line_item['price'] + markup
-                    line_item['market_price'] = line_item['price'] if not line_item.get('market_price') else line_item['market_price'] + markup
+                    if affect_market_price:
+                        line_item['market_price'] = line_item['price'] if not line_item.get('market_price') else line_item['market_price'] + markup
                     
                 
                 validity_object['line_items'].append(line_item)
@@ -716,7 +720,7 @@ class FclFreightRateBulkOperation(BaseModel):
         total_count = query.count()
         count = 0
         offset = 0
-        
+
         while(offset < total_count):
             batch_query = query.offset(offset).limit(BATCH_SIZE)
             offset += BATCH_SIZE

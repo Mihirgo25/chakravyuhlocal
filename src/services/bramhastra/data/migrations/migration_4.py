@@ -15,10 +15,17 @@ from services.bramhastra.database.dictionaries.country_rate_count import (
     CountryRateCount,
 )
 from services.bramhastra.models.fcl_freight_rate_request_statistics import FclFreightRateRequestStatistic
+from services.bramhastra.models.fcl_freight_rate_audit_statistic import FclFreightRateAuditStatistic
+from database.db_session import db
 
 
 def main():
     print("running migration")
+    
+    try:
+        db.create_tables([FclFreightRateAuditStatistic])
+    except Exception:
+        pass
 
     click = ClickHouse()
 
@@ -29,7 +36,7 @@ def main():
     from database.create_clicks import Clicks
 
     Clicks(
-        dictionaries = [CountryRateCount],models=[AirFreightRateStatistic, FclFreightRateStatistic,FclFreightRateRequestStatistic], ignore_oltp=True
+        dictionaries = [CountryRateCount],models=[FclFreightRateAuditStatistic,AirFreightRateStatistic, FclFreightRateStatistic,FclFreightRateRequestStatistic], ignore_oltp=True
     ).create()
 
     WorkerLog.delete().execute()
@@ -58,13 +65,22 @@ def execute_fcl(click):
     click.execute(
         f"INSERT INTO brahmastra.{FclFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE rate_type != 'cogo_assured'"
     )
+    click.execute(
+        f"INSERT INTO brahmastra.stale_{FclFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE rate_type != 'cogo_assured'"
+    )
     print("done cogoassured")
     click.execute(
         f"INSERT INTO brahmastra.{FclFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE rate_type = 'cogo_assured' AND origin_country_id = '{INDIAN_LOCATION_ID}'"
     )
+    click.execute(
+        f"INSERT INTO brahmastra.stale_{FclFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE rate_type = 'cogo_assured' AND origin_country_id = '{INDIAN_LOCATION_ID}'"
+    )
     print("done cogo assured origin india")
     click.execute(
         f"INSERT INTO brahmastra.{FclFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE rate_type = 'cogo_assured' AND origin_country_id != '{INDIAN_LOCATION_ID}'"
+    )
+    click.execute(
+        f"INSERT INTO brahmastra.stale_{FclFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE rate_type = 'cogo_assured' AND origin_country_id != '{INDIAN_LOCATION_ID}'"
     )
     print("done cogo assured non origin india")
 
@@ -88,6 +104,10 @@ def execute_air(click):
     for source in ["manual", "predicted", "rate_extension", "rate_sheet"]:
         click.execute(
             f"INSERT INTO brahmastra.{AirFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{AirFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE source = %(source)s",
+            {"source": source}
+        )
+        click.execute(
+            f"INSERT INTO brahmastra.stale_{AirFreightRateStatistic._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{AirFreightRateStatistic._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}') WHERE source = %(source)s",
             {"source": source}
         )
         print("done with source: ", source)
@@ -124,7 +144,7 @@ def execute_request(click):
 
     id = WorkerLog.create(**params)
     
-    print('rgtyhjgfesrdtfhgyj',id)
+    print(f'done with {FclFreightRateRequestStatistic._meta.table_name}',id)
 
 
 if __name__ == "__main__":
