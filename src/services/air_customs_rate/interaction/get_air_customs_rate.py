@@ -1,5 +1,4 @@
 from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
-from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def get_air_customs_rate(request):
     if not all_fields_present(request):
@@ -24,6 +23,6 @@ def find_object(request):
         AirCustomsRate.commodity == request.get('commodity'),
         AirCustomsRate.service_provider_id == request.get('service_provider_id'),
         AirCustomsRate.importer_exporter_id == request.get('importer_exporter_id'),
-        AirCustomsRate.rate_type == DEFAULT_RATE_TYPE
+        AirCustomsRate.rate_type == request.get('rate_type')
     ).first()
     return object

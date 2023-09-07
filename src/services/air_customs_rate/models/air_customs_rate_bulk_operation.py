@@ -15,6 +15,7 @@ from services.air_customs_rate.interaction.update_air_customs_rate import update
 from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 
 ACTION_NAMES = ['delete_rate', 'add_markup']
+BATCH_SIZE = 5000
 
 class BaseModel(Model):
     class Meta:
@@ -82,80 +83,92 @@ class AirCustomsRateBulkOperation(BaseModel):
         for customs_id in data:
             rate_ids.append(customs_id.get('air_customs_rate_id'))
 
-        customs_rate_data = AirCustomsRate.select().where(AirCustomsRate.id << rate_ids).dicts()
-        total_count = len(data)
+        customs_rate_query = AirCustomsRate.select().where(AirCustomsRate.id << rate_ids)
+        total_count = len(rate_ids)
+        offset = 0
+        
+        while(offset < total_count):
+            batch_query = customs_rate_query.offset(offset).limit(BATCH_SIZE)
+            offset += BATCH_SIZE
+            customs_rate_data = list(batch_query.dicts())
 
-        for custom_data in customs_rate_data:
-            count += 1
-            if AirCustomsRateAudit.get_or_none(bulk_operation_id = self.id, object_id = custom_data.get('id')):
+            for custom_data in customs_rate_data:
+                count += 1
+                if AirCustomsRateAudit.get_or_none(bulk_operation_id = self.id, object_id = custom_data.get('id')):
+                    self.progress = int((count * 100.0) / total_count)
+                    self.set_processed_percent_air_customs_bulk_operation(self.progress, self.id)
+                    continue
+
+                delete_air_customs_rate({
+                    'id': custom_data.get('id'),
+                    'performed_by_id': self.performed_by_id,
+                    'bulk_operation_id': self.id
+                })
+
                 self.progress = int((count * 100.0) / total_count)
                 self.set_processed_percent_air_customs_bulk_operation(self.progress, self.id)
-                continue
-
-            delete_air_customs_rate({
-                'id': custom_data.get('id'),
-                'performed_by_id': self.performed_by_id,
-                'bulk_operation_id': self.id
-            })
-
-            self.progress = int((count * 100.0) / total_count)
-            self.set_processed_percent_air_customs_bulk_operation(self.progress, self.id)
         self.save()
 
     def perform_add_markup_action(self, sourced_by_id, procured_by_id):
         data = self.data
         filters = (data.get('filters') or {}) | {'service_provider_id': self.service_provider_id, 'importer_exporter_present': False }
         
-        air_customs_rates = list_air_customs_rates(
+        air_customs_rates_query = list_air_customs_rates(
             filters = filters, 
             return_query = True, 
             page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
             )['list']
-        
-        total_count = len(air_customs_rates.dicts())
+
+        total_count = air_customs_rates_query.count()
+        offset = 0
         count = 0
 
-        for customs in air_customs_rates:
-            count += 1
+        while(offset < total_count):
+            batch_query = air_customs_rates_query.offset(offset).limit(BATCH_SIZE)
+            offset += BATCH_SIZE
+            air_customs_rates = list(batch_query.dicts())        
 
-            if AirCustomsRateAudit.get_or_none(bulk_operation_id = self.id, object_id = customs['id']):
-                self.progress = int((count * 100.0) / total_count)
-                self.set_processed_percent_air_customs_bulk_operation(self.progress, self.id)
-                continue
+            for customs in air_customs_rates:
+                count += 1
+
+                if AirCustomsRateAudit.get_or_none(bulk_operation_id = self.id, object_id = customs['id']):
+                    self.progress = int((count * 100.0) / total_count)
+                    self.set_processed_percent_air_customs_bulk_operation(self.progress, self.id)
+                    continue
             
-            line_items = [t for t in customs['line_items'] if t['code'] == data['line_item_code']]
+                line_items = [t for t in customs['line_items'] if t['code'] == data['line_item_code']]
 
-            if not line_items:
+                if not line_items:
+                    self.progress = int((count * 100.0) / total_count)
+                    self.set_processed_percent_air_customs_bulk_operation(self.progress, self.id)
+                    continue
+
+                customs['line_items'] = [t for t in customs['line_items'] if t not in line_items]
+
+                for line_item in line_items:
+                    if data['markup_type'].lower() == 'percent':
+                        markup = (data['markup'] * line_item['price']) / 100
+                    else:
+                        markup = data['markup']
+
+                    if data['markup_type'].lower() == 'net':
+                        markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
+
+                    line_item['price'] = line_item['price'] + markup
+                    if line_item['price'] < 0:
+                        line_item['price'] = 0 
+
+                    customs['line_items'].append(line_item)
+
+                update_air_customs_rate({
+                    'id': customs['id'],
+                    'performed_by_id': self.performed_by_id,
+                    'bulk_operation_id': self.id,
+                    'procured_by_id': procured_by_id,
+                    'sourced_by_id': sourced_by_id,
+                    'line_items': customs['line_items']
+                })
+
                 self.progress = int((count * 100.0) / total_count)
                 self.set_processed_percent_air_customs_bulk_operation(self.progress, self.id)
-                continue
-
-            customs['line_items'] = [t for t in customs['line_items'] if t not in line_items]
-
-            for line_item in line_items:
-                if data['markup_type'].lower() == 'percent':
-                    markup = (data['markup'] * line_item['price']) / 100
-                else:
-                    markup = data['markup']
-
-                if data['markup_type'].lower() == 'net':
-                    markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
-
-                line_item['price'] = line_item['price'] + markup
-                if line_item['price'] < 0:
-                    line_item['price'] = 0 
-
-                customs['line_items'].append(line_item)
-
-            update_air_customs_rate({
-                'id': customs['id'],
-                'performed_by_id': self.performed_by_id,
-                'bulk_operation_id': self.id,
-                'procured_by_id': procured_by_id,
-                'sourced_by_id': sourced_by_id,
-                'line_items': customs['line_items']
-            })
-
-            self.progress = int((count * 100.0) / total_count)
-            self.set_processed_percent_air_customs_bulk_operation(self.progress, self.id)
         self.save()

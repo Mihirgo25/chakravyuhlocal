@@ -25,6 +25,7 @@ csv_options = {
     ),
 }
 
+
 def append_in_final_csv(csv, row):
     list_opt = list(row.values())
     csv.writerow(list_opt)

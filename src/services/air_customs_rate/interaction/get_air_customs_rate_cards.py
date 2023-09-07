@@ -60,7 +60,7 @@ def build_response_list(query_results,request):
         response_object = build_response_object(result, request)
         if response_object:
             response_list.append(response_object)
-        return response_list
+    return response_list
 
 def build_response_object(result,request):
     source = 'spot_rates'
@@ -127,8 +127,8 @@ def get_chargeable_weight(request):
 def group_by(query):
     grouped_query_results = {}
     for result in query:
-        service_provider_id = result['service_provider_id']
-        if service_provider_id not in grouped_query_results:
-            grouped_query_results[service_provider_id] = []
-        grouped_query_results[service_provider_id].append(result)
+        key = f'{str(result["service_provider_id"] or "")}:{str(result["rate_type"])}'
+        if key not in grouped_query_results:
+            grouped_query_results[key] = []
+        grouped_query_results[key].append(result)
     return grouped_query_results
