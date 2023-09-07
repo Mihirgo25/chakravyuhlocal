@@ -3,15 +3,9 @@ from services.rate_sheet.interactions.validate_fcl_cfs_object import validate_fc
 from configs.fcl_cfs_rate_constants import FREE_DAYS_TYPES
 
 def process_fcl_cfs_cfs(params, converted_file, update):
+    valid_headers = ['location', 'trade_type', 'container_size', 'container_type', 'commodity', 'code', 'unit', 'price', 'currency', 'cargo_handling_type', 'weight_slab_lower_limit', 'weight_slab_upper_limit', 'weight_slab_price', 'weight_slab_currency', 'free_days_type', 'free_days_limit', 'free_days_lower_limit', 'free_days_upper_limit', 'free_days_price', 'free_days_currency', 'remark1', 'remark2', 'remark3']
     total_lines = 0
     original_path = get_original_file_path(converted_file)
-    with open(original_path, encoding='iso-8859-1') as file:
-        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
-        headers = next(reader)
-        for row in reader:
-            total_lines += 1
-    set_total_line(converted_file, total_lines)
-    last_line = get_current_processing_line(converted_file)
     rows = []
     params["rate_sheet_id"] = params["id"]
     rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
@@ -20,29 +14,63 @@ def process_fcl_cfs_cfs(params, converted_file, update):
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
-
+    file_path = original_path
     edit_file = open(get_file_path(converted_file), 'w')
-    with open(original_path, encoding='iso-8859-1') as file:
+    last_row = []
+    invalidated = False
+    with open(file_path, 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
+
+    with open(original_path, mode='rt', encoding=encoding) as file:
         csv_writer = csv.writer(edit_file)
-        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
-        if last_line == 0:
-            csv_writer.writerow(headers)
-        
-        input_file = csv.DictReader(open(original_path))
+        input_file = csv.DictReader(file)
+        headers = input_file.fieldnames
+
+        if len(set(valid_headers) & set(headers)) != len(valid_headers):
+            error_file = ['invalid header']
+            csv_writer.writerow(error_file)
+            invalidated = True
+
         for row in input_file:
+            total_lines += 1
+
+        set_total_line(converted_file, total_lines)
+        set_processed_percent(0, converted_file)
+        csv_writer.writerow(headers)
+        file.seek(0)
+        next(file)
+        is_previous_rate_valid = True
+        for row in input_file:
+            if invalidated:
+                break
             index += 1
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
+                continue
             for k, v in row.items():
                 if v == '':
                     row[k] = None
             row = row
-            last_line = get_current_processing_line(converted_file)
             present_field = ['location', 'trade_type', 'container_size', 'container_type', 'code', 'unit', 'price', 'currency', 'cargo_handling_type']
+
+            is_main_rate_row = False
+            if row['location']:
+                is_main_rate_row = True
             if valid_hash(row, present_field, None):
                 if rows:
-                    create_fcl_cfs_rate(
-                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, ''
-                    )
-                    set_current_processing_line(index, converted_file)
+                    last_row = list(row.values())
+                    if is_previous_rate_valid:
+                        create_fcl_cfs_rate(
+                            params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
+                        )
+                    else:
+                        is_previous_rate_valid = True
+                    set_current_processing_line(index-1, converted_file)
+                    percent = ((get_current_processing_line(converted_file) / total_lines)* 100)
+                    set_processed_percent(percent, params)
+                else:
+                    list_opt = list(row.values())
+                    csv_writer.writerow(list_opt)
                 rows = [row]
             elif rows and (valid_hash(
                 row, 
@@ -142,12 +170,30 @@ def process_fcl_cfs_cfs(params, converted_file, update):
                     ]
                 )):
                 rows.append(row)
-            if not rows:
-                return
-        create_fcl_cfs_rate(                    
-            params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, ''
-        )
-        set_current_processing_line(total_lines, converted_file)
+                list_opt = list(row.values())
+                csv_writer.writerow(list_opt)
+            else:
+                list_opt = []
+                if rows and is_previous_rate_valid and is_main_rate_row:
+                    last_row = list(row.values())
+                    create_fcl_cfs_rate(
+                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
+                    )
+                    set_current_processing_line(index-1, converted_file)
+                    percent=  ((get_current_processing_line(converted_file) / total_lines)* 100)
+                    set_processed_percent(percent, params)
+                else:
+                    list_opt = list(row.values())
+                list_opt.append('Invalid Row')
+                csv_writer.writerow(list_opt)
+                if is_previous_rate_valid:
+                    converted_file['rates_count']+=1
+                is_previous_rate_valid = False
+                rows = []
+    if rows and is_previous_rate_valid and not invalidated:
+        create_fcl_cfs_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
+    set_current_processing_line(total_lines, converted_file)
+
     try:
         valid = converted_file.get('valid_rates_count')
         total = converted_file.get('rates_count')
