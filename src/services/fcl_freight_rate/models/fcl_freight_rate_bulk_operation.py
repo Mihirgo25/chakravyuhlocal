@@ -1377,94 +1377,99 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_add_local_conditions_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
         total_affected_rates = 0
+        count = 0
+        page_count = 1
 
         filters = (data['filters'] or {})
-        page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+        total_count = list_fcl_freight_rate_locals(filters= filters, get_count = True)['list']
 
-        local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page_limit= page_limit)['list']
-        total_count = len(local_rates)
-        count = 0
+        while True:
+            batch_wise_local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page = page_count, page_limit = BATCH_SIZE)['list']
+            page_count += 1
 
-        for local in local_rates:
-            count += 1
+            if not batch_wise_local_rates:
+                break
 
-            if FclFreightRateAudit.get_or_none(bulk_operation_id = self.id,object_id = local['id']):
+            for local in batch_wise_local_rates:
+                count += 1
+
+                if FclFreightRateAudit.get_or_none(bulk_operation_id = self.id,object_id = local['id']):
+                    progress = int((count * 100.0) / total_count)
+                    self.set_progress_percent(progress)
+                    continue
+
+                line_items = data['line_items']
+                local_line_items = local['data']['line_items']
+                local_line_items_codes = []
+                for local_line_item in local_line_items:
+                    local_line_items_codes.append(local_line_item['code'])
+
+                line_items_codes = []
+                line_items_seperation = {}
+                new_line_items = []
+                for line_item in line_items:
+                    code = line_item["code"]
+                    if code in local_line_items_codes:
+                        line_items_codes.append(code)
+                        if not line_item["conditions"]:
+                            key = "Default_{}".format(code)
+                        else:
+                            key = code
+                        if key not in line_items_seperation:
+                            line_items_seperation[key] = []
+                        line_items_seperation[key].append(line_item)
+                    else:
+                        new_line_items.append({key: value for key, value in line_item.items() if key in ['code', 'unit', 'price', 'currency', 'conditions']})
+
+                matching_line_items = [t for t in local['data']['line_items'] if t['code'] in line_items_codes]
+                if  matching_line_items:
+                    completed_codes = []
+                    for line_item in line_items:
+                        local_line_items = local['data']['line_items']
+                        code = line_item["code"]
+                        if code not in completed_codes:
+
+                            if "Default_{}".format(code) in line_items_seperation and code not in line_items_seperation:
+                                matching_line_items = [t for t in local['data']['line_items'] if t['code'] == code]
+                                local_line_items = [item for item in local_line_items if item not in matching_line_items]
+                                for t in line_items_seperation[f"Default_{code}"]:
+                                    local_line_items.append(t)
+                                local['data']['line_items'] = local_line_items
+
+                            if "Default_{}".format(code) in line_items_seperation and code in line_items_seperation:
+                                matching_line_items = [t for t in local['data']['line_items'] if t['code'] == code]
+                                local_line_items = [item for item in local_line_items if item not in matching_line_items]
+                                for t in line_items_seperation[f"Default_{code}"]:
+                                    local_line_items.append(t)
+                                for t in line_items_seperation[code]:
+                                    local_line_items.append(t)
+                                local['data']['line_items'] = local_line_items
+
+                            if not "Default_{}".format(code) in line_items_seperation and code in line_items_seperation:
+                                matching_conditions_line_items = [t for t in local['data']['line_items'] if t['code'] == code and t.get('conditions')]
+                                local_line_items = [item for item in local_line_items if item not in matching_conditions_line_items]
+                                for t in line_items_seperation[code]:
+                                    local_line_items.append(t)
+                                local['data']['line_items'] = local_line_items
+
+                        completed_codes.append(code)
+
+                if new_line_items:
+                    for items in new_line_items:
+                        local['data']['line_items'].append(items)
+                        
+                update_fcl_freight_rate_local({
+                    'id': local['id'],
+                    'performed_by_id': self.performed_by_id,
+                    'sourced_by_id': sourced_by_id,
+                    'procured_by_id': procured_by_id,
+                    'bulk_operation_id': self.id,
+                    'data': local['data']
+                })
                 progress = int((count * 100.0) / total_count)
                 self.set_progress_percent(progress)
-                continue
 
-            line_items = data['line_items']
-            local_line_items = local['data']['line_items']
-            local_line_items_codes = []
-            for local_line_item in local_line_items:
-                local_line_items_codes.append(local_line_item['code'])
-
-            line_items_codes = []
-            line_items_seperation = {}
-            new_line_items = []
-            for line_item in line_items:
-                code = line_item["code"]
-                if code in local_line_items_codes:
-                    line_items_codes.append(code)
-                    if not line_item["conditions"]:
-                        key = "Default_{}".format(code)
-                    else:
-                        key = code
-                    if key not in line_items_seperation:
-                        line_items_seperation[key] = []
-                    line_items_seperation[key].append(line_item)
-                else:
-                    new_line_items.append({key: value for key, value in line_item.items() if key in ['code', 'unit', 'price', 'currency', 'conditions']})
-
-            matching_line_items = [t for t in local['data']['line_items'] if t['code'] in line_items_codes]
-            if  matching_line_items:
-                completed_codes = []
-                for line_item in line_items:
-                    local_line_items = local['data']['line_items']
-                    code = line_item["code"]
-                    if code not in completed_codes:
-
-                        if "Default_{}".format(code) in line_items_seperation and code not in line_items_seperation:
-                            matching_line_items = [t for t in local['data']['line_items'] if t['code'] == code]
-                            local_line_items = [item for item in local_line_items if item not in matching_line_items]
-                            for t in line_items_seperation[f"Default_{code}"]:
-                                local_line_items.append(t)
-                            local['data']['line_items'] = local_line_items
-
-                        if "Default_{}".format(code) in line_items_seperation and code in line_items_seperation:
-                            matching_line_items = [t for t in local['data']['line_items'] if t['code'] == code]
-                            local_line_items = [item for item in local_line_items if item not in matching_line_items]
-                            for t in line_items_seperation[f"Default_{code}"]:
-                                local_line_items.append(t)
-                            for t in line_items_seperation[code]:
-                                local_line_items.append(t)
-                            local['data']['line_items'] = local_line_items
-
-                        if not "Default_{}".format(code) in line_items_seperation and code in line_items_seperation:
-                            matching_conditions_line_items = [t for t in local['data']['line_items'] if t['code'] == code and t.get('conditions')]
-                            local_line_items = [item for item in local_line_items if item not in matching_conditions_line_items]
-                            for t in line_items_seperation[code]:
-                                local_line_items.append(t)
-                            local['data']['line_items'] = local_line_items
-
-                    completed_codes.append(code)
-
-            if new_line_items:
-                for items in new_line_items:
-                    local['data']['line_items'].append(items)
-                    
-            update_fcl_freight_rate_local({
-                'id': local['id'],
-                'performed_by_id': self.performed_by_id,
-                'sourced_by_id': sourced_by_id,
-                'procured_by_id': procured_by_id,
-                'bulk_operation_id': self.id,
-                'data': local['data']
-            })
-            total_affected_rates += 1
-            progress = int((count * 100.0) / total_count)
-            self.set_progress_percent(progress)
-
+            total_affected_rates += count
         data['total_affected_rates'] = total_affected_rates
         self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
