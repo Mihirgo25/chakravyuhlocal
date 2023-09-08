@@ -2,7 +2,7 @@ from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import *
 from services.rate_sheet.interactions.validate_air_customs_object import validate_air_customs_object
 
 def process_air_customs_customs(params, converted_file, update):
-    valid_headers = ['airport', 'country', 'trade_type', 'commodity', 'code', 'unit', 'price', 'currency', 'remark1', 'remark2', 'remark3']
+    valid_headers = ['airport', 'country', 'trade_type', 'commodity', 'commodity_type', 'commodity_sub_type', 'code', 'unit', 'price', 'currency', 'remark1', 'remark2', 'remark3']
     total_lines = 0
     original_path = get_original_file_path(converted_file)
     rows = []
@@ -126,7 +126,7 @@ def process_air_customs_customs(params, converted_file, update):
 
 def create_air_customs_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row):
     from services.air_customs_rate.air_customs_celery_worker import create_air_customs_rate_delay
-    keys_to_extract = ['trade_type', 'commodity', 'rate_type']
+    keys_to_extract = ['trade_type', 'commodity', 'rate_type', 'commodity_type', 'commodity_sub_type']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['airport_id'] = get_airport_id(rows[0]['airport'], rows[0]['country'])
     object['line_items'] = []
