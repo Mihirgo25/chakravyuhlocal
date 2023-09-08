@@ -31,6 +31,7 @@ def execute_transaction_code(request):
   air_customs_rate.sourced_by_id = request.get('sourced_by_id')
   air_customs_rate.procured_by_id = request.get('procured_by_id')
   air_customs_rate.line_items = request.get('line_items')
+  air_customs_rate.performed_by_id = request.get('performed_by_id')
   air_customs_rate.rate_not_available_entry = False
 
   air_customs_rate.validate_before_save()
