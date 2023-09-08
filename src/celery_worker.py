@@ -12,14 +12,17 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
+from services.fcl_freight_rate.interaction.cluster_extension_by_latest_trends import update_cluster_extension_by_latest_trends
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
 from services.haulage_freight_rate.schedulers.electricity_price_scheduler import electricity_price_scheduler
 from services.fcl_freight_rate.interaction.add_local_rates_on_country import add_local_rates_on_country
+from services.fcl_freight_rate.helpers.get_critical_ports_extension_parameters import get_critical_ports_extension_parameters
 from kombu import Exchange, Queue
 from celery.schedules import crontab
+import asyncio
 from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
@@ -69,7 +72,8 @@ CELERY_CONFIG = {
     "accept_content": ['application/json', 'application/x-python-serialize'],
     "task_acks_late": True,
     "result_expires": 60*30,
-    "celeryd_prefetch_multiplier": 1
+    "celeryd_prefetch_multiplier": 2,
+    "celery_queue_max_length": 1000
 }
 
 if APP_ENV == 'development':
@@ -152,6 +156,11 @@ celery.conf.beat_schedule = {
         'task': 'services.bramhastra.celery.brahmastra_in_delay',
         'schedule': crontab(minute=0, hour='*/1'),
         'options': {'queue': 'statistics'}
+    },
+    'cluster_extension_by_latest_trends_worker':{
+        'task': 'celery_worker.cluster_extension_by_latest_trends_worker',
+        'schedule': crontab(minute=0, hour='*/6'),
+        'options': {'queue': 'fcl_freight_rate'}
     },
     'cache_data_worker':{
         'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
@@ -861,6 +870,20 @@ def air_freight_airline_factors_in_delay(self):
     try:
         relate_ailine = RelateAirline()
         relate_ailine.relate_airlines()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc) 
+
+
+@celery.task(bind = True,retry_backoff=True,max_retries=3)
+def cluster_extension_by_latest_trends_worker(self):
+    try:
+        critical_port_pairs = get_critical_ports_extension_parameters()
+       
+        for request in critical_port_pairs:
+            asyncio.run(update_cluster_extension_by_latest_trends(request))
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
