@@ -1,5 +1,5 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJobs
-from services.fcl_freight_rate.models.fcl_freight_rate_jobs_mapping import FclFreightRateJobsMapping
+from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJob
+from services.fcl_freight_rate.models.fcl_freight_rate_job_mappings import FclFreightRateJobMapping
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from libs.allocate_jobs import allocate_jobs
 from database.rails_db import get_user
@@ -28,7 +28,7 @@ def execute_transaction_code(request, source):
         'rate_type' : request.get('rate_type'),
     }
     init_key = f'{str(params.get("origin_port_id") or "")}:{str(params.get("origin_main_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("destination_main_port_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}'
-    fcl_freight_rate_job = FclFreightRateJobs.select().where(FclFreightRateJobs.init_key == init_key, FclFreightRateJobs.status << ['backlog', 'pending']).first()
+    fcl_freight_rate_job = FclFreightRateJob.select().where(FclFreightRateJob.init_key == init_key, FclFreightRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
     if not fcl_freight_rate_job:
@@ -53,7 +53,7 @@ def execute_transaction_code(request, source):
 
 
 def set_jobs_mapping(jobs_id, request, source):
-    mapping_id = FclFreightRateJobsMapping.create(
+    mapping_id = FclFreightRateJobMapping.create(
         source_id=request.get("rate_id"),
         job_id= jobs_id,
         source = source
@@ -61,7 +61,7 @@ def set_jobs_mapping(jobs_id, request, source):
     return mapping_id
 
 def create_job_object(params):
-    fcl_freight_rate_job = FclFreightRateJobs()
+    fcl_freight_rate_job = FclFreightRateJob()
     for key in list(params.keys()):
         setattr(fcl_freight_rate_job, key, params[key])
     return fcl_freight_rate_job

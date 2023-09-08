@@ -11,7 +11,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 
-class AirFreightRateJobs(BaseModel):
+class AirFreightRateJob(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     origin_airport = BinaryJSONField(null=True)
     origin_airport_id = UUIDField(null=True, index=True)
@@ -26,7 +26,7 @@ class AirFreightRateJobs(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     status = CharField(index=True, null=True)
     sources = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
-    assigned_to_id = UUIDField(index=True, null=True)
+    user_id = UUIDField(index=True, null=True)
     assigned_to = BinaryJSONField(null=True)
     closed_by_id = UUIDField(null=True, index=True)
     closed_by = BinaryJSONField(null=True)
@@ -47,7 +47,7 @@ class AirFreightRateJobs(BaseModel):
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
-        return super(AirFreightRateJobs, self).save(*args, **kwargs)
+        return super(AirFreightRateJob, self).save(*args, **kwargs)
 
     def set_locations(self):
 

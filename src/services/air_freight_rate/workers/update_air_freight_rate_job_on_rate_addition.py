@@ -1,6 +1,6 @@
-from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
+from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJob
 from services.air_freight_rate.models.air_freight_rate_jobs_mapping import (
-    AirFreightRateJobsMapping,
+    AirFreightRateJobMapping,
 )
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
@@ -27,13 +27,13 @@ def update_air_freight_rate_job_on_rate_addition(request, id):
         "operation_type": request.get("operation_type"),
     }
     conditions = [
-        (getattr(AirFreightRateJobs, key) == value) for key, value in params.items()
+        (getattr(AirFreightRateJob, key) == value) for key, value in params.items()
     ]
-    conditions.append(AirFreightRateJobs.status << ["pending", "backlog"])
+    conditions.append(AirFreightRateJob.status << ["pending", "backlog"])
     affected_ids = jsonable_encoder([
-        job.id for job in AirFreightRateJobs.select(AirFreightRateJobs.id).where(*conditions)
+        job.id for job in AirFreightRateJob.select(AirFreightRateJob.id).where(*conditions)
     ])
-    air_freight_rate_job = AirFreightRateJobs.update(update_params).where(*conditions).execute()
+    air_freight_rate_job = AirFreightRateJob.update(update_params).where(*conditions).execute()
     if air_freight_rate_job:
         for affected_id in affected_ids:
             set_jobs_mapping(affected_id, jsonable_encoder(request), str(id))
@@ -42,7 +42,7 @@ def update_air_freight_rate_job_on_rate_addition(request, id):
 
 
 def set_jobs_mapping(jobs_id, data, id):
-    audit_id = AirFreightRateJobsMapping.create(
+    audit_id = AirFreightRateJobMapping.create(
         source_id=id,
         job_id=jobs_id,
         performed_by_id=data.get("performed_by_id"),

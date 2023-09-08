@@ -14,7 +14,7 @@ class BaseModel(Model):
         database = db
         only_save_dirty = True
 
-class FclFreightRateJobs(BaseModel):
+class FclFreightRateJob(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     origin_port_id = UUIDField(index=True, null=True)
     origin_main_port_id = UUIDField(index=True, null=True)
@@ -30,7 +30,7 @@ class FclFreightRateJobs(BaseModel):
     container_type = CharField(null=True, index=True)
     commodity = CharField(null=True, index=True)
     sources = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
-    assigned_to_id = UUIDField(index=True, null=True)
+    user_id = UUIDField(index=True, null=True)
     assigned_to = BinaryJSONField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
@@ -47,7 +47,7 @@ class FclFreightRateJobs(BaseModel):
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
-        return super(FclFreightRateJobs, self).save(*args, **kwargs)
+        return super(FclFreightRateJob, self).save(*args, **kwargs)
     
     def set_locations(self):
       ids = [str(self.origin_port_id), str(self.destination_port_id)]

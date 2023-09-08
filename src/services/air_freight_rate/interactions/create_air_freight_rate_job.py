@@ -1,5 +1,5 @@
-from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
-from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobsMapping
+from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJob
+from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobMapping
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from libs.allocate_jobs import allocate_jobs
 from fastapi.encoders import jsonable_encoder
@@ -35,7 +35,7 @@ def execute_transaction_code(request, source):
     }
     
     init_key = f'{str(params.get("origin_airport_id") or "")}:{str(params.get("destination_airport_id") or "")}:{str(params.get("airline_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("commodity_type") or "")}:{str(params.get("commodity_sub_type") or "")}:{str(params.get("stacking_type") or "")}:{str(params.get("operation_type") or "")}'
-    air_freight_rate_job = AirFreightRateJobs.select().where(AirFreightRateJobs.init_key == init_key, AirFreightRateJobs.status << ['backlog', 'pending']).first()
+    air_freight_rate_job = AirFreightRateJob.select().where(AirFreightRateJob.init_key == init_key, AirFreightRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
     if not air_freight_rate_job:
@@ -60,7 +60,7 @@ def execute_transaction_code(request, source):
 
 
 def set_jobs_mapping(jobs_id, request, source):
-    mapping_id = AirFreightRateJobsMapping.create(
+    mapping_id = AirFreightRateJobMapping.create(
         source_id=request.get("source_id"),
         job_id= jobs_id,
         source = source
@@ -68,7 +68,7 @@ def set_jobs_mapping(jobs_id, request, source):
     return mapping_id
 
 def create_job_object(params):
-    air_freight_rate_job = AirFreightRateJobs()
+    air_freight_rate_job = AirFreightRateJob()
     for key in list(params.keys()):
         setattr(air_freight_rate_job, key, params[key])
     return air_freight_rate_job

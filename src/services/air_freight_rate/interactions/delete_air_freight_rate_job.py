@@ -1,6 +1,6 @@
 from database.db_session import db
-from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
-from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobsMapping
+from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJob
+from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobMapping
 from database.rails_db import get_user
 from datetime import datetime
 
@@ -14,7 +14,7 @@ def delete_air_freight_rate_job(request):
     else:
         update_params = {'status':'completed', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now()}
 
-    air_freight_rate_job = AirFreightRateJobs.update(update_params).where(AirFreightRateJobs.id == request['id'], AirFreightRateJobs.status.not_in(['completed', 'aborted'])).execute()
+    air_freight_rate_job = AirFreightRateJob.update(update_params).where(AirFreightRateJob.id == request['id'], AirFreightRateJob.status.not_in(['completed', 'aborted'])).execute()
     if air_freight_rate_job:
         set_jobs_mapping(request['id'], request)
 
@@ -22,7 +22,7 @@ def delete_air_freight_rate_job(request):
 
 
 def set_jobs_mapping(jobs_id, data):
-    audit_id = AirFreightRateJobsMapping.create(
+    audit_id = AirFreightRateJobMapping.create(
         source_id=data.get("rate_id"),
         job_id= jobs_id,
         performed_by_id = data.get("performed_by_id"),
