@@ -25,7 +25,6 @@ def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='
         query = apply_indirect_filters(query, indirect_filters)
 
     if get_count:
-        print(query.count())
         return {'list':query.count()}
 
     if return_query:
@@ -65,7 +64,7 @@ def get_query(sort_by, sort_type, page, page_limit):
                 FclFreightRateLocal.procured_by,
                 FclFreightRateLocal.sourced_by,
                 FclFreightRateLocal.rate_type
-            ).order_by(eval('FclFreightRateLocal.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
+            ).order_by(eval('FclFreightRateLocal.{}.{}()'.format(sort_by,sort_type))).offset(page).limit(page_limit)
     return query
 
 def get_data(query):
