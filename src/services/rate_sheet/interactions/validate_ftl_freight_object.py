@@ -27,7 +27,8 @@ def get_freight_object(object):
         'importer_exporter_id': object.get('importer_exporter_id'),
         'transit_time': object.get('transit_time'),
         'detention_free_time': object.get('detention_free_time'),
-        'trip_type': object.get('trip_type')
+        'trip_type': object.get('trip_type'),
+        'unit': object.get('unit')
     }
 
 
@@ -47,7 +48,8 @@ def get_freight_object(object):
         FtlFreightRate.importer_exporter_id == object.get('importer_exporter_id'),
         FtlFreightRate.transit_time == object.get('transit_time'),
         FtlFreightRate.detention_free_time == object.get('detention_free_time'),
-        FtlFreightRate.trip_type == object.get('trip_type')
+        FtlFreightRate.trip_type == object.get('trip_type'),
+        FtlFreightRate.unit == object.get('unit')
     ).first()
 
     validation = {}

@@ -192,6 +192,10 @@ def create_ftl_freight_freight_rate(
         line_item['remarks'] = list(set([data["remark1"], data["remark2"], data["remark3"]]))
         object['line_items'].append(line_item)
 
+    validity_start = ''.join([val for val in object['validity_start'] if val.isdigit()])
+    validity_end = ''.join([val for val in object['validity_end'] if val.isdigit()])
+    object['validity_end'] = datetime.strptime(validity_end, '%d%m%Y')
+    object['validity_start'] = datetime.strptime(validity_start, '%d%m%Y')
     object["rate_sheet_id"] = params["id"]
     object["performed_by_id"] = created_by_id
     object["service_provider_id"] = params.get("service_provider_id")
