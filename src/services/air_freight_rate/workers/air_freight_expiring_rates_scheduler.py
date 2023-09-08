@@ -12,7 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from services.air_freight_rate.constants.air_freight_rate_constants import (
     CRITICAL_AIRPORTS_INDIA_VIETNAM,
 )
-from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
+from services.air_freight_rate.constants.air_freight_rate_constants import COGOXPRESS
 
 DAYS_TO_EXPIRE = datetime.datetime.now().date() + datetime.timedelta(days=2)
 
@@ -61,7 +61,7 @@ def air_freight_expiring_rates_scheduler():
         ~(AirFreightRate.rate_not_available_entry),
         AirFreightRate.source.not_in(["predicted", "rate_extention"]),
         AirFreightRate.rate_type == "market_place",
-        AirFreightRate.service_provider_id != DEFAULT_SERVICE_PROVIDER_ID,
+        AirFreightRate.service_provider_id != COGOXPRESS,
     )
 
     for rate in ServerSide(air_query):

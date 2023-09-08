@@ -15,7 +15,8 @@ from playhouse.shortcuts import model_to_dict
 
 SEVEN_DAYS_AGO = datetime.datetime.now().date() - datetime.timedelta(days=7)
 TODAYS_DATE = datetime.datetime.now().date()
-from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
+from services.air_freight_rate.constants.air_freight_rate_constants import COGOXPRESS
+
 
 
 REQUIRED_COLUMNS = [
@@ -61,7 +62,7 @@ def air_freight_critical_port_pairs_scheduler():
         (AirFreightRate.updated_at.cast("date") == SEVEN_DAYS_AGO),
         AirFreightRate.source.not_in(["predicted", "cluster_extension"]),
         AirFreightRate.rate_type == "market_place",
-        AirFreightRate.service_provider_id != DEFAULT_SERVICE_PROVIDER_ID,
+        AirFreightRate.service_provider_id != COGOXPRESS,
     )
 
     for rate in ServerSide(air_query):
