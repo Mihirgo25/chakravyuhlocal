@@ -37,8 +37,8 @@ class CommonApiClient:
         if cached_resp:
             return cached_resp
         request_url = self.client.url.get()
-        self.client.url.set('https://api-mustangs2.dev.cogoport.io')
-        resp = self.client.request('GET', 'charge-code/get-charge-codes',data = {"serviceChargeType": charge_name}, timeout=5)
+        self.client.url.set('https://api-mustangs1.dev.cogoport.io')
+        resp = self.client.request('GET', 'charge-code/list',data = {"serviceChargeType": charge_name}, timeout=5)
         self.client.url.set(request_url)
         if isinstance(resp,dict):
             set_charge_to_rd(charge_name, resp)
