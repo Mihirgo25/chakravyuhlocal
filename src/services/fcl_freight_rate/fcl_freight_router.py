@@ -178,15 +178,15 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
         details = ' '.join(not_available_params) + ' not present'
         raise  HTTPException(status_code=400, detail=details)
 
-    # try:
-    rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=json_encoder(rate))
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     # raise
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
+    try:
+        rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        # raise
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
 
 @fcl_freight_router.post("/create_fcl_freight_rate_feedback")
 def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback, resp: dict = Depends(authorize_token)):

@@ -13,6 +13,8 @@ from services.fcl_freight_rate.models.fcl_freight_location_cluster import (
     FclFreightLocationCluster,
 )
 from fastapi.encoders import jsonable_encoder
+from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
+
 
 DAYS_TO_EXPIRE = datetime.datetime.now().date() + datetime.timedelta(days=2)
 
@@ -61,6 +63,7 @@ def fcl_freight_expiring_rates_scheduler():
         FclFreightRate.last_rate_available_date == DAYS_TO_EXPIRE,
         FclFreightRate.mode.not_in(["predicted", "cluster_extension"]),
         FclFreightRate.rate_type == "market_place",
+        FclFreightRate.service_provider_id != DEFAULT_SERVICE_PROVIDER_ID,
     )
 
     for rate in ServerSide(fcl_query):
