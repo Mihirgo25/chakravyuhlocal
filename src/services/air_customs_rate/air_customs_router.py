@@ -195,7 +195,7 @@ def list_air_customs_rate_feedbacks_api(
     page_limit: int = 10,
     page: int = 1,
     performed_by_id: str = None,
-    is_stats_required: bool = False,
+    is_stats_required: bool = True,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
