@@ -94,6 +94,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import g
 from configs.fcl_freight_rate_constants import COGO_ASSURED_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID, COGO_ASSURED_SHIPPING_LINE_ID
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_deviations import list_fcl_freight_rate_deviations
 from services.fcl_freight_rate.interaction.create_fcl_freight_location_cluster import create_fcl_freight_location_cluster
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_job_stats import get_fcl_freight_rate_job_stats
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_jobs import list_fcl_freight_rate_jobs
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_job import delete_fcl_freight_rate_job
 from libs.rate_limiter import rate_limiter
@@ -177,15 +178,15 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
         details = ' '.join(not_available_params) + ' not present'
         raise  HTTPException(status_code=400, detail=details)
 
-    try:
-        rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=json_encoder(rate))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        # raise
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
+    # try:
+    rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content=json_encoder(rate))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     # raise
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
 
 @fcl_freight_router.post("/create_fcl_freight_rate_feedback")
 def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback, resp: dict = Depends(authorize_token)):
@@ -1922,6 +1923,23 @@ def create_critical_port_trend_index_data(request: CreateCriticalPortTrendIndex,
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_critical_port_trend_index(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.get("/get_fcl_freight_rate_job_stats")
+def get_fcl_freight_rate_job_stats_api(
+    filters: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = get_fcl_freight_rate_job_stats(filters)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise

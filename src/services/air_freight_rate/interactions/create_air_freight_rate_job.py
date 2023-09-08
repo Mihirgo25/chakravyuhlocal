@@ -1,7 +1,7 @@
 from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJobs
 from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobsMapping
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-from libs.task_distribution_system import task_distribution_system
+from libs.allocate_jobs import allocate_jobs
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_user
 from database.db_session import db
@@ -40,32 +40,32 @@ def execute_transaction_code(request, source):
 
     if not air_freight_rate_job:
         air_freight_rate_job = create_job_object(params)
-    else:
-        previous_sources = air_freight_rate_job.sources
-        if source not in previous_sources and source in POSSIBLE_SOURCES_IN_JOB_MAPPINGS:
-            air_freight_rate_job.sources = previous_sources + [source]
-            air_freight_rate_job.save()
-            set_jobs_mapping(air_freight_rate_job.id, request, source)
+        user_id = allocate_jobs('AIR')
+        air_freight_rate_job.assigned_to_id = user_id
+        air_freight_rate_job.assigned_to = get_user(user_id)[0]
+        air_freight_rate_job.status = 'pending'
+        air_freight_rate_job.set_locations()
+        air_freight_rate_job.save()
+        set_jobs_mapping(air_freight_rate_job.id, request, source)
+        get_multiple_service_objects(air_freight_rate_job)
+
         return {"id": air_freight_rate_job.id}
+    
+    previous_sources = air_freight_rate_job.sources
+    if source not in previous_sources and source in POSSIBLE_SOURCES_IN_JOB_MAPPINGS:
+        air_freight_rate_job.sources = previous_sources + [source]
+        air_freight_rate_job.save()
+        set_jobs_mapping(air_freight_rate_job.id, request, source)
+    return {"id": air_freight_rate_job.id}
 
-    user_id = task_distribution_system('AIR')
-    air_freight_rate_job.assigned_to_id = user_id
-    air_freight_rate_job.assigned_to = get_user(user_id)[0]
-    air_freight_rate_job.status = 'pending'
-    air_freight_rate_job.set_locations()
-    air_freight_rate_job.save()
-    set_jobs_mapping(air_freight_rate_job.id, request, source)
-    get_multiple_service_objects(air_freight_rate_job)
-
-    return {"updated_ids": air_freight_rate_job.id}
 
 def set_jobs_mapping(jobs_id, request, source):
-    audit_id = AirFreightRateJobsMapping.create(
+    mapping_id = AirFreightRateJobsMapping.create(
         source_id=request.get("source_id"),
         job_id= jobs_id,
         source = source
     )
-    return audit_id
+    return mapping_id
 
 def create_job_object(params):
     air_freight_rate_job = AirFreightRateJobs()
