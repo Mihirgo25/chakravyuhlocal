@@ -61,6 +61,7 @@ from services.air_freight_rate.interactions.update_air_freight_storage_rate impo
 from services.air_freight_rate.interactions.get_air_freight_rate_audit import get_air_freight_rate_audit
 from services.air_freight_rate.interactions.update_air_freight_rate_request import update_air_freight_rate_request
 from services.air_freight_rate.interactions.list_air_freight_rate_tasks import list_air_freight_rate_tasks
+from services.air_freight_rate.interactions.get_air_freight_rate_job_stats import get_air_freight_rate_job_stats
 from services.air_freight_rate.interactions.delete_air_freight_rate_job import delete_air_freight_rate_job
 from services.air_freight_rate.interactions.list_air_freight_rate_jobs import list_air_freight_rate_jobs
 
@@ -1286,6 +1287,24 @@ def list_rates_sheet_stat(
             filters, service_provider_id
         )
         return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@air_freight_router.get("/get_air_freight_rate_job_stats")
+def get_air_freight_rate_job_stats_api(
+    filters: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = get_air_freight_rate_job_stats(filters)
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:

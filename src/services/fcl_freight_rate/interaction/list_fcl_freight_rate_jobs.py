@@ -17,7 +17,7 @@ possible_direct_filters = [
     "serial_id",
     "status"
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"

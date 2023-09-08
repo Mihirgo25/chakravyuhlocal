@@ -16,28 +16,14 @@ possible_direct_filters = [
     "destination_airport_id",
     "airline_id",
     "commodity",
+    "user_id",
+    "serial_id",
+    "status"
 ]
-possible_indirect_filters = ["updated_at", "user_id", "start_date", "end_date"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 
-uncommon_filters = ["serial_id", "status"]
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
-
-STATISTICS = {
-    "pending": 0,
-    "backlog": 0,
-    "completed": 0,
-    "aborted": 0,
-    "completed_percentage": 0,
-    "total": 0,
-    "weekly_backlog_count": 0,
-}
-DYNAMIC_STATISTICS = {
-    "critical_ports": 0,
-    "expiring_rates": 0,
-    "spot_search": 0,
-    "cancelled_shipments": 0,
-}
 
 
 DEFAULT_REQUIRED_FIELDS = [
@@ -79,8 +65,6 @@ def list_air_freight_rate_jobs(
     includes={},
 ):
     query = includes_filters(includes)
-    statistics = STATISTICS.copy()
-    dynamic_statistics = DYNAMIC_STATISTICS.copy()
 
     if filters:
         if type(filters) != dict:
@@ -88,18 +72,6 @@ def list_air_freight_rate_jobs(
 
         query = apply_filters(query, filters)
 
-        # getting daily_stats
-        if filters.get("daily_stats"):
-            statistics = build_daily_details(query, statistics)
-
-        # getting weekly_stats
-        if filters.get("weekly_stats"):
-            statistics = build_weekly_details(query, statistics)
-
-        # remaining filters
-        query, dynamic_statistics = get_statistics(
-                query, filters, dynamic_statistics
-            )
 
     if generate_csv_url:
         return generate_csv_file_url_for_air(query)
@@ -113,8 +85,6 @@ def list_air_freight_rate_jobs(
 
     return {
         "list": data,
-        "dynamic_statistics": dynamic_statistics,
-        "statistics": statistics,
     }
 
 
@@ -181,108 +151,6 @@ def apply_end_date_filter(query, filters):
     return query
 
 
-def get_statistics(query, filters, dynamic_statistics):
-    subquery = AirFreightRateJob.select(
-        fn.UNNEST(AirFreightRateJob.sources).alias("element")
-    ).alias("elements")
-    subquery = apply_filters(subquery, filters)
-    subquery = apply_extra_filters(subquery, filters, True)
-    stats_query = (
-        AirFreightRateJob.select(
-            subquery.c.element, fn.COUNT(subquery.c.element).alias("count")
-        )
-        .from_(subquery)
-        .group_by(subquery.c.element)
-        .order_by(fn.COUNT(subquery.c.element).desc())
-    )
-    data = list(stats_query.dicts())
-    for stats in data:
-        dynamic_statistics[stats["element"]] = stats["count"]
-
-    query = apply_extra_filters(query, filters, False)
-
-    return query, dynamic_statistics
-
-
-def build_daily_details(query, statistics):
-    query = query.where(
-        AirFreightRateJob.created_at.cast("date") == datetime.now().date()
-    )
-    daily_stats_query = query.select(
-        AirFreightRateJob.status, fn.COUNT(AirFreightRateJob.id).alias("count")
-    ).group_by(AirFreightRateJob.status)
-
-    total_daily_count = 0
-    daily_results = json_encoder(list(daily_stats_query.dicts()))
-    for data in daily_results:
-        total_daily_count += data["count"]
-        statistics[data["status"]] = data["count"]
-    statistics["completed"] = statistics["completed"] + statistics["aborted"]
-
-    statistics["total"] = total_daily_count
-    if total_daily_count != 0:
-        statistics["completed_percentage"] = round(
-            ((statistics["completed"]) / total_daily_count) * 100, 2
-        )
-    return statistics
-
-
-def build_weekly_details(query, statistics):
-    query = query.where(
-        AirFreightRateJob.created_at.cast("date")
-        >= datetime.now().date() - timedelta(days=7)
-    )
-    weekly_stats_query = query.select(
-        AirFreightRateJob.status,
-        fn.COUNT(AirFreightRateJob.id).alias("count"),
-        AirFreightRateJob.created_at.cast("date").alias("created_at"),
-    ).group_by(AirFreightRateJob.status, AirFreightRateJob.created_at.cast("date"))
-    weekly_stats_query = weekly_stats_query.order_by(SQL("created_at DESC"))
-    weekly_results = json_encoder(list(weekly_stats_query.dicts()))
-    weekly_stats = {}
-
-    total_dict = {}
-    total_weekly_backlog_count = 0
-
-    for item in weekly_results:
-        created_at = item["created_at"]
-        status = item["status"]
-        count = item["count"]
-
-        if created_at not in total_dict:
-            total_dict[created_at] = {
-                "pending": 0,
-                "completed": 0,
-                "backlog": 0,
-                "aborted": 0,
-            }
-
-        if status == "backlog":
-            total_weekly_backlog_count += count
-
-        total_dict[created_at][status] = count
-
-    for date in total_dict:
-        total_task_per_day = (
-            total_dict[date]["pending"]
-            + total_dict[date]["completed"]
-            + total_dict[date]["backlog"]
-            + total_dict[date]["aborted"]
-        )
-        total_completed_per_day = (
-            total_dict[date]["completed"] + total_dict[date]["aborted"]
-        )
-        if total_task_per_day != 0:
-            weekly_stats[date] = round(
-                (total_completed_per_day / total_task_per_day * 100), 2
-            )
-
-    statistics["weekly_completed_percentage"] = weekly_stats
-
-    statistics["weekly_backlog_count"] = total_weekly_backlog_count
-    return statistics
-
-
 def apply_filters(query, filters):
     direct_filters, indirect_filters = get_applicable_filters(
         filters, possible_direct_filters, possible_indirect_filters
@@ -293,16 +161,4 @@ def apply_filters(query, filters):
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
 
-    return query
-
-
-def apply_extra_filters(query, filters, stats):
-    if not stats and filters.get('source'):
-        query = apply_source_filter(query, filters)
-    applicable_filters = {}
-    for key in uncommon_filters:
-        if filters.get(key):
-            applicable_filters[key] = filters[key]
-
-    query = get_filters(applicable_filters, query, AirFreightRateJob)
     return query

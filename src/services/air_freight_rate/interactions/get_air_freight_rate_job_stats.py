@@ -1,17 +1,20 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJob
+from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJob
+from services.air_freight_rate.helpers.generate_csv_file_url_for_air import (
+    generate_csv_file_url_for_air,
+)
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
 from peewee import fn
-from playhouse.postgres_ext import SQL
+from playhouse.postgres_ext import SQL, Case
 
 
 possible_direct_filters = [
-    "origin_port_id",
-    "destination_port_id",
-    "shipping_line_id",
+    "origin_airport_id",
+    "destination_airport_id",
+    "airline_id",
     "commodity",
     "user_id"
 ]
@@ -19,8 +22,7 @@ possible_indirect_filters = ["updated_at", "start_date", "end_date"]
 
 uncommon_filters = ["serial_id", "status"]
 
-STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
-
+STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 STATISTICS = {
     "pending": 0,
@@ -31,8 +33,6 @@ STATISTICS = {
     "total": 0,
     "weekly_backlog_count": 0,
 }
-
-
 DYNAMIC_STATISTICS = {
     "critical_ports": 0,
     "expiring_rates": 0,
@@ -41,8 +41,7 @@ DYNAMIC_STATISTICS = {
 }
 
 
-
-def get_fcl_freight_rate_job_stats(
+def get_air_freight_rate_job_stats(
     filters={}
 ):
     query = get_query()
@@ -53,6 +52,7 @@ def get_fcl_freight_rate_job_stats(
         filters = json.loads(filters)
 
     query = apply_filters(query, filters)
+
     # getting daily_stats
     if filters.get("daily_stats"):
         statistics = build_daily_details(query, statistics)
@@ -72,9 +72,8 @@ def get_fcl_freight_rate_job_stats(
     }
 
 
-
 def get_query():
-    query = FclFreightRateJob.select(FclFreightRateJob.id)
+    query = AirFreightRateJob.select(AirFreightRateJob.id)
     return query
 
 
@@ -86,17 +85,17 @@ def apply_indirect_filters(query, filters):
 
 
 def apply_user_id_filter(query, filters):
-    query = query.where(FclFreightRateJob.assigned_to_id == filters["user_id"])
+    query = query.where(AirFreightRateJob.assigned_to_id == filters["user_id"])
     return query
 
 
 def apply_updated_at_filter(query, filters):
-    query = query.where(FclFreightRateJob.updated_at > filters["updated_at"])
+    query = query.where(AirFreightRateJob.updated_at > filters["updated_at"])
     return query
 
 
 def apply_source_filter(query, filters):
-    query = query.where(FclFreightRateJob.sources.contains(filters["source"]))
+    query = query.where(AirFreightRateJob.sources.contains(filters["source"]))
     return query
 
 
@@ -104,7 +103,7 @@ def apply_start_date_filter(query, filters):
     start_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
         hours=5, minutes=30
     )
-    query = query.where(FclFreightRateJob.created_at.cast("date") >= start_date.date())
+    query = query.where(AirFreightRateJob.created_at.cast("date") >= start_date.date())
     return query
 
 
@@ -112,18 +111,18 @@ def apply_end_date_filter(query, filters):
     end_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
         hours=5, minutes=30
     )
-    query = query.where(FclFreightRateJob.created_at.cast("date") <= end_date.date())
+    query = query.where(AirFreightRateJob.created_at.cast("date") <= end_date.date())
     return query
 
 
 def get_statistics(filters, dynamic_statistics):
-    subquery = FclFreightRateJob.select(
-        fn.UNNEST(FclFreightRateJob.sources).alias("element")
+    subquery = AirFreightRateJob.select(
+        fn.UNNEST(AirFreightRateJob.sources).alias("element")
     ).alias("elements")
     subquery = apply_filters(subquery, filters)
     subquery = apply_extra_filters(subquery, filters)
     stats_query = (
-        FclFreightRateJob.select(
+        AirFreightRateJob.select(
             subquery.c.element, fn.COUNT(subquery.c.element).alias("count")
         )
         .from_(subquery)
@@ -134,16 +133,17 @@ def get_statistics(filters, dynamic_statistics):
     for stats in data:
         dynamic_statistics[stats["element"]] = stats["count"]
 
+
     return dynamic_statistics
 
 
 def build_daily_details(query, statistics):
     query = query.where(
-        FclFreightRateJob.created_at.cast("date") == datetime.now().date()
+        AirFreightRateJob.created_at.cast("date") == datetime.now().date()
     )
     daily_stats_query = query.select(
-        FclFreightRateJob.status, fn.COUNT(FclFreightRateJob.id).alias("count")
-    ).group_by(FclFreightRateJob.status)
+        AirFreightRateJob.status, fn.COUNT(AirFreightRateJob.id).alias("count")
+    ).group_by(AirFreightRateJob.status)
 
     total_daily_count = 0
     daily_results = json_encoder(list(daily_stats_query.dicts()))
@@ -151,6 +151,7 @@ def build_daily_details(query, statistics):
         total_daily_count += data["count"]
         statistics[data["status"]] = data["count"]
     statistics["completed"] = statistics["completed"] + statistics["aborted"]
+
     statistics["total"] = total_daily_count
     if total_daily_count != 0:
         statistics["completed_percentage"] = round(
@@ -161,15 +162,14 @@ def build_daily_details(query, statistics):
 
 def build_weekly_details(query, statistics):
     query = query.where(
-        FclFreightRateJob.created_at.cast("date")
+        AirFreightRateJob.created_at.cast("date")
         >= datetime.now().date() - timedelta(days=7)
     )
-
     weekly_stats_query = query.select(
-        FclFreightRateJob.status,
-        fn.COUNT(FclFreightRateJob.id).alias("count"),
-        FclFreightRateJob.created_at.cast("date").alias("created_at"),
-    ).group_by(FclFreightRateJob.status, FclFreightRateJob.created_at.cast("date"))
+        AirFreightRateJob.status,
+        fn.COUNT(AirFreightRateJob.id).alias("count"),
+        AirFreightRateJob.created_at.cast("date").alias("created_at"),
+    ).group_by(AirFreightRateJob.status, AirFreightRateJob.created_at.cast("date"))
     weekly_stats_query = weekly_stats_query.order_by(SQL("created_at DESC"))
     weekly_results = json_encoder(list(weekly_stats_query.dicts()))
     weekly_stats = {}
@@ -221,7 +221,7 @@ def apply_filters(query, filters):
         filters, possible_direct_filters, possible_indirect_filters
     )
     # applying direct filters
-    query = get_filters(direct_filters, query, FclFreightRateJob)
+    query = get_filters(direct_filters, query, AirFreightRateJob)
 
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
@@ -235,5 +235,5 @@ def apply_extra_filters(query, filters):
         if filters.get(key):
             applicable_filters[key] = filters[key]
 
-    query = get_filters(applicable_filters, query, FclFreightRateJob)
+    query = get_filters(applicable_filters, query, AirFreightRateJob)
     return query
