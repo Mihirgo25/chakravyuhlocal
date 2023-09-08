@@ -112,7 +112,7 @@ BAS:
   name: 'Basic Freight'
   units: ['per_trailer','per_container']
   condition: true
-  tags: ['mandatory', 'trailer', 'barge']
+  tags: ['mandatory', 'trailer', 'barge', 'slab_cargo_weight_per_container']
 FSC:
   name: 'Fuel Surcharge'
   units: ['per_trailer', 'percentage_of_freight', 'per_container']
