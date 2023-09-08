@@ -71,6 +71,7 @@ def create_fcl_freight_rate_data(request):
             return create_fcl_freight_rate(request)
         except:
             transaction.rollback()
+            raise
   
 
 def create_fcl_freight_rate(request):

@@ -4,7 +4,6 @@ from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFr
 from services.fcl_freight_rate.models.fcl_freight_rate_job_mappings import FclFreightRateJobMapping
 from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJob
 
-
 class Table:
     def __init__(self) -> None:
         pass

@@ -210,6 +210,8 @@ RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
 
 DEFAULT_RATE_TYPE = 'market_place'
 
+DEFAULT_PERFORMED_BY_TYPE = 'system'
+
 VN_ENTITY_ID = 'b67d40b1-616c-4471-b77b-de52b4c9f2ff'
 
 SPECIFICITY_TYPE_HIERARCHY = {
@@ -241,3 +243,8 @@ CRITICAL_PORTS_INDIA_VIETNAM = [
     'c2d6fb91-2875-4d73-b12b-dd1b78fdfe8a',
     '76fdeee3-1c7f-4f6e-a5d2-2a729445f2d9'
 ]
+
+MIN_ALLOWED_PERCENTAGE_CHANGE = -3
+MAX_ALLOWED_PERCENTAGE_CHANGE = 15
+MIN_ALLOWED_MARKUP = -50
+MAX_ALLOWED_MARKUP = 100
