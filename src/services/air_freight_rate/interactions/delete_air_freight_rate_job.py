@@ -3,6 +3,7 @@ from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRat
 from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobMapping
 from database.rails_db import get_user
 from datetime import datetime
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 
 
 POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_in_rate']
@@ -16,16 +17,16 @@ def delete_air_freight_rate_job(request):
 
     air_freight_rate_job = AirFreightRateJob.update(update_params).where(AirFreightRateJob.id == request['id'], AirFreightRateJob.status.not_in(['completed', 'aborted'])).execute()
     if air_freight_rate_job:
-        set_jobs_mapping(request['id'], request)
+        create_audit(request['id'], request)
 
     return {'id' : request['id']}
 
 
-def set_jobs_mapping(jobs_id, data):
-    audit_id = AirFreightRateJobMapping.create(
-        source_id=data.get("rate_id"),
-        job_id= jobs_id,
+def create_audit(jobs_id, data):
+    AirServiceAudit.create(
+        action_name = 'delete',
+        object_id = jobs_id,
+        object_type = 'AirFreightRateJob',
         performed_by_id = data.get("performed_by_id"),
         data = data.get('data')
     )
-    return audit_id

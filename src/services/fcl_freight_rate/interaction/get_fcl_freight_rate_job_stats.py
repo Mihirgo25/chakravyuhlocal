@@ -85,11 +85,6 @@ def apply_indirect_filters(query, filters):
     return query
 
 
-def apply_user_id_filter(query, filters):
-    query = query.where(FclFreightRateJob.assigned_to_id == filters["user_id"])
-    return query
-
-
 def apply_updated_at_filter(query, filters):
     query = query.where(FclFreightRateJob.updated_at > filters["updated_at"])
     return query

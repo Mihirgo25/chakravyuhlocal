@@ -5,6 +5,7 @@ from services.air_freight_rate.models.air_freight_rate_jobs_mapping import (
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 
 
 
@@ -36,16 +37,16 @@ def update_air_freight_rate_job_on_rate_addition(request, id):
     air_freight_rate_job = AirFreightRateJob.update(update_params).where(*conditions).execute()
     if air_freight_rate_job:
         for affected_id in affected_ids:
-            set_jobs_mapping(affected_id, jsonable_encoder(request), str(id))
+            create_audit(affected_id, jsonable_encoder(request))
 
     return {"ids": affected_ids}
 
 
-def set_jobs_mapping(jobs_id, data, id):
-    audit_id = AirFreightRateJobMapping.create(
-        source_id=id,
-        job_id=jobs_id,
+def create_audit(jobs_id, data):
+    AirServiceAudit.create(
+        action_name = 'delete',
+        object_id = jobs_id,
+        object_type = 'AirFreightRateJob',
         performed_by_id=data.get("performed_by_id"),
-        data=data,
+        data=data
     )
-    return audit_id

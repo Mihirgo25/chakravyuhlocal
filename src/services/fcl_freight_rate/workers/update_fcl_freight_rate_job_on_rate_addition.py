@@ -5,6 +5,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_job_mappings import (
 from datetime import datetime
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
+
 
 
 
@@ -40,15 +42,16 @@ def update_fcl_freight_rate_job_on_rate_addition(request, id):
     )
     if fcl_freight_rate_job:
         for affected_id in affected_ids:
-            set_jobs_mapping(affected_id, jsonable_encoder(request), str(id))
+            create_audit(affected_id, jsonable_encoder(request))
     return {"ids": affected_ids}
 
 
-def set_jobs_mapping(jobs_id, data, id):
-    audit_id = FclFreightRateJobMapping.create(
-        source_id=id,
-        job_id=jobs_id,
+
+def create_audit(jobs_id, data):
+    FclServiceAudit.create(
+        action_name = 'delete',
+        object_id = jobs_id,
+        data = data,
+        object_type = 'FclFreightRateJob',
         performed_by_id=data.get("performed_by_id"),
-        data=data,
     )
-    return audit_id

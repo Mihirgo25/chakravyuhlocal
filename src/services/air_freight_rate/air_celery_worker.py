@@ -29,7 +29,7 @@ def create_jobs_for_predicted_air_freight_rate_delay(
 @celery.task(bind=True, max_retries=1, retry_backoff=True)
 def update_air_freight_rate_job_on_rate_addition_delay(self, request, id):
     try:
-        update_air_freight_rate_job_on_rate_addition(request, id)
+        return update_air_freight_rate_job_on_rate_addition(request, id)
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass
@@ -40,7 +40,7 @@ def update_air_freight_rate_job_on_rate_addition_delay(self, request, id):
 @celery.task(bind=True, max_retries=1, retry_backoff=True)
 def update_air_freight_rate_jobs_to_backlog_delay(self):
     try:
-        update_air_freight_rate_jobs_to_backlog()
+        return update_air_freight_rate_jobs_to_backlog()
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass

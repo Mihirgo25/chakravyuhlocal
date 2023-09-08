@@ -3,6 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRat
 from services.fcl_freight_rate.models.fcl_freight_rate_job_mappings import FclFreightRateJobMapping
 from database.rails_db import get_user
 from datetime import datetime
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 
 POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_in_rate']
 
@@ -15,16 +16,16 @@ def delete_fcl_freight_rate_job(request):
 
     fcl_freight_rate_job = FclFreightRateJob.update(update_params).where(FclFreightRateJob.id == request['id'], FclFreightRateJob.status.not_in(['completed', 'aborted'])).execute()
     if fcl_freight_rate_job:
-        set_jobs_mapping(request['id'], request)
+        create_audit(request['id'], request)
 
     return {'id' : request['id']}
 
 
-def set_jobs_mapping(jobs_id, data):
-    audit_id = FclFreightRateJobMapping.create(
-        source_id=data.get("rate_id"),
-        job_id= jobs_id,
-        performed_by_id = data.get("performed_by_id"),
-        data = data.get('data')
+def create_audit(jobs_id, data):
+    FclServiceAudit.create(
+        action_name = 'delete',
+        object_id = jobs_id,
+        object_type = 'FclFreightRateJob',
+        data = data.get('data'),
+        performed_by_id = data.get("performed_by_id")
     )
-    return audit_id

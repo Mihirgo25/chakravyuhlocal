@@ -6,10 +6,16 @@ from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_user
 from database.db_session import db
 from configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 
 
 
 def create_air_freight_rate_job(request, source):
+    object_type = "Air_Freight_Rate_Job"
+    query = "create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(
+        object_type.lower(), object_type.replace("_", "")
+    )
+    db.execute_sql(query)
     with db.atomic():
       return execute_transaction_code(request, source)
 
@@ -41,12 +47,13 @@ def execute_transaction_code(request, source):
     if not air_freight_rate_job:
         air_freight_rate_job = create_job_object(params)
         user_id = allocate_jobs('AIR')
-        air_freight_rate_job.assigned_to_id = user_id
+        air_freight_rate_job.user_id = user_id
         air_freight_rate_job.assigned_to = get_user(user_id)[0]
         air_freight_rate_job.status = 'pending'
         air_freight_rate_job.set_locations()
         air_freight_rate_job.save()
         set_jobs_mapping(air_freight_rate_job.id, request, source)
+        create_audit(air_freight_rate_job.id)
         get_multiple_service_objects(air_freight_rate_job)
 
         return {"id": air_freight_rate_job.id}
@@ -56,6 +63,7 @@ def execute_transaction_code(request, source):
         air_freight_rate_job.sources = previous_sources + [source]
         air_freight_rate_job.save()
         set_jobs_mapping(air_freight_rate_job.id, request, source)
+        create_audit(air_freight_rate_job.id)
     return {"id": air_freight_rate_job.id}
 
 
@@ -72,3 +80,10 @@ def create_job_object(params):
     for key in list(params.keys()):
         setattr(air_freight_rate_job, key, params[key])
     return air_freight_rate_job
+
+def create_audit(jobs_id):
+    AirServiceAudit.create(
+        action_name = 'create',
+        object_id = jobs_id,
+        object_type = 'AirFreightRateJob'
+    )
