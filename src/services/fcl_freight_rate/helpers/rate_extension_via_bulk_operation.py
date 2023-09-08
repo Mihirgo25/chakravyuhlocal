@@ -59,6 +59,7 @@ def get_add_freight_rate_markup_params(request):
     data["apply_to_extended_rates"] = False
     data["rates_greater_than_price"] = None
     data["rates_less_than_price"] = None
+    data["is_system_operation"] = True
     params = {}
     params["performed_by_type"] = "agent"
     params["performed_by_id"] = DEFAULT_USER_ID
