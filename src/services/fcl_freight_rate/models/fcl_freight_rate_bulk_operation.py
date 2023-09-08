@@ -566,6 +566,7 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
         affect_market_price = data.get('affect_market_price', True)
+        is_system_operation = data.get('is_system_operation', False)
         fcl_freight_rates = list(batch_query.dicts())
         
         validity_start = datetime.strptime(data['validity_start'], '%Y-%m-%d')
@@ -644,8 +645,8 @@ class FclFreightRateBulkOperation(BaseModel):
                     'cogo_entity_id': str(freight["cogo_entity_id"]) if freight['cogo_entity_id'] else None,
                     'bulk_operation_id': self.id,
                     'performed_by_id': self.performed_by_id,
-                    'sourced_by_id': sourced_by_id,
-                    'procured_by_id': procured_by_id,
+                    'sourced_by_id': str(freight['sourced_by_id']) if  is_system_operation else sourced_by_id,
+                    'procured_by_id': str(freight['procured_by_id']) if  is_system_operation else procured_by_id,
                     'validity_start': validity_object['validity_start'],
                     'validity_end': validity_object['validity_end'],
                     'line_items': validity_object['line_items'],
@@ -713,6 +714,8 @@ class FclFreightRateBulkOperation(BaseModel):
                     'service_provider_id': True,
                     'cogo_entity_id': True,
                     'rate_type': True,
+                    'sourced_by_id': True,
+                    'procured_by_id': True,
                     'mode': True,
                 }
 
