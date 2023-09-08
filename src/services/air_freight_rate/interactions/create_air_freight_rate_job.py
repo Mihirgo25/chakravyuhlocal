@@ -7,7 +7,7 @@ from database.rails_db import get_user
 from database.db_session import db
 from configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-
+from configs.env import DEFAULT_USER_ID
 
 
 def create_air_freight_rate_job(request, source):
@@ -53,7 +53,7 @@ def execute_transaction_code(request, source):
         air_freight_rate_job.set_locations()
         air_freight_rate_job.save()
         set_jobs_mapping(air_freight_rate_job.id, request, source)
-        create_audit(air_freight_rate_job.id)
+        create_audit(air_freight_rate_job.id, request)
         get_multiple_service_objects(air_freight_rate_job)
 
         return {"id": air_freight_rate_job.id}
@@ -63,7 +63,7 @@ def execute_transaction_code(request, source):
         air_freight_rate_job.sources = previous_sources + [source]
         air_freight_rate_job.save()
         set_jobs_mapping(air_freight_rate_job.id, request, source)
-        create_audit(air_freight_rate_job.id)
+        create_audit(air_freight_rate_job.id, request)
     return {"id": air_freight_rate_job.id}
 
 
@@ -81,9 +81,11 @@ def create_job_object(params):
         setattr(air_freight_rate_job, key, params[key])
     return air_freight_rate_job
 
-def create_audit(jobs_id):
+def create_audit(jobs_id, request):
     AirServiceAudit.create(
         action_name = 'create',
         object_id = jobs_id,
-        object_type = 'AirFreightRateJob'
+        object_type = 'AirFreightRateJob',
+        data = request,
+        performed_by_id = DEFAULT_USER_ID
     )

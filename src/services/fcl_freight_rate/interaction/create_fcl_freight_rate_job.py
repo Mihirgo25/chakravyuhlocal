@@ -7,6 +7,7 @@ from fastapi.encoders import jsonable_encoder
 from database.db_session import db
 from  configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
+from configs.env import DEFAULT_USER_ID
 
 
 
@@ -47,7 +48,7 @@ def execute_transaction_code(request, source):
         fcl_freight_rate_job.set_locations()
         fcl_freight_rate_job.save()
         set_jobs_mapping(fcl_freight_rate_job.id, request, source)
-        create_audit(fcl_freight_rate_job.id)
+        create_audit(fcl_freight_rate_job.id, request)
         get_multiple_service_objects(fcl_freight_rate_job)
 
         return {"id": fcl_freight_rate_job.id}
@@ -57,7 +58,7 @@ def execute_transaction_code(request, source):
         fcl_freight_rate_job.sources = previous_sources + [source]
         fcl_freight_rate_job.save()
         set_jobs_mapping(fcl_freight_rate_job.id, request, source)
-        create_audit(fcl_freight_rate_job.id)
+        create_audit(fcl_freight_rate_job.id, request)
     return {"id": fcl_freight_rate_job.id}
 
 
@@ -76,9 +77,11 @@ def create_job_object(params):
     return fcl_freight_rate_job
 
 
-def create_audit(jobs_id):
+def create_audit(jobs_id, request):
     FclServiceAudit.create(
         action_name = 'create',
         object_id = jobs_id,
-        object_type = 'FclFreightRateJob'
+        object_type = 'FclFreightRateJob',
+        data = request,
+        performed_by_id = DEFAULT_USER_ID
     )
