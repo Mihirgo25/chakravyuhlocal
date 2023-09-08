@@ -30,7 +30,7 @@ POSSIBLE_DIRECT_FILTERS = {
     "procured_by_id",
 }
 
-POSSIBLE_INDIRECT_FILTERS = {"stale_rate","weight_slabs"}
+POSSIBLE_INDIRECT_FILTERS = {"stale_rate", "weight_slabs"}
 
 COUNT_FILTERS = {"dislikes_count", "checkout_count"}
 
@@ -65,9 +65,15 @@ def get_date_range_filter(where):
     )
 
 
+def get_cargo_clearance_date_filter(where):
+    where.append(
+        "validity_end >= %(cargo_clearance_date)s AND validity_start <= %(cargo_clearance_date)s"
+    )
+
+
 def get_stale_rates_filter(where):
     where.append("checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0")
-    
+
 
 def get_weight_slabs_filter(where):
     where.append("lower_limit >= %(lower_limit)s AND upper_limit <= %(upper_limit)s")

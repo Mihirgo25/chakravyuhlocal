@@ -120,3 +120,10 @@ class FclFilterTypes(Bramhastra):
 
 class FclChargeCodes(Bramhastra):
     BAS = "BAS"
+    
+class MapsFilter(Bramhastra):
+    origin_port_code = "origin_port_code"
+    destination_port_code = "destination_port_code"
+    
+class Status(Bramhastra):
+    active = "active"

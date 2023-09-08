@@ -26,6 +26,9 @@ from services.bramhastra.interactions.get_fcl_freight_rate_world import (
 from services.bramhastra.interactions.list_fcl_freight_rate_statistics import (
     list_fcl_freight_rate_statistics,
 )
+from services.bramhastra.interactions.list_air_freight_rate_statistics import (
+    list_air_freight_rate_statistics,
+)
 from services.bramhastra.interactions.list_fcl_freight_rate_request_statistics import (
     list_fcl_freight_rate_request_statistics,
 )
@@ -329,6 +332,32 @@ async def list_fcl_freight_rate_statistics_api(
     try:
         response = await list_fcl_freight_rate_statistics(
             filters, page_limit, page, is_service_object_required
+        )
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+        
+@bramhastra.get("/list_air_freight_rate_statistics", response_model=DefaultList)
+async def list_air_freight_rate_statistics_api(
+    filters: Annotated[Json, Query()] = {},
+    page_limit: int = 10,
+    page: int = 1,
+    is_service_object_required: bool = True,
+    pagination_data_required: bool = False,
+    auth_response: dict = Depends(authorize_token),
+):
+    if auth_response.get("status_code") != 200:
+        return JSONResponse(
+            status_code=auth_response.get("status_code"), content=auth_response
+        )
+    try:
+        response = await list_air_freight_rate_statistics(
+            filters, page_limit, page, is_service_object_required, pagination_data_required
         )
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:

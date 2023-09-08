@@ -1,9 +1,13 @@
 from services.bramhastra.client import ClickHouse
 from fastapi.encoders import jsonable_encoder
 from services.bramhastra.helpers.air_freight_filter_helper import (
-    get_direct_indirect_filters,add_pagination_data
+    get_direct_indirect_filters,
+    add_pagination_data,
 )
 from micro_services.client import maps
+from services.bramhastra.models.air_freight_rate_statistic import (
+    AirFreightRateStatistic,
+)
 
 DEFAULT_INCUDE_PARAMS = {
     "origin_airport_id",
@@ -11,29 +15,37 @@ DEFAULT_INCUDE_PARAMS = {
     "airline_id",
     "service_provider_id",
     "cogo_entity_id",
-    "container_size",
-    "container_type",
     "commodity",
-    "rate_type"
+    "rate_type",
 }
 
-LOCATION_KEYS = {'origin_airport_id','destination_airport_id'}
+DEFAULT_AGGREGATE_PARAMS = {"standard_price": "AVG(standard_price)"}
+
+DEFAULT_SELECT_KEYS = {
+    "origin_airport_id",
+    "destination_airport_id",
+}
+
+DEFAULT_QUERY_TYPE = "default"
+
+ALLOWABLE_QUERY_TYPES = {"default", "aggregate"}
+
+LOCATION_KEYS = {"origin_airport_id", "destination_airport_id"}
 
 
 async def add_service_objects(statistics):
-    
     location_ids = set()
     airline_ids = set()
-    
+
     for statistic in statistics:
-        for k,v in statistic.items():
+        for k, v in statistic.items():
             if k in LOCATION_KEYS:
                 location_ids.add(v)
-            if k == 'airline_id':
+            if k == "airline_id":
                 airline_ids.add(v)
-    
+
     airlines = await get_airlines(airline_ids)
-    
+
     locations = await get_locations(location_ids)
 
     for statistic in statistics:
@@ -44,13 +56,14 @@ async def add_service_objects(statistics):
                 if not location:
                     continue
                 update_statistic[f"{k[:-3]}"] = location
-            if k == 'airline_id':
+            if k == "airline_id":
                 airline = airlines.get(v)
                 if not airline:
                     continue
-                update_statistic['airline'] = airline
+                update_statistic["airline"] = airline
         statistic.update(update_statistic)
-        
+
+
 async def get_airlines(ids):
     return {
         airline["id"]: airline
@@ -61,48 +74,111 @@ async def get_airlines(ids):
             )
         )["list"]
     }
-    
-    
+
+
 async def get_locations(ids):
     return {
         location["id"]: location
         for location in maps.list_locations(
             dict(
                 filters=dict(id=list(ids)),
-                includes=dict(id=True, name=True,port_code = True),
+                includes=dict(id=True, name=True, port_code=True),
                 page_limit=len(ids),
             )
         )["list"]
     }
-    
 
-async def list_air_freight_rate_statistics(filters,page_limit,page):
+
+async def list_air_freight_rate_statistics(
+    filters, page_limit, page, is_service_object_required, pagination_data_required
+):
+    if (
+        "query_type" in filters
+        and filters.get("query_type") not in ALLOWABLE_QUERY_TYPES
+    ):
+        raise ValueError("invalid type")
+    return await eval(
+        f"use_{filters.get('query_type') or DEFAULT_QUERY_TYPE}_query(filters, page_limit, page,is_service_object_required, pagination_data_required)"
+    )
+
+
+async def use_aggregate_query(
+    filters, page_limit, page, is_service_object_required, pagination_data_required
+):
     clickhouse = ClickHouse()
-    
-    select = ','.join(DEFAULT_INCUDE_PARAMS)
-    
-    queries = [f'''SELECT {select},rate_deviation_from_booking_rate from brahmastra.air_freight_rate_statistics''']
-    
+
+    select = ",".join(filters.get("select", DEFAULT_SELECT_KEYS))
+
+    aggregate_select = ",".join(
+        [
+            f"{v} AS {k}"
+            for k, v in filters.get(
+                "aggregate_select", DEFAULT_AGGREGATE_PARAMS
+            ).items()
+        ]
+    )
+
+    query = [
+        f"""SELECT {select},{aggregate_select} from brahmastra.{AirFreightRateStatistic._meta.table_name}"""
+    ]
+
+    where = get_direct_indirect_filters(filters)
+
+    if where:
+        query.append(f"WHERE {where}")
+
+    query.append(f"GROUP BY {select}")
+
+    response = dict()
+
+    if pagination_data_required:
+        response["total_count"], response["total_pages"] = add_pagination_data(
+            clickhouse, query, filters, page, page_limit
+        )
+
+    statistics = jsonable_encoder(clickhouse.execute(" ".join(query), filters))
+
+    if is_service_object_required:
+        await add_service_objects(statistics)
+
+    response["list"] = statistics
+
+    return response
+
+
+async def use_default_query(
+    filters, page_limit, page, is_service_object_required, pagination_data_required
+):
+    clickhouse = ClickHouse()
+
+    select = ",".join(DEFAULT_INCUDE_PARAMS)
+
+    queries = [
+        f"""SELECT {select},rate_deviation_from_booking_rate from brahmastra.air_freight_rate_statistics"""
+    ]
+
     if where := get_direct_indirect_filters(filters):
         queries.append("WHERE")
         queries.append(where)
-    
-    total_count, total_pages = add_pagination_data(
-        clickhouse, queries, filters, page, page_limit
+
+    response = dict()
+
+    if pagination_data_required:
+        response["total_count"], response["total_pages"] = add_pagination_data(
+            clickhouse, queries, filters, page, page_limit
+        )
+
+    queries.insert(0, "WITH list AS (")
+
+    queries.append(
+        f") SELECT {select},MAX(rate_deviation_from_booking_rate) as deviation FROM list GROUP BY {select}"
     )
-    
-    queries.insert(0,'WITH list AS (')
-    
-    queries.append(f') SELECT {select},MAX(rate_deviation_from_booking_rate) as deviation FROM list GROUP BY {select}')
-    
-    statistics =  jsonable_encoder(clickhouse.execute(' '.join(queries),filters))
-    
-    await add_service_objects(statistics)
-    
-    return dict(
-        list = statistics,
-        page=page,
-        page_limit=page_limit,
-        total_pages=total_pages,
-        total_count=total_count,
-    )
+
+    statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
+
+    if is_service_object_required:
+        await add_service_objects(statistics)
+
+    response["list"] = statistics
+
+    return response
