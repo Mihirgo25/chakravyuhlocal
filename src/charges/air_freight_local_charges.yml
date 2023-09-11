@@ -538,13 +538,13 @@ BAL:
   name: 'Barcode Label'
   units: [ 'per_shipment', 'per_document','per_package']
   trade_types: [ 'export', 'import' ]
+  tags: ['additional_service']
   condition: true
   sac_code: ''
-  tags: ['additional_service']
 MCC:
   name: 'MCC fees'
   units: [ 'per_shipment', 'per_kg' ]
   trade_types: [ 'export', 'import' ]
+  tags: ['additional_service']
   condition: true
   sac_code: ''
-  tags: ['additional_service']
