@@ -12,14 +12,12 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
-from services.fcl_freight_rate.interaction.cluster_extension_by_latest_trends import update_cluster_extension_by_latest_trends
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
 from services.haulage_freight_rate.schedulers.electricity_price_scheduler import electricity_price_scheduler
 from services.fcl_freight_rate.interaction.add_local_rates_on_country import add_local_rates_on_country
-from services.fcl_freight_rate.helpers.get_critical_ports_extension_parameters import get_critical_ports_extension_parameters
 from kombu import Exchange, Queue
 from celery.schedules import crontab
 import asyncio
@@ -38,6 +36,7 @@ from database.rails_db import get_past_cost_booking_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate
 from services.fcl_customs_rate.helpers import update_organization_fcl_customs
+from services.fcl_freight_rate.helpers.cluster_extension_by_latest_trends_helper import cluster_extension_by_latest_trends_helper
 from services.fcl_cfs_rate.helpers import update_organization_fcl_cfs
 from services.air_freight_rate.interactions.update_air_freight_rate_request import update_air_freight_rate_request
 from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_feedback
@@ -932,10 +931,7 @@ def air_freight_airline_factors_in_delay(self):
 @celery.task(bind = True,retry_backoff=True,max_retries=3)
 def cluster_extension_by_latest_trends_worker(self):
     try:
-        critical_port_pairs = get_critical_ports_extension_parameters()
-       
-        for request in critical_port_pairs:
-            asyncio.run(update_cluster_extension_by_latest_trends(request))
+        cluster_extension_by_latest_trends_helper()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

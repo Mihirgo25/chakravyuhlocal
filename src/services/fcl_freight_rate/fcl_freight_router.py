@@ -512,6 +512,7 @@ def get_fcl_freight_rate_cards_data(
     ignore_omp_dmp_sl_sps: str = None,
     include_destination_dpd: bool = False,
     cargo_weight_per_container: int = 0,
+    search_source: str = 'platform',
     resp: dict = Depends(authorize_token)
 ):
     try:
@@ -558,7 +559,8 @@ def get_fcl_freight_rate_cards_data(
         'additional_services':additional_services,
         'include_confirmed_inventory_rates':include_confirmed_inventory_rates,
         'ignore_omp_dmp_sl_sps' : ignore_omp_dmp_sl_sps,
-        'cogo_entity_id' : cogo_entity_id
+        'cogo_entity_id' : cogo_entity_id,
+        'search_source': search_source
     }
 
     try:
