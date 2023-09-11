@@ -181,3 +181,5 @@ VALUE_PROPS_TAG_MAPPING = {
     'fixed_exchange_rate': 'Fixed Exchange Rate',
     'priority_booking': 'Priority Booking'
   }
+
+POSSIBLE_SOURCES_IN_JOB_MAPPINGS = ['expiring_rates','critical_ports', 'cancelled_shipments', 'spot_search', 'rate_request', 'rate_feedback']
