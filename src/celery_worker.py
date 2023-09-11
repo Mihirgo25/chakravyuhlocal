@@ -81,13 +81,6 @@ from services.air_freight_rate.workers.air_freight_critical_port_pairs_scheduler
 from services.air_freight_rate.workers.air_freight_expiring_rates_scheduler import (
     air_freight_expiring_rates_scheduler,
 )
-from services.fcl_freight_rate.workers.update_fcl_freight_rate_jobs_to_backlog import (
-    update_fcl_freight_rate_jobs_to_backlog,
-)
-from services.air_freight_rate.workers.update_air_freight_rate_jobs_to_backlog import (
-    update_air_freight_rate_jobs_to_backlog,
-)
-
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -210,11 +203,6 @@ celery.conf.beat_schedule = {
     "create_jobs_for_critical_port_pairs": {
         "task": "celery_worker.create_job_for_critical_port_pairs_delay",
         'schedule': crontab(hour=00, minute=30),
-        "options": {"queue": "fcl_freight_rate"},
-    },
-     "update_jobs_status_to_backlogs": {
-        "task": "celery_worker.update_jobs_status_to_backlog_delay",
-        'schedule': crontab(hour=22, minute=30),
         "options": {"queue": "fcl_freight_rate"},
     },
 }
@@ -976,14 +964,3 @@ def create_job_for_critical_port_pairs_delay(self):
             raise self.retry(exc=exc)
         
 
-@celery.task(bind=True, max_retries=3, retry_backoff=True)
-def update_jobs_status_to_backlog_delay(self):
-    try:
-        # Runs at 4am ist(22:30 utc) will take around 5 mins max for 3k-4k records
-        update_fcl_freight_rate_jobs_to_backlog()
-        update_air_freight_rate_jobs_to_backlog()
-    except Exception as exc:
-        if type(exc).__name__ == "HTTPException":
-            pass
-        else:
-            raise self.retry(exc=exc)
