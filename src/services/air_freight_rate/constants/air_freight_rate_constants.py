@@ -366,10 +366,6 @@ INDIA_CRITICAL_PORT_PAIR = [
         "destination_airport_id": "7a9cac74-fb06-4e8b-b5df-3ad267484df2",
     },
     {
-        "origin_airport_id": "676b663a-cab8-48dd-a6da-d28c6ee3f20c",
-        "destination_airport_id": "641f000-af1a-4f26-9fd3-be0998918e71",
-    },
-    {
         "origin_airport_id": "7391cac2-e8db-467f-a59b-574d01dd7e7c",
         "destination_airport_id": "d16363a4-58e5-418c-9a95-a281d706318b",
     },
@@ -592,10 +588,6 @@ INDIA_CRITICAL_PORT_PAIR = [
     {
         "origin_airport_id": "7391cac2-e8db-467f-a59b-574d01dd7e7c",
         "destination_airport_id": "c298f645-7d0a-44cb-845f-da7d85ac0e16",
-    },
-    {
-        "origin_airport_id": "aa0e7e59-cbb9-43b2-98ce-1f992ae7ab19",
-        "destination_airport_id": "Minsk National Airport, Minsk, Belarus",
     },
     {
         "origin_airport_id": "7391cac2-e8db-467f-a59b-574d01dd7e7c",
