@@ -1,11 +1,10 @@
 def get_filtered_line_items(rate:dict, line_items:list):
     '''
-        Line Items are added based on the conditions 
-        given by user
+        1. Line items are evaluated based on user-defined conditions.
+        2. Each condition is checked using specified operators and criteria.
+        3. The best line item is selected based on the highest number of satisfied conditions in case of duplicate line item code.
+           If multiple line items have the same number of satisfied conditions, the one with the highest price is chosen.
 
-        1. Each condition is evaluated based on given operator and few conditions.
-        2. After satisfying conditions they are appended to line items
-    
     '''
     item_conditions_mapping = {}
     new_line_items = []
