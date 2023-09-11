@@ -70,6 +70,7 @@ def execute_transaction_code(request):
     surcharge.sourced_by_id = request.get('sourced_by_id')
 
     surcharge.procured_by_id = request.get('procured_by_id')
+    surcharge.rate_not_available_entry = False
     try:
         surcharge.save()
     except Exception:

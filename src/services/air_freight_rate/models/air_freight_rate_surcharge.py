@@ -94,7 +94,7 @@ class AirFreightRateSurcharge(BaseModel):
         is_line_items_error_messages_present = False
         is_line_items_info_messages_present = False
 
-
+        commodity = self.commodity
         air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES
         grouped_charge_codes = {}
         for line_item in self.line_items:

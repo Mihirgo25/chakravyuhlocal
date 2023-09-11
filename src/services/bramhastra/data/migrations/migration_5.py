@@ -26,11 +26,6 @@ def generate_batch_intervals():
             {"fro": current_date, "to": current_date + timedelta(days=2)}
         )
         current_date += timedelta(days=3)
-        
-    # batch_intervals = [{
-    #     "fro": datetime.strptime("2023-07-01", "%Y-%m-%d"),
-    #     "to": datetime.strptime("2023-09-30", "%Y-%m-%d")
-    # }]
 
     return batch_intervals
 
@@ -72,16 +67,14 @@ def reset():
     clicks.create()
 
 
-def main(db = get_db()):
-    
+def main():
     reset()
     
     p = ParallelJobs()
 
     batches = generate_batch_intervals()
     
-    for batch in batches:
-        execute(batch)
+    p.parallel_function(batches,execute)
 
     print(
         "------------------------- SENDING TO CLICKHOUSE -------------------------------"
