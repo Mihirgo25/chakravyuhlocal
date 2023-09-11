@@ -52,6 +52,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "serial_id",
     "price_type",
     "sources",
+    "rate_id"
 ]
 
 

@@ -45,6 +45,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "serial_id",
     "container_type",
     "sources",
+    "rate_id"
 ]
 
 
