@@ -574,6 +574,8 @@ class AirFreightRateBulkOperation(BaseModel):
                     else:
                         line_item = local_line_item
                 new_line_items.append(line_item)
+            if not new_line_items:
+                continue
             update_air_freight_rate_local({                    
                         'id': freight['id'],
                         'bulk_operation_id': str(self.id),
@@ -639,19 +641,20 @@ class AirFreightRateBulkOperation(BaseModel):
                     else:
                         line_item = local_line_item
                 new_line_items.append(line_item)
-            
+            if not new_line_items:
+                continue
             update_air_freight_rate_surcharge({
                                         
                         'id': freight['id'],
                         'bulk_operation_id': str(self.id),
-                        'line_items': freight['line_items']
+                        'line_items': new_line_items
                         
             })
             self.progress = (count * 100.0) / int(total_count)
             self.save()
         return count
 
-    def perform_update_freight_rate_surcharge(self):
+    def perform_update_freight_rate_surcharge_action(self):
         data = self.data
         filters = data['filters']
         rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
