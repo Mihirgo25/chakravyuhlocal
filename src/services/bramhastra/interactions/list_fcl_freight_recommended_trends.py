@@ -89,7 +89,7 @@ def get_trends(where: str, filters: dict, limit: int) -> list:
     )
 
     query = [
-        f"SELECT {select},{aggregate_select}, SUM(spot_search_count) as searches, 'USD' as freight_rate_currency from brahmastra.{FclFreightRateStatistic._meta.table_name}"
+        f"SELECT origin_port_id,destination_port_id,{aggregate_select}, SUM(spot_search_count) as searches, 'USD' as freight_rate_currency from brahmastra.{FclFreightRateStatistic._meta.table_name}"
     ]
     if where:
         query.append(f"WHERE {where} AND is_deleted = false")
@@ -130,4 +130,5 @@ def change_currency(trends, filters):
                 (trend["current_freight_rate"] - trend["past_freight_rate"])
                 / (trend["past_freight_rate"] or 1)
             ) * 100
-        trend["freight_rate_currency"] = filters.get("currency")
+        if filters.get("currency"):
+            trend["freight_rate_currency"] = filters.get("currency")

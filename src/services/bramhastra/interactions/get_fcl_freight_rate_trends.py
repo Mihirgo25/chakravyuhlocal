@@ -19,11 +19,11 @@ DEFAULT_AGGREGATE_SELECT = {
     "max_price": "MAX(standard_price)",
 }
 
-ALLOWED_INTERVAL_TYPES = {
+ALLOWED_FREQUENCY_TYPES = {
     "year": "toStartOfMonth(toDate(day))",
     "month": "toStartOfMonth(toDate(day))",
     "week": "toStartOfWeek(toDate(day))",
-    "day": "toDate(day)"
+    "day": "toDate(day)",
 }
 
 
@@ -50,8 +50,8 @@ def get_rate(filters: dict, where: str) -> list:
             ).items()
         ]
     )
-    
-    interval = ALLOWED_INTERVAL_TYPES[filters.get("interval_type","day")]
+
+    interval = ALLOWED_FREQUENCY_TYPES[filters.get("frequency", "day")]
 
     queries = [
         f"""SELECT parent_mode as mode,{interval} AS day,{aggregate_select} FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,standard_price,parent_mode,sign FROM brahmastra.fcl_freight_rate_statistics"""
@@ -72,7 +72,7 @@ def get_rate(filters: dict, where: str) -> list:
     queries.append(
         """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day ORDER BY day,mode;"""
     )
-    
+
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     formatted_charts = format_charts(charts, filters)
@@ -110,14 +110,15 @@ def format_response(response: list, filters: dict, needed_modes: list) -> list:
             {entry["mode"]: {k: entry[k] for k in DEFAULT_AGGREGATE_SELECT}}
         )
 
+    exchange_rate = common.get_exchange_rate(
+        {
+            "from_currency": Fcl.default_currency.value,
+            "to_currency": filters.get("currency"),
+        }
+    )
+
     for day, values in sorted(response_dict.items()):
         if filters.get("currency"):
-            exchange_rate = common.get_exchange_rate(
-                {
-                    "from_currency": Fcl.default_currency.value,
-                    "to_currency": filters.get("currency"),
-                }
-            )
             for mode, aggregate_values in values.items():
                 for key in DEFAULT_AGGREGATE_SELECT.keys():
                     aggregate_values[key] = aggregate_values[key] * exchange_rate
