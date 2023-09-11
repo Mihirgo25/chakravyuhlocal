@@ -1,9 +1,6 @@
 from celery_worker import celery
 
 
-from services.fcl_freight_rate.workers.update_fcl_freight_rate_jobs_to_backlog import (
-    update_fcl_freight_rate_jobs_to_backlog,
-)
 from services.fcl_freight_rate.workers.update_fcl_freight_rate_job_on_rate_addition import (
     update_fcl_freight_rate_job_on_rate_addition,
 )
@@ -35,14 +32,5 @@ def update_fcl_freight_rate_job_on_rate_addition_delay(self, request, id):
             raise self.retry(exc=exc)
         
 
-@celery.task(bind=True, max_retries=3, retry_backoff=True)
-def update_fcl_freight_rate_jobs_to_backlog_delay(self):
-    try:
-        return update_fcl_freight_rate_jobs_to_backlog()
-    except Exception as exc:
-        if type(exc).__name__ == "HTTPException":
-            pass
-        else:
-            raise self.retry(exc=exc)
         
 
