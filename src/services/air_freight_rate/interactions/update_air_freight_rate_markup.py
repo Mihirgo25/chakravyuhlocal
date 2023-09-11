@@ -37,8 +37,8 @@ def execute_transaction_code(request):
     validity_start = max(datetime.strptime(validity_object['validity_start'], '%Y-%m-%d'), datetime.now())
     validity_end = min(datetime.strptime(request['validity_end'], '%Y-%m-%d'), (datetime.now() + timedelta(days=45)))
     object.set_validities(
-        validity_start,
-        validity_end,
+        validity_start.date(),
+        validity_end.date(),
         validity_object.get("min_price"),
         validity_object.get('currency'),
         validity_object.get("weight_slabs"),

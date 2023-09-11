@@ -59,14 +59,9 @@ class AirFreightRateBulkOperation(BaseModel):
 
     def validate_update_freight_rate_data(self):
         data = self.data
-        if not data["new_end_date"]:
-            raise HTTPException(status_code=400, detail="New End Date Is Invalid")
-
-        if not data["new_start_date"]:
-            raise HTTPException(status_code=400, detail="New Start Date Is Invalid")
 
         if (
-            datetime.fromisoformat(data["new_end_date"]).date()
+            datetime.fromisoformat(data["end_date"]).date()
             > (datetime.now() + timedelta(days=120)).date()
         ):
             raise HTTPException(
@@ -74,23 +69,6 @@ class AirFreightRateBulkOperation(BaseModel):
                 detail="New End Date Cannot Be Greater Than 120 Days From Current Date",
             )
 
-        if (
-            datetime.fromisoformat(data["new_start_date"]).date()
-            < (datetime.now() - timedelta(days=15)).date()
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="New Start Date Cannot Be Less Than 15 Days From Current Date",
-            )
-
-        if (
-            datetime.fromisoformat(data["new_end_date"]).date()
-            <= datetime.fromisoformat(data["new_start_date"]).date()
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="New End Date Cannot Be Lesser Than Or Equal To Start Validity",
-            )
 
     def validate_add_freight_rate_markup_data(self):
         data = self.data
@@ -126,7 +104,7 @@ class AirFreightRateBulkOperation(BaseModel):
         if data['validity_end'] < data['validity_start']:
             raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start')
         
-        if data.get('rates_greater_than_price')!=None and data.get('rates_greater_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
+        if data.get('rates_greater_than_price')!=None and data.get('rates_less_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
             raise HTTPException(status_code=400, detail='Greater than price cannot be greater than Less than price')
         
         if data.get('rate_sheet_serial_id'):
@@ -313,19 +291,22 @@ class AirFreightRateBulkOperation(BaseModel):
  
             validity_start = max(freight_validity_start, validity_start_date)
             validity_end = min(freight_validity_end, validity_end_date)
-            update_air_freight_rate(
-                {
-                    "id": freight["id"],
-                    "validity_id":freight['validity']['id'],
-                    "validity_start":validity_start.date(),
-                    "validity_end":validity_end.date() ,
-                    "performed_by_id": self.performed_by_id,
-                    "bulk_operation_id": self.id,
-                    "min_price": freight['validity']["min_price"],
-                    "currency": freight['validity']["currency"],
-                    "weight_slabs": slabs,
-                }
-            )
+            try:
+                update_air_freight_rate(
+                    {
+                        "id": freight["id"],
+                        "validity_id":freight['validity']['id'],
+                        "validity_start":validity_start.date(),
+                        "validity_end":validity_end.date() ,
+                        "performed_by_id": self.performed_by_id,
+                        "bulk_operation_id": self.id,
+                        "min_price": freight['validity']["min_price"],
+                        "currency": freight['validity']["currency"],
+                        "weight_slabs": slabs,
+                    }
+                )
+            except:
+                pass
             self.progress = (count * 100.0) / int(total_count)
             self.save()
         return count
@@ -378,7 +359,7 @@ class AirFreightRateBulkOperation(BaseModel):
                     "id": freight["id"],
                     "performed_by_id": self.performed_by_id,
                     "bulk_operation_id": self.id,
-                    "validity_end": self.data.get('validity_end'),
+                    "validity_end": self.data.get('end_date'),
                     
                 }
             )

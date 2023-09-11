@@ -375,7 +375,7 @@ class DeleteFreightRateParams(BaseModel):
     
 class UpdateFreightRateParams(BaseModel):
     filters:dict = {}
-    end_date: datetime
+    end_date: date
     markup: float = None
     markup_type: str = None
     markup_currency: str = None

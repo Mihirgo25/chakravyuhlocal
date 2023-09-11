@@ -36,20 +36,20 @@ def delete_air_freight_rate_data(request):
     validities =  air_freight_rate.validities
     total_avaliable_validities = len(validities)
 
-    # if total_avaliable_validities ==0:
-    #     air_freight_rate.rate_not_available_entry=True
+    if total_avaliable_validities ==0:
+        air_freight_rate.rate_not_available_entry=True
 
-    # if air_freight_rate.rate_not_available_entry==False:
-    #     air_freight_rate.set_last_rate_available_date()
+    if air_freight_rate.rate_not_available_entry==False:
+        air_freight_rate.set_last_rate_available_date()
 
-    # air_freight_rate.validities = validities
+    air_freight_rate.validities = validities
 
-    # try:
-    #     air_freight_rate.save()
-    # except Exception as e:
-    #     print("Exception in saving freight rate", e)
+    try:
+        air_freight_rate.save()
+    except Exception as e:
+        print("Exception in saving freight rate", e)
     
-    # create_audit(request, air_freight_rate.id)
+    create_audit(request, air_freight_rate.id)
 
     return {
        'id': air_freight_rate.id
