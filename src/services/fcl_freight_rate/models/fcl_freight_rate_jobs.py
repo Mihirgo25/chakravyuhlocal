@@ -41,6 +41,7 @@ class FclFreightRateJob(BaseModel):
     rate_type = TextField(null=True)
     init_key = TextField(index=True, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_jobs_serial_id_seq')")],)
+    rate_id = UUIDField(null=True, index=True)
 
     class Meta:
         table_name = 'fcl_freight_rate_jobs'
