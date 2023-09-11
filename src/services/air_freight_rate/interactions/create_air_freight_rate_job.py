@@ -38,7 +38,6 @@ def execute_transaction_code(request, source):
         'shipment_type': request.get('shipment_type'),
         'stacking_type': request.get('stacking_type'),
         'price_type': request.get('price_type'),
-        'rate_id': request.get('id') or request.get('id'),
     }
     
     init_key = f'{str(params.get("origin_airport_id") or "")}:{str(params.get("destination_airport_id") or "")}:{str(params.get("airline_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("commodity_type") or "")}:{str(params.get("commodity_sub_type") or "")}:{str(params.get("stacking_type") or "")}:{str(params.get("operation_type") or "")}'

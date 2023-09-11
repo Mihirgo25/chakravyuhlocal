@@ -45,7 +45,6 @@ DEFAULT_REQUIRED_FIELDS = [
     "serial_id",
     "container_type",
     "sources",
-    "rate_id"
 ]
 
 
@@ -72,7 +71,7 @@ def list_fcl_freight_rate_jobs(
 
     if page_limit:
         query = query.paginate(page, page_limit)
-
+    print(query)
     query = sort_query(sort_by, sort_type, query)
 
     data = get_data(query)

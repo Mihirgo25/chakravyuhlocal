@@ -17,7 +17,6 @@ def air_freight_cancelled_shipments_scheduler():
 
     for rate in ServerSide(air_query):
         rate_data = model_to_dict(rate)
-        rate_data['id'] = rate_data['rate_id']
         create_air_freight_rate_job(rate_data, 'cancelled_shipments')
 
 
