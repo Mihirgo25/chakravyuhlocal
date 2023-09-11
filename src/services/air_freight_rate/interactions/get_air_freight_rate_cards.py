@@ -14,6 +14,7 @@ import sentry_sdk
 import traceback
 from services.air_freight_rate.interactions.get_air_freight_rates_from_clusters import get_air_freight_rates_from_clusters
 from rms_utils.filter_predicted_or_extension_rates import filter_predicted_or_extension_rates
+from services.air_freight_rate.air_celery_worker import create_jobs_for_predicted_air_freight_rate_delay
 
 def initialize_freight_query(requirements,prediction_required=False):
     freight_query = AirFreightRate.select(
@@ -514,8 +515,8 @@ def get_air_freight_rate_cards(requirements):
         freight_rates = filter_predicted_or_extension_rates(freight_rates)
 
         is_predicted = False
-        freight_rates,is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
         
+        freight_rates,is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
         freight_rates = post_discard_less_relevant_rates(freight_rates)
         missing_surcharge = get_missing_surcharges(freight_rates)
         surcharges = get_surcharges(requirements,missing_surcharge)
@@ -524,7 +525,8 @@ def get_air_freight_rate_cards(requirements):
         apply_density_matching = not is_predicted
 
         freight_rates = build_response_list(freight_rates,requirements, apply_density_matching)
-
+        
+        create_jobs_for_predicted_air_freight_rate_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements}, queue='critical')
         return {
             'list': freight_rates
         }
