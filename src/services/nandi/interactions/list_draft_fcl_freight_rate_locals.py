@@ -19,16 +19,27 @@ def list_draft_fcl_freight_rate_locals(filters = {}, page_limit = 10, page = 1, 
 
             query = get_filters(direct_filters, query, DraftFclFreightRateLocal)
 
-            stats = get_stats(filters, is_stats_required) or {}
-            data = get_data(query)
-            return { 'list': json_encoder(data) } | (stats)
+    stats = get_stats(filters, is_stats_required) or {}
+    query = query.paginate(page, page_limit)
+    data = get_data(query)
+    return { 'list': json_encoder(data) } | (stats)
 
 def get_query(sort_by, sort_type):
     query = DraftFclFreightRateLocal.select().order_by(eval("DraftFclFreightRateLocal.{}.{}()".format(sort_by, sort_type)))
     return query
 
 def get_data(query):
-    data = list(query.dicts())
+    sid_wise_data = {}
+    for row in query.dicts():
+        row['invoice_urls'] = []
+        if not sid_wise_data.get(row.get('shipment_serial_id')):
+            sid_wise_data[row['shipment_serial_id']] = row
+            sid_wise_data[row['shipment_serial_id']]['invoice_urls'].append(row['invoice_url'])
+            continue
+        sid_wise_data[row['shipment_serial_id']]['data']['line_items'].extend(row['data']['line_items'])
+        sid_wise_data[row['shipment_serial_id']]['invoice_urls'].append(row['invoice_url'])
+        sid_wise_data[row['shipment_serial_id']]['invoice_urls'] = list(set(sid_wise_data[row['shipment_serial_id']]['invoice_urls']))
+    data = list(sid_wise_data.values())
     return data
 
 def get_stats(filters, is_stats_required):
