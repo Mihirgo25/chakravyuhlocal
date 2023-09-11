@@ -189,6 +189,7 @@ def get_air_freight_rate_local_api(
     trade_type: str = None,
     commodity: str = None,
     service_provider_id: str = None,
+    importer_exporter_id: str = None,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
@@ -199,6 +200,7 @@ def get_air_freight_rate_local_api(
         "trade_type": trade_type,
         "commodity": commodity,
         "service_provider_id": service_provider_id,
+        "importer_exporter_id":importer_exporter_id
     }
 
     try:
@@ -412,6 +414,7 @@ def get_air_freight_rate_surcharge_api(
     airline_id: str = None,
     operation_type: str = None,
     service_provider_id: str = None,
+    importer_exporter_id: str = None,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
@@ -423,6 +426,7 @@ def get_air_freight_rate_surcharge_api(
         "airline_id": airline_id,
         "operation_type": operation_type,
         "service_provider_id": service_provider_id,
+        "importer_exporter_id":importer_exporter_id
     }
 
     try:
