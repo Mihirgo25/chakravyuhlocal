@@ -127,3 +127,11 @@ class MapsFilter(Bramhastra):
     
 class Status(Bramhastra):
     active = "active"
+    
+class FclDefault(Bramhastra):
+    container_type  = "standard"
+    container_size = "20"
+    commodity = "general"
+    
+class Paginate(Bramhastra):
+    global_limit = 1000

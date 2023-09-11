@@ -56,6 +56,9 @@ from services.bramhastra.interactions.get_air_freight_rate_world import (
 from services.bramhastra.interactions.get_fcl_freight_rate_audit_statistics import (
     get_fcl_freight_rate_audit_statistics,
 )
+from services.bramhastra.interactions.list_fcl_freight_recommended_trends import (
+    list_fcl_freight_recommended_trends,
+)
 
 from services.bramhastra.request_params import (
     ApplySpotSearchFclFreightRateStatistic,
@@ -341,7 +344,8 @@ async def list_fcl_freight_rate_statistics_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
-        
+
+
 @bramhastra.get("/list_air_freight_rate_statistics", response_model=DefaultList)
 async def list_air_freight_rate_statistics_api(
     filters: Annotated[Json, Query()] = {},
@@ -357,7 +361,11 @@ async def list_air_freight_rate_statistics_api(
         )
     try:
         response = await list_air_freight_rate_statistics(
-            filters, page_limit, page, is_service_object_required, pagination_data_required
+            filters,
+            page_limit,
+            page,
+            is_service_object_required,
+            pagination_data_required,
         )
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
@@ -505,7 +513,11 @@ def get_fcl_freight_rate_trends_api(
 
 
 @rate_limiter.add(max_requests=10, time_window=3600)
-@bramhastra.get("/get_air_freight_rate_trends_for_public", tags=["Public"], summary = "gets air freight rates trend which are manual")
+@bramhastra.get(
+    "/get_air_freight_rate_trends_for_public",
+    tags=["Public"],
+    summary="gets air freight rates trend which are manual",
+)
 def get_air_freight_rate_trends_api(
     filters: Annotated[Json, Query()] = {},
 ):
@@ -557,6 +569,27 @@ def get_fcl_freight_rate_audit_statistics_api(
 
     try:
         response = get_fcl_freight_rate_audit_statistics(filters)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@rate_limiter.add(max_requests=10, time_window=3600)
+@bramhastra.get("/list_fcl_freight_recommended_trends", tags=["Public"])
+def list_fcl_freight_recommended_trends_api(
+    filters: Annotated[Json, Query()] = {},
+    limit: int = 5,
+    is_service_object_required: bool = False,
+):
+    try:
+        response = list_fcl_freight_recommended_trends(
+            filters, limit, is_service_object_required
+        )
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
