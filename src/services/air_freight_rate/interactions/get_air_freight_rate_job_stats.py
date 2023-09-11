@@ -133,6 +133,7 @@ def get_statistics(filters, dynamic_statistics):
 
 
 def build_daily_details(query, statistics):
+    total_backlogs = query.where(AirFreightRateJob.status == 'backlog').count()
     query = query.where(
         AirFreightRateJob.created_at.cast("date") == datetime.now().date()
     )
@@ -152,6 +153,7 @@ def build_daily_details(query, statistics):
         statistics["completed_percentage"] = round(
             ((statistics["completed"]) / total_daily_count) * 100, 2
         )
+    statistics['backlog'] = total_backlogs
     return statistics
 
 

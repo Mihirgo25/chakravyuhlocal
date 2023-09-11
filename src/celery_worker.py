@@ -82,6 +82,7 @@ from services.air_freight_rate.workers.air_freight_expiring_rates_scheduler impo
     air_freight_expiring_rates_scheduler,
 )
 
+
 CELERY_CONFIG = {
     "enable_utc": True,
     "task_serializer": "pickle",
@@ -206,7 +207,6 @@ celery.conf.beat_schedule = {
         "options": {"queue": "fcl_freight_rate"},
     },
 }
-
 
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
@@ -962,5 +962,3 @@ def create_job_for_critical_port_pairs_delay(self):
             pass
         else:
             raise self.retry(exc=exc)
-        
-
