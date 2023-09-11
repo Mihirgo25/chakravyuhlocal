@@ -1380,7 +1380,10 @@ class FclFreightRateBulkOperation(BaseModel):
         count = 0
         page_count = 1
 
-        filters = (data['filters'] or {})
+        if not data['filters']:
+            raise HTTPException(status_code=400, detail='filters cannot be empty')
+
+        filters = data['filters']
         total_count = list_fcl_freight_rate_locals(filters= filters, get_count = True)['list']
 
         while True:
@@ -1421,8 +1424,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     else:
                         new_line_items.append({key: value for key, value in line_item.items() if key in ['code', 'unit', 'price', 'currency', 'conditions']})
 
-                matching_line_items = [t for t in local['data']['line_items'] if t['code'] in line_items_codes]
-                if  matching_line_items:
+                if  line_items_seperation:
                     completed_codes = []
                     for line_item in line_items:
                         local_line_items = local['data']['line_items']
@@ -1452,22 +1454,25 @@ class FclFreightRateBulkOperation(BaseModel):
                                     local_line_items.append(t)
                                 local['data']['line_items'] = local_line_items
 
-                        completed_codes.append(code)
+                            completed_codes.append(code)
 
                 if new_line_items:
                     for items in new_line_items:
                         local['data']['line_items'].append(items)
-                        
-                update_fcl_freight_rate_local({
-                    'id': local['id'],
-                    'performed_by_id': self.performed_by_id,
-                    'sourced_by_id': sourced_by_id,
-                    'procured_by_id': procured_by_id,
-                    'bulk_operation_id': self.id,
-                    'data': local['data']
-                })
-                progress = int((count * 100.0) / total_count)
-                self.set_progress_percent(progress)
+
+                try:
+                    update_fcl_freight_rate_local({
+                        'id': local['id'],
+                        'performed_by_id': self.performed_by_id,
+                        'sourced_by_id': local.get('sourced_by_id'),
+                        'procured_by_id': local.get('procured_by_id'),
+                        'bulk_operation_id': self.id,
+                        'data': local['data']
+                    })
+                    progress = int((count * 100.0) / total_count)
+                    self.set_progress_percent(progress)
+                except :
+                    pass
 
             total_affected_rates += count
         data['total_affected_rates'] = total_affected_rates
