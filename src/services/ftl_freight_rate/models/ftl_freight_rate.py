@@ -58,7 +58,7 @@ class FtlFreightRate(BaseModel):
     service_provider = BinaryJSONField(null=True)
     origin_location = BinaryJSONField(index=True, null=True)
     destination_location = BinaryJSONField(index=True, null=True)
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
+    created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     source = CharField(default = 'manual', index=True, null = True)
     accuracy = FloatField(default = 100, null = True)

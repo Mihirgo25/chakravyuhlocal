@@ -19,7 +19,7 @@ class FtlFreightRateRequest(BaseModel):
     cargo_readiness_date = DateTimeField(null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     commodity = CharField(index=True, null=True)
-    created_at = DateTimeField(index=True, default = datetime.datetime.now)
+    created_at = DateTimeField(default = datetime.datetime.now)
     destination_country_id = UUIDField( null=True)
     destination_cluster_id = UUIDField( null=True)
     destination_location_id = UUIDField(index=True)

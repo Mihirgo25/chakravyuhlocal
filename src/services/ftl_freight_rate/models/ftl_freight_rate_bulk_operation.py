@@ -32,7 +32,7 @@ class FtlFreightRateBulkOperation(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     action_name = CharField(null=True)
     progress = IntegerField(constraints=[SQL("DEFAULT 0")], index=True, null=True)
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
+    created_at = DateTimeField(default=datetime.datetime.now)
     data = BinaryJSONField(null=True)
     performed_by_id = UUIDField(index=True, null =True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
