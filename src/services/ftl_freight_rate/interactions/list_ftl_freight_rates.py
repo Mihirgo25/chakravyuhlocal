@@ -11,8 +11,8 @@ POSSIBLE_DIRECT_FILTERS = ['id','origin_location_id','origin_cluster_id','origin
 
 POSSIBLE_INDIRECT_FILTERS = ['origin_location_ids','destination_location_ids','importer_exporter_present','is_rate_available','procured_by_id','updated_at','validity_till']
 
-def list_ftl_freight_rates(filters = {}, page_limit = 10, page = 1, return_query = False, pagination_data_required = False, all_rates_for_cogo_assured = False):
-    query = get_query(all_rates_for_cogo_assured)
+def list_ftl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by='updated_at', sort_type ='desc', return_query = False, pagination_data_required = False, all_rates_for_cogo_assured = False):
+    query = get_query(all_rates_for_cogo_assured, sort_by, sort_type)
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -35,7 +35,7 @@ def list_ftl_freight_rates(filters = {}, page_limit = 10, page = 1, return_query
 
     return {'list': data } | (pagination_data)
 
-def get_query(all_rates_for_cogo_assured):
+def get_query(all_rates_for_cogo_assured, sort_by, sort_type):
    if all_rates_for_cogo_assured:
     query = FtlFreightRate.select(
        FtlFreightRate.id,
@@ -54,7 +54,7 @@ def get_query(all_rates_for_cogo_assured):
     return query
 
    query = FtlFreightRate.select()
-   query = query.order_by(eval('FtlFreightRate.{}.{}()'.format('updated_at','desc')))
+   query = query.order_by(eval('FtlFreightRate.{}.{}()'.format(sort_by, sort_type)))
 
    return query
 
