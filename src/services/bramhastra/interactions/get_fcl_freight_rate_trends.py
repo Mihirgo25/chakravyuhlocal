@@ -28,8 +28,7 @@ ALLOWED_FREQUENCY_TYPES = {
 
 
 def get_fcl_freight_rate_trends(filters: dict) -> dict:
-    where = get_direct_indirect_filters(filters)
-    response, locations = get_rate(filters, where)
+    response, locations = get_rate(filters)
     response = {
         "rate_trend": response,
         "currency": filters.get("currency") or Fcl.default_currency.value,
@@ -39,7 +38,7 @@ def get_fcl_freight_rate_trends(filters: dict) -> dict:
     return response
 
 
-def get_rate(filters: dict, where: str) -> list:
+def get_rate(filters: dict) -> list:
     clickhouse = ClickHouse()
 
     aggregate_select = ",".join(
@@ -63,6 +62,8 @@ def get_rate(filters: dict, where: str) -> list:
         MapsFilter.destination_port_code.value
     ):
         set_port_code_filters_and_service_object(filters, location_object)
+        
+    where = get_direct_indirect_filters(filters)
 
     if where:
         queries.append(" WHERE ")
