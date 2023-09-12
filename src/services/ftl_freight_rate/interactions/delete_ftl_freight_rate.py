@@ -11,7 +11,9 @@ def create_audit(request, freight_id, audit_data):
         'validity_start': str(request.get('validity_start')),
         'validity_end': str(request.get('validity_end')),
         'minimum_chargeable_weight': request.get('minimum_chargeable_weight'),
-        'truck_body_type': request.get('truck_body_type')
+        'truck_body_type': request.get('truck_body_type'),
+        'sourced_by_id': request.get('sourced_by_id'),
+        'procured_by_id': request.get('procured_by_id')
     }
 
     FtlFreightRateAudit.create(
@@ -20,9 +22,7 @@ def create_audit(request, freight_id, audit_data):
         bulk_operation_id = request.get('bulk_operation_id'),
         data = audit_data,
         object_id = freight_id,
-        object_type = 'FtlFreightRate',
-        sourced_by_id = request.get("sourced_by_id"),
-        procured_by_id = request.get("procured_by_id")
+        object_type = 'FtlFreightRate'
     )
 
 def delete_ftl_freight_rate(request):

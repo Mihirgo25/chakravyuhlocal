@@ -161,7 +161,6 @@ class UpdateFtlFreightRateRequest(BaseModel):
     performed_by_type: str = None
     status: str = None
     remarks: str = None
-    performed_by_id: str = None
 
 
 class DeleteFtlFreightRateRequest(BaseModel):

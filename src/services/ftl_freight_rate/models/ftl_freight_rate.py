@@ -7,6 +7,7 @@ from configs.ftl_freight_rate_constants import RATE_TYPES, BODY_TYPE, TRIP_TYPES
 from micro_services.client  import maps, common
 from configs.definitions import FTL_FREIGHT_CHARGES
 from libs.get_applicable_filters import is_valid_uuid
+from fastapi.encoders import jsonable_encoder
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -215,7 +216,7 @@ class FtlFreightRate(BaseModel):
         if param['currency'] != currency:
             exchange_price = int(common.get_money_exchange_for_fcl({'price': param["price"], 'from_currency': param['currency'], 'to_currency':currency})['price'])
         return exchange_price
-    
+
     def get_line_items_total_price(self,line_items):
         currency = line_items[0].get('currency')
         result = 0
@@ -234,7 +235,7 @@ class FtlFreightRate(BaseModel):
         if not line_items:
             return
         currency=self.line_items[0].get('currency')
-        
+
         result = self.get_line_items_total_price(line_items)
 
         rates = FtlFreightRate.select().where(
@@ -244,20 +245,19 @@ class FtlFreightRate(BaseModel):
             FtlFreightRate.truck_body_type == self.truck_body_type,
             FtlFreightRate.commodity == self.commodity,
             FtlFreightRate.is_line_items_error_messages_present == False,
-        ).where(FtlFreightRate.importer_exporter_id.is_null(True) | (FtlFreightRate.importer_exporter_id == self.importer_exporter_id)).execute()
+        ).where(FtlFreightRate.importer_exporter_id.is_null(True) | (FtlFreightRate.importer_exporter_id == self.importer_exporter_id))
 
-        rates = list(rates)
+        ftl_freight_rates = jsonable_encoder(list(rates.dicts()))
         sum = 0
-        if rates:
-            mandatory_line_items = [line_item for line_item in rates.get('line_items') if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
-
-            for prices in mandatory_line_items:
+        if len(rates)>0:
+            for rate in ftl_freight_rates:
+                mandatory_line_items = [line_item for line_item in rate.get('line_items') if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
+                for prices in mandatory_line_items:
                     sum = sum + self.get_money_exchange_for_fcl(prices, currency)
+                if sum and result > sum:
+                    result = sum
 
-            if sum and result > sum:
-                result = sum
-
-            self.platform_price = result
+        self.platform_price = result
 
     def set_is_best_price(self):
         if not self.platform_price:
