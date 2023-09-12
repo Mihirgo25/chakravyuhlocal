@@ -247,6 +247,10 @@ CRITICAL_AIRPORTS_INDIA_VIETNAM=[
 INDIA_CRITICAL_PORT_PAIR = [
     {
         "origin_airport_id": "aa0e7e59-cbb9-43b2-98ce-1f992ae7ab19",
+        "destination_airport_id": "e03809de-30f3-4581-a5ea-d43abee955ce",
+    },
+    {
+        "origin_airport_id": "aa0e7e59-cbb9-43b2-98ce-1f992ae7ab19",
         "destination_airport_id": "2862bb66-1e8d-478a-9d70-ffc8d33442bf",
     },
     {
@@ -452,6 +456,10 @@ INDIA_CRITICAL_PORT_PAIR = [
     {
         "origin_airport_id": "676b663a-cab8-48dd-a6da-d28c6ee3f20c",
         "destination_airport_id": "62402abc-39e5-4cd3-8291-533c0488a35c",
+    },
+    {
+        "origin_airport_id": "676b663a-cab8-48dd-a6da-d28c6ee3f20c",
+        "destination_airport_id": "e641f000-af1a-4f26-9fd3-be0998918e71",
     },
     {
         "origin_airport_id": "aa0e7e59-cbb9-43b2-98ce-1f992ae7ab19",

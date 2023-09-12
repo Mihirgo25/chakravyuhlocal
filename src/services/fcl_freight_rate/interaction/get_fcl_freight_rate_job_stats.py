@@ -15,7 +15,7 @@ possible_direct_filters = [
     "commodity",
     "user_id"
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date"]
+possible_indirect_filters = ["updated_at"]
 
 uncommon_filters = ["serial_id", "status"]
 
@@ -96,18 +96,22 @@ def apply_source_filter(query, filters):
 
 
 def apply_start_date_filter(query, filters):
-    start_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
-        hours=5, minutes=30
-    )
+    start_date = filters["start_date"]
+    if start_date:
+        start_date = datetime.strptime(start_date, STRING_FORMAT) + timedelta(
+            hours=5, minutes=30
+        )
     query = query.where(FclFreightRateJob.created_at.cast("date") >= start_date.date())
     return query
 
 
 def apply_end_date_filter(query, filters):
-    end_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
-        hours=5, minutes=30
-    )
-    query = query.where(FclFreightRateJob.created_at.cast("date") <= end_date.date())
+    end_date = filters["end_date"]
+    if end_date:
+        end_date = datetime.strptime(filters["end_date"], STRING_FORMAT) + timedelta(
+            hours=5, minutes=30
+        )
+        query = query.where(FclFreightRateJob.created_at.cast("date") <= end_date.date())
     return query
 
 
@@ -231,6 +235,10 @@ def apply_extra_filters(query, filters):
     for key in uncommon_filters:
         if filters.get(key):
             applicable_filters[key] = filters[key]
+            
 
     query = get_filters(applicable_filters, query, FclFreightRateJob)
+    if filters.get('status')!='backlog':
+        query = apply_start_date_filter(query, filters)
+        query = apply_end_date_filter(query, filters)
     return query
