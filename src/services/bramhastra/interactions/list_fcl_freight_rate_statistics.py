@@ -120,21 +120,19 @@ async def list_fcl_freight_rate_statistics(
 async def use_average_price_filter(
     filters, page_limit, page, is_service_object_required
 ):
+    grouping = filters.get("group_by") or DEFAULT_PARAMS
+    
     clickhouse = ClickHouse()
-
-    grouping = {k for k in DEFAULT_PARAMS if k in filters}
 
     if not grouping:
         grouping = DEFAULT_SELECT_KEYS.copy()
 
     select = ",".join(grouping)
 
-    queries = [
-        f"SELECT {select},AVG(standard_price) as average_standard_price FROM brahmastra.fcl_freight_rate_statistics"
-    ]
+    queries = [f'''SELECT {select},AVG(bas_standard_price) as average_standard_price FROM brahmastra.stale_fcl_freight_rate_statistics WHERE sign = 1 AND bas_standard_price > 0 AND is_deleted = False''']
 
     if where := get_direct_indirect_filters(filters):
-        queries.append("WHERE")
+        queries.append("AND")
         queries.append(where)
 
     queries.append(f"GROUP BY {select}")

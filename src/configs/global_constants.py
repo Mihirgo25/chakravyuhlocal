@@ -183,7 +183,13 @@ VALUE_PROPS_TAG_MAPPING = {
   }
 
 
+
 CONFIRMED_INVENTORY = {
     'service_provider_ids': ["536abfe7-eab8-4a43-a4c3-6ff318ce01b5"], #CogoXpress
     'tag': "confirmed_inventory"
 }
+
+POSSIBLE_SOURCES_IN_JOB_MAPPINGS = ['expiring_rates','critical_ports', 'cancelled_shipments', 'spot_search', 'rate_request', 'rate_feedback']
+
+
+
