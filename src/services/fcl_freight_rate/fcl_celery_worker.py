@@ -12,7 +12,7 @@ from celery.schedules import crontab
 tasks = {
     'update_fcl_freight_jobs_status_to_backlogs': {
         'task': 'services.fcl_freight_rate.fcl_celery_worker.update_fcl_freight_rate_jobs_to_backlog_delay',
-        'schedule': crontab(hour=22, minute=30),
+        'schedule': crontab(hour=23, minute=0),
         'options': {'queue': 'fcl_freight_rate'}
     },
 }

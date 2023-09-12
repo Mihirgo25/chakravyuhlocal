@@ -36,6 +36,7 @@ def create_jobs_for_predicted_air_freight_rate_delay(
             pass
         else:
             raise self.retry(exc=exc)
+
         
 @celery.task(bind=True, max_retries=1, retry_backoff=True)
 def update_air_freight_rate_job_on_rate_addition_delay(self, request, id):
