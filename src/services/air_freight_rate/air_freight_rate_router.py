@@ -1120,6 +1120,7 @@ def get_air_freight_local_rate_cards_api(
     airline_id:str=None,
     additional_services: str = None,
     inco_term:str=None,
+    importer_exporter_id: str = None,
     resp:dict =Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
@@ -1134,13 +1135,14 @@ def get_air_freight_local_rate_cards_api(
     "volume":volume,
     "airline_id":airline_id,
     "additional_services":additional_services,
-    "inco_term":inco_term
+    "inco_term":inco_term,
+    "importer_exporter_id":importer_exporter_id
     }
     
     try:
         if additional_services:
             request['additional_services'] = json.loads(additional_services)
-        data=get_air_freight_local_rate_cards(request)
+        data = get_air_freight_local_rate_cards(request)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
