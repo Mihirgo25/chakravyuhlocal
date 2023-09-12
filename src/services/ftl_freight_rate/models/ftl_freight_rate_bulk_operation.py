@@ -35,7 +35,7 @@ class FtlFreightRateBulkOperation(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     data = BinaryJSONField(null=True)
     performed_by_id = UUIDField(index=True, null =True)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     service_provider_id = UUIDField(null=True)
     
     def save(self, *args, **kwargs):

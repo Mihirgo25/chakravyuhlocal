@@ -34,7 +34,7 @@ class FtlFreightRateFeedback(BaseModel):
     feedback_type = CharField(index=True, null=True)
     status = CharField(index=True, null=True)
     created_at = DateTimeField(index=True, default = datetime.datetime.now)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('ftl_freight_rate_feedback_serial_id_seq'::regclass)")])
     closed_by_id = UUIDField(index=True, null=True)

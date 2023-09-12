@@ -44,7 +44,7 @@ class FtlFreightRateRequest(BaseModel):
     source = CharField( null=True)
     source_id = UUIDField(index=True ,null=True)
     status = CharField(index=True, null=True)
-    updated_at = DateTimeField(default = datetime.datetime.now)
+    updated_at = DateTimeField(default = datetime.datetime.now, index=True)
     reverted_rates_count = IntegerField(null=True)
     reverted_by_user_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     trip_type = TextField(null=True)
