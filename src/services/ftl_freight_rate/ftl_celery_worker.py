@@ -11,18 +11,6 @@ def ftl_bulk_operation_perform_action_functions(self, action_name,object,sourced
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, max_retries=3, retry_backoff = True)
-def create_ftl_freight_rate_delay(self, request):
-    from services.ftl_freight_rate.interactions.create_ftl_freight_rate import create_ftl_freight_rate
-    try:
-        print('function_called')
-        return create_ftl_freight_rate(request)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def delay_ftl_functions(self,ftl_object,request):
     from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate

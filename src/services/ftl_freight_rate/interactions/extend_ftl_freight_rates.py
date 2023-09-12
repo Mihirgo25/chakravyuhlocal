@@ -3,8 +3,6 @@ from peewee import *
 from micro_services.client import *
 from services.fcl_freight_rate.helpers.fcl_freight_rate_cluster_helpers import *
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate import create_ftl_freight_rate
-from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
-from services.ftl_freight_rate.ftl_celery_worker import create_ftl_freight_rate_delay
 
 def extend_ftl_freight_rate(request):
     
@@ -29,12 +27,4 @@ def extend_ftl_freight_rate(request):
         'ftl_freight_rate_request_id': request.get('ftl_freight_rate_request_id')
     }
     
-    create_ftl_freight_rate_delay.apply_async(
-        kwargs={
-            'request': params
-        },queue='low'
-    )
-    
-    return {
-        "message": "Creating in delay",
-    }
+    create_ftl_freight_rate(params)
