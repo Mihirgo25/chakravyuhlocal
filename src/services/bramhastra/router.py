@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from services.bramhastra.interactions.apply_spot_search_fcl_freight_rate_statistic import (
     apply_spot_search_fcl_freight_rate_statistic,
 )
@@ -492,9 +492,10 @@ def get_air_freight_rate_trends_api(
         )
 
 
-@rate_limiter.add(max_requests=10, time_window=3600)
 @bramhastra.get("/get_fcl_freight_rate_trends_for_public", tags=["Public"])
+@rate_limiter.add(max_requests=3, time_window=3600)
 def get_fcl_freight_rate_trends_api(
+    request: Request,
     filters: Annotated[Json, Query()] = {},
 ):
     filters["end_date"] = (datetime.utcnow() - timedelta(days=15)).date().isoformat()
@@ -512,13 +513,14 @@ def get_fcl_freight_rate_trends_api(
         )
 
 
-@rate_limiter.add(max_requests=10, time_window=3600)
 @bramhastra.get(
     "/get_air_freight_rate_trends_for_public",
     tags=["Public"],
     summary="gets air freight rates trend which are manual",
 )
+@rate_limiter.add(max_requests=10, time_window=3600)
 def get_air_freight_rate_trends_api(
+    request: Request,
     filters: Annotated[Json, Query()] = {},
 ):
     filters["end_date"] = (datetime.utcnow() - timedelta(days=15)).date().isoformat()
@@ -579,9 +581,10 @@ def get_fcl_freight_rate_audit_statistics_api(
         )
 
 
-@rate_limiter.add(max_requests=10, time_window=3600)
 @bramhastra.get("/list_fcl_freight_recommended_trends", tags=["Public"])
+@rate_limiter.add(max_requests=3, time_window=3600)
 def list_fcl_freight_recommended_trends_api(
+    request: Request,
     filters: Annotated[Json, Query()] = {},
     limit: int = 5,
     is_service_object_required: bool = False,
