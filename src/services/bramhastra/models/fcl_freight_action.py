@@ -1,6 +1,6 @@
 from peewee import Model, BigIntegerField, UUIDField, IntegerField, FloatField
 from database.db_session import db
-from playhouse.postgres_ext import DateTimeTZField, BigAutoField, TextField, ArrayField
+from playhouse.postgres_ext import DateTimeTZField, BigAutoField, TextField, ArrayField , CharField
 from datetime import datetime
 
 
@@ -30,6 +30,7 @@ class FclFreightAction(BaseModel):
     rate_id = UUIDField(index=True)
     validity_id = UUIDField(index=True)
     spot_search_id = UUIDField(null=True, index=True)
+    spot_search = IntegerField(default=0)
     checkout_id = UUIDField(null=True, index=True)
     checkout = IntegerField(default=0)
     shipment_id = UUIDField(null=True, index=True)
@@ -49,11 +50,13 @@ class FclFreightAction(BaseModel):
     revenue_desk_select = IntegerField(default = 0)
     given_priority = IntegerField(default = 0)
     so1_visit = IntegerField(default=0)
+    shipment_status= TextField(null=True)
     cancelled = IntegerField(default=0)
     completed = IntegerField(default=0)
     aborted = IntegerField(default=0)
     confirmed_by_importer_exporter = IntegerField(default=0)
     recieved = IntegerField(default = 0)
+    status = CharField(null=True,index = True)
     created_at = DateTimeTZField()
     updated_at = DateTimeTZField(index=True)
     operation_created_at = DateTimeTZField(default=datetime.utcnow())

@@ -7,8 +7,10 @@ from datetime import date, timedelta, datetime
 import math
 from services.bramhastra.enums import FclModes
 from services.bramhastra.models.fcl_freight_rate_statistic import (
-    FclFreightRateStatistic,
+    FclFreightRateStatistic
 )
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from services.bramhastra.models.fcl_freight_rate_request_statistics import (
     FclFreightRateRequestStatistic,
 )
@@ -184,48 +186,14 @@ async def get_lifecycle_statistics(filters, where):
         SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE is_deleted = false
         """
     ]
-
-    spot_search = [
-        f"""
-        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE spot_search_count > 0
-        """
-    ]
-
-    checkout = [
-        f"""
-        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE checkout_count > 0
-        """
-    ]
-
-    revenue_desk_visit = [
-        f"""
-        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE revenue_desk_visit_count > 0
-        """
-    ]
-
-    so1_visit = [
-        f"""
-        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE so1_visit_count > 0
-        """
-    ]
-
-    booking_confirm = [
-        f"""
-        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE shipment_confirmed_by_importer_exporter_count > 0
-        """
-    ]
-
-    dislikes = [
-        f"""
-        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE dislikes_count > 0
-        """
-    ]
-
-    feedback_recieved = [
-        f"""
-        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE feedback_recieved_count > 0
-        """
-    ]
+    
+    spot_search = [count_distinct_by_rate_id_query('spot_search_count')]
+    checkout = [count_distinct_by_rate_id_query('checkout_count')]
+    revenue_desk_visit = [count_distinct_by_rate_id_query('revenue_desk_visit_count')]
+    so1_visit = [count_distinct_by_rate_id_query('so1_visit_count')]
+    booking_confirm = [count_distinct_by_rate_id_query('shipment_confirmed_by_importer_exporter_count')]
+    dislikes = [count_distinct_by_rate_id_query('dislikes_count')]
+    feedback_recieved = [count_distinct_by_rate_id_query('feedback_recieved_count')]
 
     dislikes_rates_reverted = [
         f"""
@@ -250,6 +218,61 @@ async def get_lifecycle_statistics(filters, where):
         SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE spot_search_count = 0 AND checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0
         """
     ]
+    
+    rate_shown = [
+        f"""
+        SELECT SUM(spot_search) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE spot_search > 0
+        """ 
+    ]
+
+    action_spot_search = [
+        f"""
+        SELECT COUNT(DISTINCT spot_search_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE spot_search = 1
+        """
+    ]
+    
+
+    action_checkout = [generate_sum_query("checkout")]
+    shipments = [generate_sum_query("shipment")]
+    so1_select = [generate_sum_query("so1_select")]
+    revenue_desk_shown_rates = [generate_sum_query("revenue_desk_visit")]
+
+    revenue_desk_selected_rates = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE revenue_desk_select > 0
+        """
+    ]
+
+    cancelled_shipments = [generate_count_query('cancelled')]
+    aborted_shipments = [generate_count_query('aborted')]
+    received_shipments = [generate_count_query('received')]
+    confirmed_by_importer_exporter_shipments = [generate_count_query('confirmed_by_importer_exporter')]
+    completed_shipments = [generate_count_query('completed')]
+    
+    action_likes = [count_boolean_query('liked')]
+    actions_dislikes = [count_boolean_query('disliked')]
+
+    feedback_closed = [
+        f"""
+        SELECT COUNT(*) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE status = 'inactive'
+        """
+    ]
+    reverted = [
+        f"""
+        SELECT SUM(is_reverted) AS count FROM brahmastra.{FclFreightRateRequest._meta.table_name} WHERE is_reverted = 1 GROUP BY rate_id
+        """
+    ]
+    rate_requests= [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateRequest._meta.table_name} WHERE column_status = 'inactive'
+        """
+    ]
+    closed_requests = [
+        f"""
+        SELECT COUNT(*) AS count FROM brahmastra.{FclFreightRateRequest._meta.table_name} WHERE status = 'inactive'
+        """
+    ]
+
 
     if where:
         rates.append(f"AND {where}")
@@ -385,3 +408,21 @@ def filter_out_of_range_value(val):
     if math.isinf(val) or math.isnan(val):
         return 0
     return val
+
+def generate_sum_query(column):
+        return f"""
+        SELECT SUM(sign*{column}) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} > 0
+        """
+def generate_count_query(status):
+        return f"""
+        SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_status = '{status}'
+        """
+def count_boolean_query(column):
+        return f"""
+        SELECT SUM({column}) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} = 1
+        """
+
+def count_distinct_by_rate_id_query(column):
+        return f"""
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE {column}> 0
+        """
