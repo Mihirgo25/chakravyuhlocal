@@ -59,7 +59,7 @@ async def get_fcl_freight_rate_distribution(filters):
 def format_distribution(response,distribution):
     for data in response:
         for k, v in data.items():
-            if not isinstance(v, str) and math.isnan(v):
+            if not isinstance(v, str) and (math.isnan(v) or math.isinf(v)):
                 data[k] = 0
         distribution[data["mode"]] = data
         del data["mode"]

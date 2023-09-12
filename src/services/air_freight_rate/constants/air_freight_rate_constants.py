@@ -217,3 +217,30 @@ SURCHARGE_SERVICE_PROVIDERS = [
 ]
 
 COGOXPRESS = '536abfe7-eab8-4a43-a4c3-6ff318ce01b5'
+
+
+SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS = {
+    'bdef6da0-8353-4b9a-b422-550ebe9c2474':{'airlines':{'3a8dc0d2-2bb9-40f4-b9c4-993b6bf273e4','83af97eb-09a7-4a17-a3ca-561f0bbc0b6f'},'not_eligible_line_items':['AMS','EHAMS','HAMS']}
+}
+
+DEFAULT_NOT_APPLICABLE_LINE_ITEMS = ['EAMS','EHAMS','HAMS']
+
+
+AIR_COVERAGE_USERS = {
+    1: "f47788fe-85e8-4f86-a9d7-7c7902ea864a",
+    2: "836a8d20-c273-485f-b787-c6b7bfe76f77",
+    3: "2296510a-1693-4c38-9d41-1a2d6d50b823",
+    4: "b26629b3-49c8-4874-a758-b733045cb45d",
+}
+
+CRITICAL_AIRPORTS_INDIA_VIETNAM=[
+  '676b663a-cab8-48dd-a6da-d28c6ee3f20c',
+  '06b9cf22-74bf-496b-ab6d-8dcb67489233',
+  '2f6f6dbc-c10b-4d1d-b9fd-e89298fb487c',
+  '7391cac2-e8db-467f-a59b-574d01dd7e7c',
+  'aa0e7e59-cbb9-43b2-98ce-1f992ae7ab19',
+  'aeb6e88f-4379-4398-bf9e-18f91c78e1f3',
+  '093f1fb6-feab-448a-a683-7dc7984734e0',
+  '2b436d09-40a3-4c0e-a07a-ebb0db38f164',
+  'a7da60eb-4f72-439c-b400-ac386b3d9d83'
+]

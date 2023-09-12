@@ -1,5 +1,6 @@
 from datetime import date, timedelta, datetime
 from math import ceil
+from services.bramhastra.enums import FclFilterTypes
 
 POSSIBLE_DIRECT_FILTERS = {
     "origin_port_id",
@@ -25,9 +26,11 @@ POSSIBLE_DIRECT_FILTERS = {
     "parent_mode",
     "sourced_by_id",
     "procured_by_id",
+    "rate_id",
+    
 }
 
-POSSIBLE_INDIRECT_FILTERS = {"stale_rate"}
+POSSIBLE_INDIRECT_FILTERS = {"stale_rate","rate_updated_at_less_than","validity_end_greater_than","validity_end_less_than"}
 
 COUNT_FILTERS = {"dislikes_count", "checkout_count"}
 
@@ -37,13 +40,21 @@ REQUIRED_FILTERS = {
 }
 
 
-def get_direct_indirect_filters(filters):
+def get_direct_indirect_filters(filters,date = "validity_range"):
+    if filters is None:
+        return
     for k, v in REQUIRED_FILTERS.items():
         if k not in filters:
             filters[k] = v
-    where = []
-    get_date_range_filter(where)
     
+    where = []
+    
+    if date == FclFilterTypes.validity_range.value:
+        get_date_range_filter(where)
+    
+    if date == FclFilterTypes.time_series.value:
+        get_time_series_filter(where)
+
     if filters:
         for key, value in filters.items():
             if key in POSSIBLE_DIRECT_FILTERS and value:
@@ -58,11 +69,32 @@ def get_direct_indirect_filters(filters):
 
     if where:
         return " AND ".join(where)
+    
+
+def get_time_series_filter(where):
+    where.append(
+        "(updated_at >= %(start_date)s AND updated_at <= %(end_date)s)"
+    )
 
 
 def get_date_range_filter(where):
     where.append(
-        "((validity_end <= %(end_date)s AND validity_end >= %(start_date)s) OR (validity_start >= %(start_date)s AND validity_start <= %(end_date)s))"
+        "((validity_end >= %(start_date)s AND validity_start <= %(start_date)s) OR (validity_start <= %(end_date)s AND validity_end >= %(end_date)s) OR (validity_end <= %(end_date)s AND validity_start >= %(start_date)s))"
+    )
+    
+def get_rate_updated_at_less_than_filter(where):
+    where.append(
+        "rate_updated_at < %(rate_updated_at_less_than)s"
+    )
+    
+def get_validity_end_greater_than_filter(where):
+    where.append(
+        "validity_end > %(validity_end_greater_than)s"
+    )
+
+def get_validity_end_less_than_filter(where):
+    where.append(
+        "validity_end < %(validity_end_less_than)s"
     )
 
 
