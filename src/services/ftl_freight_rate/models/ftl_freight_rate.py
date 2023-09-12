@@ -245,7 +245,7 @@ class FtlFreightRate(BaseModel):
             FtlFreightRate.truck_body_type == self.truck_body_type,
             FtlFreightRate.commodity == self.commodity,
             FtlFreightRate.is_line_items_error_messages_present == False,
-        ).where(FtlFreightRate.importer_exporter_id.in_([None, self.importer_exporter_id])).execute()
+        ).where(FtlFreightRate.importer_exporter_id.is_null(True) | (FtlFreightRate.importer_exporter_id == self.importer_exporter_id)).execute()
 
         rates = list(rates)
         sum = 0
