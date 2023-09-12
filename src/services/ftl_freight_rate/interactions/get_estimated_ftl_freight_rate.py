@@ -8,13 +8,12 @@ def get_estimated_ftl_freight_rate(
     origin_location_id,
     destination_location_id,
     trip_type,
-    commodity: None,
-    weight: None,
-    truck_type: None,
-    truck_body_type = None,
-    
-):
+    commodity: str = None,
+    weight: str = None,
+    truck_type: str = None,
+    truck_body_type: str = None,
 
+):
     ids = [origin_location_id, destination_location_id]
     location_data_mapping = get_location_data_mapping(ids)
     country_info = get_country_info(location_data_mapping,origin_location_id,destination_location_id)

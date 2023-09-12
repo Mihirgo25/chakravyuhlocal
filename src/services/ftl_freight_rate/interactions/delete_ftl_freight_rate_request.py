@@ -34,10 +34,11 @@ def execute_transaction_code(request):
     return {'ftl_freight_rate_request_ids' : request['ftl_freight_rate_request_ids']}
 
 def find_ftl_freight_rate_request_object(request):
-    try:
-        return FtlFreightRateRequest.select().where(FtlFreightRateRequest.id << request['ftl_freight_rate_request_ids'] & (FtlFreightRateRequest.status == 'active')).execute()
-    except:
-        return None
+    object = FtlFreightRateRequest.select().where(FtlFreightRateRequest.id << request['ftl_freight_rate_request_ids'] & (FtlFreightRateRequest.status == 'active')).execute()
+    if object:
+        return object
+    else:
+        raise HTTPException(status_code=400, detail="Rate id not found")
 
 def create_audit(request, rate_request_object_id):
     FtlFreightRateAudit.create(

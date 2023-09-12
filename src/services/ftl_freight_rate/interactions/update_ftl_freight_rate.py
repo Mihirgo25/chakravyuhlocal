@@ -54,8 +54,8 @@ def execute_transaction_code(request):
     return {"id": rate_object.id}
 
 def find_ftl_object(request):
-    query = FtlFreightRate.select().where(FtlFreightRate.id==request.get("id"))
-    if query.count()>0:
-        return query.first()
+    query = FtlFreightRate.select().where(FtlFreightRate.id==request.get("id")).first()
+    if query:
+        return query
     else:
         raise HTTPException(status_code=400, detail="Rate Not Found")

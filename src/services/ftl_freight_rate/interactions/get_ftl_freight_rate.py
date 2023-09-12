@@ -14,8 +14,8 @@ def get_ftl_freight_rate(request):
 
 
 def all_fields_present(request):
-    mandatory_fiels = ['origin_location_id','destination_location_id','truck_type','service_provider_id','trip_type','truck_body_type','transit_time','detention_free_time','unit']
-    for fields in mandatory_fiels:
+    mandatory_fields = ['origin_location_id','destination_location_id','truck_type','service_provider_id','trip_type','truck_body_type','transit_time','detention_free_time','unit']
+    for fields in mandatory_fields:
         if not request.get(fields):
             return False
     return True

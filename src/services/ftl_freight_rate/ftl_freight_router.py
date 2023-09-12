@@ -399,7 +399,7 @@ def list_ftl_freight_rate_request_api(
     page: int = 1,
     sort_by: str = "created_at",
     sort_type: str = "asc",
-    is_stats_required: bool = True,
+    is_stats_required: bool = False,
     spot_search_details_required: bool = False,
     performed_by_id=None,
     resp: dict = Depends(authorize_token),
@@ -768,7 +768,7 @@ def list_ftl_freight_rate_feedbacks_api(
     page_limit: int = 10,
     page: int = 1,
     performed_by_id: str = None,
-    is_stats_required: bool = True,
+    is_stats_required: bool = False,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:

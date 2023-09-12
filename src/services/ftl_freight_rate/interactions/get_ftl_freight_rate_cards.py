@@ -13,34 +13,48 @@ from configs.definitions import FTL_FREIGHT_CHARGES
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
 from fastapi import HTTPException
 
-# [{
-#     id:
-#     service_provider_id:
-#     origin_location_id:
-#     destination_location_id:
-#     importer_exporter_id:
-#     line_items: [{
-#       name:
-#       code:
-#       unit:
-#       quantity:
-#       price:
-#       total_price:
-#       currency:
-#       remarks:
-#     }]
-#     truck_body_type:
-#     transit_time:
-#     detention_free_time:
-#     validity_start:
-#     validity_end:
-#     truck_type:
-#     trucks_count:
-#  }]
-
-
 def get_ftl_freight_rate_cards(request):
-    set_callback_for_request(request)
+    """
+    Returns all eligible FTL rates according to requirements provided
+
+    Response Format
+        [{
+            id:
+            origin_location_id:
+            destination_location_id:
+            origin_destination_location_type:
+            service_provider_id:
+            importer_exporter_id:
+            line_items: [{
+                code:
+                unit:
+                price:
+                currency:
+                remarks:
+                quantity:
+                total_price:
+                name:
+                source:
+            }]
+            source:
+            tags:
+            truck_type:
+            trucks_count:
+            transit_time:
+            detention_free_time:
+            validity_start:
+            validity_end:
+            service_provider:
+            sourced_by:
+            created_at:
+            updated_at:
+        }]
+    """
+    try:
+        set_callback_for_request(request)
+    except:
+        return {"list": []}
+
     if (
         request.get("trucks_count") is None
         and request.get("load_selection_type") == "truck"
@@ -111,16 +125,11 @@ def initialize_query(query, request):
 
     if request.get("origin_city_id"):
         query = query.where(
-            (FtlFreightRate.origin_location_id == request.get("origin_city_id"))
-            | (FtlFreightRate.origin_city_id == request.get("origin_city_id"))
+            (FtlFreightRate.origin_city_id == request.get("origin_city_id"))
         )
     if request.get("destination_city_id"):
         query = query.where(
-            (
-                FtlFreightRate.destination_location_id
-                == request.get("destination_city_id")
-            )
-            | (FtlFreightRate.destination_city_id == request.get("destination_city_id"))
+            (FtlFreightRate.destination_city_id == request.get("destination_city_id"))
         )
 
     if request.get("origin_country_id"):
@@ -134,8 +143,8 @@ def initialize_query(query, request):
         )
     cargo_readiness_date = request.get("cargo_readiness_date")
     query = query.where(
-        (FtlFreightRate.validity_start.cast('date') <= cargo_readiness_date)
-        & (FtlFreightRate.validity_end.cast('date') >= cargo_readiness_date)
+        (FtlFreightRate.validity_start <= cargo_readiness_date)
+        & (FtlFreightRate.validity_end >= cargo_readiness_date)
     )
 
     return query
