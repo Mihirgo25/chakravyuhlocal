@@ -37,8 +37,8 @@ class CommonApiClient:
         if cached_resp:
             return cached_resp
         request_url = self.client.url.get()
-        self.client.url.set('https://api-mustangs1.dev.cogoport.io')
-        resp = self.client.request('GET', 'charge-code/list',data = {"serviceChargeType": charge_name}, timeout=5)
+        self.client.url.set('https://api-mustangs2.dev.cogoport.io')
+        resp = self.client.request('GET', 'common/charge-code/list',data = {"serviceChargeType": charge_name}, timeout=5)
         self.client.url.set(request_url)
         if isinstance(resp,dict):
             set_charge_to_rd(charge_name, resp)
@@ -69,8 +69,7 @@ class CommonApiClient:
         return self.client.request('GET','list_revenue_desk_show_rates',data)
     
     def update_spot_negotiation_locals_rate(self,data = {}):
-        return self.client.request('POST','spot_negotiation/update_spot_negotiation_locals_rate',data)
-    
+     pass
     def list_revenue_desk_show_rates(self,data = {}):
         return self.client.request('GET','list_revenue_desk_show_rates',data)
     
