@@ -1,10 +1,20 @@
 from libs.csv_link_generator import get_csv_url
+BATCH_SIZE = 2000 
 
 def generate_csv_file_url_for_fcl(query):
-    data = list(query.dicts())
-    required_coverage_data = get_fcl_freight_coverage_required_data(data)                                
-    csv_url =  get_csv_url('fcl_freight', required_coverage_data)
-    return {'url': csv_url}
+    csv_urls = []
+    offset = 0
+    while True:
+        batch = query.offset(offset).limit(BATCH_SIZE)
+        if not batch:
+            break
+        data = list(query.dicts())
+        required_coverage_data = get_fcl_freight_coverage_required_data(data) 
+        csv_url =  get_csv_url('fcl_freight', required_coverage_data) 
+        csv_urls.append(csv_url)
+        offset += BATCH_SIZE
+                         
+    return {'urls': csv_urls}
         
 
 def get_fcl_freight_coverage_required_data(fcl_coverage_data):

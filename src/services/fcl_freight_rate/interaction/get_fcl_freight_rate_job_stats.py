@@ -65,7 +65,8 @@ def get_fcl_freight_rate_job_stats(
     dynamic_statistics = get_statistics(
             filters, dynamic_statistics
         )
-
+    
+    statistics['backlog'] = get_all_backlogs(filters)
     return {
         "dynamic_statistics": dynamic_statistics,
         "statistics": statistics,
@@ -96,19 +97,19 @@ def apply_source_filter(query, filters):
 
 
 def apply_start_date_filter(query, filters):
-    start_date = filters["start_date"]
+    start_date = filters.get("start_date")
     if start_date:
         start_date = datetime.strptime(start_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
-    query = query.where(FclFreightRateJob.created_at.cast("date") >= start_date.date())
+        query = query.where(FclFreightRateJob.created_at.cast("date") >= start_date.date())
     return query
 
 
 def apply_end_date_filter(query, filters):
-    end_date = filters["end_date"]
+    end_date = filters.get("end_date")
     if end_date:
-        end_date = datetime.strptime(filters["end_date"], STRING_FORMAT) + timedelta(
+        end_date = datetime.strptime(end_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
         query = query.where(FclFreightRateJob.created_at.cast("date") <= end_date.date())
@@ -137,7 +138,6 @@ def get_statistics(filters, dynamic_statistics):
 
 
 def build_daily_details(query, statistics):
-    total_backlogs = query.where(FclFreightRateJob.status == 'backlog').count()
     query = query.where(
         FclFreightRateJob.created_at.cast("date") == datetime.now().date()
     )
@@ -156,7 +156,6 @@ def build_daily_details(query, statistics):
         statistics["completed_percentage"] = round(
             ((statistics["completed"]) / total_daily_count) * 100, 2
         )
-    statistics['backlog'] = total_backlogs
     return statistics
 
 
@@ -238,7 +237,14 @@ def apply_extra_filters(query, filters):
             
 
     query = get_filters(applicable_filters, query, FclFreightRateJob)
-    if filters.get('status')!='backlog':
-        query = apply_start_date_filter(query, filters)
-        query = apply_end_date_filter(query, filters)
+    query = apply_start_date_filter(query, filters)
+    query = apply_end_date_filter(query, filters)
     return query
+
+def get_all_backlogs(filters):
+    query = FclFreightRateJob.select()
+    if filters.get('user_id'):
+        query = query.where(FclFreightRateJob.user_id == filters.get('user_id'))
+    backlog_count = query.where(FclFreightRateJob.status == 'backlog').count()
+
+    return backlog_count

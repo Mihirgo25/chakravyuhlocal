@@ -65,7 +65,7 @@ def get_air_freight_rate_job_stats(
     dynamic_statistics = get_statistics(
             filters, dynamic_statistics
         )
-
+    statistics['backlog'] = get_all_backlogs(filters)
     return {
         "dynamic_statistics": dynamic_statistics,
         "statistics": statistics,
@@ -235,8 +235,16 @@ def apply_extra_filters(query, filters):
     for key in uncommon_filters:
         if filters.get(key):
             applicable_filters[key] = filters[key]
-    if filters.get('status')!='backlog':
-        query = apply_start_date_filter(query, filters)
-        query = apply_end_date_filter(query, filters)
     query = get_filters(applicable_filters, query, AirFreightRateJob)
+    query = apply_start_date_filter(query, filters)
+    query = apply_end_date_filter(query, filters)
     return query
+
+
+def get_all_backlogs(filters):
+    query = AirFreightRateJob.select()
+    if filters.get('user_id'):
+        query = query.where(AirFreightRateJob.user_id == filters.get('user_id'))
+    backlog_count = query.where(AirFreightRateJob.status == 'backlog').count()
+
+    return backlog_count
