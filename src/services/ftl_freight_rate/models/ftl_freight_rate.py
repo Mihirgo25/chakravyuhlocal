@@ -35,7 +35,7 @@ class FtlFreightRate(BaseModel):
     service_provider_id = UUIDField(index=True, null=True)
     importer_exporter_id = UUIDField(null=True)
     importer_exporters_count = IntegerField(null=True)
-    line_items = BinaryJSONField(null = True)
+    line_items = BinaryJSONField(default = [],null = True)
     platform_price = FloatField(null=True)
     is_best_price = BooleanField(null=True)
     is_line_items_error_messages_present = BooleanField(null=True)
