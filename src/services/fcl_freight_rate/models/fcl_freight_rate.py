@@ -539,19 +539,19 @@ class FclFreightRate(BaseModel):
                 validity_object['validity_end'] = validity_start - datetime.timedelta(days=1)
                 validity_object['action'] = 'update'
                 new_validities.append(FclFreightRateValidity(**validity_object))
-                new_tags[id] = tag or previous_tag
+                new_tags[id] = tag 
                 continue
             if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end:
                 # validity_object_validity_start = validity_end + datetime.timedelta(days=1)
                 validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
                 validity_object['action'] = 'update'
                 new_validities.append(FclFreightRateValidity(**validity_object))
-                new_tags[id] = tag or previous_tag
+                new_tags[id] = tag 
                 continue
             if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
                 validity_object['action'] = 'update'
                 new_validities.append(FclFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)}))
-                new_tags[id] = tag or previous_tag
+                new_tags[id] = tag
                 new_validity = {**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}
                 new_validity['id'] = str(uuid.uuid4())
                 new_validity['action'] = 'create'

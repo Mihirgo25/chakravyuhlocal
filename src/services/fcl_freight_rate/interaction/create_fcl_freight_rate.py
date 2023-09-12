@@ -71,11 +71,13 @@ def create_fcl_freight_rate_data(request):
             return create_fcl_freight_rate(request)
         except Exception as e:
             transaction.rollback()
-            raise e
+            raise
   
 
 def create_fcl_freight_rate(request):
     from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay, update_fcl_freight_rate_feedback_in_delay
+    from services.fcl_freight_rate.fcl_celery_worker import update_fcl_freight_rate_job_on_rate_addition_delay
+
     action = 'update'
     request = { key: value for key, value in request.items() if value }
     row = {
@@ -196,7 +198,7 @@ def create_fcl_freight_rate(request):
             raise
         
     # adjust_cogoassured_price(row, request)    
-    
+
     create_audit(request, freight.id)
     
     if not request.get('importer_exporter_id') and not request.get("rate_not_available_entry"):
@@ -220,6 +222,9 @@ def create_fcl_freight_rate(request):
         update_fcl_freight_rate_feedback_in_delay.apply_async(kwargs={'request':{'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')}},queue='critical')
         
     send_stats(action,request,freight,port_to_region_id_mapping)
+
+    if row["mode"]  not in ["predicted", "cluster_extension"] and row['rate_type'] == "market_place":
+        update_fcl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
 
     return {"id": freight.id}
 
