@@ -18,9 +18,8 @@ def update_fcl_freight_rate_jobs_to_backlog():
         
         affected_ids = jsonable_encoder([job.id for job in FclFreightRateJob.select(FclFreightRateJob.id).where(*fcl_conditions).limit(BATCH_SIZE)])
         if not affected_ids:
-            break  # No more records to update
+            break  
         
-        # Update records to "backlog"
         fcl_query = (
             FclFreightRateJob.update(status="backlog")
             .where(FclFreightRateJob.id.in_(affected_ids))
@@ -30,7 +29,6 @@ def update_fcl_freight_rate_jobs_to_backlog():
         
         total_updated += rows_updated
         
-        # Create audit for affected_ids
         for affected_id in affected_ids:
             create_audit(affected_id)
         
