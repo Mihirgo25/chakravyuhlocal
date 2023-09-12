@@ -87,7 +87,7 @@ def execute(request):
         
     send_stats(request,object)
 
-    if str(object.service_provider_id) == COGOXPRESS:
+    if str(object.service_provider_id) != COGOXPRESS:
         update_air_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": object.id},queue='fcl_freight_rate')
 
     return {
