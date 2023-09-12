@@ -29,7 +29,7 @@ from services.bramhastra.models.air_freight_rate_statistic import (
     AirFreightRateStatistic,
 )
 from services.bramhastra.models.fcl_freight_rate_request_statistics import (
-       FclFreightRateRequestStatistic
+    FclFreightRateRequestStatistic,
 )
 import os
 
@@ -42,39 +42,32 @@ Brahmastra(models).used_by(arjun=True)
 
 Options:
 If models are not send it will run for all available models present in the clickhouse system
-If `arjun` is not the user, old duplicate entries won't be cleared. We recommend using `arjun` as user to clear these entries once in a while for better performance.
 """
 
 
 class Brahmastra:
     def __init__(self, models: list[peewee.Model] = None) -> None:
-        self.models = models or [FclFreightRateStatistic, AirFreightRateStatistic,FclFreightRateRequestStatistic]
+        self.models = models or [
+            FclFreightRateStatistic,
+            AirFreightRateStatistic,
+            FclFreightRateRequestStatistic,
+        ]
         self.__clickhouse = ClickHouse()
         self.on_startup = None
+        self.non_stale = {FclFreightRateRequestStatistic}
 
     def __optimize_and_send_data_to_stale_tables(
-        self, model: peewee.Model, pass_to_stale: bool = True
+        self, model: peewee.Model, optimize: bool
     ):
-        if self.on_startup:
+        if self.on_startup or model in self.non_stale:
             return
 
-        if pass_to_stale:
-            query = f"""
-            INSERT INTO brahmastra.stale_{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 
-            WITH LatestVersions AS (
-                SELECT
-                id,max(version)
-                FROM
-                brahmastra.{model._meta.table_name}
-                GROUP BY id
+        if optimize:
+            self.__clickhouse.execute(
+                f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}"
             )
-            SELECT * FROM brahmastra.{model._meta.table_name} WHERE (id, version) NOT IN (
-            SELECT id,version
-            FROM LatestVersions)"""
-            self.__clickhouse.execute(query)
-        self.__clickhouse.execute(f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}")
 
-    def __get_clickhouse_row(self, model, row):
+    def __get_clickhouse_row(self, model, row, fields):
         params = dict()
         where = []
         for key in model.CLICK_KEYS:
@@ -85,7 +78,7 @@ class Brahmastra:
             where.append(f"{key} = %({key})s")
 
         old_row = self.__clickhouse.execute(
-            f"SELECT * from brahmastra.{model._meta.table_name} WHERE {' AND '.join(where)}",
+            f"SELECT {fields} from brahmastra.{model._meta.table_name} WHERE {' AND '.join(where)}",
             params,
         )
 
@@ -132,7 +125,6 @@ class Brahmastra:
                     model.select(model.updated_at)
                     .where(model.updated_at > brahmastra_track.last_updated_at)
                     .order_by(model.updated_at.desc())
-                    .limit(1)
                     .first()
                 )
 
@@ -147,7 +139,9 @@ class Brahmastra:
                 rows = []
                 count = 0
                 for row in ServerSide(
-                    model.select().where(model.updated_at >= brahmastra_track.last_updated_at)
+                    model.select().where(
+                        model.updated_at >= brahmastra_track.last_updated_at
+                    )
                 ):
                     print(count)
                     count += 1
@@ -155,7 +149,7 @@ class Brahmastra:
                         {field: getattr(row, field) for field in columns}
                     )
 
-                    if old_data := self.__get_clickhouse_row(model, row):
+                    if old_data := self.__get_clickhouse_row(model, row, fields):
                         data["version"] = old_data["version"] + 1
                         rows.append(json_encoder_for_clickhouse(old_data))
 
@@ -168,15 +162,19 @@ class Brahmastra:
                 dataframe.to_csv(file_path, index=False)
 
                 url = upload_media_file(file_path)
-                
+
                 try:
                     os.remove(file_path)
                 except Exception:
                     pass
 
-                query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
+                query_1 = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
 
-                self.__clickhouse.execute(query)
+                if model not in self.non_stale:
+                    query_2 = f"INSERT INTO brahmastra.stale_{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM s3('{url}')"
+                    self.__clickhouse.execute(query_2)
+
+                self.__clickhouse.execute(query_1)
 
                 status = BrahmastraTrackStatus.completed.value
 
@@ -201,18 +199,18 @@ class Brahmastra:
             f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
         )
 
-    def used_by(self, arjun: bool, on_startup: bool = False) -> None:
+    def used_by(
+        self, arjun: bool, on_startup: bool = False, optimize: bool = True
+    ) -> None:
         if APP_ENV == AppEnv.production.value:
             self.on_startup = on_startup
 
             for model in self.models:
                 self.__build_query_and_insert_to_clickhouse(model)
                 if arjun:
-                    self.__optimize_and_send_data_to_stale_tables(
-                        model, pass_to_stale=False
-                    )
+                    self.__optimize_and_send_data_to_stale_tables(model, optimize)
 
-                print(f"done with {model._meta.table_name}")
+                print(f">----->> {model._meta.table_name}")
 
     def get_track(self, model):
         if (

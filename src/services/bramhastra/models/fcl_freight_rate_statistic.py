@@ -123,6 +123,9 @@ class FclFreightRateStatistic(BaseModel):
     operation_created_at = DateTimeTZField(default=datetime.utcnow())
     operation_updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
     is_deleted = BooleanField(index = True,default = False)
+    bas_price = FloatField(default = 0,null = True)
+    bas_standard_price = FloatField(default = 0,null = True)
+    bas_currency = CharField(max_length = 3,null = True)
 
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()

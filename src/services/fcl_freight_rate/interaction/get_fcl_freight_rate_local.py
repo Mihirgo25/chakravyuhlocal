@@ -29,17 +29,19 @@ def find_object(request):
       FclFreightRateLocal.rate_type == 'cogo_assured'
       ).first()
   else:
-      object = FclFreightRateLocal.select().where(
+    object_query = FclFreightRateLocal.select().where(
       FclFreightRateLocal.port_id == request.get("port_id"),
-      FclFreightRateLocal.main_port_id == request.get("main_port_id"),
       FclFreightRateLocal.trade_type == request.get("trade_type"),
       FclFreightRateLocal.container_size == request.get("container_size"),
       FclFreightRateLocal.container_type == request.get('container_type'),
-      FclFreightRateLocal.commodity == request.get("commodity"),
       FclFreightRateLocal.shipping_line_id == request.get("shipping_line_id"),
       FclFreightRateLocal.service_provider_id == request.get("service_provider_id"),
-      FclFreightRateLocal.rate_type == DEFAULT_RATE_TYPE
-    ).first()
+      FclFreightRateLocal.rate_type == DEFAULT_RATE_TYPE,
+      FclFreightRateLocal.commodity == (request.get("commodity") or None),
+      FclFreightRateLocal.main_port_id == (request.get("main_port_id") or None)
+    )
+
+    object = object_query.first()
   
   return object
 
