@@ -10,6 +10,8 @@ def create_audit(request, freight_id):
     audit_data["validity_end"] = request.get("validity_end").isoformat()
     audit_data["line_items"] = request.get("line_items")
     audit_data["Ftl_freight_rate_request_id"] = request.get("Ftl_freight_rate_request_id")
+    audit_data["sourced_by_id"] = request.get("sourced_by_id")
+    audit_data["procured_by_id"] = request.get("procured_by_id")
 
     audit_id = FtlFreightRateAudit.create(
         rate_sheet_id=request.get("rate_sheet_id"),

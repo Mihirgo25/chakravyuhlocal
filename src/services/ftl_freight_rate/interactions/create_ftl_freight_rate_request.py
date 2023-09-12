@@ -127,7 +127,5 @@ def create_audit(request, request_object_id):
         performed_by_id = performed_by_id,
         data = request,
         object_type = 'FtlFreightRateRequest',
-        object_id = request_object_id,
-        sourced_by_id = request.get("sourced_by_id"),
-        procured_by_id = request.get("procured_by_id")
+        object_id = request_object_id
     )

@@ -42,7 +42,5 @@ def create_audit(request, freight_rate_feedback_id):
     performed_by_id = request.get('performed_by_id'),
     data = {key:value for key,value in request.items() if key != freight_rate_feedback_id},
     object_id = freight_rate_feedback_id,
-    object_type = 'FtlFreightRateFeedback',
-    sourced_by_id = request.get("sourced_by_id"),
-    procured_by_id = request.get("procured_by_id")
+    object_type = 'FtlFreightRateFeedback'
     )
