@@ -67,16 +67,6 @@ def get_freight_object(object):
     
     if 'rate_type' in object and object['rate_type'] and object['rate_type'] not in RATE_TYPES:
         validation['error']+=  ' ' + f"{object['rate_type']} is invalid, valid rate types are {RATE_TYPES}"
-    
-    if rate_object.origin_port:
-        origin_port_data = rate_object.origin_port
-        if origin_port_data.get('is_icd') != True and rate_object.origin_main_port:
-            validation['error']+= 'Main port cannot be assigned to a Base port' 
-        
-    if rate_object.destination_port:
-        destination_port_data = rate_object.destination_port
-        if destination_port_data.get('is_icd') != True and rate_object.destination_main_port:
-            validation['error']+= 'Main port cannot be assigned to a Base port' 
 
     try:
         rate_object.validate_line_items(line_items)
