@@ -40,42 +40,48 @@ def air_freight_expiring_rates_scheduler():
         AirFreightRate.source.not_in(["predicted", "rate_extention"]),
         AirFreightRate.rate_type == "market_place",
         AirFreightRate.service_provider_id != COGOXPRESS,
-        AirFreightRate.commodity == 'general'
+        AirFreightRate.commodity == "general",
     )
     condition = None
 
-    critical_port_pairs_india_path = os.path.join(ROOT_DIR, "libs", "air_freight_critical_port_pairs_india.json")
+    critical_port_pairs_india_path = os.path.join(
+        ROOT_DIR, "libs", "air_freight_critical_port_pairs_india.json"
+    )
     with open(critical_port_pairs_india_path, "r") as json_file:
         india_critical_port_pairs = json.load(json_file)
 
         for pairs in india_critical_port_pairs:
             current_condition = (
-                (AirFreightRate.origin_airport_id == pairs['origin_airport_id']) |
-                (AirFreightRate.destination_airport_id == pairs['destination_airport_id'])
+                AirFreightRate.origin_airport_id == pairs["origin_airport_id"]
+            ) | (
+                AirFreightRate.destination_airport_id == pairs["destination_airport_id"]
             )
-            
+
             if condition is None:
                 condition = current_condition
             else:
                 condition = condition | current_condition
 
-    critical_port_pairs_vietnam_path = os.path.join(ROOT_DIR, "libs", "air_freight_critical_port_pairs_vietnam.json")
+    critical_port_pairs_vietnam_path = os.path.join(
+        ROOT_DIR, "libs", "air_freight_critical_port_pairs_vietnam.json"
+    )
     with open(critical_port_pairs_vietnam_path, "r") as json_file:
         vietnam_critical_port_pairs = json.load(json_file)
-        
+
         for pairs in vietnam_critical_port_pairs:
             current_condition = (
-                (AirFreightRate.origin_airport_id == pairs['origin_airport_id']) |
-                (AirFreightRate.destination_airport_id == pairs['destination_airport_id'])
+                AirFreightRate.origin_airport_id == pairs["origin_airport_id"]
+            ) | (
+                AirFreightRate.destination_airport_id == pairs["destination_airport_id"]
             )
-            
+
             if condition is None:
                 condition = current_condition
             else:
                 condition = condition | current_condition
     if condition:
         air_query = air_query.where(condition)
-    
+
     for rate in ServerSide(air_query):
         rate_data = model_to_dict(rate)
         create_air_freight_rate_job(rate_data, "expiring_rates")
