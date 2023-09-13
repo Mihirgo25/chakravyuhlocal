@@ -30,7 +30,13 @@ POSSIBLE_DIRECT_FILTERS = {
     "procured_by_id",
 }
 
-POSSIBLE_INDIRECT_FILTERS = {"stale_rate", "weight_slabs"}
+POSSIBLE_INDIRECT_FILTERS = {
+    "stale_rate",
+    "weight_slabs",
+    "rate_updated_at_less_than",
+    "validity_end_greater_than",
+    "validity_end_less_than",
+}
 
 COUNT_FILTERS = {"dislikes_count", "checkout_count"}
 
@@ -40,21 +46,24 @@ REQUIRED_FILTERS = {
 }
 
 
-def get_direct_indirect_filters(filters):
+def get_direct_indirect_filters(filters):    
     for k, v in REQUIRED_FILTERS.items():
         if k not in filters:
             filters[k] = v
     where = []
+    
     get_date_range_filter(where)
 
     for key, value in filters.items():
         if key in POSSIBLE_DIRECT_FILTERS and value:
-            where.append(f"{key} = %({key})s")
+            if isinstance(value, str):
+                where.append(f"{key} = %({key})s")
+            elif isinstance(value, list):
+                where.append(f"{key} IN %({key})s")
         if key in POSSIBLE_INDIRECT_FILTERS and value:
             eval(f"get_{key}_filter(where)")
         if key in COUNT_FILTERS:
             where.append(f"{key} != 0")
-
     if where:
         return " AND ".join(where)
 
@@ -77,6 +86,18 @@ def get_stale_rates_filter(where):
 
 def get_weight_slabs_filter(where):
     where.append("lower_limit >= %(lower_limit)s AND upper_limit <= %(upper_limit)s")
+
+
+def get_rate_updated_at_less_than_filter(where):
+    where.append("rate_updated_at < %(rate_updated_at_less_than)s")
+
+
+def get_validity_end_greater_than_filter(where):
+    where.append("validity_end > %(validity_end_greater_than)s")
+
+
+def get_validity_end_less_than_filter(where):
+    where.append("validity_end < %(validity_end_less_than)s")
 
 
 def add_pagination_data(clickhouse, queries, filters, page, page_limit):

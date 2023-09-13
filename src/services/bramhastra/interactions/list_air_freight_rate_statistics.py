@@ -173,7 +173,6 @@ async def use_default_query(
     queries.append(
         f") SELECT {select},MAX(rate_deviation_from_booking_rate) as deviation FROM list GROUP BY {select}"
     )
-
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     if is_service_object_required:

@@ -113,7 +113,10 @@ def get_where(filters: dict) -> str:
 def change_currency(trends, filters):
     exchange_rate = 1
 
-    if filters.get("currency") and filters.get("currency") != Fcl.default_currency.value:
+    if (
+        filters.get("currency")
+        and filters.get("currency") != Fcl.default_currency.value
+    ):
         exchange_rate = common.get_exchange_rate(
             {
                 "from_currency": Fcl.default_currency.value,
