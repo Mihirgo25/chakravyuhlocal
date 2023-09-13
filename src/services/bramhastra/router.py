@@ -590,6 +590,7 @@ def list_fcl_freight_recommended_trends_api(
     is_service_object_required: bool = False,
 ):
     try:
+        limit = min(limit,5)
         response = list_fcl_freight_recommended_trends(
             filters, limit, is_service_object_required
         )
