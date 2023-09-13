@@ -9,8 +9,8 @@ async def reset_db_state():
 def get_db(db_state=Depends(reset_db_state)):
     try:
         s = time.time()
-        db.connect()
-        print('con: ',time.time() - s)
+        db.connect(reuse_if_open=True)
+        print("con: ", time.time() - s)
         yield
     finally:
         if not db.is_closed():
