@@ -14,7 +14,6 @@ def create_fcl_freight_rate_bulk_operation(request):
         if request.get(key):
             params[key] = request[key]
     
-    breakpoint()
     bulk_operation = FclFreightRateBulkOperation(**params)
     eval(f"bulk_operation.validate_{action_name}_data()")
 
