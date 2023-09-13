@@ -95,7 +95,7 @@ def apply_source_filter(query, filters):
 
 
 def apply_start_date_filter(query, filters):
-    start_date = filters["start_date"]
+    start_date = filters.get("start_date")
     if start_date:
         start_date = datetime.strptime(start_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
@@ -105,7 +105,7 @@ def apply_start_date_filter(query, filters):
 
 
 def apply_end_date_filter(query, filters):
-    end_date = filters["end_date"]
+    end_date = filters.get("end_date")
     if end_date:
         end_date = datetime.strptime(end_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30

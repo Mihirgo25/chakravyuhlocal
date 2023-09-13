@@ -40,6 +40,7 @@ def air_freight_expiring_rates_scheduler():
         AirFreightRate.source.not_in(["predicted", "rate_extention"]),
         AirFreightRate.rate_type == "market_place",
         AirFreightRate.service_provider_id != COGOXPRESS,
+        AirFreightRate.commodity == 'general'
     )
     condition = None
 

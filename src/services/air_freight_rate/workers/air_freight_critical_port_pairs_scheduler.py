@@ -42,6 +42,7 @@ def air_freight_critical_port_pairs_scheduler():
         AirFreightRate.source.not_in(["predicted", "cluster_extension"]),
         AirFreightRate.rate_type == "market_place",
         AirFreightRate.service_provider_id != COGOXPRESS,
+        AirFreightRate.commodity == 'general'
     )
     condition = None
 
