@@ -39,6 +39,7 @@ def get_data(query):
         sid_wise_data[row['shipment_serial_id']]['data']['line_items'].extend(row['data']['line_items'])
         sid_wise_data[row['shipment_serial_id']]['invoice_urls'].append(row['invoice_url'])
         sid_wise_data[row['shipment_serial_id']]['invoice_urls'] = list(set(sid_wise_data[row['shipment_serial_id']]['invoice_urls']))
+        sid_wise_data[row['shipment_serial_id']]['data']['line_items'] = remove_duplicate_line_items(sid_wise_data[row['shipment_serial_id']]['data']['line_items'])
     data = list(sid_wise_data.values())
     return data
 
@@ -73,3 +74,11 @@ def get_stats(filters, is_stats_required):
     else:
         stats ={}
     return { 'stats': stats }
+
+def remove_duplicate_line_items(data):
+    unique_items = {}
+    for item in data:
+        unique_items[item["code"]] = item
+
+    unique_data = list(unique_items.values())
+    return unique_data

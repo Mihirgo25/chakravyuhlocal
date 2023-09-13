@@ -139,12 +139,15 @@ def create_fcl_freight_rate_local_for_draft(request: CreateFclFreightDraftLocal,
             'commodity': request.get('commodity'),
             'shipping_line_id': request.get('shipping_line_id'),
             'service_provider_id': request.get('service_provider_id'),
-            'trade_type': request.get('trade_type') 
+            'trade_type': request.get('trade_type'),
+            'rate_type':request.get('rate_type','market_place')
         }
         fcl_freight_local = get_fcl_freight_rate_local(get_local_params)
         if 'id' not in fcl_freight_local:
             fcl_freight_local = create_fcl_freight_rate_local(request)
-
+        else:
+            if matching_local_charges(fcl_freight_local, request['data'].get('line_items')):
+                return 
         request['rate_id'] = fcl_freight_local.get('id')
         draft_fcl_freight_local = create_draft_fcl_freight_rate_local_data(request)
         return JSONResponse(status_code=200, content=json_encoder(draft_fcl_freight_local))
@@ -191,3 +194,24 @@ def create_fcl_freight_rate_for_draft(request: CreateFclFreightDraft, resp: dict
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+def matching_local_charges(fcl_freight_local, invoice_line_items):
+    local_charges_dict = {}
+    invoice_charges_dict = {}
+    check_list = []
+
+    for charge in fcl_freight_local['line_items']:
+        local_charges_dict[charge.get('code')] = charge.get('price')
+    
+    for invoice_charge in invoice_line_items:
+        invoice_charges_dict[invoice_charge.get('code')] = invoice_charge.get('price')
+
+    if len(local_charges_dict.keys()) == len(invoice_charges_dict.keys()):
+        for charge_code, price in invoice_charges_dict.items():
+            if charge_code in local_charges_dict and price == local_charges_dict.get(charge_code):
+                check_list.append(True)
+            else:
+                return False
+    else:
+        return False
+    return True
