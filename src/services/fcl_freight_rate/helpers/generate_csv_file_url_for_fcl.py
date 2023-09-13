@@ -1,5 +1,5 @@
 from libs.csv_link_generator import get_csv_url
-BATCH_SIZE = 2000 
+BATCH_SIZE = 5000 
 
 def generate_csv_file_url_for_fcl(query):
     csv_urls = []
