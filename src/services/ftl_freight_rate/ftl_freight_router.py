@@ -5,6 +5,7 @@ import sentry_sdk
 from params import CreateRateSheet, UpdateRateSheet
 from libs.json_encoder import json_encoder
 from fastapi import HTTPException
+import json
 from datetime import datetime
 from services.ftl_freight_rate.interactions.get_estimated_ftl_freight_rate import (
     get_estimated_ftl_freight_rate,
@@ -838,7 +839,7 @@ def get_ftl_freight_rate_min_max_validity_dates_api(
         "importer_exporter_id": importer_exporter_id,
         "cargo_readiness_date": cargo_readiness_date,
         "preferred_currency": preferred_currency,
-        "truck_type": truck_type,
+        "truck_type": json.loads(truck_type),
     }
     try:
         data = get_ftl_freight_rate_min_max_validity_dates(request)
