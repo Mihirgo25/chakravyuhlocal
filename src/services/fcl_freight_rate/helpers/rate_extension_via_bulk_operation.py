@@ -41,8 +41,6 @@ def get_extend_freight_rate_params(request):
     params["procured_by_id"] = DEFAULT_USER_ID
     params["sourced_by_id"] = DEFAULT_USER_ID
     params["extend_freight_rate"] = data
-    params["created_at"] = datetime.now()
-    params["updated_at"] = datetime.now()
     
     return params
 
@@ -70,7 +68,5 @@ def get_add_freight_rate_markup_params(request):
     params["procured_by_id"] = DEFAULT_USER_ID
     params["sourced_by_id"] = DEFAULT_USER_ID
     params["add_freight_rate_markup"] = data
-    params["created_at"] = datetime.now()
-    params["updated_at"] = datetime.now()
     
     return params
