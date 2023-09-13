@@ -489,24 +489,27 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 def fcl_freight_rates_to_cogo_assured(self):
     try:
         from services.chakravyuh.models.worker_log import WorkerLog
-        from fastapi.encoders import jsonable_encoder
+        from peewee import SQL
+        
         row = {
             'module_name' : 'fcl_freight_rates_to_cogo_assured', 
             'module_type' : 'function'
         }
 
-        query = WorkerLog.select().where(
+        worker = WorkerLog.select().where(
             WorkerLog.module_name == 'fcl_freight_rates_to_cogo_assured', 
             WorkerLog.module_type == 'function',
-            ).order_by(WorkerLog.ended_at.desc()).limit(1)
+            ).first()
 
-        if not query:
-            last_updated_at = datetime.utcnow() - timedelta(hours=24)
+        if not worker:
+            last_updated_at = datetime.utcnow() - timedelta(hours=5)
+            WorkerLog.create(**row)
         else:
-            last_updated_at = jsonable_encoder(list(query.dicts()))[0]['started_at']
-        WorkerLog.create(**row)
+            last_updated_at = worker.started_at
+            worker.last_updated_at = datetime.utcnow()
+            worker.save()
 
-        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.updated_at >= last_updated_at, FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE)   
+        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.updated_at >= last_updated_at, FclFreightRate.validities != SQL("'[]'"), ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE) 
         grouped_set = set()
 
         for rate in ServerSide(query):
