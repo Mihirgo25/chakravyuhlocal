@@ -3,7 +3,11 @@ from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
 )
 from services.bramhastra.helpers.common_statistic_helper import get_identifier
 from micro_services.client import common
-from services.bramhastra.enums import FeedbackAction
+from services.bramhastra.enums import (
+    FeedbackAction,
+    FclFeedbackClosingRemarks,
+    FclFeedbackStatus,
+)
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
@@ -55,8 +59,8 @@ class Feedback:
     def set_format_and_existing_rate_stats(self):
         if (
             not self.increment_keys
-            or not self.decrement_keys
-            or not self.rate_stats_update_params
+            and not self.decrement_keys
+            and not self.rate_stats_update_params
         ):
             return
 
@@ -72,6 +76,19 @@ class Feedback:
         if fcl_freight_rate_statistic:
             self.params["fcl_freight_rate_statistic_id"] = fcl_freight_rate_statistic.id
 
+            if self.params.get("status") == FclFeedbackStatus.inactive.value:
+                self.increment_keys.add(
+                    FclFreightRateStatistic.feedback_recieved_count.name
+                )
+                if self.params.get(
+                    FeedbackFclFreightRateStatistic.closing_remarks.name
+                ) and FclFeedbackClosingRemarks.rate_added.value in self.params.get(
+                    FeedbackFclFreightRateStatistic.closing_remarks.name
+                ):
+                    self.increment_keys.add(
+                        FclFreightRateStatistic.dislikes_rate_reverted_count.name
+                    )
+                    
             for key in self.increment_keys:
                 setattr(
                     fcl_freight_rate_statistic,
@@ -85,22 +102,30 @@ class Feedback:
                     max(getattr(fcl_freight_rate_statistic, key) - 1, 0),
                 )
             for key, value in self.rate_stats_update_params.items():
-                setattr(fcl_freight_rate_statistic, key, value)
+                if value:
+                    setattr(fcl_freight_rate_statistic, key, value)
+
             fcl_freight_rate_statistic.save()
 
     def set_new_stats(self) -> int:
         return FeedbackFclFreightRateStatistic.insert_many(self.params).execute()
 
     def set_existing_stats(self) -> None:
-        if (
-            feedback := FeedbackFclFreightRateStatistic.select()
+        feedback = (
+            FeedbackFclFreightRateStatistic.select()
             .where(
                 FeedbackFclFreightRateStatistic.feedback_id
                 == self.params.get("feedback_id")
             )
             .first()
-        ):
+        )
+
+        if feedback:
             for key in self.params.keys():
                 if key not in self.exclude_update_params:
-                    setattr(feedback, key, self.params.get(key))
-            feedback.save()
+                    if self.params.get(key):
+                        setattr(feedback, key, self.params.get(key))
+            try:
+                feedback.save()
+            except Exception as e:
+                raise e

@@ -53,15 +53,16 @@ def send_rate_stats(action, request, freight):
         )
         
         try:
-            if object.get('origin_main_port_id'):
-                object['origin_region_id'] = request.get('port_to_region_id_mapping')[object.get('origin_main_port_id')]
-            else:
-                object['origin_region_id']  = request.get('port_to_region_id_mapping')[object.get('origin_port_id')]
-                
-            if object.get('destination_main_port_id'):
-                object['destination_region_id'] = request.get('port_to_region_id_mapping')[object.get('destination_main_port_id')]
-            else:
-                object['destination_region_id']  = request.get('port_to_region_id_mapping')[object.get('destination_port_id')]
+            if request.get('port_to_region_id_mapping'):
+                if object.get('origin_main_port_id'):
+                    object['origin_region_id'] = request.get('port_to_region_id_mapping')[object.get('origin_main_port_id')]
+                else:
+                    object['origin_region_id']  = request.get('port_to_region_id_mapping')[object.get('origin_port_id')]
+                    
+                if object.get('destination_main_port_id'):
+                    object['destination_region_id'] = request.get('port_to_region_id_mapping')[object.get('destination_main_port_id')]
+                else:
+                    object['destination_region_id']  = request.get('port_to_region_id_mapping')[object.get('destination_port_id')]
         except Exception:
             pass
 
@@ -192,6 +193,8 @@ def send_feedback_delete_stats(obj):
                     FclFreightRateFeedback.status,
                     FclFreightRateFeedback.closed_by_id,
                     FclFreightRateFeedback.closing_remarks,
+                    FclFreightRateFeedback.fcl_freight_rate_id,
+                    FclFreightRateFeedback.validity_id
                 ],
             )
         )
