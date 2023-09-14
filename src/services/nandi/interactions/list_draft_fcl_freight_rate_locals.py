@@ -29,18 +29,7 @@ def get_query(sort_by, sort_type):
     return query
 
 def get_data(query):
-    sid_wise_data = {}
-    for row in query.dicts():
-        row['invoice_urls'] = []
-        if not sid_wise_data.get(row.get('shipment_serial_id')):
-            sid_wise_data[row['shipment_serial_id']] = row
-            sid_wise_data[row['shipment_serial_id']]['invoice_urls'].append(row['invoice_url'])
-            continue
-        sid_wise_data[row['shipment_serial_id']]['data']['line_items'].extend(row['data']['line_items'])
-        sid_wise_data[row['shipment_serial_id']]['invoice_urls'].append(row['invoice_url'])
-        sid_wise_data[row['shipment_serial_id']]['invoice_urls'] = list(set(sid_wise_data[row['shipment_serial_id']]['invoice_urls']))
-        sid_wise_data[row['shipment_serial_id']]['data']['line_items'] = remove_duplicate_line_items(sid_wise_data[row['shipment_serial_id']]['data']['line_items'])
-    data = list(sid_wise_data.values())
+    data = list(query.dicts())
     return data
 
 def get_stats(filters, is_stats_required):
@@ -59,9 +48,9 @@ def get_stats(filters, is_stats_required):
 
     query = (query.select(
         fn.count(DraftFclFreightRateLocal.id).over().alias('get_total'),
-        fn.count(DraftFclFreightRateLocal.id).filter(DraftFclFreightRateLocal.status == 'pending').over().alias('get_status_count_pending')
-
-         )
+        fn.count(DraftFclFreightRateLocal.id).filter(DraftFclFreightRateLocal.status == 'pending').over().alias('get_status_count_pending'),
+        fn.count(DraftFclFreightRateLocal.id).filter(DraftFclFreightRateLocal.status == 'completed').over().alias('get_status_count_completed')
+        )
     ).limit(1)
 
     result = query.execute()
@@ -69,16 +58,9 @@ def get_stats(filters, is_stats_required):
         result =result[0]
         stats = {
         'total': result.get_total,
-        'pending': result.get_status_count_pending
+        'pending': result.get_status_count_pending,
+        'completed':result.get_status_count_completed
         }
     else:
         stats ={}
     return { 'stats': stats }
-
-def remove_duplicate_line_items(data):
-    unique_items = {}
-    for item in data:
-        unique_items[item["code"]] = item
-
-    unique_data = list(unique_items.values())
-    return unique_data
