@@ -1,4 +1,4 @@
-from peewee import Model, BigIntegerField, UUIDField, IntegerField, FloatField
+from peewee import Model, BigIntegerField, UUIDField, IntegerField, FloatField, DateField
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField, BigAutoField, TextField, ArrayField , CharField
 from datetime import datetime
@@ -21,6 +21,8 @@ class FclFreightAction(BaseModel):
     destination_country_id = UUIDField(index=True)
     origin_continent_id = UUIDField(null=True, index=True)
     destination_continent_id = UUIDField(null=True, index=True)
+    origin_trade_id = UUIDField(null=True, index=True)
+    destination_trade_id = UUIDField(null=True, index=True)
     commodity = TextField(null=True, index=True)
     container_size = TextField(null=True, index=True)
     container_type = TextField(null=True, index=True)
@@ -29,6 +31,21 @@ class FclFreightAction(BaseModel):
     importer_exporter_id = UUIDField(index=True)
     rate_id = UUIDField(index=True)
     validity_id = UUIDField(index=True)
+    bas_price = FloatField(default = 0,null = True)
+    bas_standard_price = FloatField(default = 0,null = True)
+    bas_currency = CharField(max_length = 3,null = True)
+    mode = CharField(index = True)
+    parent_mode = CharField(index = True)
+    source = CharField(index = True)
+    source_id = UUIDField(index = True)
+    standard_price = FloatField()
+    market_price = FloatField()
+    rate_type = CharField()
+    validity_start = DateField()
+    validity_end = DateField()
+    currency = CharField(max_length=3)
+    shipping_line_id = UUIDField(null=True, index=True)
+    service_provider_id = UUIDField(null=True, index=True)
     spot_search_id = UUIDField(null=True, index=True)
     spot_search = IntegerField(default=0)
     checkout_id = UUIDField(null=True, index=True)

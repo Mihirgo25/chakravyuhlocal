@@ -6,13 +6,12 @@ from fastapi.encoders import jsonable_encoder
 from math import ceil
 from micro_services.client import maps
 
-HEIRARCHY = ["continent", "country", "region", "port"]
+HEIRARCHY = ["continent", "country", "port"]
 
 LOCATION_KEYS = {
     "destination_port_id",
     "destination_country_id",
     "destination_continent_id",
-    "destination_region_id",
 }
 
 
