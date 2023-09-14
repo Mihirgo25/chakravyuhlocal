@@ -2,12 +2,10 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.interactions.create_air_freight_rate_job import (
     create_air_freight_rate_job,
 )
-import datetime
+import datetime, json, os
 from playhouse.postgres_ext import ServerSide
 from playhouse.shortcuts import model_to_dict
 from services.air_freight_rate.constants.air_freight_rate_constants import COGOXPRESS
-import json
-import os
 from configs.definitions import ROOT_DIR
 
 DAYS_TO_EXPIRE = datetime.datetime.now().date() + datetime.timedelta(days=2)
