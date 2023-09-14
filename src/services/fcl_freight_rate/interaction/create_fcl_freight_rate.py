@@ -159,7 +159,7 @@ def create_fcl_freight_rate(request):
         freight.validate_validity_object(request["validity_start"], request["validity_end"])
         freight.validate_line_items(line_items)
 
-    if row["rate_type"] == "cogo_assured":
+    if row["rate_type"] == "cogo_assured" and not request.get('bulk_operation_id'):
         freight.set_validities_for_cogo_assured_rates(request.get('validities'))
     else:
         freight.set_validities(
