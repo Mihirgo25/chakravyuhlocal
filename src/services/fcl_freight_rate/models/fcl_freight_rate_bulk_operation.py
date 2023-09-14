@@ -27,7 +27,7 @@ from services.fcl_freight_rate.helpers.adjust_markup_price import adjusted_price
 
 
 
-ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate','add_local_conditions']
+ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate','add_local_conditions','delete_local_rate_line_item']
 MARKUP_TYPES = ['net','percent','absolute']
 BATCH_SIZE = 1000
 
@@ -161,6 +161,16 @@ class FclFreightRateBulkOperation(BaseModel):
         
         if str(data['markup_type']).lower() == 'percent':
             return
+
+    def validate_delete_local_rate_line_item_data(self):
+        data = self.data
+        
+        fcl_freight_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+
+        charge_codes = fcl_freight_charges_dict.keys()
+
+        if data['line_item_code'] not in charge_codes:
+            raise HTTPException(status_code=400, detail='line_item_code is invalid')
         
     def validate_add_local_conditions_data(self):
         data = self.data
@@ -294,6 +304,10 @@ class FclFreightRateBulkOperation(BaseModel):
             #     raise HTTPException(status_code=400, detail='destination_icd_port_id is invalid')
             
     def perform_batch_extend_validity_action(self, batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+        
         data = self.data 
         sourced_by_ids = data.get('sourced_by_ids')
         procured_by_ids = data.get('procured_by_ids')
@@ -405,6 +419,9 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         total_affected_rates = 0
 
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
         
         if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
@@ -451,6 +468,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_batch_delete_freight_rate_action(self, batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
         fcl_freight_rates = list(batch_query.dicts())
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         for freight in fcl_freight_rates:
             count += 1
@@ -484,6 +504,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_delete_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
         total_affected_rates = 0
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
@@ -535,6 +558,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_delete_local_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
         total_affected_rates = 0
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
 
@@ -577,6 +603,10 @@ class FclFreightRateBulkOperation(BaseModel):
 
 
     def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+        
         data = self.data
         affect_market_price = data.get('affect_market_price', True)
         is_system_operation = data.get('is_system_operation', False)
@@ -687,6 +717,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
                         
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
         
@@ -754,6 +787,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_add_local_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
         total_affected_rates = 0
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
 
@@ -835,6 +871,9 @@ class FclFreightRateBulkOperation(BaseModel):
         total_affected_rates = 0
         data = self.data
 
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+
         if data['slabs']:
             data['slabs'] = sorted(data.get('slabs', []), key=lambda slab: slab.get('lower_limit', 0))
 
@@ -882,6 +921,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_add_freight_line_item_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
         
@@ -994,6 +1036,9 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         total_affected_rates = 0
 
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id })
 
         if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
@@ -1037,6 +1082,9 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def perform_update_commodity_surcharge_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
@@ -1080,6 +1128,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_update_weight_limit_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
@@ -1126,6 +1177,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_batch_extend_freight_rate_action(self, batch_query, count, total_count, total_affected_rates, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
         fcl_freight_rates = list(batch_query.dicts())
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         total_count = len(fcl_freight_rates)
         count = 0
@@ -1223,6 +1277,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_extend_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
@@ -1273,6 +1330,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_extend_freight_rate_to_icds_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
+
+        if sourced_by_id is None or procured_by_id is None: 
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id' : cogo_entity_id })
 
@@ -1478,6 +1538,52 @@ class FclFreightRateBulkOperation(BaseModel):
                     pass
 
             total_affected_rates += count
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()
+
+
+    def perform_delete_local_rate_line_item_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
+        data = self.data
+        total_affected_rates = 0
+
+        filters = (data['filters'] or {})
+        
+        page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+
+        local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page_limit= page_limit)['list']
+        total_count = len(local_rates)
+        count = 0
+
+        for local in local_rates:
+            count += 1
+
+            if FclFreightRateAudit.get_or_none(bulk_operation_id = self.id,object_id = local['id']):
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
+                continue
+
+            line_items = [t for t in local['data']['line_items'] if t['code'] == data['line_item_code'] and t.get('conditions')]
+            if not line_items:
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
+
+            local['data']['line_items'] = [t for t in local['data']['line_items'] if t not in line_items]
+
+            update_fcl_freight_rate_local({
+                'id': local['id'],
+                'performed_by_id': self.performed_by_id,
+                'sourced_by_id': sourced_by_id,
+                'procured_by_id': procured_by_id,
+                'bulk_operation_id': self.id,
+                'data': local['data']
+            })
+
+            total_affected_rates += 1
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+            
         data['total_affected_rates'] = total_affected_rates
         self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data

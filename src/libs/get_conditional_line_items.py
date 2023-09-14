@@ -12,7 +12,7 @@ def get_filtered_line_items(rate:dict, line_items:list):
         conditions = item.get('conditions')
         charge_code = item['code']
         if conditions and validate_conditions(conditions):
-            operator = conditions['operator']
+            operator = conditions.get('operator')
             values = conditions['values']
             count, condition_met = evaluate_conditions(rate, operator, values)
             if condition_met:
@@ -44,17 +44,28 @@ def find_charge_code_index(new_line_items,charge_code):
     return None
 
 def validate_conditions(conditions):
-    if 'operator' in conditions and 'values' in conditions:
+    if 'values' in conditions:
+        if len(conditions['values']) > 1 and 'operator' not in conditions:
+            return False
         return True
     return False
 
+
 def evaluate_conditions(rate, operator, values):
+
     true_count = 0 
+    if not operator:
+        is_condition = check_condition(rate,values[0])
+        if is_condition:
+            true_count += 1
+        return true_count, is_condition
+   
     if operator == "or":
         for val in values:
             if check_condition(rate, val):
                 true_count += 1
         return true_count, true_count > 0  
+    
     if operator == "and":
         for val in values:
             if check_condition(rate, val):
@@ -66,19 +77,19 @@ def evaluate_conditions(rate, operator, values):
 def check_condition(rate, condition):
     key = condition['condition_key']
     operator = condition['operand'].lower()
-    operand = condition['condition_value']
+    condition_value = condition['condition_value']
     if operator == "in":
-        if rate.get(key) in operand:
+        if rate.get(key) in condition_value:
             return True
     if operator == "not_in":
-        if rate.get(key) not in operand:
+        if rate.get(key) not in condition_value:
             return True
-    if operator == "equal_to" and rate.get(key) == operand:
+    if operator == "equal_to" and rate.get(key) == condition_value:
         return True
-    if operator == "not_equal_to" and rate.get(key) != operand:
+    if operator == "not_equal_to" and rate.get(key) != condition_value:
         return True
-    if operator == "greater_than" and rate.get(key) > operand:
+    if operator == "greater_than" and rate.get(key) > condition_value:
         return True
-    if operator == "less_than" and rate.get(key) < operand:
+    if operator == "less_than" and rate.get(key) < condition_value:
         return True
     return False
