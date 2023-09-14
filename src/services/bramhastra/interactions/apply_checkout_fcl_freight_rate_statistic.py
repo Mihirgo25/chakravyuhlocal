@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.post_fcl_freight_helper import Checkout
+from services.bramhastra.helpers.checkout_fcl_freight_rate_statistic_helper import Checkout
 from services.bramhastra.enums import CheckoutAction
 
 

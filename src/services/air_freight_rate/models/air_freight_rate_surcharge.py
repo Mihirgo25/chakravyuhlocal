@@ -50,18 +50,26 @@ class AirFreightRateSurcharge(BaseModel):
     rate_not_available_entry = BooleanField(null=True,default=False)
     updated_at=DateTimeField(default=datetime.datetime.now,index=True)
     created_at=DateTimeField(default=datetime.datetime.now,index=True)
+    importer_exporter_id = UUIDField(null = True)
+    importer_exporter = BinaryJSONField(null = True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
         return super(AirFreightRateSurcharge, self).save(*args, **kwargs)
-    
+
     class Meta:
         table_name = 'air_freight_rate_surcharges'
 
     def detail(self):
         air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES
         new_line_items = []
+        not_required_charges = DEFAULT_NOT_APPLICABLE_LINE_ITEMS
+        origin_airport_id = str(self.origin_airport_id)
+        if origin_airport_id in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS and str(self.airline_id) in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS.get(origin_airport_id)['airlines']:
+            not_required_charges = SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS[origin_airport_id]['not_eligible_line_items']
         for line_item in self.line_items:
+            if line_item['code'] in not_required_charges:
+                continue
             code_config = air_freight_surcharges_dict.get(line_item['code'])
             if not code_config:
                 new_line_items.append(line_item)
@@ -86,12 +94,12 @@ class AirFreightRateSurcharge(BaseModel):
         is_line_items_error_messages_present = False
         is_line_items_info_messages_present = False
 
-
+        commodity = self.commodity
         air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES
         grouped_charge_codes = {}
         for line_item in self.line_items:
             grouped_charge_codes[line_item.get('code')] = line_item
-      
+
 
         for code, line_items in grouped_charge_codes.items():
             code_config = air_freight_surcharges_dict.get(code)
@@ -109,8 +117,8 @@ class AirFreightRateSurcharge(BaseModel):
                 line_items_error_messages[code] = ['is invalid']
                 is_line_items_error_messages_present = True
                 continue
-        
-        
+
+
         possible_charge_codes=self.possible_charge_codes()
         for code, config in possible_charge_codes.items():
     
@@ -128,7 +136,7 @@ class AirFreightRateSurcharge(BaseModel):
         self.line_items_info_messages = line_items_info_messages
         self.is_line_items_info_messages_present = is_line_items_info_messages_present
         self.is_line_items_error_messages_present = is_line_items_error_messages_present
-        
+
     def update_freight_objects(self):
         from services.air_freight_rate.models.air_freight_rate import AirFreightRate
         surcharge = {
@@ -151,7 +159,7 @@ class AirFreightRateSurcharge(BaseModel):
                 (AirFreightRate.price_type == "net_net")).execute()
         except Exception as e:
             print(e)
-    
+
     def set_origin_location_ids(self):
         self.origin_country_id = self.origin_airport.get('country_id')
         self.origin_continent_id = self.origin_airport.get('continent_id')
@@ -162,19 +170,19 @@ class AirFreightRateSurcharge(BaseModel):
         self.destination_country_id = self.destination_airport.get('country_id')
         self.destination_continent_id = self.destination_airport.get('continent_id')
         self.destination_trade_id = self.destination_airport.get('trade_id')
-        self.destination_location_ids = [uuid.UUID(str(self.destination_airport_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))] 
-    
+        self.destination_location_ids = [uuid.UUID(str(self.destination_airport_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))]
+
     def validate_origin_destination_country(self):
         if self.origin_airport['country_code'] == self.destination_airport['country_code']:
             raise HTTPException(status_code=400, detail="Destination airport can not be in the same country as origin_airport")
-    
+
     def validate_duplicate_line_items(self):
         line_items = {}
         for line_item in self.line_items:
             if line_item['code'] in line_items.keys():
                 raise HTTPException(status_code = 400, detail = 'Duplicate Line Items')
             line_items[line_item['code']] = True
-        
+
     def possible_charge_codes(self):
         commodity = self.commodity
         commodity_type = self.commodity_type
@@ -182,26 +190,26 @@ class AirFreightRateSurcharge(BaseModel):
 
 
         charge_codes = {}
-    
+
         for k,v in air_freight_surcharges.items():
             if eval(str(v['condition'])):
                 charge_codes[k] = v
         return charge_codes
-    
+
     def validate_service_provider_id(self):
         service_provider_data = get_organization(id=str(self.service_provider_id))
         if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
             self.service_provider = service_provider_data[0]
             return True
         raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
-    
+
     def validate_airline_id(self):
         airline_data = get_operators(id=self.airline_id,operator_type='airline')
         if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'airline':
             self.airline = airline_data[0]
             return True
-        raise HTTPException(status_code = 400, detail = 'Airline Id Is Not Valid')    
-    
+        raise HTTPException(status_code = 400, detail = 'Airline Id Is Not Valid')
+
     def validate(self):
         if self.operation_type not in AIR_OPERATION_TYPES:
             raise HTTPException(status_code = 400, detail = 'Invalid Operation Type')
@@ -221,7 +229,7 @@ class AirFreightRateSurcharge(BaseModel):
         if self.commodity_type not in COMMODITY_TYPE:
             raise HTTPException(status_code = 400, detail = 'Invalid Commodity Type')
         return True
-    
+
     def set_locations(self):
         ids = [str(self.origin_airport_id), str(self.destination_airport_id)]
         if self.origin_airport_id:

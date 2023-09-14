@@ -848,6 +848,10 @@ class AddFreightRateMarkup(BaseModel):
     rates_greater_than_price: float = None
     rates_less_than_price: float = None
     tag: str = None
+    is_system_operation: bool=False
+    affect_market_price: bool=True
+    min_allowed_markup: float=None 
+    max_allowed_markup: float=None 
 
 
 class AddLocalRateMarkup(BaseModel):
@@ -960,3 +964,26 @@ class FclLocationCluster(BaseModel):
     base_port_id: str
     location_ids: List[str]
     map_zone_id: str
+
+
+class CreateCriticalPortTrendIndex(BaseModel):
+    performed_by_id: str = None
+    performed_by_type: str = None
+    origin_port_id: str
+    destination_port_id: str
+    min_allowed_percentage_change: float = -100
+    max_allowed_percentage_change: float = 100
+    min_allowed_markup: float = -1000
+    max_allowed_markup: float = 1000
+    manual_gri: float = None
+    approval_status: str = 'active'
+
+    
+class DeleteFclFreightRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+

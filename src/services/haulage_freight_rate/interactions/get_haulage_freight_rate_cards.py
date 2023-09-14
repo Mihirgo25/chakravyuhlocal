@@ -102,7 +102,7 @@ def initialize_query(requirements, query):
         freight_query = freight_query.where(
             HaulageFreightRate.destination_location_id << destination_location_ids
         )
-    if requirements.get("shipping_line_id"):
+    if requirements.get("transport_mode") != 'trailer' and requirements.get("shipping_line_id"):
         freight_query = freight_query.where(
             HaulageFreightRate.shipping_line_id == requirements.get("shipping_line_id")
         )
@@ -115,10 +115,10 @@ def initialize_query(requirements, query):
             == requirements.get("transport_mode")
         )
     freight_query = freight_query.where(
-        HaulageFreightRate.validity_start <= datetime.now()
-        and HaulageFreightRate.validity_end >= datetime.now()
+        HaulageFreightRate.validity_start.cast('date') <= datetime.now().date()
+        and HaulageFreightRate.validity_end.cast('date') >= datetime.now().date()
     )
-
+    
     return freight_query
 
 
@@ -172,7 +172,7 @@ def build_line_item_object(line_item, requirements):
     line_item = {key: line_item[key] for key in keys_to_slice if key in line_item}
     line_item["quantity"] = (
         requirements["containers_count"]
-        if line_item["unit"] in ["per_container"]
+        if line_item["unit"] in ["per_container", "per_trailer"]
         else 1
     )
     line_item["total_price"] = line_item["quantity"] * line_item["price"]
@@ -224,24 +224,19 @@ def build_response_object(result, requirements):
     if additional_services and list(set(additional_services) - set(charger_codes)):
         return False
     # modifying line items
+    basic_line_item = {}
+    for line_item in result["line_items"]:
+        if line_item["code"] == "BAS":
+            basic_line_item = line_item
+
     for line_item in result["line_items"]:
         if line_item["code"] == "FSC" and line_item["unit"] == "percentage_of_freight":
-            for required_line_item in line_item:
-                if required_line_item["code"] != "BAS":
-                    continue
-                line_item["total_price"] = (
-                    float(
-                        build_line_item_object(required_line_item, requirements)[
-                            "total_price"
-                        ]
-                    )
-                    * float(line_item["price"])
-                ) / 100
-                line_item["quantity"] = requirements["containers_count"]
-                line_item["unit"] = "per_trailer"
-                line_item["price"] = line_item["total_price"] / line_item["quantity"]
-                code_config = HAULAGE_FREIGHT_CHARGES[line_item["code"]]
-                line_item["name"] = code_config["name"]
+            line_item["total_price"] = (float(build_line_item_object(basic_line_item, requirements)["total_price"]) * float(line_item["price"])) / 100
+            line_item["quantity"] = requirements["containers_count"]
+            line_item["unit"] = "per_trailer"
+            line_item["price"] = line_item["total_price"] / line_item["quantity"]
+            code_config = HAULAGE_FREIGHT_CHARGES[line_item["code"]]
+            line_item["name"] = code_config["name"]
         else:
             line_item = build_line_item_object(line_item, requirements)
 
@@ -428,6 +423,7 @@ def get_haulage_freight_rate_cards(requirements):
 
     try:
         # select default required columns
+
         query = select_fields()
 
         # initialize query with required conditions

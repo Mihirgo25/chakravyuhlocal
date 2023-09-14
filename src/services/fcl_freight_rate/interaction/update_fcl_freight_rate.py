@@ -5,6 +5,7 @@ from services.fcl_freight_rate.helpers.get_normalized_line_items import get_norm
 from database.db_session import db
 from datetime import datetime
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
 
 def create_audit(request, freight_id):
     validity_start = request.get('validity_start')
@@ -47,6 +48,7 @@ def validate_freight_params(request):
 
 def execute_transaction_code(request):
   from celery_worker import update_multiple_service_objects
+  from services.fcl_freight_rate.fcl_celery_worker import update_fcl_freight_rate_job_on_rate_addition_delay
 
   validate_freight_params(request)
   
@@ -121,6 +123,11 @@ def execute_transaction_code(request):
 
   current_validities = freight_object.validities
   adjust_dynamic_pricing(request, freight_object, current_validities)
+  
+  send_stats(request,freight_object)
+
+  if str(freight_object.service_provider_id) != DEFAULT_SERVICE_PROVIDER_ID:
+     update_fcl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight_object.id},queue='fcl_freight_rate')
 
   return {
     'id': freight_object.id
@@ -155,3 +162,8 @@ def adjust_dynamic_pricing(request, freight: FclFreightRate, current_validities)
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
 
     adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
+    
+  
+def send_stats(request,freight):
+    from services.bramhastra.celery import send_fcl_rate_stats_in_delay
+    send_fcl_rate_stats_in_delay.apply_async(kwargs = {'action':'update','request':request,'freight':freight},queue = 'statistics')

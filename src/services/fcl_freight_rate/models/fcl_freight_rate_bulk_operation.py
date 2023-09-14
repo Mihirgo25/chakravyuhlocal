@@ -19,7 +19,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import l
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
-from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids_from_audits_for_rate_sheet, get_relevant_rate_ids_for_extended_from_object,is_price_in_range,get_rate_sheet_id, get_progress_percent
+from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids_from_audits_for_rate_sheet, get_relevant_rate_ids_for_extended_from_object,is_price_in_range,get_rate_sheet_id, get_progress_percent,get_common_create_params
 from fastapi.encoders import jsonable_encoder
 from database.db_session import rd
 from libs.parse_numeric import parse_numeric
@@ -137,9 +137,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if data['line_item_code'] not in charge_codes:
             raise HTTPException(status_code=400, detail='line_item_code is invalid')
-        
-        if str(data['markup_type']).lower() == 'percent':
-            return
+
         
         data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
@@ -567,6 +565,10 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
+        affect_market_price = data.get('affect_market_price', True)
+        is_system_operation = data.get('is_system_operation', False)
+        min_allowed_markup =  data.get('min_allowed_markup')
+        max_allowed_markup =  data.get('max_allowed_markup')
         fcl_freight_rates = list(batch_query.dicts())
         
         validity_start = datetime.strptime(data['validity_start'], '%Y-%m-%d')
@@ -604,6 +606,11 @@ class FclFreightRateBulkOperation(BaseModel):
                 
                 if data['markup_type'].lower() == 'percent':
                     markup = float(data['markup'] * line_item['price']) / 100 
+                    if min_allowed_markup and max_allowed_markup:
+                        if line_item['currency'] != data['markup_currency']:
+                           min_allowed_markup =  common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'] , 'to_currency': line_item['currency'] , 'price': min_allowed_markup}).get('price')
+                           max_allowed_markup =  common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'] , 'to_currency': line_item['currency'] , 'price': max_allowed_markup}).get('price')
+                        markup = max(min_allowed_markup, min(markup, max_allowed_markup))
                 else:
                     markup = data['markup']
                 
@@ -616,7 +623,8 @@ class FclFreightRateBulkOperation(BaseModel):
                     line_item['currency'] = data['markup_currency']
                 else:
                     line_item['price'] = line_item['price'] + markup
-                    line_item['market_price'] = line_item['price'] if not line_item.get('market_price') else line_item['market_price'] + markup
+                    if affect_market_price:
+                        line_item['market_price'] = line_item['price'] if not line_item.get('market_price') else line_item['market_price'] + markup
                     
                 
                 validity_object['line_items'].append(line_item)
@@ -626,7 +634,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 new_validities.append(validity_object)
            
             if freight['rate_type']=='cogo_assured' and new_validities:
-                freight_rate_object =self.get_common_create_params(sourced_by_id, procured_by_id,freight,validity_start,validity_end)
+                freight_rate_object =get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,validity_start,validity_end,is_system_operation)
                 freight_rate_object['validities'] = new_validities
                 freight_rate_object['weight_limit'] = freight['weight_limit']
                 id =create_fcl_freight_rate_data(freight_rate_object)
@@ -634,7 +642,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 
             else:      
                 for validity_object in new_validities:
-                    freight_rate_object =self.get_common_create_params(sourced_by_id, procured_by_id,freight,validity_start,validity_end)
+                    freight_rate_object =get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,validity_start,validity_end,is_system_operation)
                     freight_rate_object['line_items'] = validity_object['line_items']
                     freight_rate_object['schedule_type'] = validity_object['schedule_type']
                     freight_rate_object['payment_term'] = validity_object['payment_term']
@@ -646,35 +654,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
         return count, total_affected_rates
         
-    def get_common_create_params(self, sourced_by_id, procured_by_id,freight,validity_start,validity_end):
-        data=self.data
-        freight_rate_object = {
-                'origin_port_id': str(freight["origin_port_id"]),
-                'origin_main_port_id': str(freight["origin_main_port_id"]) if freight['origin_main_port_id'] else None,
-                'destination_port_id': str(freight["destination_port_id"]),
-                'destination_main_port_id': str(freight["destination_main_port_id"]) if freight['destination_main_port_id'] else None,
-                'container_size': freight["container_size"],
-                'container_type': freight["container_type"],
-                'commodity': freight["commodity"],
-                'shipping_line_id': str(freight["shipping_line_id"]),
-                'importer_exporter_id': str(freight["importer_exporter_id"]) if freight['importer_exporter_id'] else None,
-                'service_provider_id': str(freight["service_provider_id"]) if freight['service_provider_id'] else None,
-                'cogo_entity_id': str(freight["cogo_entity_id"]) if freight['cogo_entity_id'] else None,
-                'bulk_operation_id': self.id,
-                'performed_by_id': self.performed_by_id,
-                'sourced_by_id': sourced_by_id,
-                'procured_by_id': procured_by_id,
-                'validity_start': validity_start,
-                'validity_end': validity_end,
-                'source': 'bulk_operation',
-                'mode':freight['mode'],
-                'rate_type': freight['rate_type'],
-                'tag': data.get('tag'),
-                'rate_sheet_validation': True,
-                'weight_limit':freight['weight_limit']
-            }   
-        
-        return freight_rate_object
+   
         
     def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
@@ -722,6 +702,8 @@ class FclFreightRateBulkOperation(BaseModel):
                     'service_provider_id': True,
                     'cogo_entity_id': True,
                     'rate_type': True,
+                    'sourced_by_id': True,
+                    'procured_by_id': True,
                     'mode': True,
                     'weight_limit': True
                 }
@@ -730,7 +712,7 @@ class FclFreightRateBulkOperation(BaseModel):
         total_count = query.count()
         count = 0
         offset = 0
-        
+
         while(offset < total_count):
             batch_query = query.offset(offset).limit(BATCH_SIZE)
             offset += BATCH_SIZE
