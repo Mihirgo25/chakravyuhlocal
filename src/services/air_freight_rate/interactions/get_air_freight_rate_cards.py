@@ -510,10 +510,8 @@ def get_air_freight_rate_cards(requirements):
         freight_rates = jsonable_encoder(list(freight_query.dicts()))
         freight_rates = pre_discard_noneligible_rates(freight_rates)
         freight_rates = remove_cogoxpress_service_provider(freight_rates)
-
         freight_rates = valid_weight_slabs(freight_rates,requirements)
         freight_rates = filter_predicted_or_extension_rates(freight_rates)
-
         is_predicted = False
         
         freight_rates,is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)

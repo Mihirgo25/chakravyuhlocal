@@ -637,6 +637,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 freight_rate_object =get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,validity_start,validity_end,is_system_operation)
                 freight_rate_object['validities'] = new_validities
                 freight_rate_object['weight_limit'] = freight['weight_limit']
+                
                 id =create_fcl_freight_rate_data(freight_rate_object)
                
                 
