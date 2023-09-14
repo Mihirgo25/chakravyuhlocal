@@ -150,9 +150,7 @@ async def get_fcl_freight_rate_lifecycle(filters):
 async def get_stale_rate_statistics(filters, where):
     clickhouse = ClickHouse()
 
-    queries = [
-        f"""SELECT count(DISTINCT rate_id) as idle_rates FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""
-    ]
+    queries = [f"""SELECT count(DISTINCT rate_id) as idle_rates FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""]
 
     if where:
         queries.append("AND")

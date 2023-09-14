@@ -5,6 +5,24 @@ from services.bramhastra.helpers.common_statistic_helper import get_identifier
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
+
+REQUIRED_RATE_PARAMS = [
+    "origin_port_id",
+    "destination_port_id",
+    "origin_main_port_id",
+    "destination_main_port_id",
+    "origin_region_id",
+    "destination_region_id",
+    "origin_country_id",
+    "destination_country_id",
+    "origin_continent_id",
+    "destination_continent_id",
+    "commodity",
+    "container_size",
+    "container_type",
+    "updated_at",
+]
 
 RATE_FIELDS = [
     FclFreightRateStatistic.rate_id,
@@ -46,11 +64,12 @@ class SpotSearch:
         self.common_param = params.dict(exclude={"rates"})
         self.spot_search_id = params.spot_search_id
         self.spot_search_params = []
+        self.action_params = []
         self.rates = params.rates
         self.increment_keys = {"spot_search_count"}
         self.clickhouse_client = None
 
-    def set_format_and_existing_rate_stats(self):
+    def set(self):
         for rate in self.rates:
             param = self.common_param.copy()
             rate_dict = rate.dict(exclude={"payment_term", "schedule_type"})
@@ -63,10 +82,10 @@ class SpotSearch:
                 )
                 .first()
             )
-            
+
             if not fcl_freight_rate_statistic:
                 continue
-                   
+
             for k in self.increment_keys:
                 setattr(
                     fcl_freight_rate_statistic,
@@ -81,7 +100,20 @@ class SpotSearch:
                 param["fcl_freight_rate_statistic_id"] = fcl_freight_rate_statistic.id
                 self.spot_search_params.append(param)
 
-    def set_new_stats(self) -> int:
+            fcl_freight_action_create_params = rate_dict
+
+            fcl_freight_action_create_params["spot_search_id"] = self.spot_search_id
+
+            fcl_freight_action_create_params.update(
+                {
+                    k: getattr(fcl_freight_rate_statistic, k)
+                    for k in REQUIRED_RATE_PARAMS
+                }
+            )
+
+            FclFreightAction.create(**fcl_freight_action_create_params)
+
+    def create(self) -> int:
         return SpotSearchFclFreightRateStatistic.insert_many(
             self.spot_search_params
         ).execute()

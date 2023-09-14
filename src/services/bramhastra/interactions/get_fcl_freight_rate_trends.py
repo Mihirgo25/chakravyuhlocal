@@ -29,6 +29,7 @@ ALLOWED_FREQUENCY_TYPES = {
 
 def get_fcl_freight_rate_trends(filters: dict) -> dict:
     response, locations = get_rate(filters)
+    response, locations = get_rate(filters)
     response = {
         "rate_trend": response,
         "currency": filters.get("currency") or Fcl.default_currency.value,
@@ -69,7 +70,7 @@ def get_rate(filters: dict) -> list:
         queries.append(" WHERE ")
         queries.append(where)
         queries.append("AND is_deleted = false")
-
+        
     queries.append(
         """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day ORDER BY day,mode;"""
     )

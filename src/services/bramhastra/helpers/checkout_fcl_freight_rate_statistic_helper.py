@@ -49,11 +49,14 @@ class Checkout:
                     "fcl_freight_rate_statistic_id"
                 ] = fcl_freight_rate_statistic.id
                 self.checkout_params.append(checkout_param)
+                
+    def update_rate(self):
+        pass
 
-    def set_new_stats(self) -> int:
+    def create(self) -> int:
         return CheckoutFclFreightRateStatistic.insert_many(
             self.checkout_params
         ).execute()
 
-    def set_existing_stats(self) -> None:
+    def update(self) -> None:
         pass

@@ -14,19 +14,27 @@ class MapsApiClient:
         })
 
     def list_locations(self, data={}):
-        if APP_ENV == "production":
+        if True:
             keys = ['filters', 'includes']
             for key in keys:
                 if key in data:
                     data[key] = json.dumps(data[key])
-            return self.client.request('GET', 'list_locations', {}, data)
+            self.client.url.set("https://api.cogoport.com/public_location")
+            resp =  self.client.request('GET', 'list_locations', {}, data)
+            from configs.env import RUBY_ADDRESS_URL
+            self.client.url.set(RUBY_ADDRESS_URL)
+            return resp
         return self.client.request('GET', 'list_locations', data, {})
 
     def list_location_cluster(self,data={}):
-        if APP_ENV == "production":
+        if True:
             if 'filters' in data:
                 data['filters'] = json.dumps(data['filters'])
-            return self.client.request('GET','list_location_clusters',{}, data)
+            self.client.url.set("https://api.cogoport.com/public_location")
+            resp = self.client.request('GET','list_location_clusters',{}, data)
+            from configs.env import RUBY_ADDRESS_URL
+            self.client.url.set(RUBY_ADDRESS_URL)
+            return resp
         return self.client.request('GET', 'list_location_clusters', data, {})
 
     def get_location_cluster(self,data={}):

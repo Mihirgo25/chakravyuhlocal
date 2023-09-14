@@ -2,6 +2,7 @@ from peewee import Model, BigIntegerField, UUIDField, IntegerField, FloatField, 
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField, BigAutoField, TextField, ArrayField , CharField
 from datetime import datetime
+from services.bramhastra.enums import ImportTypes
 
 
 class BaseModel(Model):
@@ -87,3 +88,13 @@ class FclFreightAction(BaseModel):
 
     class Meta:
         table_name = "fcl_freight_actions"
+        
+        CLICK_KEYS = [
+        "origin_country_id",
+        "origin_port_id",
+        "shipping_line_id"
+        "rate_id",
+        "validity_id",
+        ]
+
+    IMPORT_TYPE = ImportTypes.csv.value

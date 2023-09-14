@@ -111,7 +111,6 @@ class SpotSearchFclFreightRateStatistic(BaseModel):
     spot_search_id: str = None
     spot_search_fcl_freight_services_id: str = None
     rates: list[Rates] = []
-    created_at: datetime
     updated_at: datetime
 
 
