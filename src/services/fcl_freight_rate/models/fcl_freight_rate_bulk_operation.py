@@ -19,7 +19,8 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import l
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
-from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids_from_audits_for_rate_sheet, get_relevant_rate_ids_for_extended_from_object,is_price_in_range,get_rate_sheet_id, get_progress_percent
+from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids_from_audits_for_rate_sheet, get_relevant_rate_ids_for_extended_from_object,is_price_in_range,get_rate_sheet_id, get_progress_percent, get_common_create_params
+from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freight_rates import get_suggested_cogo_assured_fcl_freight_rates
 from fastapi.encoders import jsonable_encoder
 from database.db_session import rd
 from libs.parse_numeric import parse_numeric
@@ -635,7 +636,9 @@ class FclFreightRateBulkOperation(BaseModel):
            
             if freight['rate_type']=='cogo_assured' and new_validities:
                 freight_rate_object =get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,validity_start,validity_end,is_system_operation)
-                freight_rate_object['validities'] = new_validities
+                price_params = {'price': new_validities[0]['line_items'][0].get('price'), 'currency': new_validities[0]['line_items'][0].get('currency')}
+                response = get_suggested_cogo_assured_fcl_freight_rates(price_params)
+                freight_rate_object['validities'] = response['data'].get('validities')
                 freight_rate_object['weight_limit'] = freight['weight_limit']
                 
                 id =create_fcl_freight_rate_data(freight_rate_object)
