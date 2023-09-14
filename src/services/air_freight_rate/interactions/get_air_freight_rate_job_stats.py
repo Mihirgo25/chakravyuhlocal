@@ -18,7 +18,7 @@ possible_direct_filters = [
     "commodity",
     "user_id"
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date"]
+possible_indirect_filters = ["updated_at"]
 
 uncommon_filters = ["serial_id", "status"]
 
@@ -65,7 +65,7 @@ def get_air_freight_rate_job_stats(
     dynamic_statistics = get_statistics(
             filters, dynamic_statistics
         )
-
+    statistics['backlog'] = get_all_backlogs(filters)
     return {
         "dynamic_statistics": dynamic_statistics,
         "statistics": statistics,
@@ -95,18 +95,22 @@ def apply_source_filter(query, filters):
 
 
 def apply_start_date_filter(query, filters):
-    start_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
-        hours=5, minutes=30
-    )
-    query = query.where(AirFreightRateJob.created_at.cast("date") >= start_date.date())
+    start_date = filters.get("start_date")
+    if start_date:
+        start_date = datetime.strptime(start_date, STRING_FORMAT) + timedelta(
+            hours=5, minutes=30
+        )
+        query = query.where(AirFreightRateJob.created_at.cast("date") >= start_date.date())
     return query
 
 
 def apply_end_date_filter(query, filters):
-    end_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
-        hours=5, minutes=30
-    )
-    query = query.where(AirFreightRateJob.created_at.cast("date") <= end_date.date())
+    end_date = filters.get("end_date")
+    if end_date:
+        end_date = datetime.strptime(end_date, STRING_FORMAT) + timedelta(
+            hours=5, minutes=30
+        )
+        query = query.where(AirFreightRateJob.created_at.cast("date") <= end_date.date())
     return query
 
 
@@ -229,6 +233,16 @@ def apply_extra_filters(query, filters):
     for key in uncommon_filters:
         if filters.get(key):
             applicable_filters[key] = filters[key]
-
     query = get_filters(applicable_filters, query, AirFreightRateJob)
+    query = apply_start_date_filter(query, filters)
+    query = apply_end_date_filter(query, filters)
     return query
+
+
+def get_all_backlogs(filters):
+    query = AirFreightRateJob.select()
+    if filters.get('user_id'):
+        query = query.where(AirFreightRateJob.user_id == filters.get('user_id'))
+    backlog_count = query.where(AirFreightRateJob.status == 'backlog').count()
+
+    return backlog_count
