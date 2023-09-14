@@ -66,6 +66,7 @@ def fcl_freight_critical_port_pairs_scheduler():
         FclFreightRate.mode.not_in(["predicted", "cluster_extension"]),
         FclFreightRate.rate_type == "market_place",
         FclFreightRate.service_provider_id != DEFAULT_SERVICE_PROVIDER_ID,
+        FclFreightRate.commodity == 'general'
     )
 
     for rate in ServerSide(fcl_query):

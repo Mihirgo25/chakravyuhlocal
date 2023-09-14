@@ -10,6 +10,8 @@ from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRa
 from services.air_freight_rate.models.air_freight_rate_validity import AirFreightRateValidity
 from fastapi.encoders import jsonable_encoder
 from configs.global_constants import SERVICE_PROVIDER_FF
+from services.air_freight_rate.constants.air_freight_rate_constants import COGOXPRESS
+from services.air_freight_rate.air_celery_worker import update_air_freight_rate_job_on_rate_addition_delay
 
 def update_air_freight_rate(request):
       with db.atomic():
@@ -84,6 +86,9 @@ def execute(request):
         extend_rate_fun(object,request,validity_object)
         
     send_stats(request,object)
+
+    if str(object.service_provider_id) != COGOXPRESS:
+        update_air_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": object.id},queue='fcl_freight_rate')
 
     return {
         'id':object.id
