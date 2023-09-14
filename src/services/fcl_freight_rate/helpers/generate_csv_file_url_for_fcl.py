@@ -5,21 +5,17 @@ from playhouse.shortcuts import model_to_dict
 
 def generate_csv_file_url_for_fcl(query):
     csv_urls = []
-    rate_count = 0
     final_data = []
 
     for rate in ServerSide(query):
-        if rate_count > 5000:
-            rate_count = 0
+        if len(final_data) > 5000:
             csv_url = get_csv_url("fcl_freight", final_data)
             csv_urls.append(csv_url)
             final_data = []
 
-
         rate_data = model_to_dict(rate)
         required_coverage_data = get_fcl_freight_coverage_required_data(rate_data)
         final_data.append(required_coverage_data)
-        rate_count += 1
 
     if final_data:
         csv_url = get_csv_url("fcl_freight", final_data)

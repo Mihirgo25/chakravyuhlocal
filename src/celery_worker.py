@@ -193,12 +193,12 @@ celery.conf.beat_schedule = {
     },
     "create_jobs_for_cancelled_shipments": {
         "task": "celery_worker.create_job_for_cancelled_shipments_delay",
-        "schedule": crontab(hour=20, minute=30),
+        "schedule": crontab(hour=2, minute=30),
         "options": {"queue": "fcl_freight_rate"},
     },
     "create_jobs_for_expiring_rates": {
         "task": "celery_worker.create_job_for_expiring_rates_delay",
-        "schedule": crontab(hour=17, minute=30),
+        "schedule": crontab(hour=1, minute=30),
         "options": {"queue": "fcl_freight_rate"},
     },
     "create_jobs_for_critical_port_pairs": {
