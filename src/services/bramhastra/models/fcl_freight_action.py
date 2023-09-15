@@ -29,7 +29,7 @@ class FclFreightAction(BaseModel):
     container_type = TextField(null=True, index=True)
     shipping_line_id = UUIDField(null = True, index = True)
     service_provider_id = UUIDField(null = True, index = True)
-    importer_exporter_id = UUIDField(index=True)
+    containers_count = IntegerField(default = 0)
     rate_id = UUIDField(index=True)
     validity_id = UUIDField(index=True)
     bas_price = FloatField(default = 0,null = True)
