@@ -1,8 +1,22 @@
-from peewee import Model, BigIntegerField, UUIDField, IntegerField, FloatField, DateField
+from peewee import (
+    Model,
+    BigIntegerField,
+    UUIDField,
+    IntegerField,
+    FloatField,
+    DateField,
+)
 from database.db_session import db
-from playhouse.postgres_ext import DateTimeTZField, BigAutoField, TextField, ArrayField , CharField
+from playhouse.postgres_ext import (
+    DateTimeTZField,
+    BigAutoField,
+    TextField,
+    ArrayField,
+    CharField,
+)
 from datetime import datetime
 from services.bramhastra.enums import ImportTypes
+import sys
 
 
 class BaseModel(Model):
@@ -27,18 +41,18 @@ class FclFreightAction(BaseModel):
     commodity = TextField(null=True, index=True)
     container_size = TextField(null=True, index=True)
     container_type = TextField(null=True, index=True)
-    shipping_line_id = UUIDField(null = True, index = True)
-    service_provider_id = UUIDField(null = True, index = True)
-    containers_count = IntegerField(default = 0)
+    shipping_line_id = UUIDField(null=True, index=True)
+    service_provider_id = UUIDField(null=True, index=True)
+    containers_count = IntegerField(default=0)
     rate_id = UUIDField(index=True)
     validity_id = UUIDField(index=True)
-    bas_price = FloatField(default = 0,null = True)
-    bas_standard_price = FloatField(default = 0,null = True)
-    bas_currency = CharField(max_length = 3,null = True)
-    mode = CharField(index = True)
-    parent_mode = CharField(index = True)
-    source = CharField(index = True)
-    source_id = UUIDField(index = True)
+    bas_price = FloatField(default=0, null=True)
+    bas_standard_price = FloatField(default=0, null=True)
+    bas_currency = CharField(max_length=3, null=True)
+    mode = CharField(index=True)
+    parent_mode = CharField(index=True)
+    source = CharField(index=True)
+    source_id = UUIDField(index=True)
     standard_price = FloatField()
     market_price = FloatField()
     rate_type = CharField()
@@ -60,20 +74,25 @@ class FclFreightAction(BaseModel):
     so1_selected_rate_id = UUIDField()
     so1_selected_validity_id = UUIDField()
     source = CharField(null=True)
-    diff_from_selected_so1_rate = FloatField(default=0)
+    selected_bas_standard_price = FloatField(default=0)
+    standard_price_accuracy = FloatField(default=-sys.float_info.max)
+    bas_standard_price_accuracy = FloatField(default=-sys.float_info.max)
+    standard_price_diff_from_selected_rate = FloatField(default=0)
+    bas_standard_price_diff_from_selected_rate = FloatField(default=0)
     fcl_freight_rate_statistic_id = BigIntegerField(default=0)
     selected_fcl_freight_rate_statistic_id = BigIntegerField(default=0)
     revenue_desk_visit = IntegerField(default=0)
-    revenue_desk_select = IntegerField(default = 0)
-    given_priority = IntegerField(default = 0)
+    revenue_desk_select = IntegerField(default=0)
+    given_priority = IntegerField(default=0)
     so1_visit = IntegerField(default=0)
-    shipment_status= TextField(null=True)
+    shipment_status = TextField(null=True)
     cancelled = IntegerField(default=0)
     completed = IntegerField(default=0)
     aborted = IntegerField(default=0)
+    in_progress = IntegerField(default = 0)
     confirmed_by_importer_exporter = IntegerField(default=0)
-    recieved = IntegerField(default = 0)
-    status = CharField(null=True,index = True)
+    recieved = IntegerField(default=0)
+    status = CharField(null=True, index=True)
     created_at = DateTimeTZField()
     updated_at = DateTimeTZField(index=True)
     operation_created_at = DateTimeTZField(default=datetime.utcnow())
@@ -88,13 +107,14 @@ class FclFreightAction(BaseModel):
 
     class Meta:
         table_name = "fcl_freight_actions"
-        
+
         CLICK_KEYS = [
-        "origin_country_id",
-        "origin_port_id",
-        "shipping_line_id"
-        "rate_id",
-        "validity_id",
+            "origin_continent_id",
+            "parent_mode",
+            "origin_country_id",
+            "container_size",
+            "rate_id",
+            "id",
         ]
 
     IMPORT_TYPE = ImportTypes.csv.value

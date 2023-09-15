@@ -9,8 +9,12 @@ from dateutil.relativedelta import relativedelta
 from database.db_session import rd
 from services.bramhastra.enums import RedisKeys, FclParentMode
 import concurrent.futures
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
+import sys
 
 ALLOWED_TIME_PERIOD = 6
+
+MAX_ALLOWABLE_DEFAULT_BAS_DIFF = 100
 
 
 def get_fcl_freight_rate_charts(filters):
@@ -18,17 +22,17 @@ def get_fcl_freight_rate_charts(filters):
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         accuracy_future = executor.submit(get_accuracy, filters, where)
-        deviation_future = executor.submit(get_deviation, filters, where)
+        rates_affected_future = executor.submit(get_rates_affected, filters, where)
         spot_search_future = executor.submit(
             get_spot_search_to_checkout_count, filters, where
         )
         rate_count_future = executor.submit(
-            get_rate_count_with_deviation_more_than_30, filters, where
+            get_rate_count_with_deviation_more_than_x_price, filters, where
         )
 
     return dict(
         accuracy=accuracy_future.result(),
-        deviation=deviation_future.result(),
+        rates_affected=rates_affected_future.result(),
         **rate_count_future.result(),
         **spot_search_future.result(),
     )
@@ -41,13 +45,13 @@ def get_accuracy(filters, where):
 
     clickhouse = ClickHouse()
     queries = [
-        """SELECT parent_mode as mode,toDate(day) AS day,AVG(abs(accuracy)*sign) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,parent_mode,sign FROM brahmastra.fcl_freight_rate_statistics"""
+        f"""SELECT parent_mode as mode,toDate(day) AS day,AVG(abs(accuracy)*sign) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,parent_mode,sign FROM brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     if where:
         queries.append(" WHERE ")
         queries.append(where)
-        queries.append("AND accuracy != -1")
+        queries.append(f"AND accuracy != {sys.float_info.max}")
 
     queries.append(
         """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day ORDER BY day,mode;"""
@@ -58,46 +62,26 @@ def get_accuracy(filters, where):
     return format_charts(charts, filters.get("mode"))
 
 
-def get_deviation(filters, where):
+def get_rates_affected(filters, where):
     clickhouse = ClickHouse()
-    queries = [
-        """WITH deviation AS (SELECT AVG(rate_deviation_from_booking_rate) AS rate_deviation_from_booking_rate FROM brahmastra.fcl_freight_rate_statistics"""
+
+    query = [
+        f"""SELECT toStartOfHour(rate_updated_at) AS time,COUNT(*) FROM brahmastra.{FclFreightAction._meta.table_name}"""
     ]
+
     if where:
-        queries.append(" WHERE ")
-        queries.append(where)
+        query.append(f"WHERE {where}")
 
-    queries.append("GROUP BY rate_id")
+    query.append("GROUP BY time ORDER BY time ASC")
 
-    queries.append(
-        """) SELECT CASE
-                WHEN rate_deviation_from_booking_rate BETWEEN -100 AND -80 THEN -80
-                WHEN rate_deviation_from_booking_rate BETWEEN -79 AND -60 THEN -60
-                WHEN rate_deviation_from_booking_rate BETWEEN -59 AND -40 THEN -40
-                WHEN rate_deviation_from_booking_rate BETWEEN -39 AND -20 THEN -20
-                WHEN rate_deviation_from_booking_rate BETWEEN -20 AND 0 THEN 0
-                WHEN rate_deviation_from_booking_rate BETWEEN 1 AND 20 THEN 20
-                WHEN rate_deviation_from_booking_rate BETWEEN 21 AND 40 THEN 40
-                WHEN rate_deviation_from_booking_rate BETWEEN 41 AND 60 THEN 60
-                WHEN rate_deviation_from_booking_rate BETWEEN 61 AND 80 THEN 80
-                WHEN rate_deviation_from_booking_rate BETWEEN 81 AND 100 THEN 100
-            END AS range,
-            COUNT(1) AS count
-            FROM deviation"""
-    )
-
-    queries.append("GROUP BY range ORDER BY range WITH FILL FROM -80 TO 100 STEP 20;")
-
-    response = clickhouse.execute(" ".join(queries), filters)
-
-    return [i for i in response if i["range"] or i["range"] == 0]
+    return clickhouse.execute(query, filters)
 
 
 def get_spot_search_to_checkout_count(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT FLOOR((1 - SUM(checkout_count)/SUM(spot_search_count)),2)*100 as spot_search_to_checkout_count from brahmastra.fcl_freight_rate_statistics"""
+        f"""SELECT FLOOR((1 - SUM(checkout)/SUM(DISTINCT spot_search_id)),2)*100 as spot_search_to_checkout_count from brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     if where:
@@ -112,11 +96,11 @@ def get_spot_search_to_checkout_count(filters, where):
     return statistics
 
 
-def get_rate_count_with_deviation_more_than_30(filters, where):
+def get_rate_count_with_deviation_more_than_x_price(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT count(DISTINCT rate_id) as rate_count_with_deviation_more_than_30 from brahmastra.fcl_freight_rate_statistics WHERE ABS(rate_deviation_from_booking_rate) > 30"""
+        f"""SELECT count(DISTINCT rate_id) as rate_count_with_deviation_more_than_30 from brahmastra.{FclFreightAction._meta.table_name} WHERE ABS(bas_standard_price_diff_from_selected_rate) >= {MAX_ALLOWABLE_DEFAULT_BAS_DIFF}"""
     ]
 
     if where:

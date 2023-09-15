@@ -1,4 +1,4 @@
-CREATE TABLE brahmastra.spot_search_fcl_freight_rate_statistics
+CREATE TABLE brahmastra.fcl_freight_action
 (
     id UInt256,
     origin_port_id UUID,
@@ -69,5 +69,5 @@ CREATE TABLE brahmastra.spot_search_fcl_freight_rate_statistics
     version INT DEFAULT 1
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (origin_continent_id, origin_country_id, container_size, commodity)
-ORDER BY (origin_continent_id, origin_country_id, container_size, commodity, standard_diff_from_selected_rate,version);
+PRIMARY KEY (origin_continent_id, parent_mode,origin_country_id, container_size, origin_port_id, rate_id, id)
+ORDER BY (origin_continent_id, parent_mode, origin_country_id, container_size, origin_port_id , rate_id, id, version);
