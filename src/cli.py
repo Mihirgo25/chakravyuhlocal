@@ -145,9 +145,7 @@ def shell(ipython_args):
     config.InteractiveShell.debug = True
     user_ns = {"database": db}
     with db.connection_context():
-        IPython.start_ipython(
-            argv=ipython_args, user_ns=user_ns, config=config, exit_message="Goodbye!"
-        )
+        IPython.start_ipython(argv=ipython_args, user_ns=user_ns, config=config)
 
 
 envision_server.add_command(uvicorn.main, name="start")
