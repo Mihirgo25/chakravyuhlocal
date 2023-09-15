@@ -142,7 +142,7 @@ def create_fcl_freight_rate_local_for_draft(request: CreateFclFreightDraftLocal,
             'trade_type': request.get('trade_type'),
             'rate_type':request.get('rate_type','market_place')
         }
-        is_rate_exists = get_rate_with_shipment_id(get_local_params)
+        is_rate_exists = get_draft_rate_with_shipment_id(get_local_params)
         if is_rate_exists == False:
             fcl_freight_local = get_fcl_freight_rate_local(get_local_params)
             if 'id' not in fcl_freight_local:

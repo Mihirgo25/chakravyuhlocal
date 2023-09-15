@@ -28,6 +28,8 @@ class DraftFclFreightRateLocal(BaseModel):
     shipping_line = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
+    performed_by_id = UUIDField(null=True)
+    performed_by = BinaryJSONField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     

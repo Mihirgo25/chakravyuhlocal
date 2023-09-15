@@ -1,5 +1,7 @@
 from services.nandi.models.draft_fcl_freight_rate_local import DraftFclFreightRateLocal
+from services.nandi.models.draft_fcl_freight_rate_local_audit import DraftFclFreightRateLocalAudit
 import pandas as pd
+from database.rails_db import get_user
 import json
 from datetime import datetime
 
@@ -60,3 +62,25 @@ def remove_duplicate_line_items(data):
 
     unique_data = list(unique_items.values())
     return unique_data
+
+def set_performed_by_draft_locals():
+    audits = DraftFclFreightRateLocalAudit.select(
+        DraftFclFreightRateLocalAudit.object_id,
+        DraftFclFreightRateLocalAudit.performed_by_id
+    ).where(
+        DraftFclFreightRateLocalAudit.action_name == 'update'
+    ).execute()
+
+    performed_by_dict = {}
+    for audit in audits:
+        performed_by_dict[audit.object_id] = audit.performed_by_id
+    
+    draft_rates = DraftFclFreightRateLocal.select().where(
+        DraftFclFreightRateLocal.status != 'pending'
+    ).execute()
+
+    for rate in draft_rates:
+        rate.performed_by_id = performed_by_dict.get(str(rate.id or ''))
+        if rate.performed_by_id:
+            rate.performed_by = get_user(str(rate.performed_by_id))
+        rate.save()
