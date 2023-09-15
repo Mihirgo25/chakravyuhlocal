@@ -11,7 +11,6 @@ from playhouse.postgres_ext import (
     DateTimeTZField,
     BigAutoField,
     TextField,
-    ArrayField,
     CharField,
 )
 from datetime import datetime
