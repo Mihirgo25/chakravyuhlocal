@@ -14,35 +14,47 @@ LOCATION_KEYS = {
     "destination_continent_id",
 }
 
+DEFAULT_AGGREGATE_SELECT = {
+    "average_price": "AVG(abs(standard_price))",
+}
 
-def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, page):
+
+def get_fcl_freight_map_view_statistics(filters, sort_by, sort_type, page_limit, page):
     clickhouse = ClickHouse()
-    
+
     sort_by = filter_sort(sort_by)
+
+    aggregate_select = ",".join(
+        [
+            f"{v} AS {k}"
+            for k, v in filters.get(
+                "aggregate_select", DEFAULT_AGGREGATE_SELECT
+            ).items()
+        ]
+    )
 
     grouping = set()
 
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},FLOOR(ABS(AVG(accuracy)),2) as total_accuracy,count(DISTINCT rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
+        f'SELECT {",".join(grouping)},{aggregate_select} FROM brahmastra.fcl_freight_rate_action'
     ]
 
     if where := get_direct_indirect_filters(filters):
         queries.append(" WHERE ")
         queries.append(where)
-        queries.append("AND accuracy != -1 and accuracy != 0")
 
-    add_group_by_and_order_by(queries, grouping,sort_by,sort_type)
-    
+    add_group_by_and_order_by(queries, grouping, sort_by, sort_type)
+
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
-    )    
+    )
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     if statistics:
         add_location_objects(statistics)
-    
+
     return dict(
         list=statistics,
         page=page,
@@ -52,12 +64,10 @@ def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, p
     )
 
 
-def add_group_by_and_order_by(queries, grouping,sort_by,sort_type):
+def add_group_by_and_order_by(queries, grouping, sort_by, sort_type):
     queries.append("GROUP BY")
     queries.append(",".join(grouping))
-    queries.append(
-        f"ORDER BY {sort_by} {sort_type}"
-    )
+    queries.append(f"ORDER BY {sort_by} {sort_type}")
 
 
 def alter_filters_for_map_view(filters, grouping):
@@ -117,10 +127,10 @@ def add_location_objects(statistics):
             )
         )["list"]
     }
-    
+
     indices_to_remove = set()
 
-    for index,statistic in enumerate(statistics):
+    for index, statistic in enumerate(statistics):
         update_statistic = dict()
         remove = None
         if not statistic:
@@ -137,11 +147,10 @@ def add_location_objects(statistics):
                     update_statistic[f"{k[:12]}{key}"] = value
         statistic.pop(remove)
         statistic.update(update_statistic)
-    
+
     for index in indices_to_remove:
         del statistics[index]
-        
-    
+
+
 def filter_sort(sort_by):
-    return 'total_accuracy' if sort_by == 'accuracy' else sort_by
-    
+    return "total_accuracy" if sort_by == "accuracy" else sort_by
