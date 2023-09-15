@@ -78,72 +78,11 @@ async def get_fcl_freight_rate_lifecycle(filters):
     mode_wise_rate_count = await get_mode_wise_rate_count(filters.copy(), where)
 
     lifecycle_statistics = await get_lifecycle_statistics(filters.copy(), where)
-
-    def generate_statistic(action_type, percentage_key):
-        return {
-            "action_type": action_type,
-            "rates_count": lifecycle_statistics[action_type],
-            "drop": filter_out_of_range_value(lifecycle_statistics[percentage_key]),
-        }
     
-    statistics = [
-        [
-            generate_statistic("spot_search", "spot_search_percentage"),
-        ],
-        [
-            generate_statistic("checkout","checkout_percentage"),
-            
-            generate_statistic("shipments","shipments_percentage"),
-            
-            generate_statistic("revenue_desk_shown_rates", "revenue_desk_shown_rates_percentage"),
-            generate_statistic("revenue_desk_selected_rates", "revenue_desk_selected_rates_percentage"),
-            
-            generate_statistic("so1_select", "so1_select_percentage"),
-            
-            generate_statistic("cancelled_shipments", "cancelled_shipments_percentage"),
-            generate_statistic("aborted_shipments", "aborted_shipments_percentage"),
-            generate_statistic("received_shipments", "received_shipments_percentage"),
-            generate_statistic("confirmed_by_importer_exporter_shipments", "confirmed_by_importer_exporter_shipments_percentage"),
-            generate_statistic("completed_shipments","completed_shipments_percentage"),
-        ],
-        [
-            generate_statistic("missing_rates","missing_rates_percentage"),
-            generate_statistic("missing_closed", "missing_closed_percentage"),
-            generate_statistic("missing_reverted", "missing_reverted_percentage" ),
-            generate_statistic("missing_spot_search", "missing_spot_search_percentage"),
-            generate_statistic("missing_checkout", "missing_checkout_percentage"),
-
-            generate_statistic("missing_shipments", "missing_shipments_percentage"),
-            
-            generate_statistic("missing_cancelled_shipments", "missing_cancelled_shipments_percentage"),
-            generate_statistic("missing_aborted_shipments", "missing_aborted_shipments_percentage"),
-            generate_statistic("missing_received_shipments", "missing_received_shipments_percentage"),
-            generate_statistic("missing_confirmed_by_importer_exporter_shipments", "missing_confirmed_by_importer_exporter_shipments_percentage"),
-            generate_statistic("missing_completed_shipments","missing_completed_shipments_percentage"),
-        ],
-        [
-            generate_statistic("dislike", "dislikes_percentage"),
-            generate_statistic("like", "likes_percentage"),
-            
-            generate_statistic("feedback_closed", "feedback_closed_percentage"),
-            generate_statistic("reverted", "reverted_percentage"),
-            
-            generate_statistic("feedback_spot_search","feedback_spot_search_percentage"),
-            generate_statistic("feedback_checkout", "feedback_checkout_percentage"),
-            
-            generate_statistic("feedback_shipments","feedback_shipments_percentage"),
-            
-            generate_statistic("feedback_cancelled_shipments", "feedback_cancelled_shipments_percentage"),
-            generate_statistic("feedback_aborted_shipments","feedback_aborted_shipments_percentage"),
-            generate_statistic("feedback_received_shipments", "feedback_received_shipments_percentage"),
-            generate_statistic("feedback_confirmed_by_importer_exporter_shipments", "feedback_confirmed_by_importer_exporter_shipments_percentage"),
-            generate_statistic("feedback_completed_shipments", "feedback_completed_shipments_percentage"),            
-        ],
-    ]
     return dict(
         mode_wise_rate_count=mode_wise_rate_count,
         searches=lifecycle_statistics["spot_search"],
-        cards=statistics,
+        cards=lifecycle_statistics,
     )
 
 
@@ -174,119 +113,81 @@ async def get_lifecycle_statistics(filters, where):
         SELECT SUM(spot_search) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE spot_search > 0
         """ 
     ]
-    likes = [count_boolean_query('liked')]
-    dislikes = [count_boolean_query('disliked')]
+    liked = [count_boolean_query('liked')]
+    disliked = [count_boolean_query('disliked')]
     feedback_closed = [
         f"""
         SELECT COUNT(*) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE status = 'inactive'
         """
     ]
-    reverted = [
+    rate_reverted_feedbacks = [
         f"""
         SELECT SUM(is_reverted) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_reverted = 1 GROUP BY rate_id
         """
     ]
-    total_rates = [
+    feedback_received_count = [
         f"""
         SELECT SUM(is_reverted) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE disliked = 1 GROUP BY rate_id
         """
     ]
     #Feedback
-    feedback_spot_search = [
-        f"""
-        SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE spot_search > 0 AND disliked = 1
-        """ 
-    ]
-    feedback_checkout = [generate_disliked_count_query('checkout')]
-    feedback_shipments = [generate_disliked_count_query('shipments')]
-    feedback_cancelled_shipments = [generate_disliked_count_query('cancelled')]
+
     feedback_aborted_shipments = [generate_disliked_count_query('aborted')]
     feedback_received_shipments = [generate_disliked_count_query('received')]
-    feedback_confirmed_by_importer_exporter_shipments = [generate_disliked_count_query('confirmed_by_importer_exporter')]
-    feedback_completed_shipments = [generate_disliked_count_query('completed')]
-    # - feedback
+# - feedback
     ##missing 
 
     # source missing rates
-    closed_requests = [
+    requests_closed = [
         f"""
         SELECT COUNT(*) AS count FROM brahmastra.{FclFreightRateRequest._meta.table_name} WHERE source = 'missing_rates' AND status = 'inactive'
         """
     ]  
-    missing_rates= [
+    rates_requested= [
         f"""
         SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateRequest._meta.table_name} WHERE source = 'missing_rates'
         """
     ]
-    missing_reverted = [
+    rates_reverted = [
         f"""
         SELECT SUM(is_reverted) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_reverted = 1 GROUP BY rate_id
         """
     ]
-    missing_spot_search = [
-        f"""
-        SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE spot_search > 0 AND source = 'missing_rates'
-        """ 
-    ]
-    missing_checkout = [generate_missing_rate_query('checkout')]
-    missing_shipments = [generate_missing_rate_query('shipments')]
-    missing_cancelled_shipments = [generate_missing_rate_query('cancelled')]
-    missing_aborted_shipments = [generate_missing_rate_query('aborted')]
-    missing_received_shipments = [generate_missing_rate_query('received')]
-    missing_confirmed_by_importer_exporter_shipments = [generate_missing_rate_query('confirmed_by_importer_exporter')]
-    missing_completed_shipments = [generate_missing_rate_query('completed')]
+
 
     #Checkout branch 
     checkout = [generate_sum_query("checkout")]
-    shipments = [generate_sum_query("shipment")]
-    so1_select = [generate_sum_query("so1_select")]
-    revenue_desk_shown_rates = [generate_sum_query("revenue_desk_shown_rates")]
-    revenue_desk_selected_rates = [
-        f"""
-        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE revenue_desk_select > 0
-        """
-    ]
-    cancelled_shipments = [generate_count_query('cancelled')]
-    aborted_shipments = [generate_count_query('aborted')]
+    shipment = [generate_sum_query("shipment")]
+    so1 = [generate_sum_query("so1_select")]
+    revenue_desk = [generate_sum_query("revenue_desk_shown_rates")]
+    cancelled = [generate_count_query('cancelled')]
+    aborted = [generate_count_query('aborted')]
     received_shipments = [generate_count_query('received')]
-    confirmed_by_importer_exporter_shipments = [generate_count_query('confirmed_by_importer_exporter')]
-    completed_shipments = [generate_count_query('completed')]
+    confirmed = [generate_count_query('confirmed_by_importer_exporter')]
+    completed = [generate_count_query('completed')]
 
     variables = [
     spot_search, 
     rates_shown,
     checkout, 
-    shipments, 
-    so1_select,
-    revenue_desk_shown_rates, 
-    revenue_desk_selected_rates,
-    cancelled_shipments, 
-    aborted_shipments, 
+    shipment, 
+    so1,
+    revenue_desk, 
+    cancelled, 
+    aborted, 
     received_shipments,
-    confirmed_by_importer_exporter_shipments, 
-    completed_shipments,
-    likes, 
-    dislikes, 
+    confirmed, 
+    completed,
+    liked, 
+    disliked, 
     feedback_closed, 
-    reverted,
-    missing_rates,
-    missing_reverted, 
-    missing_spot_search, 
-    missing_checkout,
-    missing_shipments,
-    missing_cancelled_shipments, 
-    missing_aborted_shipments, 
-    missing_received_shipments,
-    missing_confirmed_by_importer_exporter_shipments, 
-    missing_completed_shipments,
-    feedback_spot_search, 
-    feedback_checkout,
-    feedback_shipments,
-    feedback_cancelled_shipments, 
+    
+    rates_requested,
+    rates_reverted, 
+
     feedback_aborted_shipments, 
-    feedback_received_shipments,
-    feedback_confirmed_by_importer_exporter_shipments, 
-    feedback_completed_shipments
+    feedback_received_shipments, 
+    rate_reverted_feedbacks
     ]
 
     if where:
@@ -300,7 +201,7 @@ async def get_lifecycle_statistics(filters, where):
     )
 
     if missing_rates_where:
-        missing_rates.append(f"AND {missing_rates_where}")
+        rates_requested.append(f"AND {missing_rates_where}")
 
     results = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -314,124 +215,74 @@ async def get_lifecycle_statistics(filters, where):
     variables = results
 
     lifecycle_statistics = {
-        #feedback
-        "rates_shown": rates_shown["count"],
+        #feedback-2
+        "rates_shown_count": rates_shown["count"],
+        "rates_shown_dropoff": (1 - (rates_shown["count"] / (spot_search["count"] or 1)))
+        * 100,
+        
+        "disliked_count": disliked["count"],
+        "disliked_dropoff": (1 - (disliked["count"] / (spot_search["count"] or 1)))
+        * 100,
 
-        "likes": dislikes["count"],
-        "likes_percentage": (1 - (likes["count"] / (spot_search["count"] or 1)))
-        * 100,
-        "dislikes": dislikes["count"],
-        "dislikes_percentage": (1 - (dislikes["count"] / (spot_search["count"] or 1)))
+        "liked_count": liked["count"],
+        "liked_dropoff": (1 - (liked["count"] / (spot_search["count"] or 1)))
         * 100,
 
-        "feedback_closed": feedback_closed["count"],
-        "feedback_closed_percentage": (
-            1 - (feedback_closed["count"] / (dislikes["count"] or 1))
-        )
-        * 100,
-        "reverted": reverted["count"],
-        "reverted_percentage": (1 - (reverted["count"] / (spot_search["count"] or 1)))* 100,
+        "rate_reverted_feedbacks_count": rate_reverted_feedbacks["count"],
+        "rate_reverted_feedbacks_dropoff": (1 - (rate_reverted_feedbacks["count"] / (spot_search["count"] or 1)))* 100,
 
-        "total_rates": total_rates["count"],
-        "total_rates_percentage": (1 - (total_rates["count"] / (spot_search["count"] or 1)))* 100,
+        "feedback_received_count": feedback_received_count["count"],
+        "feedback_received_dropoff": (1 - (feedback_received_count["count"] / (spot_search["count"] or 1)))* 100,
+        
+        "feedback_rates_added_count": feedback_received_count["count"],
+        "feedback_rates_added_dropoff": (1 - (feedback_received_count["count"] / (spot_search["count"] or 1)))* 100,
 
-        "feedback_spot_search": feedback_spot_search["count"],
-        "feedback_spot_search_percentage": (1 - (feedback_spot_search["count"] / (rates_shown["count"] or 1)))* 100,
-
-        "feedback_checkout": feedback_checkout["count"],
-        "feedback_checkout_percentage": (1 - (feedback_checkout["count"] / (spot_search["count"] or 1)))* 100,
-
-        "feedback_shipments": feedback_shipments["count"],
-        "feedback_shipments_percentage": (1 - (feedback_shipments["count"] / (feedback_checkout["count"] or 1)))* 100,
-
-        "feedback_cancelled_shipments": feedback_cancelled_shipments["count"],
-        "feedback_cancelled_shipments": (1 - (feedback_cancelled_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "feedback_aborted_shipments": feedback_aborted_shipments["count"],
-        "feedback_aborted_shipments": (1 - (feedback_aborted_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "feedback_received_shipments": feedback_received_shipments["count"],
-        "feedback_received_shipments": (1 - (feedback_received_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "feedback_confirmed_by_importer_exporter_shipments": feedback_confirmed_by_importer_exporter_shipments["count"],
-        "feedback_confirmed_by_importer_exporter_shipments": (1 - (feedback_confirmed_by_importer_exporter_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "feedback_completed_shipments": feedback_completed_shipments["count"],
-        "feedback_completed_shipments": (1 - (feedback_completed_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        #Checkout branch 
+        #Checkout branch buisness-1
         "spot_search": spot_search["count"],
-        "spot_search_percentage": (1 - (spot_search["count"] / (rates_shown["count"] or 1)))* 100,
+        "spot_search_dropoff": (1 - (spot_search["count"] / (rates_shown["count"] or 1)))* 100,
 
-        "checkout": checkout["count"],
-        "checkout_percentage": (1 - (checkout["count"] / (spot_search["count"] or 1)))* 100,
+        "checkout_count": checkout["count"],
+        "checkout_dropoff": (1 - (checkout["count"] / (spot_search["count"] or 1)))* 100,
 
-        "shipments": shipments["count"],
-        "shipments_percentage": (1 - (shipments["count"] / (checkout["count"] or 1)))* 100,
-
-        "revenue_desk_shown_rates": revenue_desk_shown_rates["count"],
-        "revenue_desk_shown_rates_percentage": (1 - (revenue_desk_shown_rates["count"] / (shipments["count"] or 1)))* 100,
+        "shipment_count": shipment["count"],
+        "shipment_dropoff": (1 - (shipment["count"] / (checkout["count"] or 1)))* 100,
         
-        "so1_select": so1_select["count"],
-        "so1_select_percentage": (
-            1 - (so1_select["count"] / (revenue_desk_shown_rates["count"] or 1)))* 100,
+        "confirmed_count": confirmed["count"],
+        "confirmed_dropoff": (1 - (confirmed["count"] / shipment["count"] or 1))
+        * 100,
 
-        "revenue_desk_selected_rates": revenue_desk_selected_rates["count"],
-        "revenue_desk_selected_rates_percentage": (1 - (revenue_desk_selected_rates["count"] / (shipments["count"] or 1)))* 100,
+        "completed_count": completed["count"],
+        "completed_dropoff": (1 - (completed["count"] / shipment["count"] or 1))
+        * 100,
+
+        "aborted_count": aborted["count"],
+        "aborted_dropoff": (1 - (aborted["count"] / shipment["count"] or 1))
+        * 100,
+
+        "cancelled_count": cancelled["count"],
+        "cancelled_dropoff": (1 - (cancelled["count"] / shipment["count"] or 1))
+        * 100,
+
+        "revenue_desk_count": revenue_desk["count"],
+        "revenue_desk_dropoff": (1 - (revenue_desk["count"] / (shipment["count"] or 1)))* 100,
         
-        "cancelled_shipments": cancelled_shipments["count"],
-        "cancelled_shipments": (1 - (cancelled_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "aborted_shipments": aborted_shipments["count"],
-        "aborted_shipments": (1 - (aborted_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "received_shipments": received_shipments["count"],
-        "received_shipments": (1 - (received_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "confirmed_by_importer_exporter_shipments": confirmed_by_importer_exporter_shipments["count"],
-        "confirmed_by_importer_exporter_shipments": (1 - (confirmed_by_importer_exporter_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "completed_shipments": completed_shipments["count"],
-        "completed_shipments": (1 - (completed_shipments["count"] / shipments["count"] or 1))
-        * 100,
+        "so1_count": so1["count"],
+        "so1_dropoff": (
+            1 - (so1["count"] / (revenue_desk["count"] or 1)))* 100,
 
-        #Missing
-        "missing_rates": missing_rates["count"],
-        "missing_rates_percentage": (
-            1 - (missing_rates["count"] / (spot_search["count"] or 1))
+        #Missing- 3
+        "rates_requested_count": rates_requested["count"],
+        "rates_requested_dropoff": (
+            1 - (rates_requested["count"] / (spot_search["count"] or 1))
         )
         * 100,
-        "closed_requests": closed_requests["count"],
-        "closed_requests_percentage": (1 - (closed_requests["count"] / rates_shown["count"] or 1))
+        "requests_closed_count": requests_closed["count"],
+        "requests_closed_dropoff": (1 - (requests_closed["count"] / rates_shown["count"] or 1))
         * 100,
-        "missing_reverted": missing_reverted["count"],
-        "missing_reverted_percentage": (1 - (missing_reverted["count"] / rates_shown["count"] or 1))
+        "rates_reverted_count": rates_reverted["count"],
+        "rates_reverted_dropoff": (1 - (rates_reverted["count"] / rates_shown["count"] or 1))
         * 100,
-        "missing_spot_search": missing_spot_search["count"],
-        "missing_spot_search_percentage": (1 - (missing_spot_search["count"] / (rates_shown["count"] or 1)))* 100,
 
-        "missing_checkout": missing_checkout["count"],
-        "missing_checkout_percentage": (1 - (missing_checkout["count"] / (missing_spot_search["count"] or 1)))* 100,
-
-        "missing_shipments": missing_shipments["count"],
-        "missing_shipments_percentage": (1 - (missing_shipments["count"] / (missing_checkout["count"] or 1)))* 100,
-
-        "missing_cancelled_shipments": missing_cancelled_shipments["count"],
-        "missing_cancelled_shipments": (1 - (missing_cancelled_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "missing_aborted_shipments": missing_aborted_shipments["count"],
-        "missing_aborted_shipments": (1 - (missing_aborted_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "missing_received_shipments": missing_received_shipments["count"],
-        "missing_received_shipments": (1 - (missing_received_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "missing_confirmed_by_importer_exporter_shipments": missing_confirmed_by_importer_exporter_shipments["count"],
-        "missing_confirmed_by_importer_exporter_shipments": (1 - (missing_confirmed_by_importer_exporter_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        "missing_completed_shipments": missing_completed_shipments["count"],
-        "missing_completed_shipments": (1 - (missing_completed_shipments["count"] / shipments["count"] or 1))
-        * 100,
-        
 
     }
     return lifecycle_statistics
