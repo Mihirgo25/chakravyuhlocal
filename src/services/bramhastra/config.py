@@ -2,8 +2,10 @@ class LifeCycleConfig:
     def __init__(self, input) -> None:
         self.input = input
 
-    def get_flow(self) -> dict:
-        return {
+    def fill_flows(self) -> dict:
+        response = {}
+
+        response["business_flow"] = {
             "name": "spot_search",
             "count": self.input.get("spot_search"),
             "parent": "global_parent",
@@ -93,11 +95,9 @@ class LifeCycleConfig:
             },
         }
 
-    def get_dislike_flow(self) -> dict:
-        return {
+        response["dislike_flow"] = {
             "name": "spot_search",
             "count": self.input.get("spot_search"),
-            "drop": None,
             "parent": "global_parent",
             "child": {
                 "right": [
@@ -153,11 +153,9 @@ class LifeCycleConfig:
             },
         }
 
-    def get_rate_request_flow(self) -> dict:
-        return {
+        response["rate_request_flow"] = {
             "name": "spot_search",
             "count": self.input.get("spot_search"),
-            "drop": None,
             "parent": "global_parent",
             "child": {
                 "right": [
@@ -191,3 +189,5 @@ class LifeCycleConfig:
                 ],
             },
         }
+
+        return response
