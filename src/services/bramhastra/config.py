@@ -1,12 +1,11 @@
 class LifeCycleConfig:
-    def __init__(self, spot_search_count, input) -> None:
-        self.spot_search_count = spot_search_count
+    def __init__(self, input) -> None:
         self.input = input
 
     def get_flow(self) -> dict:
         return {
             "name": "spot_search",
-            "count": self.spot_search_count,
+            "count": self.input.get("spot_search"),
             "parent": "global_parent",
             "child": {
                 "right": [
@@ -97,7 +96,7 @@ class LifeCycleConfig:
     def get_dislike_flow(self) -> dict:
         return {
             "name": "spot_search",
-            "count": self.spot_search_count,
+            "count": self.input.get("spot_search"),
             "drop": None,
             "parent": "global_parent",
             "child": {
@@ -157,7 +156,7 @@ class LifeCycleConfig:
     def get_rate_request_flow(self) -> dict:
         return {
             "name": "spot_search",
-            "count": self.spot_search_count,
+            "count": self.input.get("spot_search"),
             "drop": None,
             "parent": "global_parent",
             "child": {
