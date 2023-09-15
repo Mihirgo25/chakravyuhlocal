@@ -185,6 +185,7 @@ class Brahmastra:
                 status = BrahmastraTrackStatus.failed.value
 
             brahmastra_track.status = status
+            brahmastra_track.started_at = started_at
             brahmastra_track.ended_at = datetime.utcnow()
 
             brahmastra_track.save()
