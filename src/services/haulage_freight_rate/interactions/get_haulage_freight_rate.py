@@ -1,6 +1,9 @@
 
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from operator import attrgetter
+from datetime import datetime
+STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+
 
 default_fields = [ 'line_items',
         'transit_time',
@@ -25,7 +28,11 @@ def find_object(requirement):
     for key in object_params:
       if object_params[key]:
         query = query.where(attrgetter(key)(HaulageFreightRate) == object_params[key])
-    return query.first()
+    validity_end = requirement.get('validity_end')
+    if validity_end:
+        validity_end = datetime.strptime(validity_end, STRING_FORMAT)
+        query = query.where(HaulageFreightRate.validity_end >= validity_end)
+    return query.first() 
 
 def get_object_params(requirement):
 
