@@ -10,9 +10,10 @@ from libs.get_applicable_filters import get_applicable_filters
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
 from micro_services.client import spot_search
+from services.air_freight_rate.constants.air_freight_rate_constants import IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE
 
 possible_direct_filters = ['origin_airport_id', 'destination_airport_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id','source']
-possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'partner_id']
+possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'partner_id', 'freight_force_importer_exporter', 'except_freight_force_importer_exporter']
 
 def list_air_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True):
     query = AirFreightRateRequest.select()
@@ -74,6 +75,12 @@ def apply_validity_start_greater_than_filter(query, filters):
 
 def apply_validity_end_less_than_filter(query, filters):
     return query.where(AirFreightRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
+
+def apply_freight_force_importer_exporter_filter(query, filters):
+    return query.where(AirFreightRateRequest.performed_by_org_id in IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE)
+
+def apply_except_freight_force_importer_exporter_filter(query, filters):
+    return query.where(AirFreightRateRequest.performed_by_org_id not in IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE)
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('air_freight', filters['relevant_supply_agent'])
