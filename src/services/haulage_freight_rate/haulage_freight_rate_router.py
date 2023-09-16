@@ -154,17 +154,17 @@ def get_haulage_freight_rate_api(
         "validity_end": validity_end
     }
     request = {key: value for key, value in request.items() if value is not None}
-    # try:
-    data = get_haulage_freight_rate(request)
-    data = json_encoder(data)
-    return JSONResponse(status_code=200, content=data)
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(
-    #         status_code=500, content={"success": False, "error": str(e)}
-    #     )
+    try:
+        data = get_haulage_freight_rate(request)
+        data = json_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
 
 
 @haulage_freight_router.post("/create_haulage_freight_rate")
