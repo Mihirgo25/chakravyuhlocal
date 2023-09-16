@@ -215,11 +215,11 @@ STHF:
   tags: ['additional_service']
 DSWD:
   name: "Weekend and Public Holiday Delivery"
-  units: ['per_tariler', 'per_container']
+  units: ['per_trailer', 'per_container']
   condition: true
   tags: ['additional_service']
 UO8H:
   name: "Urgent Order (< 8 Hours)"
-  units: ['per_tariler', 'per_container']
+  units: ['per_trailer', 'per_container']
   condition: true
   tags: ['additional_service']
