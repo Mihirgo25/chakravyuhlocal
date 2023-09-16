@@ -31,7 +31,7 @@ def find_object(requirement):
     validity_end = requirement.get('validity_end')
     if validity_end:
         validity_end = datetime.strptime(validity_end, STRING_FORMAT)
-        query = query.where(HaulageFreightRate.validity_end >= validity_end)
+        query = query.where(HaulageFreightRate.validity_end.cast("date") >= validity_end.date())
     return query.first() 
 
 def get_object_params(requirement):
