@@ -171,6 +171,8 @@ def get_data(query, spot_search_details_required, booking_details_required):
                     object['price']=weight_slab['tariff_price']
                     break
             object['reverted_rate_data']['currency'] = reverted_validity_data.get('currency')
+        if str(object['performed_by_org_id']) in IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE:
+            object['service_provider'] = 'FREIGHT_FORCE'
 
         new_data.append(object)
     return new_data

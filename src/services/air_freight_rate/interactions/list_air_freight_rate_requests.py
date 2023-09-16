@@ -48,6 +48,9 @@ def list_air_freight_rate_requests(filters = {}, page_limit = 10, page = 1, perf
         else:
             value['spot_search'] = {}
 
+        if str(value['performed_by_org_id']) in IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE:
+            value['service_provider'] = 'FREIGHT_FORCE'
+
 
 
     return { 'list': json_encoder(data) } | (pagination_data) | (stats)
