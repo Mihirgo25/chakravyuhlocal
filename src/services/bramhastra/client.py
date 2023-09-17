@@ -2,6 +2,12 @@ from clickhouse_driver import Client
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from configs.env import CLICK_DATABASE_HOST, CLICK_DATABASE_PASSWORD
+from services.bramhastra.enums import AppEnv
+from configs.env import APP_ENV
+import logging
+
+logger = logging.getLogger("peewee")
+logger.setLevel(logging.DEBUG)
 
 
 class ClickHouse:
@@ -9,6 +15,8 @@ class ClickHouse:
         self.client = Client(host=CLICK_DATABASE_HOST, password=CLICK_DATABASE_PASSWORD)
 
     def execute(self, query, parameters=None):
+        if APP_ENV != AppEnv.production.value:
+            logger.debug((query, parameters))
         if result := self.client.execute(query, parameters, with_column_types=True):
             column_names = [column[0] for column in result[1]]
             data = [row for row in result[0]]
