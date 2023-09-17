@@ -18,6 +18,7 @@ EXEC_LINES = [
 
 EXCLUDE_FILES = ["setup.py", "env.py"]
 
+
 def configure_logger(loggers: list, level=logging.DEBUG):
     handler = logging.StreamHandler()
     handler.setFormatter(ColoredFormatter("%(levelname)s:%(name)s: %(message)s"))
@@ -141,7 +142,7 @@ def run_development_server(port: int = 8000):
 def shell(ipython_args):
     handler = logging.StreamHandler()
     handler.setFormatter(ColoredFormatter("%(levelname)s:%(name)s: %(message)s"))
-    configure_logger(["peewee","httpx","click"])
+    configure_logger(["peewee", "httpx", "click"])
     config = load_default_config()
     config.TerminalInteractiveShell.banner1 = (
         f"""Python {sys.version} on {sys.platform} IPython: {IPython.__version__}"""
