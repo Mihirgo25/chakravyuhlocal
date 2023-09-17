@@ -5,6 +5,7 @@ from configs.env import CLICK_DATABASE_HOST, CLICK_DATABASE_PASSWORD
 from services.bramhastra.enums import AppEnv
 from configs.env import APP_ENV
 import logging
+import time
 
 logger = logging.getLogger("click")
 logger.setLevel(logging.DEBUG)
@@ -15,9 +16,13 @@ class ClickHouse:
         self.client = Client(host=CLICK_DATABASE_HOST, password=CLICK_DATABASE_PASSWORD)
 
     def execute(self, query, parameters=None):
+        start_time = time.perf_counter_ns()
+        result = self.client.execute(query, parameters, with_column_types=True)
+        end_time = time.perf_counter_ns()
         if APP_ENV != AppEnv.production.value:
             logger.debug((query, parameters))
-        if result := self.client.execute(query, parameters, with_column_types=True):
+            logger.debug("Execution Time: %.2f ms" % ((end_time - start_time) / 1e6))
+        if result is not None:
             column_names = [column[0] for column in result[1]]
             data = [row for row in result[0]]
             return [dict(zip(column_names, row)) for row in data]
