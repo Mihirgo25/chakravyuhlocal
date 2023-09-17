@@ -66,6 +66,8 @@ class ColoredFormatter(logging.Formatter):
                     message = sql % tuple(map(self._query_val_transform, params))
             except Exception:
                 pass
+        elif isinstance(record.msg, str):
+            message = record.msg
         color = self.COLORS.get(record.levelname, self.COLORS["RESET"])
         return f'{color}{message}{self.COLORS["RESET"]}'
 
