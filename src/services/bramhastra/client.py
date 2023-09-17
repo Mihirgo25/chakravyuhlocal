@@ -6,7 +6,7 @@ from services.bramhastra.enums import AppEnv
 from configs.env import APP_ENV
 import logging
 
-logger = logging.getLogger("peewee")
+logger = logging.getLogger("click")
 logger.setLevel(logging.DEBUG)
 
 
