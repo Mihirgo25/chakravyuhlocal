@@ -29,7 +29,6 @@ ALLOWED_FREQUENCY_TYPES = {
 
 def get_fcl_freight_rate_trends(filters: dict) -> dict:
     response, locations = get_rate(filters)
-    response, locations = get_rate(filters)
     response = {
         "rate_trend": response,
         "currency": filters.get("currency") or Fcl.default_currency.value,
