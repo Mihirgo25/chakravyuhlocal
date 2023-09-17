@@ -16,14 +16,33 @@ from services.bramhastra.database.dictionaries.country_rate_count import (
 )
 from services.bramhastra.models.fcl_freight_rate_request_statistics import FclFreightRateRequestStatistic
 from services.bramhastra.models.fcl_freight_rate_audit_statistic import FclFreightRateAuditStatistic
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
 from database.db_session import db
+from services.bramhastra.models.feedback_fcl_freight_rate_statistic import FeedbackFclFreightRateStatistic
+from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import SpotSearchFclFreightRateStatistic
+from services.bramhastra.models.checkout_fcl_freight_rate_statistic import CheckoutFclFreightRateStatistic
+from services.bramhastra.models.shipment_fcl_freight_rate_statistic import ShipmentFclFreightRateStatistic
+from services.bramhastra.models.data_migration import DataMigration
+from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
 
 
 def main():
     print("running migration")
     
     try:
-        db.create_tables([FclFreightRateAuditStatistic])
+        db.create_tables([FclFreightAction,
+                          FclFreightRateAuditStatistic,
+                          AirFreightRateStatistic,
+                          FclFreightRateRequestStatistic,
+                          FclFreightRateStatistic,
+                          FeedbackFclFreightRateStatistic,
+                          SpotSearchFclFreightRateStatistic,
+                          CheckoutFclFreightRateStatistic,
+                          ShipmentFclFreightRateStatistic,
+                          DataMigration,
+                          FclFreightAction,
+                          WorkerLog])
     except Exception:
         pass
 
@@ -36,10 +55,14 @@ def main():
     from database.create_clicks import Clicks
 
     Clicks(
-        dictionaries = [CountryRateCount],models=[FclFreightRateAuditStatistic,AirFreightRateStatistic, FclFreightRateStatistic,FclFreightRateRequestStatistic], ignore_oltp=True
+        dictionaries = [CountryRateCount],models=[FclFreightRateAuditStatistic,AirFreightRateStatistic, FclFreightRateStatistic,FclFreightRateRequestStatistic, FclFreightAction], ignore_oltp=True
     ).create()
 
     WorkerLog.delete().execute()
+    
+    print("executing action")
+    
+    execute_action(click)
 
     print("started inserting fcl")
 
@@ -56,6 +79,15 @@ def main():
     execute_request(click)
     
     print("completed")
+    
+    
+def execute_action(click):
+    started_at = datetime.utcnow()
+    columns = [field for field in FclFreightAction._meta.fields.keys()]
+    fields = ",".join(columns)
+    click.execute(
+        f"INSERT INTO brahmastra.{FclFreightAction._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{FclFreightAction._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
+    )
 
 
 def execute_fcl(click):

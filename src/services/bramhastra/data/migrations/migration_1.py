@@ -530,7 +530,8 @@ class MigrationHelpers:
 
 class PopulateFclFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
-        self.cogoback_connection = get_connection()
+        # self.cogoback_connection = get_connection()
+        pass
 
     def populate_from_active_rates(self):
         query = FclFreightRate.select().where(

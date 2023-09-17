@@ -30,12 +30,14 @@ def get_fcl_freight_rate_charts(filters):
             get_rate_count_with_deviation_more_than_x_price, filters, where
         )
 
-    return dict(
+    resp = dict(
         accuracy=accuracy_future.result(),
         rates_affected=rates_affected_future.result(),
         **rate_count_future.result(),
         **spot_search_future.result(),
     )
+    
+    return jsonable_encoder(resp)
 
 
 def get_accuracy(filters, where):
@@ -45,16 +47,17 @@ def get_accuracy(filters, where):
 
     clickhouse = ClickHouse()
     queries = [
-        f"""SELECT parent_mode as mode,toDate(day) AS day,AVG(abs(accuracy)*sign) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,parent_mode,sign FROM brahmastra.{FclFreightAction._meta.table_name}"""
+        f"""SELECT parent_mode as mode,toDate(updated_at) AS day,AVG(abs(bas_standard_price_accuracy)*sign) AS average_accuracy FROM brahmastra.{FclFreightAction._meta.table_name}"""
     ]
+    
+    queries.append(" WHERE ")
 
     if where:
-        queries.append(" WHERE ")
         queries.append(where)
-        queries.append(f"AND accuracy != {sys.float_info.max}")
+        queries.append(f"AND bas_standard_price_accuracy != {sys.float_info.max}")
 
     queries.append(
-        """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day ORDER BY day,mode;"""
+        """GROUP BY parent_mode,day ORDER BY day,mode;"""
     )
 
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
@@ -66,7 +69,7 @@ def get_rates_affected(filters, where):
     clickhouse = ClickHouse()
 
     query = [
-        f"""SELECT toStartOfHour(rate_updated_at) AS time,COUNT(*) FROM brahmastra.{FclFreightAction._meta.table_name}"""
+        f"""SELECT toStartOfHour(rate_updated_at) AS time,COUNT(*) as rates_count FROM brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     if where:
@@ -74,14 +77,14 @@ def get_rates_affected(filters, where):
 
     query.append("GROUP BY time ORDER BY time ASC")
 
-    return clickhouse.execute(query, filters)
+    return clickhouse.execute(" ".join(query), filters)
 
 
 def get_spot_search_to_checkout_count(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        f"""SELECT FLOOR((1 - SUM(checkout)/SUM(DISTINCT spot_search_id)),2)*100 as spot_search_to_checkout_count from brahmastra.{FclFreightAction._meta.table_name}"""
+        f"""SELECT FLOOR((1 - SUM(checkout)/COUNT(DISTINCT spot_search_id)),2)*100 as spot_search_to_checkout_count from brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     if where:
@@ -100,7 +103,7 @@ def get_rate_count_with_deviation_more_than_x_price(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        f"""SELECT count(DISTINCT rate_id) as rate_count_with_deviation_more_than_30 from brahmastra.{FclFreightAction._meta.table_name} WHERE ABS(bas_standard_price_diff_from_selected_rate) >= {MAX_ALLOWABLE_DEFAULT_BAS_DIFF}"""
+        f"""SELECT count(DISTINCT rate_id) as rate_count_with_deviation_more_than_x_price from brahmastra.{FclFreightAction._meta.table_name} WHERE ABS(bas_standard_price_diff_from_selected_rate) >= {MAX_ALLOWABLE_DEFAULT_BAS_DIFF}"""
     ]
 
     if where:

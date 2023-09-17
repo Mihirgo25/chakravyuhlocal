@@ -14,11 +14,11 @@ async def get_fcl_freight_rate_distribution(filters):
 
     queries = [
         f"""WITH rate_distribution as 
-               (SELECT parent_mode as mode,SUM(shipment_cancelled_count) AS shipment_cancelled_count,
+               (SELECT parent_mode as mode,SUM(cancelled) AS shipment_cancelled_count,
                SUM(completed) as shipment_completed_count,
                SUM(confirmed_by_importer_exporter) AS shipment_confirmed_by_importer_exporter_count,
                SUM(aborted) AS shipment_aborted_count, 
-               SUM(shipment_received_count) AS bookings_created,
+               SUM(recieved) AS bookings_created,
                SUM(in_progress) AS shipment_in_progress_count
                from brahmastra.{FclFreightAction._meta.table_name}"""
     ]
@@ -41,9 +41,7 @@ async def get_fcl_freight_rate_distribution(filters):
         sum(shipment_in_progress_count)  as shipment_in_progress_count,
         floor((shipment_in_progress_count/bookings_created)*100,2) as shipment_in_progress_percentage,
         sum(shipment_confirmed_by_importer_exporter_count)  as shipment_confirmed_by_importer_exporter_count, 
-        floor((shipment_confirmed_by_importer_exporter_count/bookings_created)*100,2) as shipment_confirmed_by_importer_exporter_percentage,  
-        sum(shipment_received_count)  as shipment_received_count,
-        floor((shipment_received_count/bookings_created)*100,2) as shipment_received_percentage
+        floor((shipment_confirmed_by_importer_exporter_count/bookings_created)*100,2) as shipment_confirmed_by_importer_exporter_percentage
         from rate_distribution group by mode)
            SELECT * from mode_count"""
     )
@@ -70,7 +68,7 @@ def format_distribution(response, distribution):
 
 async def get_total_rate_count(filters, where):
     queries = [
-        f"SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"
+        f"SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.{FclFreightAction._meta.table_name}"
     ]
     if where:
         queries.append("WHERE")

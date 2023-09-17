@@ -13,11 +13,13 @@ class Checkout:
         self.checkout_params = []
         self.increment_keys = {"checkout_count"}
         self.params = params
+        self.fcl_freight_rate_statistic = None
+        self.rate = None
 
-    def set_format_and_existing_rate_stats(self):
+    def set(self):
         self.common_params = self.params.dict(exclude={"checkout_fcl_freight_services"})
         for param in self.params.checkout_fcl_freight_services:
-            rate = param.rate.dict(include={"rate_id", "validity_id"})
+            self.rate = param.rate.dict(include={"rate_id", "validity_id"})
             total_buy_price = 0
             for line_item in param.rate.line_items:
                 total_buy_price += line_item["total_buy_price"]
@@ -25,38 +27,46 @@ class Checkout:
             checkout_param.update(param.dict(exclude={"rate"}))
             checkout_param["total_buy_price"] = total_buy_price
             checkout_param["currency"] = param.rate.line_items[0]["currency"]
-            checkout_param.update(rate)
+            checkout_param.update(self.rate)
 
-            fcl_freight_rate_statistic = (
-                FclFreightRateStatistic.select()
-                .where(FclFreightRateStatistic.identifier == get_identifier(**rate))
-                .first()
+            self.set_statistics()
+            self.update_statistics(
+                update_params=dict(updated_at=self.params.updated_at)
             )
 
-            if fcl_freight_rate_statistic:
-                for k in self.increment_keys:
-                    setattr(
-                        fcl_freight_rate_statistic,
-                        k,
-                        getattr(fcl_freight_rate_statistic, k) + 1,
-                    )
-                
-                fcl_freight_rate_statistic.updated_at = self.params.updated_at
-                
-                fcl_freight_rate_statistic.save()
-                
+            if self.fcl_freight_rate_statistic:
                 checkout_param[
                     "fcl_freight_rate_statistic_id"
-                ] = fcl_freight_rate_statistic.id
+                ] = self.fcl_freight_rate_statistic.id
+
                 self.checkout_params.append(checkout_param)
-                
-    def update_rate(self):
+
+    def update_action(self):
         pass
+
+    def update(self):
+        pass
+
+    def set_statistics(self):
+        self.fcl_freight_rate_statistic = (
+            FclFreightRateStatistic.select()
+            .where(FclFreightRateStatistic.identifier == get_identifier(**self.rate))
+            .first()
+        )
+
+    def update_statistics(self, update_params):
+        for key in self.increment_keys:
+            setattr(
+                self.fcl_freight_rate_statistic,
+                key,
+                getattr(self.fcl_freight_rate_statistic, key) + 1,
+            )
+        for key, value in update_params.items():
+            setattr(self.fcl_freight_rate_statistic, key, value)
+
+        self.fcl_freight_rate_statistic.save()
 
     def create(self) -> int:
         return CheckoutFclFreightRateStatistic.insert_many(
             self.checkout_params
         ).execute()
-
-    def update(self) -> None:
-        pass

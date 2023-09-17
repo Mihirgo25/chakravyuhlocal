@@ -11,7 +11,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )
 from services.bramhastra.enums import ShipmentServices
-from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.helpers.common_statistic_helper import get_fcl_freight_identifier
 from services.bramhastra.enums import Fcl
 
 
@@ -27,8 +27,6 @@ class Shipment:
         self.stats = []
         self.increment_keys = {
             "bookings_created",
-            "buy_quotations_created",
-            "shipment_is_active_count",
         }
         self.exclude_update_params = {
             "id",
@@ -61,7 +59,7 @@ class Shipment:
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
-                == get_identifier(
+                == get_fcl_freight_identifier(
                     rate_id=quotation["rate_id"], validity_id=quotation["validity_id"]
                 )
             )
