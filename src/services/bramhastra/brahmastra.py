@@ -32,6 +32,7 @@ from services.bramhastra.models.fcl_freight_rate_request_statistics import (
     FclFreightRateRequestStatistic,
 )
 import os
+import uuid
 
 """
 Info:
@@ -71,8 +72,12 @@ class Brahmastra:
         params = dict()
         where = []
         for key in model.CLICK_KEYS:
-            if getattr(row, key):
-                params[key] = str(getattr(row, key))
+            if getattr(row, key) is not None:
+                params[key] = (
+                    str(getattr(row, key))
+                    if isinstance(getattr(row, key), uuid.UUID)
+                    else getattr(row, key)
+                )
             else:
                 params[key] = DEFAULT_UUID
             where.append(f"{key} = %({key})s")
