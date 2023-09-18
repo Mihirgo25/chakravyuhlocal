@@ -453,14 +453,14 @@ class FclFreightRate(BaseModel):
 
         new_validities.append(FclFreightRateValidity(**validity))
 
-      new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end).split('T')[0], '%Y-%m-%d').date() >= datetime.datetime.now().date()]
-      new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start).split('T')[0], '%Y-%m-%d').date())
+      new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end).replace('T', ' ').split()[0], '%Y-%m-%d').date() >= datetime.datetime.now().date()]
+      new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start).replace('T', ' ').split()[0], '%Y-%m-%d').date())
       
       main_validities=[]
       for new_validity in new_validities:
         new_validity.line_items = [dict(line_item) for line_item in new_validity.line_items]
-        new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start).split('T')[0], '%Y-%m-%d').date().isoformat()
-        new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end).split('T')[0], '%Y-%m-%d').date().isoformat()
+        new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start).replace('T', ' ').split()[0], '%Y-%m-%d').date().isoformat()
+        new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end).replace('T', ' ').split()[0], '%Y-%m-%d').date().isoformat()
         new_validity = vars(new_validity)
         new_validity['id'] = new_validity['__data__']['id']
         new_validity.pop('__data__')
