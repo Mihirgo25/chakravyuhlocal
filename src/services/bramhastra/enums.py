@@ -120,3 +120,18 @@ class FclFilterTypes(Bramhastra):
 
 class FclChargeCodes(Bramhastra):
     BAS = "BAS"
+    
+class MapsFilter(Bramhastra):
+    origin_port_code = "origin_port_code"
+    destination_port_code = "destination_port_code"
+    
+class Status(Bramhastra):
+    active = "active"
+    
+class FclDefault(Bramhastra):
+    container_type  = "standard"
+    container_size = "20"
+    commodity = "general"
+    
+class Paginate(Bramhastra):
+    global_limit = 1000
