@@ -509,7 +509,8 @@ def build_freight_line_item_object(line_item, request):
         "unit": line_item["unit"],
         "price": line_item["price"],
         "currency": line_item["currency"],
-        "remarks": line_item["remarks"] if 'remarks' in line_item else []
+        "remarks": line_item.get("remarks") or [],
+        "slabs": line_item.get("slabs") or []
     }
 
     fcl_freight_charges = FCL_FREIGHT_CHARGES
@@ -538,7 +539,7 @@ def build_freight_line_item_object(line_item, request):
     line_item['total_price'] = line_item['quantity'] * line_item['price']
     line_item['name'] = code_config.get('name')
     line_item['source'] = 'system'
-
+    del line_item["slabs"]
     return line_item
 
 def build_freight_object(freight_validity, additional_weight_rate, additional_weight_rate_currency, request):

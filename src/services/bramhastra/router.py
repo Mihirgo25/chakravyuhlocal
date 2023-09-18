@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from services.bramhastra.interactions.apply_spot_search_fcl_freight_rate_statistic import (
     apply_spot_search_fcl_freight_rate_statistic,
 )
@@ -25,6 +25,9 @@ from services.bramhastra.interactions.get_fcl_freight_rate_world import (
 )
 from services.bramhastra.interactions.list_fcl_freight_rate_statistics import (
     list_fcl_freight_rate_statistics,
+)
+from services.bramhastra.interactions.list_air_freight_rate_statistics import (
+    list_air_freight_rate_statistics,
 )
 from services.bramhastra.interactions.list_fcl_freight_rate_request_statistics import (
     list_fcl_freight_rate_request_statistics,
@@ -53,6 +56,9 @@ from services.bramhastra.interactions.get_air_freight_rate_world import (
 from services.bramhastra.interactions.get_fcl_freight_rate_audit_statistics import (
     get_fcl_freight_rate_audit_statistics,
 )
+from services.bramhastra.interactions.list_fcl_freight_recommended_trends import (
+    list_fcl_freight_recommended_trends,
+)
 
 from services.bramhastra.request_params import (
     ApplySpotSearchFclFreightRateStatistic,
@@ -77,6 +83,7 @@ from fastapi import HTTPException
 import sentry_sdk
 from datetime import datetime, timedelta
 from libs.rate_limiter import rate_limiter
+from services.bramhastra.enums import FclParentMode, AirSources
 
 bramhastra = APIRouter()
 
@@ -339,6 +346,37 @@ async def list_fcl_freight_rate_statistics_api(
         )
 
 
+@bramhastra.get("/list_air_freight_rate_statistics", response_model=DefaultList)
+async def list_air_freight_rate_statistics_api(
+    filters: Annotated[Json, Query()] = {},
+    page_limit: int = 10,
+    page: int = 1,
+    is_service_object_required: bool = True,
+    pagination_data_required: bool = False,
+    auth_response: dict = Depends(authorize_token),
+):
+    if auth_response.get("status_code") != 200:
+        return JSONResponse(
+            status_code=auth_response.get("status_code"), content=auth_response
+        )
+    try:
+        response = await list_air_freight_rate_statistics(
+            filters,
+            page_limit,
+            page,
+            is_service_object_required,
+            pagination_data_required,
+        )
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
 @bramhastra.get("/list_fcl_freight_rate_request_statistics", response_model=DefaultList)
 def list_fcl_freight_rate_request_statistics_api(
     filters: Annotated[Json, Query()] = {},
@@ -454,12 +492,14 @@ def get_air_freight_rate_trends_api(
         )
 
 
-@rate_limiter.add(max_requests=10, time_window=3600)
-@bramhastra.get("/get_air_freight_rate_trends_for_public", tags = ["Public"])
+@bramhastra.get("/get_fcl_freight_rate_trends_for_public", tags=["Public"])
+@rate_limiter.add(max_requests=3, time_window=3600)
 def get_fcl_freight_rate_trends_api(
+    request: Request,
     filters: Annotated[Json, Query()] = {},
 ):
-    filters["end_date"] = datetime.now() - timedelta(days=15)
+    filters["end_date"] = (datetime.utcnow() - timedelta(days=15)).date().isoformat()
+    filters["mode"] = FclParentMode.supply.value
 
     try:
         response = get_fcl_freight_rate_trends(filters)
@@ -473,12 +513,18 @@ def get_fcl_freight_rate_trends_api(
         )
 
 
+@bramhastra.get(
+    "/get_air_freight_rate_trends_for_public",
+    tags=["Public"],
+    summary="gets air freight rates trend which are manual",
+)
 @rate_limiter.add(max_requests=10, time_window=3600)
-@bramhastra.get("/get_air_freight_rate_trends_for_public", tags = ["Public"])
 def get_air_freight_rate_trends_api(
+    request: Request,
     filters: Annotated[Json, Query()] = {},
 ):
-    filters["end_date"] = datetime.now() - timedelta(days=15)
+    filters["end_date"] = (datetime.utcnow() - timedelta(days=15)).date().isoformat()
+    filters["source"] = AirSources.manual.value
 
     try:
         response = get_air_freight_rate_trends(filters)
@@ -525,6 +571,29 @@ def get_fcl_freight_rate_audit_statistics_api(
 
     try:
         response = get_fcl_freight_rate_audit_statistics(filters)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@bramhastra.get("/list_fcl_freight_recommended_trends", tags=["Public"])
+@rate_limiter.add(max_requests=3, time_window=3600)
+def list_fcl_freight_recommended_trends_api(
+    request: Request,
+    filters: Annotated[Json, Query()] = {},
+    limit: int = 5,
+    is_service_object_required: bool = False,
+):
+    try:
+        limit = min(limit,5)
+        response = list_fcl_freight_recommended_trends(
+            filters, limit, is_service_object_required
+        )
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise

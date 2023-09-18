@@ -31,11 +31,13 @@ def execute_transaction_code(request):
     if not updated_configuration:
         raise HTTPException(status_code=400,detail='Weight Slab Not Found')
     request['updated_at'] = datetime.now()
-    request['price'] = request.get('slabs')[0].get('price')
-    request['currency'] = request.get('slabs')[0].get('currency')
+    if request.get('slabs'):
+        request['price'] = request.get('slabs')[0].get('price')
+        request['currency'] = request.get('slabs')[0].get('currency')
     
     for attr,value in request.items():
-        setattr(updated_configuration, attr, value)
+        if value:
+            setattr(updated_configuration, attr, value)
 
     if not updated_configuration.save():
         raise HTTPException(status_code=500, detail="Commodity Cluster not saved")
