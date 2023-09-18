@@ -305,7 +305,7 @@ class FclFreightRateBulkOperation(BaseModel):
             
     def perform_batch_extend_validity_action(self, batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         data = self.data 
@@ -419,7 +419,7 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         total_affected_rates = 0
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
@@ -469,7 +469,7 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         fcl_freight_rates = list(batch_query.dicts())
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         for freight in fcl_freight_rates:
@@ -505,7 +505,7 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         total_affected_rates = 0
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
@@ -559,7 +559,7 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         total_affected_rates = 0
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
@@ -604,7 +604,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         data = self.data
@@ -718,7 +718,7 @@ class FclFreightRateBulkOperation(BaseModel):
         total_affected_rates = 0
         data = self.data
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
                         
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
@@ -788,7 +788,7 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         total_affected_rates = 0
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
@@ -796,8 +796,8 @@ class FclFreightRateBulkOperation(BaseModel):
         if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
             del filters['service_provider_id']
         
-        if not filters['partner_id'] or filters['partner_id'] == 'None':
-            del filters['partner_id']
+        # if not filters['partner_id'] or filters['partner_id'] == 'None':
+        #     del filters['partner_id']
         
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
@@ -871,7 +871,7 @@ class FclFreightRateBulkOperation(BaseModel):
         total_affected_rates = 0
         data = self.data
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         if data['slabs']:
@@ -922,7 +922,7 @@ class FclFreightRateBulkOperation(BaseModel):
         total_affected_rates = 0
         data = self.data
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
@@ -1036,7 +1036,7 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         total_affected_rates = 0
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id })
@@ -1083,7 +1083,7 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_update_commodity_surcharge_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
@@ -1129,7 +1129,7 @@ class FclFreightRateBulkOperation(BaseModel):
         total_affected_rates = 0
         data = self.data
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
@@ -1178,7 +1178,7 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         fcl_freight_rates = list(batch_query.dicts())
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         total_count = len(fcl_freight_rates)
@@ -1278,7 +1278,7 @@ class FclFreightRateBulkOperation(BaseModel):
         total_affected_rates = 0
         data = self.data
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
@@ -1331,7 +1331,7 @@ class FclFreightRateBulkOperation(BaseModel):
         total_affected_rates = 0
         data = self.data
 
-        if sourced_by_id is None or procured_by_id is None: 
+        if sourced_by_id == 'None' or procured_by_id == 'None': 
             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id' : cogo_entity_id })
