@@ -1,12 +1,13 @@
 from services.nandi.models.draft_fcl_freight_rate_local import DraftFclFreightRateLocal
 from services.nandi.models.draft_fcl_freight_rate_local_audit import DraftFclFreightRateLocalAudit
-import pandas as pd
+import pandas as pd, json, os
 from database.rails_db import get_user
-import json
 from datetime import datetime
+from configs.definitions import ROOT_DIR
 
 def draft_rates_migration():
-    draft_rates_csv = pd.read_csv('/Users/shreyasnakshatram/Desktop/chakravyuh/src/database/draft_rates_locals.csv')
+    file_path = os.path.join(ROOT_DIR, "database", "draft_rates_locals.csv")
+    draft_rates_csv = pd.read_csv(file_path)
     draft_rates_csv.sort_values(['shipment_serial_id','invoice_date'], ascending= [False, False], inplace = True)
     draft_rates_csv = draft_rates_csv.where(pd.notnull(draft_rates_csv), None)
 
@@ -45,14 +46,13 @@ def draft_rates_migration():
         sid_wise_data[key]['invoice_date'] = list(set(sid_wise_data[key]['invoice_dates']))
         # sid_wise_data[key]['invoice_url'] = sid_wise_data[key]['invoice_urls']
         sid_wise_data[key]['data']['line_items'] = remove_duplicate_line_items(sid_wise_data[key]['data']['line_items'])
-        break
+
     data = list(sid_wise_data.values())
     i = 0
     for row in data:
         i += 1
         print('going {}'.format(i))
         DraftFclFreightRateLocal.create(**row)
-        break
         # object.save()
 
 def remove_duplicate_line_items(data):
@@ -73,14 +73,16 @@ def set_performed_by_draft_locals():
 
     performed_by_dict = {}
     for audit in audits:
-        performed_by_dict[audit.object_id] = audit.performed_by_id
-    
+        performed_by_dict[str(audit.object_id)] = audit.performed_by_id
     draft_rates = DraftFclFreightRateLocal.select().where(
         DraftFclFreightRateLocal.status != 'pending'
     ).execute()
 
+    rate_count = 0
     for rate in draft_rates:
         rate.performed_by_id = performed_by_dict.get(str(rate.id or ''))
         if rate.performed_by_id:
             rate.performed_by = get_user(str(rate.performed_by_id))
+        rate_count += 1
+        print(rate_count)
         rate.save()
