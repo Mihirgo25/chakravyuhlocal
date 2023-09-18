@@ -1574,8 +1574,8 @@ class FclFreightRateBulkOperation(BaseModel):
             update_fcl_freight_rate_local({
                 'id': local['id'],
                 'performed_by_id': self.performed_by_id,
-                'sourced_by_id': sourced_by_id,
-                'procured_by_id': procured_by_id,
+                'sourced_by_id': local.get('sourced_by_id'),
+                'procured_by_id': local.get('procured_by_id'),
                 'bulk_operation_id': self.id,
                 'data': local['data']
             })
