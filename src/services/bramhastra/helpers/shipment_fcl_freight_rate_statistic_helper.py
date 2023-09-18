@@ -25,27 +25,20 @@ class Shipment:
         self.params = request.params
         self.action = request.action
         self.stats = []
-        self.increment_keys = {
-            "bookings_created",
-        }
+        
         self.exclude_update_params = {
             "id",
             "shipment_fcl_freight_service_id",
             "shipment_id",
         }
         self.current_total_price = None
-        self.state_increment_keys = {
+        self.increment_keys = {
             "cancelled",
             "completed",
             "confirmed_by_importer_exporter",
             "aborted",
             "shipment_received",
         }
-        self.key = (
-            f"shipment_{self.params.shipment.state}_count"
-            if self.params.shipment.state != "shipment_received"
-            else "shipment_received_count"
-        )
 
     def format(self):
         shipment = self.params.shipment.dict()

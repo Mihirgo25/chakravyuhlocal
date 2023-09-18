@@ -78,7 +78,7 @@ import uuid
 from playhouse.postgres_ext import ServerSide
 from database.create_tables import Table
 from services.bramhastra.client import ClickHouse
-from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.helpers.common_statistic_helper import get_fcl_freight_identifier
 
 BATCH_SIZE = 1000
 REGION_MAPPING_URL = "https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json"
@@ -169,8 +169,8 @@ class MigrationHelpers:
         freight = FclFreightRate.select().where(FclFreightRate.id == id).first()
         return freight
 
-    def get_identifier(self, rate_id, validity_id):
-        return get_identifier(rate_id,validity_id)
+    def get_fcl_freight_identifier(self, rate_id, validity_id):
+        return get_fcl_freight_identifier(rate_id,validity_id)
 
     def get_validity_params(self, validity):
         price = validity.get("price")
@@ -564,7 +564,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         for rate in ServerSide(query):
             print(str(rate.id))
             for validity in rate.validities:
-                identifier = self.get_identifier(str(rate.id), validity["id"])
+                identifier = self.get_fcl_freight_identifier(str(rate.id), validity["id"])
 
                 rate_params = {key: getattr(rate, key) for key in RATE_PARAMS}
 
@@ -642,7 +642,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             offset += BATCH_SIZE
 
             identifier_ar = [
-                self.get_identifier(
+                self.get_fcl_freight_identifier(
                     str(feedback.fcl_freight_rate_id), str(feedback.validity_id)
                 )
                 for feedback in feedbacks
@@ -653,7 +653,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 count += 1
                 print(count)
                 rate_card = feedback.booking_params["rate_card"]
-                identifier = self.get_identifier(
+                identifier = self.get_fcl_freight_identifier(
                     str(feedback.fcl_freight_rate_id), str(feedback.validity_id)
                 )
 
@@ -762,7 +762,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
                 print(count)
 
-                identifier = self.get_identifier(
+                identifier = self.get_fcl_freight_identifier(
                     str(feedback.fcl_freight_rate_id), str(feedback.validity_id)
                 )
 
@@ -850,7 +850,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             rate_cards = self.get_spot_search_rates(offset=offset, limit=BATCH_SIZE)
             offset += BATCH_SIZE
             identifier_ar = [
-                self.get_identifier(rate_card["rate_id"], rate_card["validity_id"])
+                self.get_fcl_freight_identifier(rate_card["rate_id"], rate_card["validity_id"])
                 for rate_card in rate_cards
             ]
             identifier_ar = self.get_filtered_identifiers(identifier_ar)
@@ -865,7 +865,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             )
 
             for rate_card in rate_cards:
-                identifier = self.get_identifier(
+                identifier = self.get_fcl_freight_identifier(
                     rate_card["rate_id"], rate_card["validity_id"]
                 )
 
@@ -944,7 +944,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 container_state = result[2]
                 containers_count = result[3]
 
-                identifier = self.get_identifier(rate_id, validity_id)
+                identifier = self.get_fcl_freight_identifier(rate_id, validity_id)
                 statistic = (
                     FclFreightRateStatistic.select()
                     .where(
@@ -1123,7 +1123,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         and rate_card["rate_id"]
                         and rate_card["validity_id"]
                     ):
-                        identifier = self.get_identifier(
+                        identifier = self.get_fcl_freight_identifier(
                             rate_card["rate_id"], rate_card["validity_id"]
                         )
 
@@ -1211,7 +1211,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                             rate_id = service_rate["rate_id"]
                             validity_id = service_rate["validity_id"]
 
-                            identifier = self.get_identifier(rate_id, validity_id)
+                            identifier = self.get_fcl_freight_identifier(rate_id, validity_id)
                             statistic = self.find_statistics_object(identifier)
 
                             if not statistic:
@@ -1461,7 +1461,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
                         rate_id = row[0]
                         validity_id = row[1]
-                        identifier = self.get_identifier(rate_id, validity_id)
+                        identifier = self.get_fcl_freight_identifier(rate_id, validity_id)
                         stats_obj = self.find_statistics_object(identifier)
                         shipment_id = row[2]
 
@@ -1634,7 +1634,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         statistics_ids = []
         count = 0
         for row in data:
-            identifier = self.get_identifier(row["rate_id"], row["validity_id"])
+            identifier = self.get_fcl_freight_identifier(row["rate_id"], row["validity_id"])
             statistics_obj = self.find_statistics_object(identifier)
             count += 1
             print(count)
@@ -1760,7 +1760,10 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             AirFreightRateStatistic,
             WorkerLog
         ]:
-            db.execute_sql(f"drop table {model._meta.table_name}")
+            try:
+                db.execute_sql(f"drop table {model._meta.table_name}")
+            except Exception:
+                pass
 
         ClickHouse().execute("create database brahmastra")
 

@@ -6,7 +6,7 @@ from playhouse.shortcuts import model_to_dict
 from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )
-from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.helpers.common_statistic_helper import get_fcl_freight_identifier
 from services.bramhastra.constants import SHIPMENT_RATE_STATS_KEYS, RATE_DETAIL_KEYS
 
 
@@ -35,7 +35,7 @@ class RevenueDesk:
                 FclFreightRateStatistic.select()
                 .where(
                     FclFreightRateStatistic.identifier
-                    == get_identifier(request.rate_id, validity_id)
+                    == get_fcl_freight_identifier(request.rate_id, validity_id)
                 )
                 .first()
             )
@@ -51,7 +51,7 @@ class RevenueDesk:
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
-                == get_identifier(
+                == get_fcl_freight_identifier(
                     request.selected_for_preference.rate_id,
                     request.selected_for_preference.validity_id,
                 )
@@ -196,7 +196,7 @@ class RevenueDesk:
     def set_rate_stats(self, created_at):
         fcl_freight_rate_statistic = (
             FclFreightRateStatistic.select()
-            .where(FclFreightRateStatistic.identifier == get_identifier(**self.rate))
+            .where(FclFreightRateStatistic.identifier == get_fcl_freight_identifier(**self.rate))
             .first()
         )
         
@@ -228,7 +228,7 @@ class RevenueDesk:
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
-                == get_identifier(
+                == get_fcl_freight_identifier(
                     self.original_booked_rate.get("rate_id"),
                     self.original_booked_rate.get("validity_id"),
                 )

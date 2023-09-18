@@ -15,7 +15,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
 from database.rails_db import get_connection
 from services.bramhastra.constants import SHIPMENT_RATE_STATS_KEYS
 from playhouse.shortcuts import model_to_dict
-from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.helpers.common_statistic_helper import get_fcl_freight_identifier
 
 
 class Quotations:
@@ -113,7 +113,7 @@ class Statistics:
             fcl_freight_rate_statistic = (
                 FclFreightRateStatistic.select()
                 .where(
-                    FclFreightRateStatistic.identifier == get_identifier(**self.rate)
+                    FclFreightRateStatistic.identifier == get_fcl_freight_identifier(**self.rate)
                 )
                 .first()
             )
@@ -125,7 +125,7 @@ class Statistics:
 
             fcl_freight_rate_statistic = FclFreightRateStatistic.select().where(
                 FclFreightRateStatistic.identifier
-                == get_identifier(**self.original_booked_rate)
+                == get_fcl_freight_identifier(**self.original_booked_rate)
             )
 
             if fcl_freight_rate_statistic:
@@ -167,7 +167,7 @@ class Statistics:
 
         fcl_freight_rate_statistic = (
             FclFreightRateStatistic.select()
-            .where(FclFreightRateStatistic.identifier == get_identifier(**ans))
+            .where(FclFreightRateStatistic.identifier == get_fcl_freight_identifier(**ans))
             .first()
         )
 

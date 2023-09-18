@@ -55,7 +55,6 @@ class FclFreightRateStatistic(BaseModel):
     dislikes_count = IntegerField(default=0)
     spot_search_count = IntegerField(default=0)
     checkout_count = IntegerField(default=0)
-    bookings_created = IntegerField(default=0)
     rate_created_at = DateTimeTZField()
     rate_updated_at = DateTimeTZField()
     validity_created_at = DateTimeTZField(default=datetime.utcnow())
@@ -99,9 +98,9 @@ class FclFreightRateStatistic(BaseModel):
     bas_price = FloatField(default=0, null=True)
     bas_standard_price = FloatField(default=0, null=True)
     bas_currency = CharField(max_length=3, null=True)
-    tag = CharField(max_length=256, index=True)
-    shipment_completed = CharField(default="create")
-    shipment_cancelled = CharField(default="create")
+    tag = CharField(max_length=256, index=True, null = True)
+    shipment_completed = IntegerField(default = 0)
+    shipment_cancelled = IntegerField(default = 0)
 
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()

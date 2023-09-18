@@ -5,6 +5,7 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
     add_pagination_data,
 )
 from micro_services.client import maps
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
 
 DEFAULT_PARAMS = {
     "origin_port_id",
@@ -13,7 +14,6 @@ DEFAULT_PARAMS = {
     "destination_main_port_id",
     "shipping_line_id",
     "service_provider_id",
-    "cogo_entity_id",
     "container_size",
     "container_type",
     "commodity",
@@ -21,10 +21,10 @@ DEFAULT_PARAMS = {
 }
 
 DEFAULT_AGGREGATE_PARAMS = {
-    "spot_search_count": "SUM(spot_search_count)",
-    "checkout_count": "SUM(checkout_count)",
-    "bookings_created": "SUM(bookings_created)",
-    "rate_deviation_from_booking_rate": "MAX(ABS(rate_deviation_from_booking_rate))",
+    "spot_search_count": "COUNT(DISTINCT spot_search_id)",
+    "checkout_count": "SUM(checkout*sign)",
+    "bookings_created": "SUM(shipment*sign)",
+    "rate_deviation_from_booking_rate": "MAX(ABS(bas_standard_price_diff_from_selected_rate))",
 }
 
 DEFAULT_SELECT_KEYS = {
@@ -167,7 +167,7 @@ async def use_default_filter(filters, page_limit, page, is_service_object_requir
     )
 
     queries = [
-        f"""SELECT {select},{aggregate_select} from brahmastra.fcl_freight_rate_statistics"""
+        f"""SELECT {select},{aggregate_select} from brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     if where := get_direct_indirect_filters(filters):

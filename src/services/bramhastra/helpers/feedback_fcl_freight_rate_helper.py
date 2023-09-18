@@ -1,7 +1,7 @@
 from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
     FeedbackFclFreightRateStatistic,
 )
-from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.helpers.common_statistic_helper import get_fcl_freight_identifier
 from micro_services.client import common
 from services.bramhastra.enums import (
     FeedbackAction,
@@ -68,7 +68,7 @@ class Feedback:
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
-                == get_identifier(self.rate_id, self.validity_id)
+                == get_fcl_freight_identifier(self.rate_id, self.validity_id)
             )
             .first()
         )

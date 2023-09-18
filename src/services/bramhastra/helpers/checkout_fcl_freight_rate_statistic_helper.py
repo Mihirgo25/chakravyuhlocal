@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.helpers.common_statistic_helper import get_fcl_freight_identifier
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
@@ -50,7 +50,7 @@ class Checkout:
     def set_statistics(self):
         self.fcl_freight_rate_statistic = (
             FclFreightRateStatistic.select()
-            .where(FclFreightRateStatistic.identifier == get_identifier(**self.rate))
+            .where(FclFreightRateStatistic.identifier == get_fcl_freight_identifier(**self.rate))
             .first()
         )
 
