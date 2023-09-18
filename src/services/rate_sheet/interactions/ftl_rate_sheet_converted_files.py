@@ -9,11 +9,13 @@ from libs.json_encoder import json_encoder
 from services.rate_sheet.helpers import *
 import chardet
 from libs.parse_numeric import parse_numeric
+from configs.ftl_freight_rate_constants import DEFAULT_RATE_TYPE
+
 
 def process_ftl_freight_freight(params, converted_file, update):
     valid_headers = ['origin_location', 'destination_location', 'truck_type', 'commodity', 'code', 'unit', 'price',
                 'currency', 'truck_body_type', 'validity_start', 'validity_end', 'transit_time', 'detention_free_time',
-                  'trip_type', 'remark1', 'remark2', 'remark3']
+                  'trip_type', 'remark1', 'remark2', 'remark3', 'rate_type']
     total_lines = 0
     original_path = get_original_file_path(converted_file)
     rows = []
@@ -183,7 +185,7 @@ def create_ftl_freight_freight_rate(
 
     object["origin_location_id"] = get_location_id(rows[0]['origin_location'])
     object["destination_location_id"] = get_location_id(rows[0]['destination_location'])
-
+    object['rate_type'] = rows[0].get('rate_type') or DEFAULT_RATE_TYPE
     object["line_items"] = []
 
     for data in rows:

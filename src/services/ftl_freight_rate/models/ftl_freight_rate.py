@@ -86,7 +86,7 @@ class FtlFreightRate(BaseModel):
         for location in locations:
             if str(location['id']) == str(self.origin_location_id):
                 self.origin_location = self.get_required_location_data(location)
-            elif str(location['id']) == str(self.destination_location_id):
+            if str(location['id']) == str(self.destination_location_id):
                 self.destination_location = self.get_required_location_data(location)
         self.set_origin_location_ids()
         self.set_origin_location_type()
