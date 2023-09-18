@@ -82,7 +82,7 @@ def get_common_create_params(data,bulk_operation_id, performed_by_id, sourced_by
             'commodity': freight["commodity"],
             'shipping_line_id': str(freight["shipping_line_id"]),
             'importer_exporter_id': str(freight["importer_exporter_id"]) if freight['importer_exporter_id'] else None,
-            'service_provider_id': str(freight["service_provider_id"]) if freight['service_provider_id'] else None,
+            'service_provider_id': str(freight["service_provider_id"]),
             'cogo_entity_id': str(freight["cogo_entity_id"]) if freight['cogo_entity_id'] else None,
             'bulk_operation_id': bulk_operation_id,
             'performed_by_id': performed_by_id,
