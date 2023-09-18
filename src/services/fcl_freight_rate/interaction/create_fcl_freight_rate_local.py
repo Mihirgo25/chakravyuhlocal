@@ -89,8 +89,8 @@ def execute_transaction_code(request):
     if not fcl_freight_local:
         fcl_freight_local = FclFreightRateLocal(**row)
         fcl_freight_local.set_port()
-        fcl_freight_local.data={}
-        
+    
+    fcl_freight_local.set_data(get_normalized_line_items(request.get("data", {}).get("line_items", [])))
     fcl_freight_local.sourced_by_id = request.get("sourced_by_id")
     fcl_freight_local.procured_by_id = request.get("procured_by_id")
     fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
@@ -106,9 +106,6 @@ def execute_transaction_code(request):
     if 'plugin' in request['data']:
         new_free_days['plugin'] = {'slabs': [] } | (request['data']['plugin'] or {})
 
-    if request['data'].get('line_items'):
-        line_items = get_normalized_line_items(request['data']['line_items'])
-        fcl_freight_local.data = fcl_freight_local.data | { 'line_items': line_items }
     if 'rate_sheet_validation' not in request:
         fcl_freight_local.validate_before_save()
         fcl_freight_local.update_special_attributes(new_free_days)
