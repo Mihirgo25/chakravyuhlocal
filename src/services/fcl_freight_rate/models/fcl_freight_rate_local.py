@@ -360,4 +360,4 @@ class FclFreightRateLocal(BaseModel):
         self.data = {} if not self.data else self.data
         old_line_items = self.data.get("line_items") or []
         conditional_line_items = [line_item for line_item in old_line_items if line_item.get("conditions")]
-        self.data["line_items"] = conditional_line_items | new_line_items
+        self.data["line_items"] = conditional_line_items + new_line_items
