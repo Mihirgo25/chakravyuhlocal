@@ -32,7 +32,6 @@ def delete_air_freight_rate_data(request):
         request.get('likes_count'),
         request.get('dislikes_count')
     )
-    print(air_freight_rate.validities,"123")
     validities =  air_freight_rate.validities
     total_avaliable_validities = len(validities)
 

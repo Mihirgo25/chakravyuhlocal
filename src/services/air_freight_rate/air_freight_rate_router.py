@@ -1028,7 +1028,7 @@ def list_air_freight_rates_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
-    return_query: bool = False,
+    return_count: bool = False,
     older_rates_required: bool = False,
     all_rates_for_cogo_assured: bool = False,
     sort_by: str = 'updated_at',
@@ -1044,7 +1044,7 @@ def list_air_freight_rates_api(
             filters= filters,
             page_limit =page_limit,
             page= page,
-            return_query=return_query,
+            return_count=return_count,
             older_rates_required= older_rates_required,
             all_rates_for_cogo_assured= all_rates_for_cogo_assured,
             sort_by=sort_by,
@@ -1160,7 +1160,7 @@ def delete_air_freight_rate_request_api(request:DeleteAirFreightRateRequestParam
         return JSONResponse(status_code=500, content={"success":False , "error":str(e)})    
 
 @air_freight_router.post("/delete_air_freight_rate_surcharge")
-def delete_air_freight_rate_surcharge_api(request:DeleteAirFreightRateSurchargeParams, resp:dict = Depends(authorize_token)):
+def delete_air_freight_rate_surcharge_api(request:DeleteAirFreightRateSurcharge, resp:dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     if resp['isAuthorized']:
@@ -1175,7 +1175,7 @@ def delete_air_freight_rate_surcharge_api(request:DeleteAirFreightRateSurchargeP
         return JSONResponse(status_code=500 , content={"success":False, "error":str(e)})
 
 @air_freight_router.post("/delete_air_freight_rate_local")
-def delete_air_freight_rate_local_api(request:DeleteAirFreightRateLocalParams, resp:dict = Depends(authorize_token)):
+def delete_air_freight_rate_local_api(request:DeleteAirFreightRateLocal, resp:dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     if resp['isAuthorized']:

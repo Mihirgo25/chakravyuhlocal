@@ -525,3 +525,11 @@ class DeleteAirFreightRateRequestParams(BaseModel):
     rate_id: str = None
     validity_id: str = None
     performed_by_id: str = None
+
+class DeleteAirFreightRateLocal(BaseModel):
+    id:str
+    performed_by_id: str = None
+
+class DeleteAirFreightRateSurcharge(BaseModel):
+    id:str
+    performed_by_id: str = None
