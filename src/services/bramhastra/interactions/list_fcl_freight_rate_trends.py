@@ -22,7 +22,6 @@ def list_fcl_freight_rate_trends(filters: dict) -> dict:
 def get_rate(filters: dict, where: str) -> list:
     query_current, query_months, query_weeks = generate_queries(filters, where)
     results = []
-    print(query_weeks)
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         futures = [
             executor.submit(ClickHouse().execute, query_current, filters),
@@ -51,7 +50,6 @@ def generate_queries(filters, where):
     queries.append(" ".join(query_present))
     for time_unit, details in filters.get("frequency", {}).items():
         queries.append(get_query(time_unit, details, where))
-    breakpoint()
     return queries
 
 
@@ -72,8 +70,8 @@ def get_query(time_unit, details, where):
 
 
 def query_after(startDate, timeUnit, unit):
-    return f""" AND (toDate(rate_created_at) <= ({startDate})) AND (toDate(rate_created_at) <= toLastDayOf{timeUnit}(add{timeUnit}s(toDate({startDate}), {unit}))) """
+    return f""" AND (toDate(rate_created_at) <= ('{startDate}')) AND (toDate(rate_created_at) <= toLastDayOf{timeUnit}(add{timeUnit}s(toDate({startDate}), {unit}))) """
 
 
 def query_before(endDate, timeUnit, unit):
-    return f""" AND (toDate(rate_created_at) >= ({endDate})) AND (toDate(rate_created_at) >= toLastDayOf{timeUnit}(subtract{timeUnit}s(toDate({endDate}), {unit}))) """
+    return f""" AND (toDate(rate_created_at) >= ('{endDate}')) AND (toDate(rate_created_at) >= toLastDayOf{timeUnit}(subtract{timeUnit}s(toDate({endDate}), {unit}))) """
