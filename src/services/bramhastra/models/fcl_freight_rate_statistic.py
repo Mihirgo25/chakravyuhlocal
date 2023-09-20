@@ -49,7 +49,6 @@ class FclFreightRateStatistic(BaseModel):
     currency = CharField(max_length=3)
     shipping_line_id = UUIDField(null=True, index=True)
     service_provider_id = UUIDField(null=True, index=True)
-    accuracy = FloatField(default=-1.0)
     mode = CharField(index=True)
     likes_count = IntegerField(default=0)
     dislikes_count = IntegerField(default=0)
@@ -75,7 +74,6 @@ class FclFreightRateStatistic(BaseModel):
     rate_type = CharField()
     sourced_by_id = UUIDField(null=True)
     procured_by_id = UUIDField(null=True)
-    revenue_desk_visit_count = IntegerField(default=0)
     created_at = DateTimeTZField(default=datetime.utcnow())
     updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
     version = IntegerField(default=1, index=True)
@@ -101,6 +99,8 @@ class FclFreightRateStatistic(BaseModel):
     tag = CharField(max_length=256, index=True, null = True)
     shipment_completed = IntegerField(default = 0)
     shipment_cancelled = IntegerField(default = 0)
+    bas_standard_price_accuracy = FloatField(default = -1)
+    bas_standard_price_diff_from_selected_rate = FloatField(default=0)
 
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()

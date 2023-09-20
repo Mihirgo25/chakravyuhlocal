@@ -4,15 +4,16 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
     CheckoutFclFreightRateStatistic,
 )
-from micro_services.client import common
 from fastapi.encoders import jsonable_encoder
 from services.bramhastra.enums import ShipmentAction
 from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )
 from services.bramhastra.enums import ShipmentServices
-from services.bramhastra.helpers.common_statistic_helper import get_fcl_freight_identifier
-from services.bramhastra.enums import Fcl
+from services.bramhastra.helpers.common_statistic_helper import (
+    get_fcl_freight_identifier,
+)
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
 
 
 class Shipment:
@@ -25,7 +26,7 @@ class Shipment:
         self.params = request.params
         self.action = request.action
         self.stats = []
-        
+
         self.exclude_update_params = {
             "id",
             "shipment_fcl_freight_service_id",
@@ -42,22 +43,23 @@ class Shipment:
 
     def format(self):
         shipment = self.params.shipment.dict()
-        quotation = self.get_rate_details_from_initial_quotation(
-            self.params.shipment.source_id
-        )
-        if quotation is None:
+        original_rates = self.get_original_rates(self.params.shipment.source_id)
+        if not original_rates:
             return
 
-        fcl_freight_rate_statistic = (
+        original_rate_statistics = (
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
                 == get_fcl_freight_identifier(
-                    rate_id=quotation["rate_id"], validity_id=quotation["validity_id"]
+                    rate_id=original_rate["rate_id"],
+                    validity_id=original_rate["validity_id"],
                 )
             )
             .first()
         )
+
+        fcl_freight_actions = self.get_fcl_freight_actions(self.params.shipment.source_id)
 
         shipment_services_hash = {
             i.shipment_fcl_freight_service_id: i.dict()
@@ -76,75 +78,28 @@ class Shipment:
                 self.current_currency = buy_quotation.currency
 
             shipment_copy = shipment.copy()
-            shipment_copy["rate_id"] = quotation["rate_id"]
-            shipment_copy["validity_id"] = quotation["validity_id"]
+            shipment_copy["rate_id"] = original_rate["rate_id"]
+            shipment_copy["validity_id"] = original_rate["validity_id"]
             shipment_copy.update(
                 buy_quotation.dict(exclude={"service_id", "service_type"})
             )
             shipment_copy.update(
                 shipment_services_hash.get(buy_quotation.service_id, {})
             )
-            shipment_copy[
-                "fcl_freight_rate_statistic_id"
-            ] = fcl_freight_rate_statistic.id
+            shipment_copy["fcl_freight_rate_statistic_id"] = original_rate_statistic.id
             self.stats.append(shipment_copy)
 
         if self.action == ShipmentAction.create.value:
             ShipmentFclFreightRateStatistic.insert_many(self.stats).execute()
             if self.params.shipment.state in self.state_increment_keys:
                 setattr(
-                    fcl_freight_rate_statistic,
+                    original_rate_statistic,
                     self.key,
-                    getattr(fcl_freight_rate_statistic, self.key) + 1,
+                    getattr(original_rate_statistic, self.key) + 1,
                 )
-                fcl_freight_rate_statistic.save()
+                original_rate_statistic.save()
         elif self.action == ShipmentAction.update.value:
-            self.create_or_update(fcl_freight_rate_statistic)
-
-        fcl_freight_rate_statistic.save()
-
-        rate_update_hash = dict()
-
-        rate_update_hash["accuracy"] = 100
-
-        rate_update_hash["rate_deviation_from_latest_booking"] = 0
-
-        booking_rate_count = fcl_freight_rate_statistic.booking_rate_count
-
-        average_booking_rate = fcl_freight_rate_statistic.average_booking_rate
-
-        standard_price = (
-            fcl_freight_rate_statistic.standard_price
-            if self.action == ShipmentAction.create.value
-            else common.get_money_exchange_for_fcl(
-                {
-                    "from_currency": self.current_currency,
-                    "to_currency": Fcl.default_currency.value,
-                    "price": self.current_total_price,
-                }
-            ).get("price", self.current_total_price)
-        )
-
-        rate_update_hash["booking_rate_count"] = booking_rate_count + 1
-
-        rate_update_hash["average_booking_rate"] = (
-            ((average_booking_rate * booking_rate_count) + standard_price)
-            / (booking_rate_count + 1)
-            if average_booking_rate
-            else standard_price
-        )
-
-        rate_update_hash["rate_deviation_from_booking_rate"] = (
-            (standard_price - rate_update_hash.get("average_booking_rate")) ** 2
-            / (booking_rate_count or 1)
-        ) ** 0.5
-
-        if fcl_freight_rate_statistic:
-            for stat in self.stats:
-                stat["fcl_freight_rate_statistic_id"] = fcl_freight_rate_statistic.id
-            self.increment_shipment_rate_stats(
-                fcl_freight_rate_statistic, rate_update_hash
-            )
+            self.create_or_update(original_rate_statistic)
 
     def create_or_update(self, new_row):
         first_row = False
@@ -244,13 +199,17 @@ class Shipment:
                 setattr(row, k, v)
         row.save()
 
-    def get_rate_details_from_initial_quotation(self, source_id):
-        if (
-            response := CheckoutFclFreightRateStatistic.select(
-                CheckoutFclFreightRateStatistic.rate_id,
-                CheckoutFclFreightRateStatistic.validity_id,
+    def get_original_rates(self, source_id: str) -> list:
+        return jsonable_encoder(
+            list(
+                CheckoutFclFreightRateStatistic.select(
+                    CheckoutFclFreightRateStatistic.rate_id,
+                    CheckoutFclFreightRateStatistic.validity_id,
+                )
+                .where(CheckoutFclFreightRateStatistic.checkout_id == source_id)
+                .dicts()
             )
-            .where(CheckoutFclFreightRateStatistic.checkout_id == source_id)
-            .dicts()
-        ):
-            return jsonable_encoder(response.get())
+        )
+
+    def get_fcl_freight_actions(self, source_id: str):
+        return FclFreightAction.select().where(FclFreightAction.checkout_id == source_id)

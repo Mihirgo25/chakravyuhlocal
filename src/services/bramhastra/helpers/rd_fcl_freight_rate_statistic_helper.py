@@ -1,35 +1,37 @@
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
-from fastapi.encoders import jsonable_encoder
-from playhouse.shortcuts import model_to_dict
-from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
-    ShipmentFclFreightRateStatistic,
+from services.bramhastra.helpers.common_statistic_helper import (
+    get_fcl_freight_identifier,
 )
-from services.bramhastra.helpers.common_statistic_helper import get_fcl_freight_identifier
-from services.bramhastra.constants import SHIPMENT_RATE_STATS_KEYS, RATE_DETAIL_KEYS
+from peewee import Model
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
+
+RATE_KEYS = {
+    FclFreightRateStatistic.rate_id.name,
+    FclFreightRateStatistic.validity_id.name,
+    FclFreightRateStatistic.bas_standard_price.name,
+}
+
+STATISTICS_KEYS = {
+    FclFreightAction.bas_standard_price_accuracy.name,
+    FclFreightAction.bas_standard_price_diff_from_selected_rate.name,
+}
 
 
 class RevenueDesk:
-    def __init__(self, params) -> None:
-        if not getattr(params, "selected_for_booking"):
+    def __init__(self, init=False) -> None:
+        if not init:
             return
+        self.selected_rate = dict()
+        self.original_rate = dict()
+        self.original_rate_numerics = dict()
+        self.selected_rate_numerics = dict()
 
-        self.rate = dict()
-        self.original_booked_rate = None
-        self.shipment_id = params.shipment_id
-        self.shipment_fcl_freight_service_id = params.shipment_fcl_freight_service_id
-        self.increment_keys = {
-            "so1_select_count",
-            "booking_rate_count",
+    def update_rd_visit_count(self, request) -> None:
+        common_update_params = {
+            "updated_at": request.created_at,
         }
-        self.clickhouse_client = None
-        self.original_fcl_freight_rate_statistic_id = None
-        self.rate_stats_hash = dict()
-        self.original_rate_stats_hash = dict()
-        self.set_current_rate(params)
-
-    def update_rd_visit_count(self, request):
         for validity_id in request.validities:
             fcl_freight_rate_statistic = (
                 FclFreightRateStatistic.select()
@@ -39,14 +41,47 @@ class RevenueDesk:
                 )
                 .first()
             )
-
-            self.increment_keys = {"revenue_desk_visit_count"}
-
             if fcl_freight_rate_statistic:
-                fcl_freight_rate_statistic.updated_at = request.created_at
-                self.increment_rd_rate_stats(fcl_freight_rate_statistic)
+                statistic_increment_keys = {
+                    FclFreightRateStatistic.revenue_desk_visit_count.column_name
+                }
+                self.update_foreign_reference(
+                    fcl_freight_rate_statistic,
+                    statistic_increment_keys,
+                    common_update_params,
+                )
+            fcl_freight_action = (
+                FclFreightAction.select()
+                .where(
+                    FclFreightAction.shipment_fcl_freight_service_id
+                    == request.shipment_fcl_freight_service_id
+                )
+                .first()
+            )
+            if fcl_freight_action:
+                action_increment_keys = {
+                    FclFreightAction.revenue_desk_visit.column_name
+                }
+                self.update_foreign_reference(
+                    fcl_freight_action, action_increment_keys, common_update_params
+                )
 
-    def update_selected_for_preference_count(self, request):
+    def update_foreign_reference(
+        self, model: Model, increment_keys: set = None, params: dict = None
+    ) -> None:
+        if increment_keys:
+            for key in increment_keys:
+                setattr(model, key, getattr(model, key) + 1)
+        if params:
+            for k, v in params.keys():
+                if v is not None:
+                    setattr(model, k, v)
+        model.save()
+
+    def update_selected_for_preference_count(self, request) -> None:
+        common_update_params = {
+            "updated_at": request.created_at,
+        }
         fcl_freight_rate_statistic = (
             FclFreightRateStatistic.select()
             .where(
@@ -58,195 +93,105 @@ class RevenueDesk:
             )
             .first()
         )
-        
-        if fcl_freight_rate_statistic:
-
-            fcl_freight_rate_statistic.updated_at = request.created_at
-
-            self.increment_keys = {"so1_visit_count"}
-
+        if fcl_freight_rate_statistic is not None:
+            statistic_increment_keys = {
+                FclFreightRateStatistic.so1_select_count.column_name
+            }
             total_priority = (fcl_freight_rate_statistic.total_priority or 1) + (
                 request.selected_for_preference.given_priority or 1
             )
-
             update_params = dict(total_priority=total_priority)
-
-            self.increment_rd_rate_stats(fcl_freight_rate_statistic, update_params)
-
-    def set_current_rate(self, params):
-        if getattr(params, "selected_for_booking"):
-            self.rate["rate_id"] = params.selected_for_booking.rate_id
-            self.rate["validity_id"] = params.selected_for_booking.validity_id
-
-    def set_original_statistics_id(self):
-        if (
-            shipment := ShipmentFclFreightRateStatistic.select(
-                ShipmentFclFreightRateStatistic.fcl_freight_rate_statistic_id
+            update_params.update(common_update_params)
+            self.update_foreign_reference(
+                fcl_freight_rate_statistic, statistic_increment_keys, update_params
             )
+        fcl_freight_action = (
+            FclFreightAction.select()
             .where(
-                ShipmentFclFreightRateStatistic.shipment_fcl_freight_service_id
-                == self.shipment_fcl_freight_service_id,
-                ShipmentFclFreightRateStatistic.sign == 1,
-            )
-            .first()
-        ):
-            self.original_fcl_freight_rate_statistic_id = (
-                shipment.fcl_freight_rate_statistic_id
-            )
-
-        shipment_fcl_freight_rate_statistic = (
-            ShipmentFclFreightRateStatistic.select(
-                ShipmentFclFreightRateStatistic.fcl_freight_rate_statistic_id
-            )
-            .where(
-                ShipmentFclFreightRateStatistic.shipment_fcl_freight_service_id
-                == self.shipment_fcl_freight_service_id
+                FclFreightAction.shipment_fcl_freight_service_id
+                == request.shipment_fcl_freight_service_id
             )
             .first()
         )
+        if fcl_freight_action is not None:
+            action_increment_keys = {FclFreightAction.revenue_desk_select.column_name}
+            self.update_foreign_reference(
+                fcl_freight_rate_statistic, action_increment_keys, common_update_params
+            )
 
-        self.original_fcl_freight_rate_statistic_id = (
-            shipment_fcl_freight_rate_statistic.fcl_freight_rate_statistic_id
-        )
-
-    def set_original_rate(self):
-        self.set_original_statistics_id()
-
-        if fcl := FclFreightRateStatistic.select(
-            FclFreightRateStatistic.id,
-            FclFreightRateStatistic.rate_id,
-            FclFreightRateStatistic.validity_id,
-            FclFreightRateStatistic.booking_rate_count,
-            FclFreightRateStatistic.rate_deviation_from_latest_booking,
-            FclFreightRateStatistic.rate_deviation_from_booking_rate,
-            FclFreightRateStatistic.accuracy,
-            FclFreightRateStatistic.average_booking_rate,
-            FclFreightRateStatistic.standard_price,
-        ).where(
-            FclFreightRateStatistic.id == self.original_fcl_freight_rate_statistic_id,
-            FclFreightRateStatistic.sign == 1,
-        ):
-            self.original_booked_rate = jsonable_encoder(fcl.dicts().get())
-
-    def set_stats_hash(self):
-        for key in SHIPMENT_RATE_STATS_KEYS:
+    def set_statistics(self) -> None:
+        for key in STATISTICS_KEYS:
             eval(f"self.set_{key}(key)")
 
-    def set_rate_deviation_from_latest_booking(self, key):
-        self.original_rate_stats_hash[key] = self.rate.get(
-            "standard_price"
-        ) - self.original_booked_rate.get("standard_price")
-
-        self.rate_stats_hash[key] = 0
-
-    def set_average_booking_rate(self, key):
-        self.original_rate_stats_hash[key] = (
-            (
-                self.original_booked_rate.get("average_booking_rate")
-                * self.original_booked_rate.get("booking_rate_count")
+    def set_bas_standard_price_accuracy(self, key: str) -> None:
+        self.original_rate_numerics[key] = (
+            1
+            - (
+                self.original_rate[FclFreightAction.bas_standard_price.name]
+                / self.selected_rate[FclFreightAction.bas_standard_price.name]
             )
-            + self.rate.get("standard_price")
-        ) / (self.original_booked_rate.get("booking_rate_count") + 1)
-        self.rate_stats_hash[key] = (
-            (
-                self.rate.get("average_booking_rate")
-                * self.rate.get("booking_rate_count")
-            )
-            + self.rate.get("standard_price")
-        ) / (self.rate.get("booking_rate_count") + 1)
+        ) * 100
+        self.selected_rate_numerics[key] = 100
 
-    def set_rate_deviation_from_booking_rate(self, key):
-        self.original_rate_stats_hash[key] = self.rate.get(
-            "standard_price"
-        ) - self.original_booked_rate.get("standard_price")
-        self.rate_stats_hash[key] = 0
-
-    def set_accuracy(self, key):
-        self.rate_stats_hash[key] = round(
-            (
-                1
-                - (
-                    abs(
-                        self.rate_stats_hash.get("average_booking_rate")
-                        - self.rate.get("standard_price")
-                    )
-                    / (self.rate_stats_hash.get("average_booking_rate") or 1)
-                )
-            )
-            * 100,
-            2,
-        )
-        self.original_rate_stats_hash[key] = (
-            round(
-                (
-                    1
-                    - abs(
-                        self.original_booked_rate.get("standard_price")
-                        - self.rate.get("standard_price")
-                    )
-                    / (self.original_booked_rate.get("standard_price") or 1)
-                )
-                * 100,
-                2,
-            )
-            if self.original_booked_rate.get("standard_price") != 0
-            else 100
+    def set_bas_standard_price_diff_from_selected_rate(self, key: str) -> None:
+        self.original_rate_numerics[key] = (
+            self.original_rate[FclFreightAction.bas_standard_price.name]
+            - self.selected_rate[FclFreightAction.bas_standard_price.name]
         )
 
-    def set_rate_stats(self, created_at):
-        fcl_freight_rate_statistic = (
-            FclFreightRateStatistic.select()
-            .where(FclFreightRateStatistic.identifier == get_fcl_freight_identifier(**self.rate))
-            .first()
-        )
-        
-        if not fcl_freight_rate_statistic:
-            return
-
-        self.rate = jsonable_encoder(model_to_dict(fcl_freight_rate_statistic))
-
-        self.rate = {
-            key: self.rate[key]
-            for key in SHIPMENT_RATE_STATS_KEYS + RATE_DETAIL_KEYS
-            if key in self.rate
-        }
-
-        self.set_original_rate()
-        if (self.original_booked_rate["rate_id"] == self.rate["rate_id"]) and (
-            self.original_booked_rate["validity_id"] == self.rate["validity_id"]
-        ):
-            return
-        self.set_stats_hash()
-
-        if fcl_freight_rate_statistic:
-            self.increment_rd_rate_stats(
-                fcl_freight_rate_statistic, self.rate_stats_hash
-            )
-            fcl_freight_rate_statistic.updated_at = created_at
-
-        fcl_freight_rate_statistic = (
+    def set(self, request) -> None:
+        self.common_update_params = {"updated_at": request.created_at}
+        selected_statistic = (
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
                 == get_fcl_freight_identifier(
-                    self.original_booked_rate.get("rate_id"),
-                    self.original_booked_rate.get("validity_id"),
+                    request.selected_for_booking.rate_id,
+                    request.selected_for_booking.validity_id,
                 )
             )
             .first()
         )
-
-        if fcl_freight_rate_statistic:
-            fcl_freight_rate_statistic.updated_at = created_at
-            self.increment_keys.remove("so1_select_count")
-            self.increment_rd_rate_stats(
-                fcl_freight_rate_statistic, self.original_rate_stats_hash
+        original_action = (
+            FclFreightAction.select()
+            .where(
+                FclFreightAction.shipment_fcl_freight_service_id
+                == request.shipment_fcl_freight_service_id
             )
-
-    def increment_rd_rate_stats(self, row, update_object={}):
-        for key in self.increment_keys:
-            setattr(row, key, getattr(row, key) + 1)
-        for k, v in update_object.items():
-            if v is not None:
-                setattr(row, k, v)
-        row.save()
+            .first()
+        )
+        original_statistic = (
+            FclFreightRateStatistic.select()
+            .where(
+                FclFreightRateStatistic.identifier
+                == get_fcl_freight_identifier(
+                    original_action.rate_id, original_action.validity_id
+                )
+            )
+            .first()
+        )
+        if not original_statistic or selected_statistic:
+            return
+        for key in RATE_KEYS:
+            self.selected_rate[key] = getattr(selected_statistic, key)
+            self.original_rate[key] = getattr(original_statistic, key)
+        self.set_statistics()
+        self.selected_rate_numerics.update(
+            {
+                FclFreightAction.selected_fcl_freight_rate_statistic_id.name: selected_statistic.id,
+                FclFreightAction.selected_rate_id: selected_statistic.rate_id,
+                FclFreightAction.selected_validity_id: selected_statistic.validity_id,
+                FclFreightAction.selected_bas_standard_price: selected_statistic.bas_standard_price,
+            }
+        )
+        self.update_foreign_reference(
+            selected_statistic, {FclFreightRateStatistic.so1_select_count}, None
+        )
+        self.update_foreign_reference(
+            original_statistic, None, self.selected_rate_numerics
+        )
+        self.update_foreign_reference(
+            original_action,
+            {FclFreightAction.so1_select.name},
+            self.original_rate_numerics,
+        )
