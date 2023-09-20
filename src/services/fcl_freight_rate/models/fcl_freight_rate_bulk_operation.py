@@ -798,8 +798,8 @@ class FclFreightRateBulkOperation(BaseModel):
         if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
             del filters['service_provider_id']
         
-        # if not filters['partner_id'] or filters['partner_id'] == 'None':
-        #     del filters['partner_id']
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
         
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
