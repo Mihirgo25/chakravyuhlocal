@@ -54,21 +54,23 @@ def get_ftl_freight_rate_cards(request):
         set_callback_for_request(request)
     except:
         return {"list": []}
-
     if (
         request.get("trucks_count") is None
         and request.get("load_selection_type") == "truck"
     ):
         return {"list": []}
+
     query = select_fields()
     query = initialize_query(query, request)
     rate_list = ignore_non_eligible_service_providers(request, query)
     rate_list = build_response_list(rate_list, request)
+
     if request.get("include_additional_response_data"):
         rate_list = additional_response_data(rate_list)
 
     if request.get("predicted_rate"):
         rate_list = remove_unnecessary_fields(rate_list)
+
 
     return {"list": rate_list}
 
@@ -227,7 +229,7 @@ def set_callback_for_request(request):
 
 
 def get_location_mapping(location_ids):
-    location_data = maps.list_locations({"filters": {"id": location_ids}})["list"]
+    location_data = maps.list_locations({"filters": {"id": location_ids,"status":"active"}})["list"]
     location_mapping = {}
     for data in location_data:
         location_mapping[data["id"]] = data
@@ -268,19 +270,12 @@ def build_response_object(result, request):
         in CONFIRMED_INVENTORY["service_provider_ids"]
     ):
         response_object["tags"] = CONFIRMED_INVENTORY["tag"]
-    result_line_items = (
-        result["line_items"]
-        if type(result["line_items"]) == list
-        else list(result["line_items"])
-    )
+    result_line_items = list(result["line_items"])
+
 
     for line_item in result_line_items:
         if line_item["code"] == "FSC" and line_item["unit"] == "percentage_of_freight":
-            required_line_items = (
-                result["line_items"]
-                if type(result["line_items"]) == list
-                else list(result["line_items"])
-            )
+            required_line_items = list(result["line_items"])
             for required_line_item in required_line_items:
                 if required_line_item["code"] != "BAS":
                     continue
@@ -294,14 +289,8 @@ def build_response_object(result, request):
                     )
                     | {}
                 )
-                total_price = (
-                    float(
-                        line_item_object.get("total_price")
-                        if line_item_object.get("total_price")
-                        else 0
-                    )
-                    * float(line_item.get("price") if line_item.get("price") else 0)
-                ) / 100
+                total_price = float(line_item_object.get("total_price",0))
+                total_price = (total_price * float(line_item.get("price",0))/100)
                 line_item["total_price"] = total_price
                 line_item["price"] = line_item["total_price"]
                 line_item["quantity"] = 1
@@ -335,9 +324,13 @@ def build_line_item_object(
     request, line_item, trucks_count=0, minimum_chargeable_weight=0
 ):
     code_config = FTL_FREIGHT_CHARGES[line_item["code"]]
-    is_additional_service = (
-        True if "additional_services" in list(code_config.get("tags")) else False
-    )
+
+    is_additional_service = False
+
+    if "additional_services" in list(code_config.get("tags")):
+        is_additional_service = True
+
+
     if (
         is_additional_service
         and line_item["code"] not in request["additional_services"]
@@ -348,14 +341,16 @@ def build_line_item_object(
         line_item_copy[key] = line_item[key]
 
     line_item = line_item_copy
-    alternative_truck_count = (
-        get_chargeable_weight(minimum_chargeable_weight)
-        if line_item["unit"] == "per_ton"
-        else 1
-    )
-    line_item["quantity"] = (
-        trucks_count if line_item["unit"] == "per_truck" else alternative_truck_count
-    )
+    alternative_truck_count = 1
+    if line_item["unit"] == "per_ton":
+        alternative_truck_count = get_chargeable_weight(minimum_chargeable_weight)
+
+    line_item["quantity"] = alternative_truck_count
+
+    if line_item["unit"] == "per_truck":
+        line_item["quantity"] = trucks_count
+
+
     line_item["total_price"] = line_item["quantity"] * line_item["price"]
     line_item["name"] = code_config["name"]
     line_item["source"] = "system"

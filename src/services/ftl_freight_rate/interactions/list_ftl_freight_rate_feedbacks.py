@@ -78,7 +78,7 @@ def apply_similar_id_filter(query, filters):
 def get_data(query, spot_search_details_required):
     query = query.select()
     data = json_encoder(list(query.dicts()))
-    
+
     ftl_freight_rate_ids = []
     for rate in data:
         if rate['ftl_freight_rate_id']:
@@ -93,7 +93,7 @@ def get_data(query, spot_search_details_required):
             ).where(FtlFreightRate.id.in_(ftl_freight_rate_ids))
     ftl_freight_rates = json_encoder(list(ftl_freight_rates.dicts()))
     ftl_freight_rate_mappings = {k['id']: k for k in ftl_freight_rates}
-    
+
     service_provider_ids = []
     for object in data:
         service_provider_ids.append(object.get('service_provider_id'))
@@ -119,7 +119,7 @@ def get_data(query, spot_search_details_required):
             object["origin_location"] = rate.get("origin_location")
             object["destination_location"] = rate.get("destination_location")
             object["commodity"] = rate.get("commodity")
-            object["price"] = sum(p['price'] for p in rate.get("line_items")) if rate.get("line_items") else None
+            object["price"] = sum(int(p['price']) for p in rate.get("line_items")) if rate.get("line_items") else None
             object["currency"] = rate["line_items"][0].get('currency') if rate["line_items"] else None
 
         service_provider = object.get('service_provider_id', None)
@@ -131,7 +131,7 @@ def get_data(query, spot_search_details_required):
         if spot_search_details_required:
             object['spot_search'] = spot_search_hash.get(str(object['source_id']), {})
         new_data.append(object)
-    
+
     return new_data
 
 def get_pagination_data(query, page, page_limit):

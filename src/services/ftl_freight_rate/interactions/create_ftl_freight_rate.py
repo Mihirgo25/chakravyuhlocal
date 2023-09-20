@@ -62,9 +62,12 @@ def execute_transaction_code(request):
     init_key = f'{str(params["origin_location_id"])}:{str(params["destination_location_id"])}:{str(params["truck_type"])}:{str(params["commodity"] or "")}:{str(params["service_provider_id"])}:{str(params["importer_exporter_id"] or "")}:{str(params["truck_body_type"])}:{str(params["rate_type"])}'
 
     ftl_freight_rate = (
-        FtlFreightRate.select().where(
-        FtlFreightRate.init_key == init_key,
-        ).first()
+        FtlFreightRate.select()
+        .where(
+          FtlFreightRate.init_key == init_key,
+          FtlFreightRate.rate_type == params['rate_type']
+        )
+        .first()
       )
 
     if not ftl_freight_rate:
