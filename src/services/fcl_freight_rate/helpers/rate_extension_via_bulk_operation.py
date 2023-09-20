@@ -1,8 +1,10 @@
 from configs.env import DEFAULT_USER_ID
+
+from configs.fcl_freight_rate_constants import DEFAULT_PERFORMED_BY_TYPE
 from datetime import datetime, timedelta
 ACTION_NAMES_FOR_SOURCES = {
     "flash_booking": "extend_freight_rate",
-    "cluster_extension_worker": "add_freight_rate_markup",
+    "latest_rate_trend": "add_freight_rate_markup",
 }
 
 def rate_extension_via_bulk_operation(request):
@@ -52,8 +54,8 @@ def get_add_freight_rate_markup_params(request):
     data["markup_currency"] = "USD"
     data["validity_start"] = datetime.now() - timedelta(days=3)
     data["validity_end"] = datetime.now() + timedelta(days=60)
-    data["max_increase_markup"] = request.get("max_increase_markup")
-    data["min_decrease_markup"] = request.get("min_decrease_markup")
+    data["min_allowed_markup"] = request.get("min_allowed_markup")
+    data["max_allowed_markup"] = request.get("max_allowed_markup")
     data["affect_market_price"] = False
     data["rate_sheet_serial_id"] = None
     data["apply_to_extended_rates"] = False
@@ -61,7 +63,7 @@ def get_add_freight_rate_markup_params(request):
     data["rates_less_than_price"] = None
     data["is_system_operation"] = True
     params = {}
-    params["performed_by_type"] = "agent"
+    params["performed_by_type"] = DEFAULT_PERFORMED_BY_TYPE
     params["performed_by_id"] = DEFAULT_USER_ID
     params["procured_by_id"] = DEFAULT_USER_ID
     params["sourced_by_id"] = DEFAULT_USER_ID

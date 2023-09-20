@@ -1,10 +1,11 @@
 from datetime import date, timedelta, datetime
 from math import ceil
-from services.bramhastra.enums import FclFilterTypes
+from services.bramhastra.enums import FclFilterTypes, MapsFilter, Status
+from micro_services.client import maps
 
 POSSIBLE_DIRECT_FILTERS = {
-    "origin_port_id",
     "origin_country_id",
+    "origin_port_id",
     "origin_trade_id",
     "origin_continent_id",
     "destination_port_id",
@@ -27,10 +28,14 @@ POSSIBLE_DIRECT_FILTERS = {
     "sourced_by_id",
     "procured_by_id",
     "rate_id",
-    
 }
 
-POSSIBLE_INDIRECT_FILTERS = {"stale_rate","rate_updated_at_less_than","validity_end_greater_than","validity_end_less_than"}
+POSSIBLE_INDIRECT_FILTERS = {
+    "stale_rate",
+    "rate_updated_at_less_than",
+    "validity_end_greater_than",
+    "validity_end_less_than",
+}
 
 COUNT_FILTERS = {"dislikes_count", "checkout_count"}
 
@@ -40,18 +45,18 @@ REQUIRED_FILTERS = {
 }
 
 
-def get_direct_indirect_filters(filters,date = "validity_range"):
+def get_direct_indirect_filters(filters, date="validity_range"):
     if filters is None:
         return
     for k, v in REQUIRED_FILTERS.items():
         if k not in filters:
             filters[k] = v
-    
+
     where = []
-    
+
     if date == FclFilterTypes.validity_range.value:
         get_date_range_filter(where)
-    
+
     if date == FclFilterTypes.time_series.value:
         get_time_series_filter(where)
 
@@ -69,33 +74,28 @@ def get_direct_indirect_filters(filters,date = "validity_range"):
 
     if where:
         return " AND ".join(where)
-    
+
 
 def get_time_series_filter(where):
-    where.append(
-        "(updated_at >= %(start_date)s AND updated_at <= %(end_date)s)"
-    )
+    where.append("(updated_at >= %(start_date)s AND updated_at <= %(end_date)s)")
 
 
 def get_date_range_filter(where):
     where.append(
         "((validity_end >= %(start_date)s AND validity_start <= %(start_date)s) OR (validity_start <= %(end_date)s AND validity_end >= %(end_date)s) OR (validity_end <= %(end_date)s AND validity_start >= %(start_date)s))"
     )
-    
+
+
 def get_rate_updated_at_less_than_filter(where):
-    where.append(
-        "rate_updated_at < %(rate_updated_at_less_than)s"
-    )
-    
+    where.append("rate_updated_at < %(rate_updated_at_less_than)s")
+
+
 def get_validity_end_greater_than_filter(where):
-    where.append(
-        "validity_end > %(validity_end_greater_than)s"
-    )
+    where.append("validity_end > %(validity_end_greater_than)s")
+
 
 def get_validity_end_less_than_filter(where):
-    where.append(
-        "validity_end < %(validity_end_less_than)s"
-    )
+    where.append("validity_end < %(validity_end_less_than)s")
 
 
 def get_stale_rate_filter(where):
@@ -112,3 +112,40 @@ def add_pagination_data(clickhouse, queries, filters, page, page_limit):
     total_pages = ceil(total_count / page_limit)
 
     return total_count, total_pages
+
+
+def set_port_code_filters_and_service_object(filters, location_object):
+    origin_port_code = filters.pop(MapsFilter.origin_port_code.value, None)
+    destination_port_code = filters.pop(MapsFilter.destination_port_code.value, None)
+
+    locations = maps.list_locations(
+        data={
+            "filters": {
+                "port_code": [origin_port_code, destination_port_code],
+                "status": Status.active.value,
+            },
+            "includes": {
+                "id": True,
+                "name": True,
+                "display_name": True,
+                "port_code": True,
+            },
+        }
+    ).get("list", None)
+
+    port_code_to_location_details_mapping = {
+        location["port_code"]: location for location in locations
+    }
+
+    if origin_port_code:
+        location_object["origin_port"] = port_code_to_location_details_mapping.get(
+            origin_port_code
+        )
+
+        filters["origin_port_id"] = location_object["origin_port"]["id"]
+
+    if destination_port_code:
+        location_object["destination_port"] = port_code_to_location_details_mapping.get(
+            destination_port_code
+        )
+        filters["destination_port_id"] = location_object["destination_port"]["id"]

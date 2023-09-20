@@ -15,6 +15,7 @@ from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
 import traceback
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
+from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_predicted_fcl_freight_rate_delay
 
 def initialize_freight_query(requirements, prediction_required = False, get_cogo_assured=False):
     freight_query = FclFreightRate.select(
@@ -508,7 +509,8 @@ def build_freight_line_item_object(line_item, request):
         "unit": line_item["unit"],
         "price": line_item["price"],
         "currency": line_item["currency"],
-        "remarks": line_item["remarks"] if 'remarks' in line_item else []
+        "remarks": line_item.get("remarks") or [],
+        "slabs": line_item.get("slabs") or []
     }
 
     fcl_freight_charges = FCL_FREIGHT_CHARGES
@@ -537,7 +539,7 @@ def build_freight_line_item_object(line_item, request):
     line_item['total_price'] = line_item['quantity'] * line_item['price']
     line_item['name'] = code_config.get('name')
     line_item['source'] = 'system'
-
+    del line_item["slabs"]
     return line_item
 
 def build_freight_object(freight_validity, additional_weight_rate, additional_weight_rate_currency, request):
@@ -910,13 +912,13 @@ def get_fcl_freight_rate_cards(requirements):
         cogo_assured_rates, supply_rates = break_rates(freight_rates)
         
         selected_cogo_assured = get_cogo_assured_with_locals(cogo_assured_rates)
-
         if is_predicted:
             fcl_freight_vyuh = FclFreightVyuh(supply_rates, requirements)
             supply_rates = fcl_freight_vyuh.apply_dynamic_pricing()
         
         all_rates = supply_rates + selected_cogo_assured 
         all_rates = build_response_list(all_rates, requirements)
+        create_jobs_for_predicted_fcl_freight_rate_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements}, queue='critical')
         return {
             "list" : all_rates
         }
@@ -931,6 +933,10 @@ def get_fcl_freight_rate_cards(requirements):
 def get_freight_rates(supply_rates, requirements):
     freight_rates = pre_discard_noneligible_rates(supply_rates, requirements)
     is_predicted = False
+    
+    if requirements["search_source"] == "rfq":
+        freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+        return (freight_rates, is_predicted)
 
     are_all_rates_predicted = all_rates_predicted(freight_rates)
     if len(freight_rates) == 0 or are_all_rates_predicted:
