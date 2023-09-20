@@ -341,7 +341,6 @@ class FclFreightRateBulkOperation(BaseModel):
             #     raise HTTPException(status_code=400, detail='destination_icd_port_id is invalid')
             
     def perform_batch_extend_validity_action(self, batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
-        
         data = self.data 
         sourced_by_ids = data.get('sourced_by_ids')
         procured_by_ids = data.get('procured_by_ids')
@@ -625,7 +624,6 @@ class FclFreightRateBulkOperation(BaseModel):
 
 
     def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
-        
         data = self.data
         affect_market_price = data.get('affect_market_price', True)
         is_system_operation = data.get('is_system_operation', False)

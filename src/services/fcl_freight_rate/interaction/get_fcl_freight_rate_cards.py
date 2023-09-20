@@ -939,7 +939,6 @@ def get_fcl_freight_rate_cards(requirements):
         
 def get_freight_rates(supply_rates, requirements):
     freight_rates = pre_discard_noneligible_rates(supply_rates, requirements)
-    freight_rates = supply_rates
     is_predicted = False
     
     if requirements["search_source"] == "rfq":
