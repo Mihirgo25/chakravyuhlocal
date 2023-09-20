@@ -3,7 +3,6 @@ from services.bramhastra.brahmastra import Brahmastra
 
 @celery.task(bind=True,retry_backoff=True,max_retries=5)
 def brahmastra_in_delay(self):
-    return
     # using this until we get all queries right
     try:
         brahmastra=Brahmastra()
