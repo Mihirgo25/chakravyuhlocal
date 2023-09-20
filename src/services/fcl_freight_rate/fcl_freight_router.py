@@ -97,6 +97,9 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_location_cluster i
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_job_stats import get_fcl_freight_rate_job_stats
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_jobs import list_fcl_freight_rate_jobs
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_job import delete_fcl_freight_rate_job
+
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards_schedules import get_fcl_freight_rate_cards_schedules
+
 from libs.rate_limiter import rate_limiter
 from configs.env import DEFAULT_USER_ID
 
@@ -2008,3 +2011,40 @@ def get_fcl_freight_rate_job_csv_url_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@fcl_freight_router.get('/get_fcl_freight_rate_cards_schedules)')
+def get_fcl_freight_rate_cards_schedules_data(
+    origin_port_id: str,
+    origin_trade_id:str,
+    origin_continent_id:str,
+    destination_port_id:str,
+    destination_trade_id:str,
+    destination_continent_id:str,
+    port_pairs:dict,
+    sailing_schedules_required:bool,
+    validity_start:str,
+    list:List[dict],
+    spot_search_object:dict,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        resp = get_fcl_freight_rate_cards_schedules(origin_port_id, origin_trade_id,
+    origin_continent_id,
+    destination_port_id,
+    destination_trade_id,
+    destination_continent_id,
+    port_pairs,
+    sailing_schedules_required,
+    validity_start,
+    list,
+    spot_search_object)
+        return JSONResponse(status_code=200, content=resp)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })     
