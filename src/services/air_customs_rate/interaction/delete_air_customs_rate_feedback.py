@@ -26,7 +26,7 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=500, detail = 'Error while deleting feedback')
 
     create_audit_for_customs_feedback(request, object.id, data)
-    get_multiple_service_objects(object, required_columns = ['closed_by_id', 'performed_by_id'])
+    get_multiple_service_objects(object)
 
   return {'air_customs_rate_feedback_ids' : request.get('air_customs_rate_feedback_ids')}
 

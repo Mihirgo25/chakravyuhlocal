@@ -16,6 +16,7 @@ def execute_transaction_code(request):
     rate_object.line_items = request.get('line_items')
     rate_object.procured_by_id = request.get('procured_by_id')
     rate_object.sourced_by_id = request.get('sourced_by_id')
+    rate_object.performed_by_id = request.get('performed_by_id')
     rate_object.update_line_item_messages()
 
     try:
