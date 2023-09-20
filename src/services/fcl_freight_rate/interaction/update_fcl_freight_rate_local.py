@@ -58,7 +58,10 @@ def execute_transaction_code(request):
   fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
 
   if request.get('data') and request['data'].get('line_items'):
-      fcl_freight_local.set_data(get_normalized_line_items(request['data']['line_items']))
+      if request.get('bulk_operation_id'):
+        fcl_freight_local.data = fcl_freight_local.data | {'line_items':get_normalized_line_items(request['data']['line_items'])}
+      else:
+        fcl_freight_local.set_data(get_normalized_line_items(request['data']['line_items']))
 
   if request.get('data') and request['data'].get('detention'):
     if fcl_freight_local.detention_id:
