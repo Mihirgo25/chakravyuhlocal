@@ -82,10 +82,7 @@ def get_rate(filters: dict) -> list:
 
 
 def format_charts(charts: list, filters: dict) -> list:
-    NEEDED_MODES = {filters.get("mode")}
-
-    if not NEEDED_MODES:
-        NEEDED_MODES = {i.value for i in FclParentMode}
+    NEEDED_MODES = {filters.get("mode")} if filters.get("mode") else {i.value for i in FclParentMode}
 
     return format_response(charts, filters, NEEDED_MODES)
 
@@ -110,13 +107,16 @@ def format_response(response: list, filters: dict, needed_modes: list) -> list:
         response_dict[day].update(
             {entry["mode"]: {k: entry[k] for k in DEFAULT_AGGREGATE_SELECT}}
         )
-
-    exchange_rate = common.get_exchange_rate(
-        {
-            "from_currency": Fcl.default_currency.value,
-            "to_currency": filters.get("currency"),
-        }
-    )
+        
+    exchange_rate = 1
+    
+    if filters.get("currency") and filters.get("currency") != Fcl.default_currency.value:
+        exchange_rate = common.get_exchange_rate(
+            {
+                "from_currency": Fcl.default_currency.value,
+                "to_currency": filters.get("currency"),
+            }
+        )
 
     for day, values in sorted(response_dict.items()):
         if filters.get("currency"):
