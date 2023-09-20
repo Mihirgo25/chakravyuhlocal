@@ -26,7 +26,7 @@ def get_rate(filters: dict, where: str) -> list:
         futures = [
             executor.submit(ClickHouse().execute, query_current, filters),
             executor.submit(ClickHouse().execute, query_weeks, filters),
-            executor.submit(ClickHouse().execute, query_months, filters)
+            executor.submit(ClickHouse().execute, query_months, filters),
         ]
         for i in range(0, len(futures)):
             results.append(futures[i].result())
@@ -62,9 +62,7 @@ def get_query(time_unit, details, where):
         query.append(query_before(details.get("before"), time_unit, details["unit"]))
     elif "after" in details:
         query.append(query_after(details.get("after"), time_unit, details["unit"]))
-    query.append(
-        f"""GROUP BY {time_unit} ORDER BY {time_unit} ASC"""
-    )
+    query.append(f"""GROUP BY {time_unit} ORDER BY {time_unit} ASC""")
     return " ".join(query)
 
 
