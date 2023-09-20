@@ -30,9 +30,8 @@ def get_rate(filters: dict, where: str) -> list:
         ]
         for i in range(0, len(futures)):
             results.append(futures[i].result())
-
     response = {
-        "current_price": results[0][0],
+        "current_price": results[0][0] if results[0] else results[0],
         "weeks": results[1],
         "months": results[2],
     }
