@@ -88,14 +88,14 @@ def delete_air_freight_rate_api(request: DeleteAirFreightRateParams, resp: dict 
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    try:
-        delete_rate=delete_air_freight_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200,content=json_encoder(delete_rate))
-    except HTTPException as e :
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    # try:
+    delete_rate=delete_air_freight_rate(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200,content=json_encoder(delete_rate))
+    # except HTTPException as e :
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.post("/update_air_freight_rate")
 def update_air_freight_rate_api(
