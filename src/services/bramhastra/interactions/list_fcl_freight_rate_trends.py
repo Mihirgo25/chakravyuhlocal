@@ -69,8 +69,8 @@ def get_query(time_unit, details, where):
 
 
 def query_after(startDate, timeUnit, unit):
-    return f""" AND (toDate(rate_created_at) <= ('{startDate}')) AND (toDate(rate_created_at) <= toLastDayOf{timeUnit}(add{timeUnit}s(toDate({startDate}), {unit}))) """
+    return f""" AND (toDate(rate_created_at) >= ('{startDate}')) AND (toDate(rate_created_at) <= add{timeUnit}s(toDate('{startDate}'), {unit-1})) """
 
 
 def query_before(endDate, timeUnit, unit):
-    return f""" AND (toDate(rate_created_at) >= ('{endDate}')) AND (toDate(rate_created_at) >= toLastDayOf{timeUnit}(subtract{timeUnit}s(toDate({endDate}), {unit}))) """
+    return f""" AND (toDate(rate_created_at) <= ('{endDate}')) AND (toDate(rate_created_at) >= subtract{timeUnit}s(toDate('{endDate}'), {unit-1})) """
