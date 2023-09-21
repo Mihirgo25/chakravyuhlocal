@@ -6,6 +6,9 @@ from services.bramhastra.helpers.common_statistic_helper import (
 )
 from peewee import Model
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
+    ShipmentFclFreightRateStatistic,
+)
 
 RATE_KEYS = {
     FclFreightRateStatistic.rate_id.name,
@@ -172,6 +175,9 @@ class RevenueDesk:
         )
         if not original_statistic or selected_statistic:
             return
+        self.update_shipment(
+            request.shipment_fcl_freight_service_id, selected_statistic
+        )
         for key in RATE_KEYS:
             self.selected_rate[key] = getattr(selected_statistic, key)
             self.original_rate[key] = getattr(original_statistic, key)
@@ -194,4 +200,11 @@ class RevenueDesk:
             original_action,
             {FclFreightAction.so1_select.name},
             self.original_rate_numerics,
+        )
+
+    def update_shipment(self, shipment_service_id, statistic):
+        ShipmentFclFreightRateStatistic.update(
+            rate_id=statistic.rate_id, validity_id=statistic.validity_id
+        ).where(
+            ShipmentFclFreightRateStatistic.shipment_service_id == shipment_service_id
         )

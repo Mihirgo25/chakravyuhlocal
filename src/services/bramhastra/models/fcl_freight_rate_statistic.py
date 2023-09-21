@@ -54,6 +54,7 @@ class FclFreightRateStatistic(BaseModel):
     dislikes_count = IntegerField(default=0)
     spot_search_count = IntegerField(default=0)
     checkout_count = IntegerField(default=0)
+    bookings_created = IntegerField(default = 0)
     rate_created_at = DateTimeTZField()
     rate_updated_at = DateTimeTZField()
     validity_created_at = DateTimeTZField(default=datetime.utcnow())

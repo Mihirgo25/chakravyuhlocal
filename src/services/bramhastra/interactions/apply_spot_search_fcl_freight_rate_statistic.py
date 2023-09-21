@@ -12,7 +12,6 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 def apply_spot_search_fcl_freight_rate_statistic(request):
     if APP_ENV == AppEnv.production.value:
         with FclFreightRateStatistic._meta.database.atomic():
-            spot_search = SpotSearch(request.params)
-            spot_search.set()
-            spot_search.create()
+            spot_search = SpotSearch()
+            spot_search.set(request.params)
             return {"success": True}

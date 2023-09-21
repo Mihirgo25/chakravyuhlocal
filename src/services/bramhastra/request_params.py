@@ -88,7 +88,7 @@ class ApplyFclFreightRateStatistic(BaseModel):
 # Apply Spot Search Fcl Freight Statistics
 
 
-class Rates(BaseModel):
+class Rate(BaseModel):
     rate_id: str
     validity_id: str
     payment_term: str
@@ -110,7 +110,7 @@ class Rates(BaseModel):
 class SpotSearchFclFreightRateStatistic(BaseModel):
     spot_search_id: str = None
     spot_search_fcl_freight_services_id: str = None
-    rates: list[Rates] = []
+    rates: list[Rate] = []
     updated_at: datetime
 
 
@@ -122,7 +122,7 @@ class ApplySpotSearchFclFreightRateStatistic(BaseModel):
 # Apply Checkout Fcl Freight Statistics
 
 
-class CheckoutRates(BaseModel):
+class CheckoutRate(BaseModel):
     rate_id: str
     source: str
     validity_id: str
@@ -132,11 +132,11 @@ class CheckoutRates(BaseModel):
 class CheckoutFclFreightService(BaseModel):
     checkout_id: str
     checkout_fcl_freight_service_id: str = Field(alias="id")
-    rate: CheckoutRates
+    rate: CheckoutRate
 
 
 class FclFreightCheckoutParams(BaseModel):
-    source: str
+    checkout_source: str = Field(alias="source")
     source_id: str
     importer_exporter_id: str
     created_at: datetime
@@ -161,7 +161,7 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     source_id: str = None
     serial_id: int = None
     preferred_freight_rate: float = None
-    currency: str = Field(alias="preferred_freight_rate_currency", default = 'USD')
+    currency: str = Field(alias="preferred_freight_rate_currency", default="USD")
     importer_exporter_id: str = None
     service_provider_id: str = None
     created_at: datetime = datetime.utcnow()
@@ -173,36 +173,23 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     dislikes_count: int = None
     closing_remarks: list[str]
     status: str = "active"
-        
+
     @validator("preferred_freight_rate", pre=True)
     def convert_preferred_freight_rate(cls, v):
         if not v:
             v = 0
         return v
-    
+
     @validator("currency", pre=True)
     def convert_currency(cls, v):
         if not v:
-            v = 'USD'
+            v = "USD"
         return v
-
 
 
 class ApplyFeedbackFclFreightRateStatistics(BaseModel):
     action: str
     params: FeedbackFclFreightRateStatistic
-
-
-class FclFreightServices(BaseModel):
-    shipment_fcl_freight_service_id: str = Field(alias="id")
-    shipment_id: str = None
-    service_state: str = Field(alias="state", default=None)
-    service_is_active: bool = Field(alias="is_active")
-    service_cancellation_reason: str = Field(alias="cancellation_reason", default=None)
-    service_created_at: datetime = Field(alias="created_at", default=datetime.utcnow())
-    service_updated_at: datetime = Field(alias="updated_at", default=datetime.utcnow())
-    shipping_line_id: str = None
-    service_provider_id: str = None
 
 
 class BuyQuotation(BaseModel):
@@ -225,23 +212,44 @@ class BuyQuotation(BaseModel):
     )
 
 
+class FclFreightServices(BaseModel):
+    shipment_fcl_freight_service_id: str = Field(alias="id")
+    shipment_service_state: str = Field(alias="state", default=None)
+    shipment_service_is_active: bool = Field(alias="is_active")
+    shipment_service_cancellation_reason: str = Field(
+        alias="cancellation_reason", default=None
+    )
+    shipment_service_created_at: datetime = Field(
+        alias="created_at", default=datetime.utcnow()
+    )
+    shipment_service_updated_at: datetime = Field(
+        alias="updated_at", default=datetime.utcnow()
+    )
+    shipping_line_id: str = None
+    service_provider_id: str = None
+    containers_count: int = 1
+    cargo_weight_per_container: float = 0
+    container_size: str
+    container_type: str
+    commodity: str
+
+
 class Shipment(BaseModel):
     shipment_id: str = Field(alias="id")
-    serial_id: int = None
+    shipment_serial_id: int = Field(alias="serial_id")
+    shipment_source: str
+    shipment_source_id: str
     importer_exporter_id: str = None
     shipment_type: str = None
     services: list[str] = []
-    source: str = None
-    source_id: str = None
-    state: str = None
-    created_at: datetime = None
-    updated_at: datetime = None
-    cancellation_reason: str = None
+    shipment_source: str = Field(alias="source")
+    shipment_source_id: str = Field(alias="source_id")
+    shipment_created_at: datetime = Field(alias="created_at", default=datetime.utcnow())
+    shipment_updated_at: datetime = Field(alias="updated_at", default=datetime.utcnow())
 
 
 class ShipmentParams(BaseModel):
     fcl_freight_services: list[FclFreightServices]
-    buy_quotations: list[BuyQuotation]
     shipment: Shipment
 
 
@@ -365,7 +373,7 @@ class AirFreight(BaseModel):
     currency: str
     discount_type: str = None
     importer_exporter_id: str = None
-    rate_not_available_entry: str = None  
+    rate_not_available_entry: str = None
     rate_created_at: datetime = Field(alias="created_at")
     rate_updated_at: datetime = Field(alias="updated_at")
 
