@@ -196,8 +196,8 @@ def create_ftl_freight_freight_rate(
 
     validity_start = ''.join([val for val in object['validity_start'] if val.isdigit()])
     validity_end = ''.join([val for val in object['validity_end'] if val.isdigit()])
-    object['validity_end'] = datetime.strptime(validity_end, '%d%m%Y')
-    object['validity_start'] = datetime.strptime(validity_start, '%d%m%Y')
+    object['validity_end'] = datetime.strptime(validity_end, '%d%m%Y').date()
+    object['validity_start'] = datetime.strptime(validity_start, '%d%m%Y').date()
     object["rate_sheet_id"] = params["id"]
     object["performed_by_id"] = created_by_id
     object["service_provider_id"] = params.get("service_provider_id")
@@ -211,7 +211,7 @@ def create_ftl_freight_freight_rate(
     if validation.get("valid"):
         object["rate_sheet_validation"] = True
         create_ftl_freight_rate_delay.apply_async(
-            kwargs={"request": object}, queue="low"
+            kwargs={"request": object}, queue="fcl_freight_rate"
         )
     else:
         print(validation.get("error"))
