@@ -44,6 +44,7 @@ CREATE TABLE brahmastra.fcl_freight_actions
     spot_search UInt8,
     checkout_source FixedString(256),
     checkout_id UUID,
+    checkout_created_at DateTime,
     checkout_fcl_freight_service_id UUID,
     checkout UInt8,
     shipment UInt8,
