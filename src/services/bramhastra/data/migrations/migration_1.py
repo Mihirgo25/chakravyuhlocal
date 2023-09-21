@@ -115,7 +115,6 @@ RATE_PARAMS = [
     "service_provider_id",
     "shipping_line_id",
     "mode",
-    "accuracy",
     "cogo_entity_id",
     "sourced_by_id",
     "procured_by_id",
@@ -1761,10 +1760,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             WorkerLog
         ]:
             try:
-                try:
                 db.execute_sql(f"drop table {model._meta.table_name}")
-            except:
-                pass
             except Exception:
                 pass
 

@@ -16,32 +16,35 @@ class SpotSearch:
         self.fcl_freight_rate_statistic = None
 
     def set(self, params) -> None:
-        for rate in self.rates:
-            self.fcl_freight_rate_statistic = self.__get_fcl_freight_rate_statistic()
+        for rate in params.rates:
+            self.fcl_freight_rate_statistic = self.__get_fcl_freight_rate_statistic(
+                rate
+            )
             if self.fcl_freight_rate_statistic is None:
                 continue
             self.__update_statistics(dict(updated_at=params.updated_at))
-            action_params = self.__get_action_params(rate, params)
+            action_params = self.__get_action_params(params)
             self.__create_action(action_params)
 
-    def __get_action_params(self, rates, params) -> dict:
+    def __get_action_params(self, params) -> dict:
         action_params = {
             "spot_search_id": params.spot_search_id,
-            "spot_search_fcl_freight_services_id": params.spot_search_fcl_freight_services_id,
+            "spot_search_fcl_freight_service_id": params.spot_search_fcl_freight_services_id,
             "spot_search": 1,
             **{
-                k: getattr(self.fcl_freight_rate_statistic, k.name)
+                k: getattr(self.fcl_freight_rate_statistic, k)
                 for k in REQUIRED_ACTION_FIELDS
+                if getattr(self.fcl_freight_rate_statistic, k) is not None
             },
-            **rates,
         }
         return action_params
 
     def __create_action(self, params) -> None:
-        FclFreightAction.create(**params)
+        fcl_freight_action = FclFreightAction(**params)
+        fcl_freight_action.save()
 
-    def __get_fcl_freight_rate_statistic(self, rate_dict) -> Union[None, Model]:
-        identifier = get_fcl_freight_identifier(**rate_dict)
+    def __get_fcl_freight_rate_statistic(self, rate) -> Union[None, Model]:
+        identifier = get_fcl_freight_identifier(rate.rate_id, rate.validity_id)
         return (
             FclFreightRateStatistic.select()
             .where(FclFreightRateStatistic.identifier == identifier)
