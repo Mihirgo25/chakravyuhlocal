@@ -2,7 +2,7 @@ from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import *
 from services.rate_sheet.interactions.validate_air_customs_object import validate_air_customs_object
 
 def process_air_customs_customs(params, converted_file, update):
-    valid_headers = ['airport', 'country', 'trade_type', 'commodity', 'commodity_type', 'commodity_sub_type', 'code', 'unit', 'price', 'currency', 'remark1', 'remark2', 'remark3']
+    valid_headers = ['airport', 'country', 'trade_type', 'commodity', 'commodity_type', 'commodity_sub_type', 'rate_type', 'code', 'unit', 'price', 'currency', 'remark1', 'remark2', 'remark3']
     total_lines = 0
     original_path = get_original_file_path(converted_file)
     rows = []
@@ -72,7 +72,7 @@ def process_air_customs_customs(params, converted_file, update):
                     list_opt = list(row.values())
                     csv_writer.writerow(list_opt)
                 rows = [row]
-            elif rows and valid_hash(row, ['code', 'unit', 'price', 'currency'], ['airport', 'country', 'trade_type', 'commodity', 'rate_type']):
+            elif rows and valid_hash(row, ['code', 'unit', 'price', 'currency'], ['airport', 'country', 'trade_type', 'commodity', 'commodity_type', 'commodity_sub_type', 'rate_type']):
                 rows.append(row)
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
