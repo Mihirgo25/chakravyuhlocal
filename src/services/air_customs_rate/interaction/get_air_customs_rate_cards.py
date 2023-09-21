@@ -13,6 +13,7 @@ def get_air_customs_rate_cards(request):
 
         if len(air_customs_rates) > 0:
             customs_rates = discard_noneligible_lsps(air_customs_rates)
+            customs_rates = set_shipper_specific_rates(air_customs_rates)
             rate_cards = build_response_list(customs_rates,request)
 
             return {'list':rate_cards}
@@ -132,3 +133,13 @@ def group_by(query):
             grouped_query_results[key] = []
         grouped_query_results[key].append(result)
     return grouped_query_results
+
+def set_shipper_specific_rates(customs_rates):
+    rates_list = []
+    shipper_specific_list = []
+    for rate in customs_rates:
+        if rate.get('importer_exporter_id'):
+            shipper_specific_list.append(rate)
+        else:
+            rates_list.append(rate)
+    return shipper_specific_list if len(shipper_specific_list) > 0 else rates_list

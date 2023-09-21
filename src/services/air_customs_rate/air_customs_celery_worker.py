@@ -31,3 +31,13 @@ def create_air_customs_rate_delay(self, request):
             pass
         else:
             raise self.retry(exc= e)
+        
+@celery.task(bind = True, retry_backoff=True, max_retries=5)
+def send_closed_notifications_to_sales_agent_air_customs_delay(self, object):
+    try:
+        object.send_closed_notifications_to_sales_agent()
+    except Exception as e:
+        if type(e).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= e)
