@@ -3,6 +3,8 @@ from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFre
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from configs.haulage_freight_rate_constants import DEFAULT_RATE_TYPE
 from fastapi.encoders import jsonable_encoder
+from services.haulage_freight_rate.helpers.get_multiple_service_object_haulage import get_multiple_service_objects_haulage
+
 
 def create_audit(request, freight_id):
     audit_data = {}
@@ -76,8 +78,9 @@ def create_haulage_freight_rate(request):
         ).first()
     )
     
-    
+    is_new_rate = False
     if not haulage_freight_rate:
+        is_new_rate = True
         haulage_freight_rate = HaulageFreightRate(init_key = init_key)
         for key in list(params.keys()):
             setattr(haulage_freight_rate, key, params[key])
@@ -115,6 +118,8 @@ def create_haulage_freight_rate(request):
     haulage_freight_rate.update_platform_prices_for_other_service_providers()
 
     delay_haulage_functions.apply_async(kwargs={'haulage_object':haulage_freight_rate,'request':request},queue='low')
+    get_multiple_service_objects_haulage(haulage_freight_rate, is_new_rate)
+
     if request.get('haulage_freight_rate_request_id'):
         update_haulage_freight_rate_request_delay.apply_async(kwargs={'request':{'haulage_freight_rate_request_id': request.get('haulage_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')
     
