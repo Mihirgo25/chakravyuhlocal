@@ -68,6 +68,16 @@ def get_freight_object(object):
     if 'rate_type' in object and object['rate_type'] and object['rate_type'] not in RATE_TYPES:
         validation['error']+=  ' ' + f"{object['rate_type']} is invalid, valid rate types are {RATE_TYPES}"
 
+    if rate_object.origin_port:
+        origin_port_data = rate_object.origin_port
+        if origin_port_data.get('is_icd') != True and rate_object.origin_main_port:
+            validation['error']+= 'Main port cannot be assigned to a Base port (origin)' 
+        
+    if rate_object.destination_port:
+        destination_port_data = rate_object.destination_port
+        if destination_port_data.get('is_icd') != True and rate_object.destination_main_port:
+            validation['error']+= 'Main port cannot be assigned to a Base port (destination)' 
+
     try:
         rate_object.validate_line_items(line_items)
     except HTTPException as e:
@@ -89,12 +99,27 @@ def get_local_object(object):
         local.validate_before_save()
     except HTTPException as e:
         validation['error'] += ' ' + str(e.detail)
-    for line_item in object.get('data').get('line_items'):
+        
+    line_items = object.get('data', {}).get('line_items', [])
+    
+    if object.get('rate_type') == 'cogo_assured':
+        if len(line_items) != 1:
+            validation['error']+= ' ' + f"{len(line_items)} length of line_items is invalid for cogo assured rate"
+        elif line_items[0]['code'] != 'THC':
+            validation['error']+= ' ' + f"{line_items[0]['code']} code is invalid for cogo assured rate" 
+
+    for line_item in line_items:
         if line_item['unit'] not in VALID_UNITS:
             validation['error']+= ' ' + "unit is_invalid"
+
     if not validate_shipping_line(local):
          validation['error']+=' Invalid shipping line'
-
+    
+    if local.port:
+        port_data = local.port
+        if port_data.get('is_icd') == False and local.main_port_id:        
+            validation['error']+= 'Main port cannot be assigned to a Base port' 
+        
     return validation
 
 def get_free_day_object(object):

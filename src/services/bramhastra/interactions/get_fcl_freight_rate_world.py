@@ -7,7 +7,7 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 
 
 async def get_fcl_freight_rate_world():
-    statistics = await get_past_count()
+    statistics = await get_count_distribution()
 
     count = await get_total_count()
 
@@ -24,7 +24,7 @@ async def get_total_count():
         return result[0]["count"]
 
 
-async def get_past_count():
+async def get_count_distribution():
     clickhouse = ClickHouse()
 
     query = f"""
@@ -33,18 +33,16 @@ async def get_past_count():
                 SELECT
                     origin_country_id,
                     destination_country_id,
-                    rate_id,
-                    sum(sign)
+                    rate_id
                 FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE validity_end >= toDate(now())
                 GROUP BY
                     rate_id,
                     origin_country_id,
                     destination_country_id
-                HAVING sum(sign) > 0
             )
         SELECT
             country_id,
-            dictGet('brahmastra.country_rate_count', 'rate_count', country_id) + COUNT(*) AS rate_count
+            COUNT(*) AS rate_count
         FROM
         (
             SELECT origin_country_id AS country_id
