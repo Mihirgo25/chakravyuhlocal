@@ -656,7 +656,7 @@ def list_fcl_freight_rate_trends_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
-    
+
 
 @bramhastra.get("/get_fcl_freight_rate_differences")
 def get_fcl_freight_rate_differences_api(

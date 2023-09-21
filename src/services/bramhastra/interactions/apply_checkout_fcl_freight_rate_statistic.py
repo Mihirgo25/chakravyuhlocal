@@ -8,8 +8,7 @@ from configs.env import APP_ENV
 
 def apply_checkout_fcl_freight_rate_statistic(request):
     if APP_ENV == AppEnv.production.value:
-        checkout = Checkout(request.params)
+        checkout = Checkout()
         if request.action == CheckoutAction.create.value:
-            checkout.set()
-            checkout.create()
+            checkout.set(request.params)
     return {"success": True}

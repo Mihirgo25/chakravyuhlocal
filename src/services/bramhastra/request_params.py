@@ -137,7 +137,7 @@ class CheckoutFclFreightService(BaseModel):
 
 class FclFreightCheckoutParams(BaseModel):
     checkout_source: str = Field(alias="source")
-    source_id: str
+    checkout_source_id: str =  Field(alias="source_id")
     importer_exporter_id: str
     created_at: datetime
     updated_at: datetime
