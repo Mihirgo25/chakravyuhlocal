@@ -59,8 +59,8 @@ from services.bramhastra.interactions.get_fcl_freight_rate_audit_statistics impo
 from services.bramhastra.interactions.list_fcl_freight_recommended_trends import (
     list_fcl_freight_recommended_trends,
 )
-from services.bramhastra.interactions.get_fcl_freight_rate_deviations import (
-    get_fcl_freight_rate_deviations,
+from services.bramhastra.interactions.get_fcl_freight_rate_differences import (
+    get_fcl_freight_rate_differences,
 )
 
 from services.bramhastra.request_params import (
@@ -607,8 +607,8 @@ def list_fcl_freight_recommended_trends_api(
         )
 
 
-@bramhastra.get("/get_fcl_freight_rate_deviations")
-def get_fcl_freight_rate_deviations_api(
+@bramhastra.get("/get_fcl_freight_rate_differences")
+def get_fcl_freight_rate_differences_api(
     filters: Annotated[Json, Query()] = {},
     auth_response: dict = Depends(authorize_token),
 ):
@@ -618,7 +618,7 @@ def get_fcl_freight_rate_deviations_api(
         )
 
     try:
-        response = get_fcl_freight_rate_deviations(filters)
+        response = get_fcl_freight_rate_differences(filters)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise

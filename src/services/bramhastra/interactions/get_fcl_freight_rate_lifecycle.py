@@ -18,6 +18,7 @@ from services.bramhastra.interactions.list_fcl_freight_rate_request_statistics i
     get_direct_indirect_filters as get_direct_indirect_filters_for_rate_request,
 )
 import concurrent.futures
+from services.bramhastra.config import LifeCycleConfig 
 
 POSSIBLE_DIRECT_FILTERS = {
     "origin_port_id",
@@ -79,10 +80,14 @@ async def get_fcl_freight_rate_lifecycle(filters):
 
     lifecycle_statistics = await get_lifecycle_statistics(filters.copy(), where)
     
+    graph = LifeCycleConfig(lifecycle_statistics)
+    graph_data = graph.fill_flows()
+
     return dict(
         mode_wise_rate_count=mode_wise_rate_count,
         searches=lifecycle_statistics["spot_search"],
         cards=lifecycle_statistics,
+        graph=graph_data,
     )
 
 
