@@ -79,7 +79,7 @@ def get_date_range_filter(where):
 
 
 async def get_fcl_freight_rate_lifecycle(filters):
-    where = get_direct_indirect_filters_for_rate(filters)
+    where = get_direct_indirect_filters_for_rate(filters,date=None)
 
     # mode_wise_rate_count = await get_mode_wise_rate_count(filters.copy(), where)
 
@@ -163,10 +163,12 @@ async def get_lifecycle_statistics(filters, where):
     ]
     checkout = [generate_sum_query("checkout")]
     shipment = [generate_sum_query("shipment")]
-    confirmed = [generate_count_query('confirmed_by_importer_exporter')]
-    completed = [generate_count_query('completed')]
-    aborted = [generate_count_query('aborted')]
-    cancelled = [generate_count_query('cancelled')]
+    
+    confirmed = [avg_group_by_query('shipment_confirmed_by_importer_exporter')]
+    completed = [avg_group_by_query('shipment_completed')]
+    aborted = [avg_group_by_query('shipment_aborted')]
+    cancelled = [avg_group_by_query('shipment_cancelled')]
+
     revenue_desk = [generate_sum_query("revenue_desk_visit")]
     so1 = [generate_sum_query("so1_select")]
 
@@ -318,21 +320,15 @@ def filter_out_of_range_value(val):
     return val
 def generate_sum_query(column):
         return f"""
-        SELECT SUM(sign*{column}) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} > 0
+        SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} > 0
         """
-def generate_count_query(status):
-    return f"""
-    SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state = '{status}'
-    """
-def generate_missing_rate_query(status):
-    return f"""
-    SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state = '{status}' AND source = 'missing_rates'
-    """ 
-def generate_disliked_count_query(status):
-    return f"""
-    SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state = '{status}' AND disliked = 1
-    """ 
+
 def count_boolean_query(column):
-        return f"""
-        SELECT SUM({column}) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} = 1
-        """
+    return f"""
+    SELECT SUM({column}) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} = 1
+    """
+def avg_group_by_query(column):
+    #use groupBY , avg for faster query
+    return f"""
+    SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} = 1 
+    """
