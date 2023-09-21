@@ -39,7 +39,9 @@ class ColoredFormatter(logging.Formatter):
     }
 
     def _query_val_transform(self, v):
-        if isinstance(v, (str, datetime.datetime, datetime.date, datetime.time)):
+        if isinstance(v, bool):
+            pass
+        elif isinstance(v, (str, datetime.datetime, datetime.date, datetime.time)):
             v = "'%s'" % v
         elif isinstance(v, bytes):
             try:
@@ -62,10 +64,19 @@ class ColoredFormatter(logging.Formatter):
                 sql, params = record.msg
                 if params is None:
                     message = sql
-                else:
+                elif isinstance(params, list):
+                    params = tuple(params)
                     message = sql % tuple(map(self._query_val_transform, params))
-            except Exception:
-                pass
+                elif isinstance(params, tuple):
+                    message = sql % tuple(map(self._query_val_transform, params))
+                elif isinstance(params, dict):
+                    params = {
+                        k: self._query_val_transform(v) for k, v in params.items()
+                    }
+                    message = sql % params
+            except Exception as exc:
+                if isinstance(exc, TypeError):
+                    message = sql
         elif isinstance(record.msg, str):
             message = record.msg
         color = self.COLORS.get(record.levelname, self.COLORS["RESET"])
