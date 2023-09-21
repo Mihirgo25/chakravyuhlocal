@@ -115,7 +115,7 @@ RATE_PARAMS = [
     "service_provider_id",
     "shipping_line_id",
     "mode",
-    "accuracy",
+    # "accuracy",
     "cogo_entity_id",
     "sourced_by_id",
     "procured_by_id",
@@ -1762,9 +1762,9 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         ]:
             try:
                 try:
-                db.execute_sql(f"drop table {model._meta.table_name}")
-            except:
-                pass
+                    db.execute_sql(f"drop table {model._meta.table_name}")
+                except:
+                    pass
             except Exception:
                 pass
 
@@ -1795,10 +1795,10 @@ def main():
     populate_from_rates.hard_reset()
     print("# active rates from rms to main_statistics")
     populate_from_rates.populate_from_active_rates()
-    print('#like dislike count in main_statistics and populate feedback_statistics')
-    populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
-    print("# update map_zone_ids for main_statistics and missing_requests")
-    populate_from_rates.update_pricing_map_zone_ids()
+    # print('#like dislike count in main_statistics and populate feedback_statistics')
+    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
+    # print("# update map_zone_ids for main_statistics and missing_requests")
+    # populate_from_rates.update_pricing_map_zone_ids()
     print("parent modes")
     populate_from_rates.update_parent_mode()
     

@@ -29,7 +29,7 @@ class BaseModel(Model):
 
 class FclFreightAction(BaseModel):
     id = BigAutoField()
-    fcl_freight_rate_statistic_id = ForeignKeyField(FclFreightRateStatistic)
+    fcl_freight_rate_statistic_id = BigIntegerField(null=True)
     origin_port_id = UUIDField(index=True, default=DEFAULT_UUID)
     destination_port_id = UUIDField(index=True, default=DEFAULT_UUID)
     origin_main_port_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
@@ -60,9 +60,9 @@ class FclFreightAction(BaseModel):
     parent_mode = CharField(index=True)
     source = CharField(index=True)
     source_id = UUIDField(index=True, default=DEFAULT_UUID)
-    sourced_by_id = UUIDField(index=True, default="None", default=DEFAULT_UUID)
-    procured_by_id = UUIDField(index=True, default="None", default=DEFAULT_UUID)
-    performed_by_id = UUIDField(index=True, default="None", default=DEFAULT_UUID)
+    sourced_by_id = UUIDField(index=True, default=DEFAULT_UUID)
+    procured_by_id = UUIDField(index=True, default=DEFAULT_UUID)
+    performed_by_id = UUIDField(index=True, default=DEFAULT_UUID)
     rate_type = CharField(default="None")
     validity_start = DateField()
     validity_end = DateField()

@@ -77,7 +77,7 @@ def get_date_range_filter(where):
 async def get_fcl_freight_rate_lifecycle(filters):
     where = get_direct_indirect_filters_for_rate(filters)
 
-    mode_wise_rate_count = await get_mode_wise_rate_count(filters.copy(), where)
+    # mode_wise_rate_count = await get_mode_wise_rate_count(filters.copy(), where)
 
     lifecycle_statistics = await get_lifecycle_statistics(filters.copy(), where)
     
@@ -85,7 +85,7 @@ async def get_fcl_freight_rate_lifecycle(filters):
     graph_data = graph.fill_flows()
 
     return dict(
-        mode_wise_rate_count=mode_wise_rate_count,
+        # mode_wise_rate_count=mode_wise_rate_count,
         searches=lifecycle_statistics["spot_search"],
         cards=lifecycle_statistics,
         graph=graph_data,
