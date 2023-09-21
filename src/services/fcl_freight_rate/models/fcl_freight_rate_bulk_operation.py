@@ -1441,10 +1441,11 @@ class FclFreightRateBulkOperation(BaseModel):
                     continue
 
                 line_items = data['line_items']
-                local_line_items = local['data']['line_items']
+                local_line_items = ((local.get('data') or {}).get('line_items',[]) or [])
                 local_line_items_codes = []
-                for local_line_item in local_line_items:
-                    local_line_items_codes.append(local_line_item['code'])
+                if local_line_items:
+                    for local_line_item in local_line_items:
+                        local_line_items_codes.append(local_line_item['code'])
 
                 line_items_codes = []
                 line_items_seperation = {}
@@ -1466,7 +1467,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 if  line_items_seperation:
                     completed_codes = []
                     for line_item in line_items:
-                        local_line_items = local['data']['line_items']
+                        local_line_items = local['data'].get('line_items')
                         code = line_item["code"]
                         if code not in completed_codes:
 
@@ -1541,12 +1542,16 @@ class FclFreightRateBulkOperation(BaseModel):
                 self.set_progress_percent(progress)
                 continue
 
-            line_items = [t for t in local['data']['line_items'] if t['code'] == data['line_item_code'] and t.get('conditions')]
+            if not (local.get('data') or {}).get('line_items'):
+                continue
+
+            line_items = [t for t in local['data'].get('line_items',[]) if t.get('code') == data['line_item_code'] and t.get('conditions')]
+
             if not line_items:
                 progress = int((count * 100.0) / total_count)
                 self.set_progress_percent(progress)
 
-            local['data']['line_items'] = [t for t in local['data']['line_items'] if t not in line_items]
+            local['data']['line_items'] = [t for t in local['data'].get('line_items',[]) if t not in line_items]
 
             update_fcl_freight_rate_local({
                 'id': local['id'],
