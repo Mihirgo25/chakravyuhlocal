@@ -22,16 +22,15 @@ def list_ftl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by='upd
         query = get_filters(direct_filters, query, FtlFreightRate)
         query = apply_indirect_filters(query, indirect_filters)
 
-    total_count = query.count()
-
     if return_query:
        return {'list': query}
+
+    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
 
     if page_limit:
       query = query.paginate(page, page_limit)
 
     data = get_data(query)
-    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required, total_count)
 
     return {'list': data } | (pagination_data)
 
@@ -74,7 +73,8 @@ def get_data(query):
     final_data.append(object)
   return final_data
 
-def get_pagination_data(query, page, page_limit, pagination_data_required, total_count):
+def get_pagination_data(query, page, page_limit, pagination_data_required):
+    total_count = query.count()
     if not pagination_data_required:
         return {}
 
