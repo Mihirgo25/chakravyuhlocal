@@ -5,11 +5,11 @@ from fastapi.encoders import jsonable_encoder
 from services.bramhastra.helpers.fcl_freight_filter_helper import (
     set_port_code_filters_and_service_object,
 )
-from services.bramhastra.helpers.fcl_freight_filter_helper import (
-    get_direct_indirect_filters,
-)
+# from services.bramhastra.helpers.fcl_freight_filter_helper import (
+#     get_direct_indirect_filters,
+# )
 
-def get_fcl_freight_rate_deviations(filters: dict) -> dict:
+def get_fcl_freight_rate_differences(filters: dict) -> dict:
     response, locations = get_rate(filters)
     response = {
         "rate_deviations": response,
@@ -33,38 +33,40 @@ def get_rate(filters: dict) -> list:
     ):
         set_port_code_filters_and_service_object(filters, location_object)
         
-    where = get_direct_indirect_filters(filters)
+    # where = get_direct_indirect_filters(filters)
 
-    if where:
-        queries.append(" WHERE ")
-        queries.append(where)
-        queries.append("AND is_deleted = false")
-        
-    queries.append(
-        """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day ORDER BY day,mode;"""
-    )
+    # if where:
+    #     queries.append(" WHERE ")
+    #     queries.append(where)
+    #     queries.append("AND is_deleted = false")
+
+    #     queries.append(
+    #         """AND (day <= %(end_date)s) AND (day >= %(start_date)s)"""
+    #     )
+    # else:
+    #     queries.append(
+    #         """WHERE (day <= %(end_date)s) AND (day >= %(start_date)s)"""
+    #     )
 
     queries.append(
-        """ GROUP BY ROUND(bas_standard_price_diff_from_selected_rate) """
+        """GROUP BY deviation ORDER BY deviation;"""
     )
 
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
-    formatted_charts = format_charts(charts, filters)
+    formatted_charts = format_charts(charts)
 
     return formatted_charts, location_object
 
-def format_charts(charts: list, filters: dict) -> list:
-    NEEDED_MODES = {filters.get("mode")} if filters.get("mode") else {i.value for i in FclParentMode}
-
-    return format_response(charts, filters, NEEDED_MODES)
+def format_charts(charts: list) -> list:
+    return format_response(charts)
 
 def format_response(response: list) -> list:
     formatted_response = []
     for entry in response:
         formatted_response.append({
-            'deviation': entry.get('rate', '0'),
-            'count': entry.get('count','0'),
+            'deviation': entry.get('deviation', '0'),
+            'rate_count': entry.get('count','0'),
         })
 
     return formatted_response
