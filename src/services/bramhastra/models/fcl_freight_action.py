@@ -4,7 +4,7 @@ from peewee import (
     UUIDField,
     IntegerField,
     FloatField,
-    DateField
+    DateField,
 )
 from database.db_session import db
 from playhouse.postgres_ext import (
@@ -12,8 +12,8 @@ from playhouse.postgres_ext import (
     BigAutoField,
     TextField,
     CharField,
-    ForeignKeyField,,
-    ArrayField
+    ForeignKeyField,
+    ArrayField,
 )
 from datetime import datetime
 from services.bramhastra.enums import ImportTypes
@@ -31,7 +31,6 @@ class BaseModel(Model):
 
 class FclFreightAction(BaseModel):
     id = BigAutoField()
-    fcl_freight_rate_statistic_id = ForeignKeyField(FclFreightRateStatistic)
     origin_port_id = UUIDField(index=True, default=DEFAULT_UUID)
     destination_port_id = UUIDField(index=True, default=DEFAULT_UUID)
     origin_main_port_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
@@ -48,7 +47,6 @@ class FclFreightAction(BaseModel):
     container_size = TextField(null=True, index=True)
     container_type = TextField(null=True, index=True)
     service_provider_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
-    containers_count = IntegerField(default=0)
     rate_id = UUIDField(index=True, default=DEFAULT_UUID)
     validity_id = UUIDField(index=True, default=DEFAULT_UUID)
     bas_price = FloatField(default=0, null=True)
@@ -62,9 +60,9 @@ class FclFreightAction(BaseModel):
     parent_mode = CharField(index=True)
     source = CharField(index=True)
     source_id = UUIDField(index=True, default=DEFAULT_UUID)
-    sourced_by_id = UUIDField(index=True, default="None", default=DEFAULT_UUID)
-    procured_by_id = UUIDField(index=True, default="None", default=DEFAULT_UUID)
-    performed_by_id = UUIDField(index=True, default="None", default=DEFAULT_UUID)
+    sourced_by_id = UUIDField(index=True, default=DEFAULT_UUID)
+    procured_by_id = UUIDField(index=True, default=DEFAULT_UUID)
+    performed_by_id = UUIDField(index=True, default=DEFAULT_UUID)
     rate_type = CharField(default="None")
     validity_start = DateField()
     validity_end = DateField()
@@ -93,10 +91,8 @@ class FclFreightAction(BaseModel):
     shipment_confirmed_by_importer_exporter = IntegerField(default=0)
     shipment_recieved = IntegerField(default=0)
     shipment_source_id = UUIDField(null=True)
-    shipment_state = TextField(null=True)
     shipment_created_at = DateTimeTZField(null=True)
     shipment_updated_at = DateTimeTZField(null=True)
-    shipment_cancellation_reason = TextField(null=True)
     shipment_service_state = CharField(null=True)
     shipment_service_is_active = CharField(null=True)
     shipment_service_created_at = DateTimeTZField(null=True)
@@ -110,6 +106,7 @@ class FclFreightAction(BaseModel):
     selected_bas_standard_price = FloatField(default=0)
     bas_standard_price_accuracy = FloatField(default=-sys.float_info.max)
     bas_standard_price_diff_from_selected_rate = FloatField(default=0)
+    fcl_freight_rate_statistic_id = BigIntegerField(default=0)
     selected_fcl_freight_rate_statistic_id = BigIntegerField(default=0)
     selected_rate_id = UUIDField(index=True, null=True, default=DEFAULT_UUID)
     selected_validity_id = UUIDField(index=True, null=True, default=DEFAULT_UUID)
@@ -118,8 +115,8 @@ class FclFreightAction(BaseModel):
     given_priority = IntegerField(default=0)
     rate_created_at = DateTimeTZField(index=True)
     rate_updated_at = DateTimeTZField(index=True)
-    validity_updated_at = DateTimeTZField(index=True)
     validity_created_at = DateTimeTZField(index=True)
+    validity_updated_at = DateTimeTZField(index=True)
     created_at = DateTimeTZField(index=True)
     updated_at = DateTimeTZField(index=True)
     operation_created_at = DateTimeTZField(default=datetime.utcnow())
