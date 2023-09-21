@@ -114,31 +114,31 @@ async def get_lifecycle_statistics(filters, where):
     ]
     liked = [count_boolean_query('liked')]
     disliked = [count_boolean_query('disliked')]
-    feedback_closed = [
+
+    feedback_received_count = [
         f"""
-        SELECT COUNT(*) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE status = 'inactive'
+        SELECT COUNT(DISTINT feedback_id) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE disliked = 1
         """
     ]
+    #ok
     rate_reverted_feedbacks = [
         f"""
         SELECT SUM(is_reverted) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_reverted = 1 GROUP BY rate_id
         """
     ]
-    #?
-    feedback_received_count = [
+
+    feedback_rates_added = [
         f"""
-        SELECT SUM(is_reverted) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE disliked = 1 GROUP BY rate_id
+        SELECT COUNT(*) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE status = 'inactive'
         """
     ]
     #Feedback
     feedback_received_shipments = [generate_disliked_count_query('received')]
-# - feedback
-    ##missing 
+# - feedback 
 
-    # source missing rates
     requests_closed = [
         f"""
-        SELECT COUNT(*) AS count FROM brahmastra.{FclFreightRateRequest._meta.table_name} WHERE source = 'missing_rates' AND status = 'inactive'
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightRateRequest._meta.table_name} WHERE source = 'missing_rates' AND status = 'inactive'
         """
     ]  
     rates_requested= [
@@ -188,7 +188,7 @@ async def get_lifecycle_statistics(filters, where):
     completed,
     liked, 
     disliked, 
-    feedback_closed, 
+    feedback_rates_added, 
     
     rates_requested,
     rates_reverted, 
@@ -228,25 +228,24 @@ async def get_lifecycle_statistics(filters, where):
         * 100,
         
         "disliked_count": disliked["count"],
-        "disliked_dropoff": (1 - (disliked["count"] / (spot_search["count"] or 1)))
+        "disliked_dropoff": (1 - (disliked["count"] / (rates_shown["count"] or 1)))
         * 100,
 
+        "feedback_received_count": feedback_received_count["count"],
+        "feedback_received_dropoff": (1 - (feedback_received_count["count"] / (disliked["count"] or 1)))* 100,
+
+        "rate_reverted_feedbacks_count": rate_reverted_feedbacks["count"],
+        "rate_reverted_feedbacks_dropoff": (1 - (rate_reverted_feedbacks["count"] / (feedback_received_count["count"] or 1)))* 100,
+
+        "feedback_rates_added_count": feedback_rates_added["count"],
+        "feedback_rates_added_dropoff": (1 - (feedback_rates_added["count"] / (rate_reverted_feedbacks["count"] or 1)))* 100,
+        
         "liked_count": liked["count"],
         "liked_dropoff": (1 - (liked["count"] / (spot_search["count"] or 1)))
         * 100,
-
-        "rate_reverted_feedbacks_count": rate_reverted_feedbacks["count"],
-        "rate_reverted_feedbacks_dropoff": (1 - (rate_reverted_feedbacks["count"] / (spot_search["count"] or 1)))* 100,
-
-        "feedback_received_count": feedback_received_count["count"],
-        "feedback_received_dropoff": (1 - (feedback_received_count["count"] / (spot_search["count"] or 1)))* 100,
-        
-        "feedback_rates_added_count": feedback_received_count["count"],
-        "feedback_rates_added_dropoff": (1 - (feedback_received_count["count"] / (spot_search["count"] or 1)))* 100,
-
         #Checkout branch buisness-1
         "spot_search": spot_search["count"],
-        "spot_search_dropoff": (1 - (spot_search["count"] / (rates_shown["count"] or 1)))* 100,
+        "spot_search_dropoff": (spot_search["count"])* 100,
 
         "checkout_count": checkout["count"],
         "checkout_dropoff": (1 - (checkout["count"] / (spot_search["count"] or 1)))* 100,
@@ -284,10 +283,10 @@ async def get_lifecycle_statistics(filters, where):
         )
         * 100,
         "requests_closed_count": requests_closed["count"],
-        "requests_closed_dropoff": (1 - (requests_closed["count"] / rates_shown["count"] or 1))
+        "requests_closed_dropoff": (1 - (requests_closed["count"] / rates_requested["count"] or 1))
         * 100,
         "rates_reverted_count": rates_reverted["count"],
-        "rates_reverted_dropoff": (1 - (rates_reverted["count"] / rates_shown["count"] or 1))
+        "rates_reverted_dropoff": (1 - (rates_reverted["count"] / requests_closed["count"] or 1))
         * 100,
 
 
