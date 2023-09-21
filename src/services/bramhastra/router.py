@@ -59,6 +59,9 @@ from services.bramhastra.interactions.get_fcl_freight_rate_audit_statistics impo
 from services.bramhastra.interactions.list_fcl_freight_recommended_trends import (
     list_fcl_freight_recommended_trends,
 )
+from services.bramhastra.interactions.list_fcl_freight_rate_trends import (
+    list_fcl_freight_rate_trends,
+)
 from services.bramhastra.interactions.get_fcl_freight_rate_deviations import (
     get_fcl_freight_rate_deviations,
 )
@@ -593,10 +596,26 @@ def list_fcl_freight_recommended_trends_api(
     is_service_object_required: bool = False,
 ):
     try:
-        limit = min(limit,5)
+        limit = min(limit, 5)
         response = list_fcl_freight_recommended_trends(
             filters, limit, is_service_object_required
         )
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@bramhastra.get("/list_fcl_freight_rate_trends")
+def list_fcl_freight_rate_trends_api(
+    filters: Annotated[Json, Query()] = {},
+):
+    try:
+        response = list_fcl_freight_rate_trends(filters)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
