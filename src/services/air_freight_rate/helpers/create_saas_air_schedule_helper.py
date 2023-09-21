@@ -15,4 +15,4 @@ def create_saas_air_schedule_airport_pair(air_object,request):
         )
     
     if not air_freight_query.exists():
-        common.create_saas_air_schedule_airport_pair_coverages({"origin_airport_id":origin_airport_id, "destination_airport_id":destination_airport_id,"airline_id":airline_id})
+        common.create_saas_air_schedule_airport_pair_coverage({"origin_airport_id":origin_airport_id, "destination_airport_id":destination_airport_id,"airline_id":airline_id})
