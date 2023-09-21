@@ -13,7 +13,9 @@ from libs.json_encoder import json_encoder
 NOT_REQUIRED_FIELDS = ["destination_local_line_items_info_messages",  "origin_local_line_items_info_messages", "origin_local_line_items_error_messages", "destination_local_line_items_error_messages", "destination_location_ids", "origin_location_ids", "omp_dmp_sl_sp", "init_key"]
 
 possible_direct_filters = ['id', 'origin_port_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_port_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'container_size', 'container_type', 'commodity', 'is_best_price', 'rate_not_available_entry', 'origin_main_port_id', 'destination_main_port_id', 'cogo_entity_id', 'procured_by_id','rate_type', 'mode']
-possible_indirect_filters = ['is_origin_local_missing', 'is_destination_local_missing', 'is_weight_limit_missing', 'is_origin_detention_missing', 'is_origin_plugin_missing', 'is_destination_detention_missing', 'is_destination_demurrage_missing', 'is_destination_plugin_missing', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'origin_location_ids', 'destination_location_ids', 'importer_exporter_present', 'last_rate_available_date_greater_than','last_rate_available_date_less_than', 'validity_start_greater_than', 'validity_end_less_than', 'partner_id', 'importer_exporter_relevant_rate','exclude_shipping_line_id','exclude_service_provider_types','exclude_rate_types','service_provider_type', 'updated_at_greater_than', 'updated_at_less_than','updated_at_greater_than_time', 'updated_at_less_than_time' 'get_cogo_assured_checkout_rates']
+possible_indirect_filters = ['is_origin_local_missing', 'is_destination_local_missing', 'is_weight_limit_missing', 'is_origin_detention_missing', 'is_origin_plugin_missing', 'is_destination_detention_missing', 'is_destination_demurrage_missing', 'is_destination_plugin_missing', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'origin_location_ids', 'destination_location_ids', 'importer_exporter_present', 'last_rate_available_date_greater_than','last_rate_available_date_less_than', 'validity_start_greater_than', 'validity_end_less_than', 'partner_id', 'importer_exporter_relevant_rate','exclude_shipping_line_id','exclude_service_provider_types','exclude_rate_types','service_provider_type', 'updated_at_greater_than', 'updated_at_less_than','updated_at_greater_than_time', 'updated_at_less_than_time', 'get_cogo_assured_checkout_rates']
+
+EXCLUDED_PROPERTIES = ['id', 'created_at', 'updated_at']
 
 def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = None, sort_type = 'desc', return_query = False, expired_rates_required = False, return_count = False,  is_line_items_required = False, includes = {}, pagination_data_required = False):
   query = get_query(sort_by, sort_type, includes)
@@ -55,7 +57,7 @@ def get_query(sort_by, sort_type, includes):
   fcl_fields = [getattr(FclFreightRate, key) for key in required_fcl_fields]
   
   properties_all_fields = list(FclFreightRateProperties._meta.fields.keys())
-  required_properties_fields = list(c for c in includes.keys() if c in properties_all_fields and c != 'id') if includes else []
+  required_properties_fields = list(c for c in includes.keys() if c in properties_all_fields and c  not in EXCLUDED_PROPERTIES) if includes else []
   properties_fields = [getattr(FclFreightRateProperties, key) for key in required_properties_fields]
   
   fields = fcl_fields + properties_fields
@@ -82,7 +84,7 @@ def get_data(query, expired_rates_required,is_line_items_required):
     
     validities = []
     
-    if result['validities']:
+    if result.get('validities'):
       for validity_object in result['validities']:
         if (datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') <= datetime.now()) and (not expired_rates_required):
             continue 

@@ -140,9 +140,11 @@ class FclFreightRateStatistic(BaseModel):
         return type(self).get(self._pk_expr())
 
     CLICK_KEYS = [
+        "is_deleted",
         "origin_continent_id",
         "origin_country_id",
         "origin_port_id",
+        "shipping_line_id",
         "rate_id",
         "validity_id",
     ]
