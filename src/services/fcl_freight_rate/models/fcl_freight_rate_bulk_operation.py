@@ -447,12 +447,18 @@ class FclFreightRateBulkOperation(BaseModel):
                 progress = int((count * 100.0) / total_count)
                 self.set_progress_percent(progress)
                 continue
+            validity_start = datetime.strptime(data['validity_start'], "%Y-%m-%d")
+            validity_end = datetime.strptime(data['validity_end'], "%Y-%m-%d")
+            
+            if data.get('delete_all_validities') == True:
+                validity_start -= timedelta(days=60)
+                validity_end += timedelta(days=60)           
 
             delete_fcl_freight_rate({
                 'id': str(freight["id"]),
                 'performed_by_id': self.performed_by_id,
-                'validity_start': datetime.strptime(data['validity_start'],"%Y-%m-%d"),
-                'validity_end': datetime.strptime(data['validity_end'],"%Y-%m-%d"),
+                'validity_start': validity_start,
+                'validity_end': validity_end,
                 'bulk_operation_id': self.id,
                 'sourced_by_id': sourced_by_id,
                 'procured_by_id': procured_by_id,
