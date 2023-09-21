@@ -17,6 +17,10 @@ from services.bramhastra.models.fcl_freight_rate_request_statistics import (
 from services.bramhastra.interactions.list_fcl_freight_rate_request_statistics import (
     get_direct_indirect_filters as get_direct_indirect_filters_for_rate_request,
 )
+from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
+    FeedbackFclFreightRateStatistic
+)
+
 from services.bramhastra.config import LifeCycleConfig
 import concurrent.futures
 from services.bramhastra.config import LifeCycleConfig 
@@ -77,7 +81,7 @@ def get_date_range_filter(where):
 async def get_fcl_freight_rate_lifecycle(filters):
     where = get_direct_indirect_filters_for_rate(filters)
 
-    mode_wise_rate_count = await get_mode_wise_rate_count(filters.copy(), where)
+    # mode_wise_rate_count = await get_mode_wise_rate_count(filters.copy(), where)
 
     lifecycle_statistics = await get_lifecycle_statistics(filters.copy(), where)
     
@@ -85,7 +89,7 @@ async def get_fcl_freight_rate_lifecycle(filters):
     graph_data = graph.fill_flows()
 
     return dict(
-        mode_wise_rate_count=mode_wise_rate_count,
+        # mode_wise_rate_count=mode_wise_rate_count,
         searches=lifecycle_statistics["spot_search"],
         cards=lifecycle_statistics,
         graph=graph_data,
@@ -119,7 +123,7 @@ async def get_lifecycle_statistics(filters, where):
 
     feedback_received = [
         f"""
-        SELECT COUNT(DISTINT feedback_id) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE disliked = 1
+        SELECT COUNT(*) AS count FROM brahmastra.{FeedbackFclFreightRateStatistic._meta.table_name}
         """
     ]
     #ok
@@ -163,7 +167,7 @@ async def get_lifecycle_statistics(filters, where):
     completed = [generate_count_query('completed')]
     aborted = [generate_count_query('aborted')]
     cancelled = [generate_count_query('cancelled')]
-    revenue_desk = [generate_sum_query("revenue_desk_shown_rates")]
+    revenue_desk = [generate_sum_query("revenue_desk_visit")]
     so1 = [generate_sum_query("so1_select")]
 
 
@@ -194,7 +198,10 @@ async def get_lifecycle_statistics(filters, where):
 
     if where:
         for var in variables:
-            var.append(f"AND {where}")
+            if('where' in " ".join(var).lower()):
+                var.append(f" AND {where} ")
+            else:
+                var.append(f" WHERE {where} ")
         
     missing_rates_filter = filters.copy()
 
@@ -315,15 +322,15 @@ def generate_sum_query(column):
         """
 def generate_count_query(status):
     return f"""
-    SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_status = '{status}'
+    SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state = '{status}'
     """
 def generate_missing_rate_query(status):
     return f"""
-    SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_status = '{status}' AND source = 'missing_rates'
+    SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state = '{status}' AND source = 'missing_rates'
     """ 
 def generate_disliked_count_query(status):
     return f"""
-    SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_status = '{status}' AND disliked = 1
+    SELECT COUNT(DISTINCT shipment_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state = '{status}' AND disliked = 1
     """ 
 def count_boolean_query(column):
         return f"""

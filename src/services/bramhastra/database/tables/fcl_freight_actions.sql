@@ -1,6 +1,7 @@
 CREATE TABLE brahmastra.fcl_freight_actions
 (
     id UInt256,
+    fcl_freight_rate_statistic_id UInt256,
     origin_port_id UUID,
     destination_port_id UUID,
     origin_main_port_id UUID,
@@ -77,7 +78,6 @@ CREATE TABLE brahmastra.fcl_freight_actions
     selected_bas_standard_price Float64 DEFAULT 0,
     bas_standard_price_accuracy Float64 DEFAULT 0,
     bas_standard_price_diff_from_selected_rate Float64 DEFAULT 0,
-    fcl_freight_rate_statistic_id UInt256,
     selected_fcl_freight_rate_statistic_id UInt256,
     selected_rate_id UUID,
     selected_validity_id UUID,
