@@ -1,5 +1,6 @@
 from celery_worker import celery
 from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import adding_multiple_service_object
+from services.ftl_freight_rate.interactions.create_ftl_freight_rate import create_ftl_freight_rate
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def ftl_bulk_operation_perform_action_functions(self, action_name,object,sourced_by_id,procured_by_id):
@@ -52,3 +53,13 @@ def send_missing_or_dislike_rate_notifications_to_platform(self, object, request
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=3, retry_backoff=True)
+def create_ftl_freight_rate_delay(self, request):
+    try:
+        return create_ftl_freight_rate(request)
+    except Exception as e:
+        if type(e).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= e)
