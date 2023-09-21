@@ -72,12 +72,4 @@ SHIPMENT_RATE_STATS_KEYS = [
     "accuracy",
 ]
 
-RATE_DETAIL_KEYS = [
-    "id",
-    "rate_id",
-    "validity_id",
-    "booking_rate_count",
-    "standard_price",
-]
-
 DEFAULT_UUID = "00000000-0000-0000-0000-000000000000"

@@ -1761,7 +1761,10 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             WorkerLog
         ]:
             try:
+                try:
                 db.execute_sql(f"drop table {model._meta.table_name}")
+            except:
+                pass
             except Exception:
                 pass
 

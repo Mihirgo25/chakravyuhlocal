@@ -105,17 +105,13 @@ async def get_stale_rate_statistics(filters, where):
 
 
 async def get_lifecycle_statistics(filters, where):
-    #Main block 
-    spot_search = [
-        f"""
-        SELECT COUNT(DISTINCT spot_search_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE spot_search = 1
-        """
-    ]
+    #Buisness block 
+
     #rates shown
 
     rates_shown = [
         f"""
-        SELECT SUM(spot_search) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE spot_search > 0
+        SELECT COUNT(DISTINCT rate_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE spot_search > 0
         """ 
     ]
     liked = [count_boolean_query('liked')]
@@ -130,14 +126,13 @@ async def get_lifecycle_statistics(filters, where):
         SELECT SUM(is_reverted) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_reverted = 1 GROUP BY rate_id
         """
     ]
+    #?
     feedback_received_count = [
         f"""
         SELECT SUM(is_reverted) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE disliked = 1 GROUP BY rate_id
         """
     ]
     #Feedback
-
-    feedback_aborted_shipments = [generate_disliked_count_query('aborted')]
     feedback_received_shipments = [generate_disliked_count_query('received')]
 # - feedback
     ##missing 
@@ -160,16 +155,26 @@ async def get_lifecycle_statistics(filters, where):
     ]
 
 
-    #Checkout branch 
+    #Buisness branch 
+    spot_search = [
+        f"""
+        SELECT COUNT(DISTINCT spot_search_id) AS count FROM brahmastra.{FclFreightAction._meta.table_name}
+        """
+    ]
     checkout = [generate_sum_query("checkout")]
     shipment = [generate_sum_query("shipment")]
-    so1 = [generate_sum_query("so1_select")]
-    revenue_desk = [generate_sum_query("revenue_desk_shown_rates")]
-    cancelled = [generate_count_query('cancelled')]
-    aborted = [generate_count_query('aborted')]
-    received_shipments = [generate_count_query('received')]
     confirmed = [generate_count_query('confirmed_by_importer_exporter')]
     completed = [generate_count_query('completed')]
+    aborted = [generate_count_query('aborted')]
+    cancelled = [generate_count_query('cancelled')]
+    revenue_desk = [generate_sum_query("revenue_desk_shown_rates")]
+    so1 = [generate_sum_query("so1_select")]
+    
+    
+    
+    received_shipments = [generate_count_query('received')]
+    
+
 
     variables = [
     spot_search, 
@@ -190,7 +195,6 @@ async def get_lifecycle_statistics(filters, where):
     rates_requested,
     rates_reverted, 
 
-    feedback_aborted_shipments, 
     feedback_received_shipments, 
     rate_reverted_feedbacks
     ]

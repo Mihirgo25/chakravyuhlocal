@@ -5,6 +5,7 @@ from services.bramhastra.brahmastra import Brahmastra
 @celery.task(bind=True, retry_backoff=True, max_retries=5)
 def brahmastra_in_delay(self):
     # using this until we get all queries right
+    return
     try:
         brahmastra = Brahmastra()
         brahmastra.used_by(arjun=True)

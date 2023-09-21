@@ -12,9 +12,11 @@ from playhouse.postgres_ext import (
     BigAutoField,
     TextField,
     CharField,
+    ForeignKeyField
 )
 from datetime import datetime
 from services.bramhastra.enums import ImportTypes
+from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
 import sys
 
 
@@ -25,6 +27,7 @@ class BaseModel(Model):
 
 class FclFreightAction(BaseModel):
     id = BigAutoField()
+    fcl_freight_rate_statistic_id = ForeignKeyField(FclFreightRateStatistic)
     origin_port_id = UUIDField(index=True)
     destination_port_id = UUIDField(index=True)
     origin_main_port_id = UUIDField(null=True, index=True)
@@ -78,14 +81,11 @@ class FclFreightAction(BaseModel):
     feedback_id = UUIDField(index=True, null=True)
     so1_select = IntegerField()
     selected_bas_standard_price = FloatField(default=0)
-    standard_price_accuracy = FloatField(default=-sys.float_info.max)
     bas_standard_price_accuracy = FloatField(default=-sys.float_info.max)
-    standard_price_diff_from_selected_rate = FloatField(default=0)
     bas_standard_price_diff_from_selected_rate = FloatField(default=0)
-    fcl_freight_rate_statistic_id = BigIntegerField(default=0)
-    so1_selected_fcl_freight_rate_statistic_id = BigIntegerField(default=0)
-    so1_selected_rate_id = UUIDField(index=True, null=True)
-    so1_selected_validity_id = UUIDField(index=True, null=True)
+    selected_fcl_freight_rate_statistic_id = BigIntegerField(default=0)
+    selected_rate_id = UUIDField(index=True, null=True)
+    selected_validity_id = UUIDField(index=True, null=True)
     revenue_desk_visit = IntegerField(default=0)
     revenue_desk_select = IntegerField(default=0)
     given_priority = IntegerField(default=0)
