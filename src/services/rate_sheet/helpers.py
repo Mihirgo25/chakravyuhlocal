@@ -176,6 +176,20 @@ def get_port_id(port_code):
         port_id = None
     return port_id
 
+def get_terminal_id(site_code):
+    try:
+        port_code = port_code.strip()
+    except:
+        port_code = port_code
+    filters = {
+        "filters": {"type": "seaport_terminal", "site_code": site_code, "status": "active"}
+    }
+    try:
+        port_id = maps.list_locations(filters)["list"][0]["id"]
+    except:
+        port_id = None
+    return port_id
+
 
 def get_shipping_line_id(shipping_line_name):
     try:
