@@ -178,9 +178,9 @@ def get_port_id(port_code):
 
 def get_terminal_id(site_code):
     try:
-        port_code = port_code.strip()
+        site_code = site_code.strip()
     except:
-        port_code = port_code
+        site_code = site_code
     filters = {
         "filters": {"type": "seaport_terminal", "site_code": site_code, "status": "active"}
     }
