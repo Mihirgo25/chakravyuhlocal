@@ -1,72 +1,77 @@
-from services.bramhastra.helpers.common_statistic_helper import get_fcl_freight_identifier
+from services.bramhastra.helpers.common_statistic_helper import (
+    get_fcl_freight_identifier,
+)
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
-from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
-    CheckoutFclFreightRateStatistic,
-)
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.bramhastra.constants import UNIQUE_FCL_SPOT_SEARCH_SERVICE_KEYS
 
 
 class Checkout:
-    def __init__(self, params) -> None:
-        self.common_params = None
-        self.checkout_params = []
-        self.increment_keys = {"checkout_count"}
-        self.params = params
-        self.fcl_freight_rate_statistic = None
-        self.rate = None
+    def __init__(self) -> None:
+        self.increment_keys = {FclFreightRateStatistic.checkout_count.name}
 
-    def set(self):
-        self.common_params = self.params.dict(exclude={"checkout_fcl_freight_services"})
-        for param in self.params.checkout_fcl_freight_services:
-            self.rate = param.rate.dict(include={"rate_id", "validity_id"})
-            total_buy_price = 0
-            for line_item in param.rate.line_items:
-                total_buy_price += line_item["total_buy_price"]
-            checkout_param = self.common_params.copy()
-            checkout_param.update(param.dict(exclude={"rate"}))
-            checkout_param["total_buy_price"] = total_buy_price
-            checkout_param["currency"] = param.rate.line_items[0]["currency"]
-            checkout_param.update(self.rate)
-
-            self.set_statistics()
-            self.update_statistics(
-                update_params=dict(updated_at=self.params.updated_at)
+    def set(self, params):
+        actions = self.get_actions_dict(params.source_id)
+        for checkout_fcl_freight_service in params.checkout_fcl_freight_services:
+            fcl_freight_rate_statistic = self.get_fcl_freight_rate_statistic(
+                checkout_fcl_freight_service.rate
             )
+            self.update_statistics(
+                fcl_freight_rate_statistic,
+                dict(created_at=params.created_at, source=params.source),
+            )
+            unique_fcl_spot_search_service_key = (
+                self.get_unique_fcl_spot_search_service_key(fcl_freight_rate_statistic)
+            )
+            action = actions.get(unique_fcl_spot_search_service_key)
+            action_update_params = params.dict(
+                include={"checkout_source", "created_at"}
+            )
+            action_update_params[
+                "checkout_id"
+            ] = checkout_fcl_freight_service.checkout_id
+            if action is not None:
+                self.update(action, action_update_params)
 
-            if self.fcl_freight_rate_statistic:
-                checkout_param[
-                    "fcl_freight_rate_statistic_id"
-                ] = self.fcl_freight_rate_statistic.id
-
-                self.checkout_params.append(checkout_param)
-
-    def update_action(self):
-        pass
-
-    def update(self):
-        pass
-
-    def set_statistics(self):
-        self.fcl_freight_rate_statistic = (
-            FclFreightRateStatistic.select()
-            .where(FclFreightRateStatistic.identifier == get_fcl_freight_identifier(**self.rate))
-            .first()
+    def get_fcl_freight_rate_statistic(self, rate):
+        FclFreightRateStatistic.select().where(
+            FclFreightRateStatistic.identifier
+            == get_fcl_freight_identifier(rate.rate_id, rate.validity_id)
         )
 
-    def update_statistics(self, update_params):
+    def get_unique_fcl_spot_search_service_key(self, model):
+        return "".join(
+            [str(getattr(model, key)) for key in UNIQUE_FCL_SPOT_SEARCH_SERVICE_KEYS]
+        )
+
+    def get_actions(self, spot_search_id):
+        actions = FclFreightAction.select().where(
+            FclFreightAction.spot_search_id == spot_search_id
+        )
+        actions_hash = dict()
+        for action in actions:
+            unique_fcl_spot_search_service_key = (
+                self.get_unique_fcl_spot_search_service_key(action)
+            )
+            actions_hash[unique_fcl_spot_search_service_key] = action
+        return actions_hash
+
+    def update(self, model, params):
+        for key, value in params.items():
+            if value is not None:
+                setattr(model, key, value)
+
+    def update_statistics(self, model, params=None):
         for key in self.increment_keys:
             setattr(
-                self.fcl_freight_rate_statistic,
+                model,
                 key,
-                getattr(self.fcl_freight_rate_statistic, key) + 1,
+                getattr(model, key) + 1,
             )
-        for key, value in update_params.items():
-            setattr(self.fcl_freight_rate_statistic, key, value)
-
-        self.fcl_freight_rate_statistic.save()
-
-    def create(self) -> int:
-        return CheckoutFclFreightRateStatistic.insert_many(
-            self.checkout_params
-        ).execute()
+        if params is not None:
+            for key, value in params.items():
+                if value is not None:
+                    setattr(model, key, value)
+        model.save()

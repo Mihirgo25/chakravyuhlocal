@@ -1,6 +1,3 @@
-from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import (
-    SpotSearchFclFreightRateStatistic,
-)
 from services.bramhastra.helpers.common_statistic_helper import (
     get_fcl_freight_identifier,
 )
@@ -9,64 +6,55 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 )
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
 from services.bramhastra.helpers.common_statistic_helper import REQUIRED_ACTION_FIELDS
+from typing import Union
+from peewee import Model
 
 
 class SpotSearch:
-    def __init__(self, params) -> None:
-        self.common_param = params.dict(exclude={"rates"})
-        self.spot_search_id = params.spot_search_id
-        self.spot_search_params = []
-        self.rates = params.rates
-        self.increment_keys = {"spot_search_count"}
+    def __init__(self) -> None:
+        self.increment_keys = {FclFreightRateStatistic.spot_search_count.name}
         self.fcl_freight_rate_statistic = None
 
-    def set(self):
+    def set(self, params) -> None:
         for rate in self.rates:
-            param = self.common_param.copy()
-            rate_dict = rate.dict(exclude={"payment_term", "schedule_type"})
-            param.update(rate_dict)
-            self.fcl_freight_rate_statistic = (
-                FclFreightRateStatistic.select()
-                .where(
-                    FclFreightRateStatistic.identifier
-                    == get_fcl_freight_identifier(**rate_dict)
-                )
-                .first()
-            )
+            self.fcl_freight_rate_statistic = self.__get_fcl_freight_rate_statistic()
             if self.fcl_freight_rate_statistic is None:
                 continue
-            self.update_statistics(dict(updated_at=param["updated_at"]))
-            if self.fcl_freight_rate_statistic:
-                param[
-                    "fcl_freight_rate_statistic_id"
-                ] = self.fcl_freight_rate_statistic.id
-                self.spot_search_params.append(param)
-            fcl_freight_action_create_params = rate_dict
-            fcl_freight_action_create_params["spot_search_id"] = self.spot_search_id
-            fcl_freight_action_create_params.update(
-                {
-                    k: getattr(self.fcl_freight_rate_statistic, k.name)
-                    for k in REQUIRED_ACTION_FIELDS
-                }
-            )
-            self.create_action(fcl_freight_action_create_params)
+            self.__update_statistics(dict(updated_at=params.updated_at))
+            action_params = self.__get_action_params(rate, params)
+            self.__create_action(action_params)
 
-    def create_action(self, params) -> None:
+    def __get_action_params(self, rates, params) -> dict:
+        action_params = {
+            "spot_search_id": params.spot_search_id,
+            "spot_search_fcl_freight_services_id": params.spot_search_fcl_freight_services_id,
+            "spot_search": 1,
+            **{
+                k: getattr(self.fcl_freight_rate_statistic, k.name)
+                for k in REQUIRED_ACTION_FIELDS
+            },
+            **rates,
+        }
+        return action_params
+
+    def __create_action(self, params) -> None:
         FclFreightAction.create(**params)
 
-    def update_statistics(self, params) -> None:
-        for k in self.increment_keys:
+    def __get_fcl_freight_rate_statistic(self, rate_dict) -> Union[None, Model]:
+        identifier = get_fcl_freight_identifier(**rate_dict)
+        return (
+            FclFreightRateStatistic.select()
+            .where(FclFreightRateStatistic.identifier == identifier)
+            .first()
+        )
+
+    def __update_statistics(self, params) -> None:
+        for key in self.increment_keys:
             setattr(
                 self.fcl_freight_rate_statistic,
-                k,
-                getattr(self.fcl_freight_rate_statistic, k) + 1,
+                key,
+                getattr(self.fcl_freight_rate_statistic, key) + 1,
             )
         for key, value in params.items():
             setattr(self.fcl_freight_rate_statistic, key, value)
-
         self.fcl_freight_rate_statistic.save()
-
-    def create(self) -> int:
-        return SpotSearchFclFreightRateStatistic.insert_many(
-            self.spot_search_params
-        ).execute()
