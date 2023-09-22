@@ -63,7 +63,7 @@ app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags
 app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'], dependencies=[Depends(get_db)])
 app.include_router(prefix = "/air_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'], dependencies=[Depends(get_db)])
 app.include_router(prefix = "/fcl_freight_rate",router = bramhastra, tags = ['Brahmastra'], dependencies=[Depends(get_db)])
-app.include_router(prefix = "/air_customs_rate", router=air_customs_router, tags = ['Air Customs Rate'])
+app.include_router(prefix = "/air_customs_rate", router=air_customs_router, tags = ['Air Customs Rate'], dependencies=[Depends(get_db)])
 
 
 app.add_middleware(

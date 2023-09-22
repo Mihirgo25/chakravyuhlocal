@@ -50,7 +50,7 @@ class AirCustomsRate(BaseModel):
     tags = BinaryJSONField(null=True)
     rate_type = CharField(default='market_place', choices = RATE_TYPES)
     accuracy = FloatField(default = 100, null = True)
-    source = CharField(index=True, null=True)
+    source = CharField(default = 'rms_upload', null=True)
 
     class Meta:
         table_name = 'air_customs_rates'
