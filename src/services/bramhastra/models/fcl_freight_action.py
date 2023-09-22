@@ -105,7 +105,6 @@ class FclFreightAction(BaseModel):
     selected_bas_standard_price = FloatField(default=0)
     bas_standard_price_accuracy = FloatField(default=GLOBAL_MIN)
     bas_standard_price_diff_from_selected_rate = FloatField(default=0)
-    fcl_freight_rate_statistic_id = BigIntegerField(default=0)
     selected_fcl_freight_rate_statistic_id = BigIntegerField(default=0)
     selected_rate_id = UUIDField(index=True, null=True, default=DEFAULT_UUID)
     selected_validity_id = UUIDField(index=True, null=True, default=DEFAULT_UUID)
