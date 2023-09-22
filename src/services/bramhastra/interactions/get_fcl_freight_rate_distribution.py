@@ -14,12 +14,13 @@ async def get_fcl_freight_rate_distribution(filters):
 
     queries = [
         f"""WITH rate_distribution as 
-               (SELECT parent_mode as mode,SUM(cancelled) AS shipment_cancelled_count,
-               SUM(completed) as shipment_completed_count,
-               SUM(confirmed_by_importer_exporter) AS shipment_confirmed_by_importer_exporter_count,
-               SUM(aborted) AS shipment_aborted_count, 
-               SUM(recieved) AS bookings_created,
-               SUM(in_progress) AS shipment_in_progress_count
+               (SELECT parent_mode as mode,
+               SUM(shipment_cancelled) AS shipment_cancelled_count,
+               SUM(shipment_completed) as shipment_completed_count,
+               SUM(shipment_confirmed_by_importer_exporter) AS shipment_confirmed_by_importer_exporter_count,
+               SUM(shipment_aborted) AS shipment_aborted_count, 
+               SUM(shipment_recieved) AS bookings_created,
+               SUM(shipment_in_progress) AS shipment_in_progress_count
                from brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
