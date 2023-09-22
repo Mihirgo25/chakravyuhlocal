@@ -52,12 +52,11 @@ REQUIRED_FILTERS = {
 }
 
 
-def get_direct_indirect_filters(filters):
+def get_direct_indirect_filters(filters,where):
     for k, v in REQUIRED_FILTERS.items():
         if k not in filters:
             filters[k] = v
-    where = []
-    get_date_range_filter(where)
+    get_date_range_filter(where,filters)
 
     for key, value in filters.items():
         if key in POSSIBLE_DIRECT_FILTERS and value:
@@ -72,26 +71,24 @@ def get_direct_indirect_filters(filters):
         return " AND ".join(where)
 
 
-def get_date_range_filter(where):
+def get_date_range_filter(where, filters):
     where.append(
-        "((updated_at <= %(end_date)s AND updated_at >= %(start_date)s) OR (created_at >= %(start_date)s AND created_at <= %(end_date)s))"
+        f" ((updated_at >= ('{filters['start_date']}') AND updated_at <= ('{filters['end_date']}')) OR (created_at >= ('{filters['start_date']}') AND created_at <= ('{filters['end_date']}')))"
     )
 
 
 async def get_fcl_freight_rate_lifecycle(filters):
-    where = get_direct_indirect_filters_for_rate(filters,date=None)
+    where = get_direct_indirect_filters_for_rate(filters, date=None) or []
 
-    # mode_wise_rate_count = await get_mode_wise_rate_count(filters.copy(), where)
+    get_direct_indirect_filters(filters=filters,where=where)
 
     lifecycle_statistics = await get_lifecycle_statistics(filters.copy(), where)
-    
+
     graph = LifeCycleConfig(lifecycle_statistics)
     graph_data = graph.fill_flows()
 
     return dict(
-        # mode_wise_rate_count=mode_wise_rate_count,
         searches=lifecycle_statistics["spot_search"],
-        cards=lifecycle_statistics,
         graph=graph_data,
     )
 
@@ -145,46 +142,31 @@ async def get_lifecycle_statistics(filters, where):
     
     rate_reverted_feedbacks = [
         f"""
-        SELECT COUNT(*) AS rate_reverted_feedbacks FROM brahmastra.{FclFreightAction._meta.table_name}
+        SELECT SUM(is_rate_reverted) AS rate_reverted_feedbacks FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_rate_reverted = 1
         """
-        # f"""
-        # SELECT SUM(is_rate_reverted) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_rate_reverted = 1
-        # """
     ]
 
     feedback_rates_added = [
         f"""
-        SELECT COUNT(*) AS feedback_rates_added FROM brahmastra.{FclFreightAction._meta.table_name}
+        SELECT COUNT(*) AS feedback_rates_added FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name}
         """
-        # f"""
-        # SELECT COUNT(*) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE status = 'inactive'
-        # """
     ]
 
     #rate request 
     rates_requested = [
-        f""" 
-        SELECT COUNT(*) AS rates_requested FROM brahmastra.{FclFreightAction._meta.table_name} WHERE mode = 'disliked_rate' 
+        f"""
+        SELECT COUNT(DISTINCT rate_request_id) AS rates_requested FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name}
         """
-        # f"""
-        # SELECT COUNT(DISTINCT rate_request_id) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name}
-        # """
     ]
     rates_reverted = [
         f"""
-        SELECT COUNT(*) AS rates_reverted FROM brahmastra.{FclFreightAction._meta.table_name}
+        SELECT COUNT(DISTINCT rate_request_id) AS rates_reverted FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_rate_reverted = 1
         """
-        # f"""
-        # SELECT COUNT(DISTINCT rate_request_id) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_rate_reverted = 1
-        # """
     ]
     rates_closed = [
         f"""
-        SELECT COUNT(*) AS rates_closed FROM brahmastra.{FclFreightAction._meta.table_name}
+        SELECT COUNT(DISTINCT rate_request_id) AS rates_closed FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name}
         """
-        # f"""
-        # SELECT COUNT(DISTINCT rate_request_id) AS count FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE status = 'inactive'
-        # """
     ]
 
     variables = [spot_search, feedbacks_created, checkout, shipment, confirmed, completed, aborted, cancelled, revenue_desk, so1, disliked, feedback_received, rate_reverted_feedbacks, feedback_rates_added, liked, rates_requested, rates_reverted, rates_closed]
@@ -192,9 +174,9 @@ async def get_lifecycle_statistics(filters, where):
     if where:
         for var in variables:
             if('where' in " ".join(var).lower()):
-                var.append(f" AND {where} ")
+                var.append(f" AND {where[0]} ")
             else:
-                var.append(f" WHERE {where} ")
+                var.append(f" WHERE {where[0]} ")
         
     missing_rates_filter = filters.copy()
 
@@ -210,15 +192,15 @@ async def get_lifecycle_statistics(filters, where):
         futures =[]
         for var in variables:
             futures.append(executor.submit(ClickHouse().execute, " ".join(var), filters))
+     
     for i in range(0, len(futures)):
             results.append(futures[i].result()[0])
     result = {}
     for count in results:
         result.update(count)
 
-    breakpoint()
     lifecycle_statistics = {
-        #Checkout branch buisness-1
+        #buisness flow
         "spot_search": result['spot_search'],
         "spot_search_dropoff": (result['spot_search'])* 100,
 
@@ -265,7 +247,7 @@ async def get_lifecycle_statistics(filters, where):
         "liked_count": result['liked_count'],
         "liked_dropoff":calculate_dropoff(result['liked_count'],result['spot_search']),
         
-        #Missing- 3
+        #rate requests
         "rates_requested_count": result['rates_requested'],
         "rates_requested_dropoff":calculate_dropoff(result['rates_requested'],result['spot_search']),
 
@@ -309,7 +291,6 @@ def count_boolean_query(column):
     SELECT SUM({column}) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} = 1
     """
 def avg_group_by_query(column):
-    #use groupBY , avg for faster query
     return f"""
     SELECT COUNT(DISTINCT shipment_id) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} = 1 
     """
