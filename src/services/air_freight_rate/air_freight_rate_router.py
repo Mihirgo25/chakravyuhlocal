@@ -361,6 +361,7 @@ def list_air_freight_rate_locals_api(
     sort_by: str = "updated_at",
     sort_type: str = "desc",
     return_query: bool = False,
+    return_count: bool = False,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
@@ -371,7 +372,8 @@ def list_air_freight_rate_locals_api(
                                             page=page,
                                             sort_by= sort_by,
                                             sort_type= sort_type, 
-                                            return_query= return_query)
+                                            return_query= return_query,
+                                            return_count = return_count)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
@@ -463,6 +465,7 @@ def list_air_freight_rate_surcharges_api(
     return_query: bool = False,
     includes: str = None,
     resp: dict = Depends(authorize_token),
+    return_count: bool = False,
     require_eligible_lineitems: bool = False
 ):
     if resp["status_code"] != 200:
@@ -474,6 +477,7 @@ def list_air_freight_rate_surcharges_api(
                                                 page=page, 
                                                 pagination_data_required=pagination_data_required,
                                                 return_query=return_query, 
+                                                return_count = return_count,
                                                 includes=includes,require_eligible_lineitems=require_eligible_lineitems)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:

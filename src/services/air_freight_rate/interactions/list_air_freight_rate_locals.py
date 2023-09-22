@@ -11,7 +11,7 @@ possible_direct_filters = ['id', 'airport_id', 'country_id', 'trade_id', 'contin
 possible_indirect_filters = ['location_ids']
 
 def list_air_freight_rate_locals(filters={},page_limit=10,page=1,
-sort_by='updated_at',pagination_data_required=True,sort_type='desc',return_query=False):
+sort_by='updated_at',pagination_data_required=True,sort_type='desc',return_query=False,return_count = False):
     
     query=get_query(sort_by,sort_type)
 
@@ -24,10 +24,10 @@ sort_by='updated_at',pagination_data_required=True,sort_type='desc',return_query
         query = get_filters(direct_filters, query, AirFreightRateLocal)
         
         query = apply_indirect_filters(query, indirect_filters)
-        
     if return_query: 
         return { 'list': query }
-
+    if return_count:
+        return {'total_count':query.count()}
     pagination_data=get_pagination_data(query,page,page_limit,pagination_data_required)
     query = query.paginate(page, page_limit)
     data = json_encoder(list(query.dicts()))
