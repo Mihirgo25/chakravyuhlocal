@@ -1496,6 +1496,11 @@ class FclFreightRateBulkOperation(BaseModel):
 
                             completed_codes.append(code)
 
+                
+                local['data'] = (local.get('data') or {})
+                if 'line_items' not in local['data']:
+                    local['data']['line_items'] = []
+
                 if new_line_items:
                     for items in new_line_items:
                         local['data']['line_items'].append(items)
@@ -1512,8 +1517,8 @@ class FclFreightRateBulkOperation(BaseModel):
                 except :
                     pass
 
-                    progress = int((count * 100.0) / total_count)
-                    self.set_progress_percent(progress)
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
 
             total_affected_rates += count
         data['total_affected_rates'] = total_affected_rates
