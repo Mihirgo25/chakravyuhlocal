@@ -85,9 +85,9 @@ class LifeCycleConfig:
             "child": {
                 "right": [
                     {
-                        "name": "rates_shown",
-                        "rates_count": self.input.get("rates_shown_count"),
-                        "drop": self.input.get("rates_shown_dropoff"),
+                        "name": "feedbacks_created",
+                        "rates_count": self.input.get("feedbacks_created _count"),
+                        "drop": self.input.get("feedbacks_created _dropoff"),
                         "child": {
                             "right": [
                                 {
