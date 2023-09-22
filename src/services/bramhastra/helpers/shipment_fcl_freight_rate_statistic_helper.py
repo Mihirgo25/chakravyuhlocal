@@ -13,23 +13,36 @@ class Shipment:
         self.request = request
 
     def set(self):
-        shipment = self.request.shipment.dict()
-        actions = self.get_actions_dict(shipment.source_id)
+        shipment = self.request.dict(include={"shipment"})["shipment"]
+        actions = self.__get_actions(self.request.shipment.shipment_source_id)
         for fcl_freight_service in self.request.fcl_freight_services:
             shipment_copy = shipment.copy()
-            shipment_copy.update(fcl_freight_service.dicts())
-            action_update_params = shipment_copy.copy()
+            shipment_copy.update(fcl_freight_service.dict())
+            unique_fcl_spot_search_service_key = (
+                self.get_unique_fcl_spot_search_service_key(fcl_freight_service)
+            )
+            action = actions.get(unique_fcl_spot_search_service_key)
+            if action is not None:
+                action_update_params = shipment_copy.copy()
+                action_update_params["bas_standard_accuracy"] = 100
+                self.__update(
+                    action, {FclFreightAction.shipment.name}, action_update_params
+                )
             statistic = (
                 FclFreightRateStatistic.select()
-                .where(FclFreightRateStatistic.id == action.fcl_freight_rate_statistic)
+                .where(
+                    FclFreightRateStatistic.id == action.fcl_freight_rate_statistic_id
+                )
                 .first()
             )
             if statistic is not None:
-                self.update(
+                self.__update(
                     statistic,
                     {
                         "bookings_created",
-                        getattr(f"shipment_{shipment_copy.get('shipment_state')}"),
+                        shipment_copy.get("shipment_state")
+                        if shipment_copy.get("shipment_state") in {"shipment_recieved"}
+                        else f"shipment_{shipment_copy.get('shipment_state')}",
                     },
                 )
                 shipment_copy.update(
@@ -37,18 +50,10 @@ class Shipment:
                         "rate_id": statistic.rate_id,
                         "validity_id": statistic.validity_id,
                         "fcl_freight_rate_statistic_id": statistic.id,
+                        "shipment_serial_id": 34,
                     }
                 )
                 self.create(ShipmentFclFreightRateStatistic, shipment_copy)
-            unique_fcl_spot_search_service_key = (
-                self.get_unique_fcl_spot_search_service_key(fcl_freight_service)
-            )
-            action = actions.get(unique_fcl_spot_search_service_key)
-            if action is not None:
-                action_update_params["bas_standard_accuracy"] = 100
-                self.__update(
-                    action, {FclFreightAction.shipment.name}, action_update_params
-                )
 
     def get_unique_fcl_spot_search_service_key(self, model):
         return "".join(
@@ -58,9 +63,9 @@ class Shipment:
     def create(self, model, params):
         model.create(**params)
 
-    def get_actions(self, checkout_id):
+    def __get_actions(self, checkout_id):
         actions = FclFreightAction.select().where(
-            FclFreightAction.spot_search_id == checkout_id
+            FclFreightAction.checkout_id == checkout_id
         )
         actions_hash = dict()
         for action in actions:
@@ -84,11 +89,12 @@ class Shipment:
 
     def __update(self, model, increment_keys: set = None, params: dict = None):
         if increment_keys is not None:
-            setattr(
-                model,
-                key,
-                getattr(model, key) + 1,
-            )
+            for key in increment_keys:
+                setattr(
+                    model,
+                    key,
+                    getattr(model, key) + 1,
+                )
         if params is not None:
             for key, value in params.items():
                 if value is not None:

@@ -36,6 +36,7 @@ class SpotSearch:
             "spot_search_id": params.spot_search_id,
             "spot_search_fcl_freight_service_id": params.spot_search_fcl_freight_services_id,
             "spot_search": 1,
+            "fcl_freight_rate_statistic_id": self.fcl_freight_rate_statistic.id,
             **{
                 k: getattr(self.fcl_freight_rate_statistic, k)
                 for k in REQUIRED_ACTION_FIELDS

@@ -237,6 +237,7 @@ class FclFreightServices(BaseModel):
 class Shipment(BaseModel):
     shipment_id: str = Field(alias="id")
     shipment_serial_id: int = Field(alias="serial_id", default = None)
+    shipment_state: str = Field(alias="state", default=None)
     shipment_source: str = None
     shipment_source_id: str = None
     importer_exporter_id: str = None
