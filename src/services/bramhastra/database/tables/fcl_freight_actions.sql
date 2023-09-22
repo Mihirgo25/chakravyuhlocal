@@ -61,7 +61,7 @@ CREATE TABLE brahmastra.fcl_freight_actions
     shipment_aborted UInt8,
     shipment_in_progress UInt8,
     shipment_confirmed_by_importer_exporter UInt8,
-    shipment_recieved UInt8,
+    shipment_received UInt8,
     shipment_source_id UUID,
     shipment_created_at DateTime,
     shipment_updated_at DateTime,

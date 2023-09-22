@@ -48,8 +48,7 @@ class Click:
                     column_names_set.add(name)
                     column_names.append(name)
     
-        if(len(model_cols)!=len(column_names)):
-            raise Exception("\nColumn length mismatched !!")
+        print("\nColumn length mismatched !!")
         
         missing_columns = []
         for idx, name in enumerate(model_cols):

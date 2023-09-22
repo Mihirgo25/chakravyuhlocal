@@ -137,7 +137,7 @@ class CheckoutFclFreightService(BaseModel):
 
 class FclFreightCheckoutParams(BaseModel):
     checkout_source: str = Field(alias="source")
-    checkout_source_id: str =  Field(alias="source_id")
+    checkout_source_id: str = Field(alias="source_id")
     importer_exporter_id: str
     created_at: datetime
     updated_at: datetime
@@ -213,7 +213,7 @@ class BuyQuotation(BaseModel):
 
 
 class FclFreightServices(BaseModel):
-    shipment_fcl_freight_service_id: str = Field(alias="id")
+    shipment_service_id: str = Field(alias="id")
     shipment_service_state: str = Field(alias="state", default=None)
     shipment_service_is_active: bool = Field(alias="is_active")
     shipment_service_cancellation_reason: str = Field(
@@ -236,28 +236,26 @@ class FclFreightServices(BaseModel):
 
 class Shipment(BaseModel):
     shipment_id: str = Field(alias="id")
-    shipment_serial_id: int = Field(alias="serial_id", default = None)
+    shipment_serial_id: int = Field(alias="serial_id", default=None)
     shipment_state: str = Field(alias="state", default=None)
-    shipment_source: str = None
-    shipment_source_id: str = None
     importer_exporter_id: str = None
     shipment_type: str = None
-    services: list[str] = []
-    shipment_source: str = Field(alias="source", default = None)
-    shipment_source_id: str = Field(alias="source_id", default = None)
-    shipment_created_at: datetime = Field(alias="created_at", default=datetime.utcnow())
-    shipment_updated_at: datetime = Field(alias="updated_at", default=datetime.utcnow())
+    services: list[str] = None
+    shipment_source: str = Field(alias="source", default=None)
+    shipment_source_id: str = Field(alias="source_id", default=None)
+    shipment_created_at: datetime = Field(alias="created_at", default = None)
+    shipment_updated_at: datetime = Field(alias="updated_at")
 
 
 class ShipmentParams(BaseModel):
-    fcl_freight_services: list[FclFreightServices]
+    fcl_freight_services: list[FclFreightServices] = []
     shipment: Shipment
 
 
 class ApplyShipmentFclFreightRateStatistics(BaseModel):
     action: str
     params: ShipmentParams = None
-    force_update_params: Shipment = None
+    shipment_update_params: Shipment = None
 
 
 class QuotationParams(BaseModel):

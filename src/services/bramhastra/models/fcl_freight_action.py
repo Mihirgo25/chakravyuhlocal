@@ -88,7 +88,7 @@ class FclFreightAction(BaseModel):
     shipment_aborted = IntegerField(default=0)
     shipment_in_progress = IntegerField(default=0)
     shipment_confirmed_by_importer_exporter = IntegerField(default=0)
-    shipment_recieved = IntegerField(default=0)
+    shipment_received = IntegerField(default=0)
     shipment_source_id = UUIDField(null=True, default=DEFAULT_UUID)
     shipment_created_at = DateTimeTZField(null=True)
     shipment_updated_at = DateTimeTZField(null=True)

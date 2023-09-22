@@ -50,6 +50,7 @@ class ShipmentServices(Bramhastra):
 
 class ShipmentState(Bramhastra):
     confirmed_by_importer_exporter = "confirmed_by_importer_exporter"
+    shipment_received = "shipment_received"
 
 
 class FclModes(Bramhastra):

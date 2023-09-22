@@ -6,11 +6,21 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
 )
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
 from services.bramhastra.constants import UNIQUE_FCL_SPOT_SEARCH_SERVICE_KEYS
+from services.bramhastra.enums import ShipmentState, ShipmentAction
 
 
 class Shipment:
     def __init__(self, request) -> None:
-        self.request = request
+        self.request = (
+            request.params
+            if request.action == ShipmentAction.create.value
+            else request.shipment_update_params
+        )
+
+    def __get_shipment_state_bool_string(self, shipment_state) -> str:
+        if shipment_state in {ShipmentState.shipment_received.value}:
+            return shipment_state
+        return f"shipment_{shipment_state}"
 
     def set(self):
         shipment = self.request.dict(include={"shipment"})["shipment"]
@@ -21,12 +31,20 @@ class Shipment:
             unique_fcl_spot_search_service_key = (
                 self.get_unique_fcl_spot_search_service_key(fcl_freight_service)
             )
+            shipment_state = self.__get_shipment_state_bool_string(
+                shipment_copy.get(FclFreightAction.shipment_state.name)
+            )
             action = actions.get(unique_fcl_spot_search_service_key)
             if action is not None:
                 action_update_params = shipment_copy.copy()
-                action_update_params["bas_standard_accuracy"] = 100
+                action_update_params[
+                    FclFreightAction.bas_standard_price_accuracy.name
+                ] = 100
+                action_update_params[shipment_state] = 1
                 self.__update(
-                    action, {FclFreightAction.shipment.name}, action_update_params
+                    action,
+                    {FclFreightAction.shipment.name, shipment_state},
+                    action_update_params,
                 )
             statistic = (
                 FclFreightRateStatistic.select()
@@ -40,9 +58,6 @@ class Shipment:
                     statistic,
                     {
                         "bookings_created",
-                        shipment_copy.get("shipment_state")
-                        if shipment_copy.get("shipment_state") in {"shipment_recieved"}
-                        else f"shipment_{shipment_copy.get('shipment_state')}",
                     },
                 )
                 shipment_copy.update(
@@ -50,7 +65,6 @@ class Shipment:
                         "rate_id": statistic.rate_id,
                         "validity_id": statistic.validity_id,
                         "fcl_freight_rate_statistic_id": statistic.id,
-                        "shipment_serial_id": 34,
                     }
                 )
                 self.create(ShipmentFclFreightRateStatistic, shipment_copy)
@@ -76,13 +90,18 @@ class Shipment:
         return actions_hash
 
     def update(self):
-        params = self.request.shipment.dicts(
+        params = self.request.dict(
             exclude={
                 FclFreightAction.shipment_id.name,
                 FclFreightAction.shipment_service_id.name,
             },
             exclude_none=True,
         )
+        if FclFreightAction.shipment_state.name in params:
+            shipment_state = self.__get_shipment_state_bool_string(
+                params.get(FclFreightAction.shipment_state.name)
+            )
+            params[shipment_state] = 1
         FclFreightAction.update(**params).where(
             FclFreightAction.shipment_id == self.request.shipment_id
         ).execute()
