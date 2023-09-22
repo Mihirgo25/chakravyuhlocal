@@ -23,7 +23,11 @@ def get_rate(filters: dict) -> list:
     clickhouse = ClickHouse()
 
     queries = [
-        f"""SELECT ROUND(bas_standard_price_diff_from_selected_rate) AS deviation, COUNT(rate_id) AS count FROM brahmastra.fcl_freight_actions"""
+        f"""
+            SELECT ROUND(bas_standard_price_diff_from_selected_rate) AS deviation, 
+            COUNT(rate_id) AS count
+            FROM brahmastra.fcl_freight_actions
+        """
     ]
 
     location_object = dict()
@@ -59,14 +63,38 @@ def get_rate(filters: dict) -> list:
     return formatted_charts, location_object
 
 def format_charts(charts: list) -> list:
-    return format_response(charts)
+    result_dict = dict()
+    range_val = 20
+    
+    min_diff = int(charts[0].get('deviation', '0'))
+
+    range_min = min_diff - (min_diff % range_val)
+    range_max = range_min + range_val
+
+    result_dict[f"{range_min}_{range_max}"] = 0
+
+    for entry in charts:
+        deviation = entry.get('deviation', '0')
+        rate_count = entry.get('count','0')
+
+        if deviation > range_max:
+            range_min += range_val
+            range_max += range_val
+            result_dict[f"{range_min}_{range_max}"] = 0
+        
+        result_dict[f"{range_min}_{range_max}"] += rate_count
+
+    return format_response(result_dict)
 
 def format_response(response: list) -> list:
     formatted_response = []
-    for entry in response:
+
+    for key, val in response.items():
+        [min_val, max_val] = key.split('_')
         formatted_response.append({
-            'deviation': entry.get('deviation', '0'),
-            'rate_count': entry.get('count','0'),
+            'from': min_val,
+            'to': max_val,
+            'rate_count': val,
         })
 
     return formatted_response

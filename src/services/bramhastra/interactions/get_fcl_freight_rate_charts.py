@@ -16,6 +16,9 @@ ALLOWED_TIME_PERIOD = 6
 
 MAX_ALLOWABLE_DEFAULT_BAS_DIFF = 100
 
+from services.bramhastra.interactions.get_fcl_freight_rate_differences import (
+    get_fcl_freight_rate_differences,
+)
 
 def get_fcl_freight_rate_charts(filters):
     where = get_direct_indirect_filters(filters)
@@ -31,11 +34,18 @@ def get_fcl_freight_rate_charts(filters):
         )
 
     resp = dict(
-        accuracy=accuracy_future.result(),
         rates_affected=rates_affected_future.result(),
         **rate_count_future.result(),
         **spot_search_future.result(),
     )
+
+    chart_type = filters.get('chart_type')
+    match chart_type:
+        case 'deviation':
+            resp['deviation'] = get_fcl_freight_rate_differences(filters)
+        
+        case 'accuracy':
+            resp['accuracy'] = accuracy_future.result()
     
     return jsonable_encoder(resp)
 
