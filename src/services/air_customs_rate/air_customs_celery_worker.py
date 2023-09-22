@@ -1,5 +1,5 @@
 from celery_worker import celery
-from services.air_customs_rate.helpers import update_organization_air_customs
+from services.air_customs_rate.helpers.update_organization_air_customs import update_organization_air_customs
 from services.air_customs_rate.interaction.create_air_customs_rate import create_air_customs_rate
 
 @celery.task(bind = True, retry_backoff=True, max_retries=5)
