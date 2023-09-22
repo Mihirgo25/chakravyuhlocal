@@ -8,7 +8,7 @@ import json
 
 possible_direct_filters = ['id', 'airport_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'commodity', 'airline_id', 'service_provider_id', 'is_line_items_info_messages_present', 'is_line_items_error_messages_present', 'rate_type','procured_by_id']
 
-possible_indirect_filters = ['location_ids']
+possible_indirect_filters = ['location_ids','exclude_rate_types','exclude_airline_id']
 
 def list_air_freight_rate_locals(filters={},page_limit=10,page=1,
 sort_by='updated_at',pagination_data_required=True,sort_type='desc',return_query=False,return_count = False):
@@ -54,6 +54,15 @@ def apply_indirect_filters(query,filters):
             apply_filter_function = f'apply_{key}_filter'
             query = eval(f'{apply_filter_function}(query, filters)')
     return query
+
+def apply_exclude_rate_types_filter(query, filters):
+  query=query.where(~AirFreightRateLocal.rate_type << filters['exclude_rate_types'])
+  return query
+
+def apply_exclude_airline_id_filter(query, filters):
+  airline_ids = filters['exclude_airline_id']
+  query=query.where(~AirFreightRateLocal.airline_id << airline_ids)
+  return query
 
 def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:

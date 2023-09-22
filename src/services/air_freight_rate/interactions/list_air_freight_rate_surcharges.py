@@ -8,7 +8,7 @@ from services.air_freight_rate.constants.air_freight_rate_constants import SURCH
 
 
 possible_direct_filters = ['id','origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'service_provider_id', 'airline_id', 'is_line_items_info_messages_present', 'commodity', 'is_line_items_error_messages_present', 'operation_type','procured_by_id']
-possible_indirect_filters = ['location_ids']
+possible_indirect_filters = ['location_ids','exclude_rate_types','exclude_airline_id']
 
 def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pagination_data_required=True, return_query = False, sort_by='updated_at', sort_type = 'desc', includes= {},require_eligible_lineitems = False,return_count = False):
     query = get_query(sort_by,sort_type, includes)
@@ -83,3 +83,13 @@ def apply_location_ids_filter(query,filters):
     locations_ids = filters['location_ids']
     query = query.where(AirFreightRateSurcharge.destination_location_ids.contains(locations_ids))
     return query 
+
+
+def apply_exclude_rate_types_filter(query, filters):
+  query=query.where(~AirFreightRateSurcharge.rate_type << filters['exclude_rate_types'])
+  return query
+
+def apply_exclude_airline_id_filter(query, filters):
+  airline_ids = filters['exclude_airline_id']
+  query=query.where(~AirFreightRateSurcharge.airline_id << airline_ids)
+  return query
