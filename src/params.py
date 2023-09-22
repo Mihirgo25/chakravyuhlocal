@@ -834,6 +834,7 @@ class DeleteFreightRate(BaseModel):
     comparison_charge_code: str = "BAS"
     rates_greater_than_price: float = None
     rates_less_than_price: float = None
+    delete_all_validities: bool = False
 
 
 class AddFreightRateMarkup(BaseModel):
