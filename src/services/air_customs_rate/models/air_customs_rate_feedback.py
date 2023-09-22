@@ -61,9 +61,9 @@ class AirCustomsRateFeedback(BaseModel):
     def set_spot_search(self):
         spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
         self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
-    
+
     def send_closed_notifications_to_sales_agent(self):
-        locations_data_query = AirCustomsRate.select( 
+        locations_data_query = AirCustomsRate.select(
             AirCustomsRate.airport_id
         ).where(AirCustomsRate.id == self.air_customs_rate_id)
         locations_data = jsonable_encoder(list(locations_data_query.dicts()))
