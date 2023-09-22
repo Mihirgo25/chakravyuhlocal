@@ -14,7 +14,7 @@ possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id']
 
-def list_air_customs_rate_feedbacks(filters = {}, spot_search_details_required=False, customer_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
+def list_air_customs_rate_feedbacks(filters = {}, spot_search_details_required=False, customer_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=False):
     query = AirCustomsRateFeedback.select()
 
     if filters:

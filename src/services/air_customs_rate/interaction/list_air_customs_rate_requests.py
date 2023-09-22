@@ -12,7 +12,7 @@ possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_th
 
 possible_direct_filters = ['airport_id', 'performed_by_id', 'status', 'closed_by_id', 'country_id','trade_id']
 
-def list_air_customs_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True, spot_search_details_required=False):
+def list_air_customs_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = False, spot_search_details_required=False):
     query = AirCustomsRateRequest.select()
     if filters:
         if type(filters) != dict:
