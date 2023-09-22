@@ -28,7 +28,7 @@ class AirCustomsRateRequest(BaseModel):
     closed_by_id = UUIDField(index=True, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_customs_rate_request_serial_id_seq'::regclass)")])
     created_at = DateTimeField(index=True, default = datetime.datetime.now)
-    updated_at = DateTimeField(default = datetime.datetime.now)
+    updated_at = DateTimeField(default = datetime.datetime.now, index = True)
     weight = FloatField(null = True)
     volume = FloatField(null = True)
     commodity = CharField(null=True)

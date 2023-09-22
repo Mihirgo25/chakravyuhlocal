@@ -22,7 +22,7 @@ class AirCustomsRate(BaseModel):
     country_id = UUIDField(index=True, null= True)
     trade_id = UUIDField(index=True, null=True)
     continent_id = UUIDField(null=True)
-    trade_type = CharField(null=True)
+    trade_type = CharField(null=True, index = True)
     commodity = CharField(null=True, index=True)
     commodity_type = CharField(null=True, index = True)
     commodity_sub_type = CharField(null=True, index = True)
@@ -33,7 +33,7 @@ class AirCustomsRate(BaseModel):
     is_line_items_info_messages_present = BooleanField(null=True, default=False)
     line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
-    rate_not_available_entry = BooleanField(null=True, default=False)
+    rate_not_available_entry = BooleanField(null=True, index = True, default=False)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
@@ -46,11 +46,11 @@ class AirCustomsRate(BaseModel):
     importer_exporter = BinaryJSONField(null=True)
     performed_by = BinaryJSONField(null=True)
     airport = BinaryJSONField(null=True)
-    mode = CharField(default = 'manual', null = True)
+    mode = CharField(default = 'manual', index = True, null = True)
     tags = BinaryJSONField(null=True)
     rate_type = CharField(default='market_place', choices = RATE_TYPES)
     accuracy = FloatField(default = 100, null = True)
-    source = CharField(default = 'rms_upload', null=True)
+    source = CharField(default = 'rms_upload', index = True, null=True)
 
     class Meta:
         table_name = 'air_customs_rates'

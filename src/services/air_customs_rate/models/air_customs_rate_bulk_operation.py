@@ -29,7 +29,7 @@ class AirCustomsRateBulkOperation(BaseModel):
     performed_by_id = UUIDField(index=True, null=True)
     created_at = DateTimeField(default=datetime.now())
     data = BinaryJSONField(null=True)
-    updated_at = DateTimeField(default=datetime.now())
+    updated_at = DateTimeField(default=datetime.now(), index = True)
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
 

@@ -30,10 +30,7 @@ def execute_transaction_code(request):
     return {'id': rate_object.id}
 
 def find_rate_object(request):
-    try:
-        rate_object = AirCustomsRate.select().where(AirCustomsRate.id == request['id']).first()
-    except:
-        rate_object = None
+    rate_object = AirCustomsRate.select().where(AirCustomsRate.id == request['id']).first()
     return rate_object
 
 def create_audit_for_updating_rate(request, rate_object_id):
