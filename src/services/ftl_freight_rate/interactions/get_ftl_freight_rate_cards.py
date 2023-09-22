@@ -173,6 +173,7 @@ def select_fields():
         FtlFreightRate.sourced_by,
         FtlFreightRate.updated_at,
         FtlFreightRate.created_at,
+        FtlFreightRate.source
     )
 
 
@@ -404,7 +405,12 @@ def check_for_prediction(request, rate_list):
     if response is not None:
         request["predicted_rate"] = False
         rate_list = get_ftl_freight_rate_cards(request)["list"]
-    return rate_list
+
+    final_rate_list = []
+    if len(rate_list) > 1:
+        final_rate_list = [ftl_freight_rate for ftl_freight_rate in rate_list if ftl_freight_rate['source']=='manual']
+
+    return final_rate_list
 
 
 def additional_response_data(list_of_data):
