@@ -16,9 +16,14 @@ class SpotSearch:
         self.fcl_freight_rate_statistic = None
 
     def set(self, params) -> None:
+        covered_rates = set()
         for rate in params.rates:
+            identifier = get_fcl_freight_identifier(rate.rate_id, rate.validity_id)
+            if identifier in covered_rates:
+                continue
+            covered_rates.add(identifier)
             self.fcl_freight_rate_statistic = self.__get_fcl_freight_rate_statistic(
-                rate
+                identifier
             )
             if self.fcl_freight_rate_statistic is None:
                 continue
@@ -43,8 +48,7 @@ class SpotSearch:
         fcl_freight_action = FclFreightAction(**params)
         fcl_freight_action.save()
 
-    def __get_fcl_freight_rate_statistic(self, rate) -> Union[None, Model]:
-        identifier = get_fcl_freight_identifier(rate.rate_id, rate.validity_id)
+    def __get_fcl_freight_rate_statistic(self, identifier) -> Union[None, Model]:
         return (
             FclFreightRateStatistic.select()
             .where(FclFreightRateStatistic.identifier == identifier)

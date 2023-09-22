@@ -236,14 +236,14 @@ class FclFreightServices(BaseModel):
 
 class Shipment(BaseModel):
     shipment_id: str = Field(alias="id")
-    shipment_serial_id: int = Field(alias="serial_id")
-    shipment_source: str
-    shipment_source_id: str
+    shipment_serial_id: int = Field(alias="serial_id", default = None)
+    shipment_source: str = None
+    shipment_source_id: str = None
     importer_exporter_id: str = None
     shipment_type: str = None
     services: list[str] = []
-    shipment_source: str = Field(alias="source")
-    shipment_source_id: str = Field(alias="source_id")
+    shipment_source: str = Field(alias="source", default = None)
+    shipment_source_id: str = Field(alias="source_id", default = None)
     shipment_created_at: datetime = Field(alias="created_at", default=datetime.utcnow())
     shipment_updated_at: datetime = Field(alias="updated_at", default=datetime.utcnow())
 

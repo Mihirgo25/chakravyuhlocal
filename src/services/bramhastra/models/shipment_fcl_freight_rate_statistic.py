@@ -9,7 +9,7 @@ from peewee import (
 )
 from datetime import datetime
 from database.db_session import db
-from playhouse.postgres_ext import DateTimeTZField, ArrayField, BooleanField
+from playhouse.postgres_ext import DateTimeTZField
 
 
 class BaseModel(Model):
