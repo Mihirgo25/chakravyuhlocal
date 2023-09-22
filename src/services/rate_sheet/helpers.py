@@ -4,7 +4,6 @@ from database.db_session import rd
 from datetime import datetime
 import dateutil.parser as parser
 from libs.parse_numeric import parse_numeric
-from database.rails_db import get_operators
 from micro_services.client import maps
 from database.rails_db import get_operators
 
