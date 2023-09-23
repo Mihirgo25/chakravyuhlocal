@@ -41,7 +41,7 @@ LOCATION_KEYS = {
 
 DEFAULT_QUERY_TYPE = "default"
 
-ALLOWABLE_QUERY_TYPES = {"default", "average_price"}
+ALLOWABLE_QUERY_TYPES = {"default", "average_price", "rates_affected"}
 
 
 async def add_service_objects(statistics):
@@ -155,6 +155,22 @@ async def use_average_price_filter(
         total_pages=total_pages,
         total_count=total_count,
     )
+
+
+async def use_rates_affected_filter(
+    filters, page_limit, page, is_service_object_required
+):
+    clickhouse = ClickHouse()
+    query = [
+        f"""SELECT toUnixTimestamp(rate_updated_at,'Asia/Tokyo')*1000 AS day,COUNT(*) as rates_count FROM brahmastra.{FclFreightAction._meta.table_name}"""
+    ]
+    where = get_direct_indirect_filters(filters)
+    if where:
+        query.append(f"WHERE {where}")
+    query.append("GROUP BY day ORDER BY day ASC")
+    response = dict()
+    response["list"] = clickhouse.execute(" ".join(query), filters)
+    return response
 
 
 async def use_default_filter(filters, page_limit, page, is_service_object_required):

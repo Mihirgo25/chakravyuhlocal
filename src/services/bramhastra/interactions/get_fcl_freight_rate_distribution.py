@@ -4,9 +4,6 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 )
 import math
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
-from services.bramhastra.models.fcl_freight_rate_statistic import (
-    FclFreightRateStatistic,
-)
 
 
 async def get_fcl_freight_rate_distribution(filters):
@@ -19,7 +16,7 @@ async def get_fcl_freight_rate_distribution(filters):
                SUM(shipment_completed) as shipment_completed_count,
                SUM(shipment_confirmed_by_importer_exporter) AS shipment_confirmed_by_importer_exporter_count,
                SUM(shipment_aborted) AS shipment_aborted_count, 
-               SUM(shipment_recieved) AS bookings_created,
+               SUM(shipment_received) AS bookings_created,
                SUM(shipment_in_progress) AS shipment_in_progress_count
                from brahmastra.{FclFreightAction._meta.table_name}"""
     ]

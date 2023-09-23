@@ -22,13 +22,11 @@ DEFAULT_AGGREGATE_SELECT = {
 def get_fcl_freight_map_view_statistics(filters, sort_by, sort_type, page_limit, page):
     clickhouse = ClickHouse()
 
-    sort_by = filter_sort(sort_by)
-
-    aggregate_select = ",".join(
+    select_aggregate = ",".join(
         [
             f"{v} AS {k}"
             for k, v in filters.get(
-                "aggregate_select", DEFAULT_AGGREGATE_SELECT
+                "select_aggregate", DEFAULT_AGGREGATE_SELECT
             ).items()
         ]
     )
@@ -38,10 +36,10 @@ def get_fcl_freight_map_view_statistics(filters, sort_by, sort_type, page_limit,
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},{aggregate_select} FROM brahmastra.fcl_freight_rate_action'
+        f'SELECT {",".join(grouping)},{select_aggregate} FROM brahmastra.fcl_freight_actions'
     ]
 
-    if where := get_direct_indirect_filters(filters):
+    if where := get_direct_indirect_filters(filters, date=None):
         queries.append(" WHERE ")
         queries.append(where)
 
@@ -67,7 +65,8 @@ def get_fcl_freight_map_view_statistics(filters, sort_by, sort_type, page_limit,
 def add_group_by_and_order_by(queries, grouping, sort_by, sort_type):
     queries.append("GROUP BY")
     queries.append(",".join(grouping))
-    queries.append(f"ORDER BY {sort_by} {sort_type}")
+    if sort_by and sort_type:
+        queries.append(f"ORDER BY {sort_by} {sort_type}")
 
 
 def alter_filters_for_map_view(filters, grouping):
@@ -150,7 +149,3 @@ def add_location_objects(statistics):
 
     for index in indices_to_remove:
         del statistics[index]
-
-
-def filter_sort(sort_by):
-    return "total_accuracy" if sort_by == "accuracy" else sort_by

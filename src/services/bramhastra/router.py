@@ -277,8 +277,8 @@ def get_fcl_freight_map_view_statistics_api(
     filters: Annotated[Json, Query()] = {
         "origin": {"type": "country", "id": INDIAN_LOCATION_ID}
     },
-    sort_by: str = "accuracy",
-    sort_type: str = "desc",
+    sort_by: str = None,
+    sort_type: str = None,
     page_limit: int = 30,
     page: int = 1,
     auth_response: dict = Depends(authorize_token),

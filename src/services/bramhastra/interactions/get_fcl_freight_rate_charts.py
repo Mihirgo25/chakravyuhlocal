@@ -20,12 +20,12 @@ from services.bramhastra.interactions.get_fcl_freight_rate_differences import (
     get_fcl_freight_rate_differences,
 )
 
+
 def get_fcl_freight_rate_charts(filters):
     where = get_direct_indirect_filters(filters)
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         accuracy_future = executor.submit(get_accuracy, filters, where)
-        rates_affected_future = executor.submit(get_rates_affected, filters, where)
         spot_search_future = executor.submit(
             get_spot_search_to_checkout_count, filters, where
         )
@@ -34,19 +34,18 @@ def get_fcl_freight_rate_charts(filters):
         )
 
     resp = dict(
-        rates_affected=rates_affected_future.result(),
         **rate_count_future.result(),
         **spot_search_future.result(),
     )
 
-    chart_type = filters.get('chart_type')
+    chart_type = filters.get("chart_type")
     match chart_type:
-        case 'deviation':
-            resp['deviation'] = get_fcl_freight_rate_differences(filters)
-        
-        case 'accuracy':
-            resp['accuracy'] = accuracy_future.result()
-    
+        case "deviation":
+            resp["deviation"] = get_fcl_freight_rate_differences(filters)
+
+        case "accuracy":
+            resp["accuracy"] = accuracy_future.result()
+
     return jsonable_encoder(resp)
 
 
@@ -59,35 +58,18 @@ def get_accuracy(filters, where):
     queries = [
         f"""SELECT parent_mode as mode,toDate(updated_at) AS day,AVG(abs(bas_standard_price_accuracy)*sign) AS average_accuracy FROM brahmastra.{FclFreightAction._meta.table_name}"""
     ]
-    
+
     queries.append(" WHERE ")
 
     if where:
         queries.append(where)
         queries.append(f"AND bas_standard_price_accuracy != {sys.float_info.max}")
 
-    queries.append(
-        """GROUP BY parent_mode,day ORDER BY day,mode;"""
-    )
+    queries.append("""GROUP BY parent_mode,day ORDER BY day,mode;""")
 
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     return format_charts(charts, filters.get("mode"))
-
-
-def get_rates_affected(filters, where):
-    clickhouse = ClickHouse()
-
-    query = [
-        f"""SELECT toStartOfHour(rate_updated_at) AS time,COUNT(*) as rates_count FROM brahmastra.{FclFreightAction._meta.table_name}"""
-    ]
-
-    if where:
-        query.append(f"WHERE {where}")
-
-    query.append("GROUP BY time ORDER BY time ASC")
-
-    return clickhouse.execute(" ".join(query), filters)
 
 
 def get_spot_search_to_checkout_count(filters, where):

@@ -9,6 +9,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreigh
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.bramhastra.models.fcl_freight_rate_request_statistics import FclFreightRateRequestStatistic
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 
 class Table:
     def __init__(self) -> None:
