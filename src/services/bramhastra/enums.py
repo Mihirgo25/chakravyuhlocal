@@ -44,6 +44,7 @@ class RedisKeys(Bramhastra):
         "fcl_freight_rate_all_time_accuracy_chart"
     )
 
+
 class ShipmentServices(Bramhastra):
     fcl_freight_service = "fcl_freight_service"
 
@@ -72,30 +73,36 @@ class FclParentMode(Bramhastra):
     rate_extension = "rate_extension"
     predicted = "predicted"
     cluster_extension = "cluster_extension"
-    
+
+
 class Fcl(Bramhastra):
     default_currency = "USD"
-    
+
+
 class Air(Bramhastra):
     default_currency = "USD"
-    
+
+
 class ImportTypes(Bramhastra):
     parquet = "parquet"
     csv = "csv"
     postgres = "postgres"
-    
+
+
 class AppEnv(Bramhastra):
     production = "production"
-    
+
+
 class BrahmastraTrackStatus(Bramhastra):
     started = "started"
     failed = "failed"
     completed = "completed"
     empty = "empty"
-    
+
+
 class BrahmastraTrackModuleTypes(Bramhastra):
     table = "table"
-    
+
 
 class AirSources(Bramhastra):
     manual = "manual"
@@ -104,35 +111,41 @@ class AirSources(Bramhastra):
     rate_sheet = "rate_sheet"
     freight_look = "freight_look"
     cargo_ai = "cargo_ai"
-    
+
 
 class FclFeedbackClosingRemarks(Bramhastra):
     rate_added = "rate_added"
 
+
 class FclFeedbackStatus(Bramhastra):
     active = "active"
     inactive = "inactive"
-    
+
 
 class FclFilterTypes(Bramhastra):
     validity_range = "validity_range"
     time_series = "time_series"
-    
+
 
 class FclChargeCodes(Bramhastra):
     BAS = "BAS"
-    
+
+
 class MapsFilter(Bramhastra):
     origin_port_code = "origin_port_code"
     destination_port_code = "destination_port_code"
-    
+
+
 class Status(Bramhastra):
     active = "active"
-    
+    inactive = "inactive"
+
+
 class FclDefault(Bramhastra):
-    container_type  = "standard"
+    container_type = "standard"
     container_size = "20"
     commodity = "general"
-    
+
+
 class Paginate(Bramhastra):
     global_limit = 1000

@@ -1,6 +1,5 @@
 from datetime import datetime, date
-from pydantic import BaseModel, validator, Field, root_validator
-from typing import Optional
+from pydantic import BaseModel, validator, Field
 
 
 class LineItems(BaseModel):

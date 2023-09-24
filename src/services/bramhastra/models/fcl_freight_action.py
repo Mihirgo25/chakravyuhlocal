@@ -5,6 +5,7 @@ from peewee import (
     IntegerField,
     FloatField,
     DateField,
+    BooleanField,
 )
 from database.db_session import db
 from playhouse.postgres_ext import (
@@ -73,7 +74,7 @@ class FclFreightAction(BaseModel):
     checkout_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
     checkout_fcl_freight_service_id = UUIDField(null=True, default=DEFAULT_UUID)
     checkout = IntegerField(default=0)
-    checkout_created_at = DateTimeTZField(null = True)
+    checkout_created_at = DateTimeTZField(null=True)
     shipment = IntegerField(default=0)
     shipment_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
     shipment_serial_id = BigIntegerField(default=0, null=True)
@@ -99,8 +100,14 @@ class FclFreightAction(BaseModel):
     shipment_service_cancellation_reason = TextField(null=True)
     disliked = IntegerField(default=0)
     liked = IntegerField(default=0)
-    rate_request_ids = ArrayField(UUIDField, null=True)
+    feedback_created = BooleanField(default=False)
+    feedback_closed = BooleanField(default=False)
+    feedback_rate_added = BooleanField(default=False, null=True)
     feedback_ids = ArrayField(UUIDField, null=True)
+    rate_request_created = BooleanField(default=False, null=True)
+    rate_requested_closed = BooleanField(default=False)
+    rate_request_rate_added = BooleanField(default=False, null=True)
+    rate_requested_ids = ArrayField(UUIDField, null=True)
     so1_select = IntegerField(default=0)
     selected_bas_standard_price = FloatField(default=0)
     bas_standard_price_accuracy = FloatField(default=GLOBAL_MIN)

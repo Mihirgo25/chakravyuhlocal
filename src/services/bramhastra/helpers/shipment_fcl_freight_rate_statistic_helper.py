@@ -29,7 +29,7 @@ class Shipment:
             shipment_copy = shipment.copy()
             shipment_copy.update(fcl_freight_service.dict())
             unique_fcl_spot_search_service_key = (
-                self.get_unique_fcl_spot_search_service_key(fcl_freight_service)
+                self.__get_unique_fcl_spot_search_service_key(fcl_freight_service)
             )
             shipment_state = self.__get_shipment_state_bool_string(
                 shipment_copy.get(FclFreightAction.shipment_state.name)
@@ -67,14 +67,14 @@ class Shipment:
                         "fcl_freight_rate_statistic_id": statistic.id,
                     }
                 )
-                self.create(ShipmentFclFreightRateStatistic, shipment_copy)
+                self.__create(ShipmentFclFreightRateStatistic, shipment_copy)
 
-    def get_unique_fcl_spot_search_service_key(self, model):
+    def __get_unique_fcl_spot_search_service_key(self, model):
         return "".join(
             [str(getattr(model, key)) for key in UNIQUE_FCL_SPOT_SEARCH_SERVICE_KEYS]
         )
 
-    def create(self, model, params):
+    def __create(self, model, params):
         model.create(**params)
 
     def __get_actions(self, checkout_id):
@@ -84,7 +84,7 @@ class Shipment:
         actions_hash = dict()
         for action in actions:
             unique_fcl_spot_search_service_key = (
-                self.get_unique_fcl_spot_search_service_key(action)
+                self.__get_unique_fcl_spot_search_service_key(action)
             )
             actions_hash[unique_fcl_spot_search_service_key] = action
         return actions_hash
