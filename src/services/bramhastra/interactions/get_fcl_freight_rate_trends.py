@@ -62,14 +62,14 @@ def get_rate(filters: dict) -> list:
         MapsFilter.destination_port_code.value
     ):
         set_port_code_filters_and_service_object(filters, location_object)
-        
+
     where = get_direct_indirect_filters(filters)
 
     if where:
         queries.append(" WHERE ")
         queries.append(where)
         queries.append("AND is_deleted = false")
-        
+
     queries.append(
         """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day ORDER BY day,mode;"""
     )
@@ -82,7 +82,11 @@ def get_rate(filters: dict) -> list:
 
 
 def format_charts(charts: list, filters: dict) -> list:
-    NEEDED_MODES = {filters.get("mode")} if filters.get("mode") else {i.value for i in FclParentMode}
+    NEEDED_MODES = (
+        {filters.get("mode")}
+        if filters.get("mode")
+        else {i.value for i in FclParentMode}
+    )
 
     return format_response(charts, filters, NEEDED_MODES)
 
@@ -107,10 +111,13 @@ def format_response(response: list, filters: dict, needed_modes: list) -> list:
         response_dict[day].update(
             {entry["mode"]: {k: entry[k] for k in DEFAULT_AGGREGATE_SELECT}}
         )
-        
+
     exchange_rate = 1
-    
-    if filters.get("currency") and filters.get("currency") != Fcl.default_currency.value:
+
+    if (
+        filters.get("currency")
+        and filters.get("currency") != Fcl.default_currency.value
+    ):
         exchange_rate = common.get_exchange_rate(
             {
                 "from_currency": Fcl.default_currency.value,

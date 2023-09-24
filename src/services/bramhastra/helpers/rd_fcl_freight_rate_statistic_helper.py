@@ -46,7 +46,7 @@ class RevenueDesk:
             )
             if fcl_freight_rate_statistic:
                 statistic_increment_keys = {
-                    FclFreightRateStatistic.revenue_desk_visit_count.column_name
+                    FclFreightRateStatistic.revenue_desk_visit_count.name
                 }
                 self.update_foreign_reference(
                     fcl_freight_rate_statistic,
@@ -63,7 +63,7 @@ class RevenueDesk:
             )
             if fcl_freight_action:
                 action_increment_keys = {
-                    FclFreightAction.revenue_desk_visit.column_name
+                    FclFreightAction.revenue_desk_visit.name
                 }
                 self.update_foreign_reference(
                     fcl_freight_action, action_increment_keys, common_update_params
@@ -98,7 +98,7 @@ class RevenueDesk:
         )
         if fcl_freight_rate_statistic is not None:
             statistic_increment_keys = {
-                FclFreightRateStatistic.so1_select_count.column_name
+                FclFreightRateStatistic.so1_select_count.name
             }
             total_priority = (fcl_freight_rate_statistic.total_priority or 1) + (
                 request.selected_for_preference.given_priority or 1
@@ -111,13 +111,13 @@ class RevenueDesk:
         fcl_freight_action = (
             FclFreightAction.select()
             .where(
-                FclFreightAction.shipment_fcl_freight_service_id
+                FclFreightAction.shipment_service_id
                 == request.shipment_fcl_freight_service_id
             )
             .first()
         )
         if fcl_freight_action is not None:
-            action_increment_keys = {FclFreightAction.revenue_desk_select.column_name}
+            action_increment_keys = {FclFreightAction.revenue_desk_select.name}
             self.update_foreign_reference(
                 fcl_freight_rate_statistic, action_increment_keys, common_update_params
             )
