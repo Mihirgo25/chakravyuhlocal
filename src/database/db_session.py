@@ -69,7 +69,7 @@ class CustomDatabase(PooledPostgresqlExtDatabase):
 
 db = (
     CustomDatabase(**db_params)
-    if ENVIRONMENT_TYPE == "shell"
+    if ENVIRONMENT_TYPE == "cli"
     else PooledPostgresqlExtDatabase(**db_params)
 )
 

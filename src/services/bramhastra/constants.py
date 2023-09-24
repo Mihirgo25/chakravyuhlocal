@@ -74,6 +74,6 @@ SHIPMENT_RATE_STATS_KEYS = [
 
 DEFAULT_UUID = "00000000-0000-0000-0000-000000000000"
 
-UNIQUE_FCL_SPOT_SEARCH_SERVICE_KEYS = {"commodity","container_size","container_type"}
+UNIQUE_FCL_SPOT_SEARCH_SERVICE_KEYS = {"commodity", "container_size", "container_type"}
 
 GLOBAL_MIN = -1000000000000000  # 10e-15

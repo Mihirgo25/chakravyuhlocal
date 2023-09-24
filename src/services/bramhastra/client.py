@@ -19,7 +19,7 @@ class ClickHouse:
         start_time = time.perf_counter_ns()
         result = self.client.execute(query, parameters, with_column_types=True)
         end_time = time.perf_counter_ns()
-        if ENVIRONMENT_TYPE == "shell":
+        if ENVIRONMENT_TYPE == "cli":
             logger.debug((query, parameters))
             logger.info("Execution Time: %.2f ms" % ((end_time - start_time) / 1e6))
         if result is not None:
