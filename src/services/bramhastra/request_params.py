@@ -212,26 +212,26 @@ class BuyQuotation(BaseModel):
     )
 
 
-class FclFreightServices(BaseModel):
+class  ShipmentFclFreightService(BaseModel):
     shipment_service_id: str = Field(alias="id")
     shipment_service_state: str = Field(alias="state", default=None)
-    shipment_service_is_active: bool = Field(alias="is_active")
+    shipment_service_is_active: bool = Field(alias="is_active", default = None)
     shipment_service_cancellation_reason: str = Field(
         alias="cancellation_reason", default=None
     )
     shipment_service_created_at: datetime = Field(
-        alias="created_at", default=datetime.utcnow()
+        alias="created_at",default = None
     )
     shipment_service_updated_at: datetime = Field(
         alias="updated_at", default=datetime.utcnow()
     )
     shipping_line_id: str = None
     service_provider_id: str = None
-    containers_count: int = 1
-    cargo_weight_per_container: float = 0
-    container_size: str
-    container_type: str
-    commodity: str
+    containers_count: int = None
+    cargo_weight_per_container: float = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
 
 
 class Shipment(BaseModel):
@@ -248,7 +248,7 @@ class Shipment(BaseModel):
 
 
 class ShipmentParams(BaseModel):
-    fcl_freight_services: list[FclFreightServices] = []
+    fcl_freight_services: list[ShipmentFclFreightService] = []
     shipment: Shipment
 
 
@@ -256,10 +256,11 @@ class ApplyShipmentFclFreightRateStatistics(BaseModel):
     action: str
     params: ShipmentParams = None
     shipment_update_params: Shipment = None
+    shipment_service_update_params: ShipmentFclFreightService
 
 
 class QuotationParams(BaseModel):
-    fcl_freight_service: FclFreightServices = None
+    fcl_freight_service: ShipmentFclFreightService = None
     buy_quotation: BuyQuotation = None
     shipment: Shipment = None
 

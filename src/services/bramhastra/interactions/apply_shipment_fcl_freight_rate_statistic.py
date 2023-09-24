@@ -10,6 +10,8 @@ def apply_shipment_fcl_freight_rate_statistic(request):
         shipment = Shipment(request)
         if request.action == ShipmentAction.create.value:
             shipment.set()
-        else:
+        elif request.shipment_update_params is not None:
             shipment.update()
+        elif request.shipment_service_update_params is not None:
+            shipment.update_service()
     return {"succuss": True}

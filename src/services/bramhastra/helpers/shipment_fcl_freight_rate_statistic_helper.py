@@ -106,6 +106,17 @@ class Shipment:
             FclFreightAction.shipment_id == self.request.shipment_id
         ).execute()
 
+    def update_service(self) -> None:
+        params = self.request.dict(
+            exclude={
+                FclFreightAction.shipment_service_id.name,
+            },
+            exclude_none=True,
+        )
+        FclFreightAction.update(**params).where(
+            FclFreightAction.shipment_serial_id == self.request.shipment_service_id
+        ).execute()
+
     def __update(self, model, increment_keys: set = None, params: dict = None):
         if increment_keys is not None:
             for key in increment_keys:
