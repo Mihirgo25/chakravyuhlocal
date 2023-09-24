@@ -29,7 +29,7 @@ class BaseModel(Model):
 
 class FclFreightAction(BaseModel):
     id = BigAutoField()
-    fcl_freight_rate_statistic_id = BigIntegerField(null=True)
+    fcl_freight_rate_statistic_id = BigIntegerField(index = True,null=True)
     origin_port_id = UUIDField(index=True, default=DEFAULT_UUID)
     destination_port_id = UUIDField(index=True, default=DEFAULT_UUID)
     origin_main_port_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
@@ -62,7 +62,7 @@ class FclFreightAction(BaseModel):
     sourced_by_id = UUIDField(index=True, default=DEFAULT_UUID, null=True)
     procured_by_id = UUIDField(index=True, default=DEFAULT_UUID, null=True)
     performed_by_id = UUIDField(index=True, default=DEFAULT_UUID, null=True)
-    rate_type = CharField(default="None", null=True)
+    rate_type = CharField(null=True)
     validity_start = DateField()
     validity_end = DateField()
     shipping_line_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
@@ -84,7 +84,7 @@ class FclFreightAction(BaseModel):
     shipment_state = TextField(null=True)
     shipment_service_id = UUIDField(null=True, default=DEFAULT_UUID)
     shipment_cancelled = IntegerField(default=0)
-    shipment_cancellation_reason = TextField(default="None", index=True)
+    shipment_cancellation_reason = TextField(index=True)
     shipment_completed = IntegerField(default=0)
     shipment_aborted = IntegerField(default=0)
     shipment_in_progress = IntegerField(default=0)
@@ -131,7 +131,6 @@ class FclFreightAction(BaseModel):
 
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()
-        self.created_at = self.updated_at
         return super(FclFreightAction, self).save(*args, **kwargs)
 
     def refresh(self):
