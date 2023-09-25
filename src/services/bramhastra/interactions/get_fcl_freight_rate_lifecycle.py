@@ -68,7 +68,8 @@ def get_date_range_filter(where, filters):
 
 
 async def get_fcl_freight_rate_lifecycle(filters):
-    where = get_direct_indirect_filters(filters, date=None) or []
+    where = []
+    get_direct_indirect_filters(filters, where) 
 
     lifecycle_statistics = await get_lifecycle_statistics(filters, where)
 
