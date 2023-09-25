@@ -1,14 +1,24 @@
 from celery_worker import celery
-from services.bramhastra.brahmastra import Brahmastra
+from services.bramhastra.brahmastra import Brahmastra, BrahmastraV2
 
 
 @celery.task(bind=True, retry_backoff=True, max_retries=5)
 def brahmastra_in_delay(self):
     # using this until we get all queries right
-    return
     try:
         brahmastra = Brahmastra()
         brahmastra.used_by(arjun=True)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+
+
+@celery.task(bind=True, retry_backoff=True, max_retries=5)
+def brahmastra_v2_in_delay(self, events):
+    try:
+        BrahmastraV2(events).execute()
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass
