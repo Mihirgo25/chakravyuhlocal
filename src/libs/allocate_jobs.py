@@ -20,6 +20,9 @@ def allocate_jobs(service_type: str) -> str:
     elif service_type.upper() == "AIR":
         users = AIR_COVERAGE_USERS
         redis_key = "last_assigned_user_air"
+    elif service_type.upper() == "HAULAGE":
+        users = HAULAGE_COVERAGE_USERS   # users where to define? and what?
+        redis_key = "last_assigned_user_haulage"
 
     last_assigned_user = rd.get(redis_key)
     if not last_assigned_user:
