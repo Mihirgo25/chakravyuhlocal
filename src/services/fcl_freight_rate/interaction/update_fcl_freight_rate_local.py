@@ -46,7 +46,8 @@ def create_audit(request, fcl_freight_local_id):
         performed_by_id = request.get('performed_by_id'),
         data = audit_data,
         object_id = fcl_freight_local_id,
-        object_type = 'FclFreightRateLocal'
+        object_type = 'FclFreightRateLocal',
+        bulk_operation_id = request.get('bulk_operation_id')
     )
 
 def execute_transaction_code(request):
@@ -57,7 +58,10 @@ def execute_transaction_code(request):
   fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
 
   if request.get('data') and request['data'].get('line_items'):
-      fcl_freight_local.data = fcl_freight_local.data | {'line_items':get_normalized_line_items(request['data']['line_items'])}
+      if request.get('bulk_operation_id'):
+        fcl_freight_local.data = (fcl_freight_local.data or {}) | {'line_items':get_normalized_line_items(request['data']['line_items'])}
+      else:
+        fcl_freight_local.set_data(get_normalized_line_items(request['data']['line_items']))
 
   if request.get('data') and request['data'].get('detention'):
     if fcl_freight_local.detention_id:
