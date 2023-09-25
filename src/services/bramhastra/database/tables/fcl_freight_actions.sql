@@ -78,9 +78,9 @@ CREATE TABLE brahmastra.fcl_freight_actions
     feedback_ids Array(UUID),
     rate_request_created Bool DEFAULT false,
     rate_requested_closed Bool DEFAULT false,
-    rate_request_added Bool DEFAULT false,
-    rate_requested_ids Array(UUID)
-    so1_select INT,
+    rate_request_rate_added Bool DEFAULT false,
+    rate_requested_ids Array(UUID),
+    so1_select UInt8,
     selected_bas_standard_price Float64 DEFAULT 0,
     bas_standard_price_accuracy Float64 DEFAULT 0,
     bas_standard_price_diff_from_selected_rate Float64 DEFAULT 0,
