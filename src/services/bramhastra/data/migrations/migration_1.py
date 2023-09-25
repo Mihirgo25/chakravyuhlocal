@@ -1759,7 +1759,10 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             AirFreightRateStatistic,
             WorkerLog
         ]:
-            db.execute_sql(f"drop table {model._meta.table_name}")
+            try:
+                db.execute_sql(f"drop table {model._meta.table_name}")
+            except:
+                pass
 
         ClickHouse().execute("create database brahmastra")
 

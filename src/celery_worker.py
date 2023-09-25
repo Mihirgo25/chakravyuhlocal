@@ -443,9 +443,13 @@ def celery_create_fcl_freight_rate_local(self, request):
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_id,procured_by_id,cogo_entity_id):
-    eval_string = f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')"
+
+    args = [f"sourced_by_id='{sourced_by_id}'", f"procured_by_id='{procured_by_id}'"] if sourced_by_id is not None and procured_by_id is not None else []
     if cogo_entity_id:
-        eval_string = f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}',cogo_entity_id='{cogo_entity_id}')"
+        args.append(f"cogo_entity_id='{cogo_entity_id}'")
+
+    eval_string = f"object.perform_{action_name}_action({', '.join(args)})"
+    
     try:
         eval(eval_string)
     except Exception as exc:
