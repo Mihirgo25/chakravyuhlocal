@@ -470,7 +470,7 @@ class FclFreightRate(BaseModel):
       self.validities = main_validities
 
 
-    def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term, tag = None, other_params={}):
+    def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term,tag = None,schedule_id= None, other_params={}):
         new_validities = []
         new_tags = {}
         
@@ -545,6 +545,7 @@ class FclFreightRate(BaseModel):
                 # validity_object_validity_start = validity_end + datetime.timedelta(days=1)
                 validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
                 validity_object['action'] = 'update'
+                new_validity['schedule_id'] = schedule_id
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 new_tags[id] = tag 
                 continue
@@ -555,6 +556,7 @@ class FclFreightRate(BaseModel):
                 new_validity = {**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}
                 new_validity['id'] = str(uuid.uuid4())
                 new_validity['action'] = 'create'
+                new_validity['schedule_id'] = schedule_id
                 new_validities.append(FclFreightRateValidity(**new_validity))
                 continue   
         
@@ -576,6 +578,7 @@ class FclFreightRate(BaseModel):
                 "payment_term": payment_term,
                 "likes_count": 0,
                 "dislikes_count": 0,
+                "schedule_id": schedule_id,
                 "action": "create"
               }
           if old_validity_id is not None:  
