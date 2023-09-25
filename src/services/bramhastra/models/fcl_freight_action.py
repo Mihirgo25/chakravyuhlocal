@@ -130,6 +130,8 @@ class FclFreightAction(BaseModel):
     version = IntegerField(default=1)
 
     def save(self, *args, **kwargs):
+        if self.id:
+            self.version+=1
         self.operation_updated_at = datetime.utcnow()
         return super(FclFreightAction, self).save(*args, **kwargs)
 
