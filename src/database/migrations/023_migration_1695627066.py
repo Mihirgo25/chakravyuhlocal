@@ -69,7 +69,8 @@ fields_to_remove = [
 
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
     """Write your migrations here."""
-    migrator.add_fields(FclFreightRateStatistic, tag = CharField(max_length=256, index=True, null = True))
+    migrator.add_fields(FclFreightRateStatistic, tag = CharField(max_length=256, null = True))
+    migrator.sql('Create index fcl_freight_rate_statistic_tag on brahmastra.{FclFreightRateStatistic._meta.table_name} (tag);')
     migrator.add_fields(FclFreightRateStatistic, shipment_completed = IntegerField(default = 0))
     migrator.add_fields(FclFreightRateStatistic, shipment_cancelled = IntegerField(default = 0))
     migrator.add_fields(FclFreightRateStatistic, bas_standard_price_accuracy = FloatField(default = -1))
