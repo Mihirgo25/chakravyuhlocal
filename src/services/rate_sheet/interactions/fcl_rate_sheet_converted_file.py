@@ -61,7 +61,7 @@ def get_importer_exporter_id(importer_exporter_name):
 
 
 def process_fcl_freight_local(params, converted_file, update):
-    valid_headers = ["trade_type", "port", "main_port", "container_size", "container_type", "commodity", "shipping_line", "location", "code", "unit", "lower_limit", "upper_limit", "price", "currency","market_price", "remark1", "remark2", "remark3", "rate_type"]
+    valid_headers = ["trade_type", "port", "main_port", "terminal", "container_size", "container_type", "commodity", "shipping_line", "location", "code", "unit", "lower_limit", "upper_limit", "price", "currency","market_price", "remark1", "remark2", "remark3", "rate_type"]
     total_lines = 0
     original_path = get_original_file_path(converted_file)
 
@@ -133,12 +133,12 @@ def process_fcl_freight_local(params, converted_file, update):
                         (valid_hash(
                             row,
                             ["code", "unit", "price", "currency"],
-                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'lower_limit', 'upper_limit', 'market_price']
+                            ['trade_type', 'port', 'main_port', 'terminal', 'container_type', 'container_size', 'commodity', 'shipping_line', 'lower_limit', 'upper_limit', 'market_price']
                         )
                         or valid_hash(
                             row,
                             ['lower_limit', 'upper_limit', 'price', 'currency'],
-                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'location', 'code', 'unit','market_price']
+                            ['trade_type', 'port', 'main_port', 'terminal', 'container_type', 'container_size', 'commodity', 'shipping_line', 'location', 'code', 'unit','market_price']
                         )
                     )):
                 rows.append(row)
@@ -202,6 +202,7 @@ def create_fcl_freight_local_rate(
     keys_to_extract = ['trade_type', 'container_size', 'container_type', 'commodity']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['main_port_id'] = get_port_id(rows[0].get('main_port'))
+    object['terminal_id'] = get_terminal_id(rows[0].get('terminal'))
     object['port_id'] = get_port_id(rows[0].get('port'))
     object['rate_type'] = rows[0].get('rate_type') or DEFAULT_RATE_TYPE
 
