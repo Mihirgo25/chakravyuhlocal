@@ -952,7 +952,7 @@ class CreateBulkOperation(BaseModel):
     extend_freight_rate_to_icds: ExtendFreightRateToIcds = None
     add_local_conditions: AddLocalConditions = None
     delete_local_rate_line_item: DeleteLocalRateLineItem = None
-    add_schedules: AddSailingSchedules = None
+    add_sailing_schedules: AddSailingSchedules = None
 
 
 class UpdateFclFreightRateTask(BaseModel):

@@ -1630,6 +1630,9 @@ class FclFreightRateBulkOperation(BaseModel):
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= None,includes=includes)['list']
         fcl_freight_rates = list(fcl_freight_rates.dicts())
 
+        validity_start = datetime.strptime(data['validity_start'], '%Y-%m-%d')
+        validity_end = datetime.strptime(data['validity_end'], '%Y-%m-%d') 
+
         total_count = len(fcl_freight_rates)
         count = 0
         for freight in fcl_freight_rates:
@@ -1642,16 +1645,16 @@ class FclFreightRateBulkOperation(BaseModel):
 
             new_validities = []
 
-            validities = [k for k in freight["validities"] if k['validity_end'].date() >= datetime.now().date()]
+            validities = [k for k in freight["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d').date() >= datetime.now().date()]
 
             for validity_object in validities:
                 validity_object['validity_start'] = datetime.strptime(validity_object['validity_start'], '%Y-%m-%d')
                 validity_object['validity_end'] = datetime.strptime(validity_object['validity_end'], '%Y-%m-%d')
 
-                if validity_object['validity_start'] > data['validity_end'] or validity_object['validity_end'] < data['validity_start']:
+                if validity_object['validity_start'] > validity_end or validity_object['validity_end'] < validity_start:
                     continue
-                validity_object['validity_start'] = max(validity_object['validity_start'], data['validity_start'])
-                validity_object['validity_end'] = min(validity_object['validity_end'], data['validity_end'])
+                validity_object['validity_start'] = max(validity_object['validity_start'], validity_start)
+                validity_object['validity_end'] = min(validity_object['validity_end'],validity_end)
 
                 validity_object['validity_start'] = max(validity_object['validity_start'], datetime.now())
                 validity_object['schedule_id'] = data.get('schedule_id')
