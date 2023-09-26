@@ -208,6 +208,8 @@ celery.conf.beat_schedule = {
     },
 }
 
+
+celery.autodiscover_tasks(['services.air_customs_rate.air_customs_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
 celery.autodiscover_tasks(['services.air_freight_rate.air_celery_worker'], force=True)
@@ -669,6 +671,17 @@ def process_freight_look_rates(self, rate, locations):
 def create_fcl_customs_rate_delay(self, request):
     try:
         return create_fcl_customs_rate(request)
+    except Exception as e:
+        if type(e).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= e)
+        
+@celery.task(bind = True, retry_backoff=True, max_retries=5)
+def create_fcl_cfs_rate_delay(self, request):
+    from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate import create_fcl_cfs_rate
+    try:
+        return create_fcl_cfs_rate(request)
     except Exception as e:
         if type(e).__name__ == 'HTTPException':
             pass
