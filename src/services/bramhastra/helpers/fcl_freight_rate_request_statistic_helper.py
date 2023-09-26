@@ -121,7 +121,9 @@ class Request:
         if fcl_freight_action is None:
             return
         if action == RequestAction.create.name:
-            setattr(fcl_freight_action, FclFreightAction.rate_request_created.name, True)
+            setattr(
+                fcl_freight_action, FclFreightAction.rate_request_created.name, True
+            )
             rate_requested_ids = getattr(
                 fcl_freight_action, FclFreightAction.rate_requested_ids.name
             )
