@@ -3,7 +3,7 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
 from libs.json_encoder import json_encoder
-from peewee import fn, SQL
+from peewee import fn
 
 possible_direct_filters = ["id", "commodity", "container_size", "container_type", "port_id", "shipping_line_id", "trade_type", "rate_id", "source", "status", "shipment_serial_id"]
 possible_indirect_filters = []
@@ -41,9 +41,9 @@ def get_stats(filters, is_stats_required):
     if filters:
         if 'status' in filters:
             del filters['status']
-    
+
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-  
+
         query = get_filters(direct_filters, query, DraftFclFreightRateLocal)
 
     query = (query.select(
