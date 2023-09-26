@@ -12,7 +12,7 @@ from services.nandi.interactions.list_draft_fcl_freight_rates import list_draft_
 from services.nandi.interactions.list_draft_fcl_freight_rate_locals import list_draft_fcl_freight_rate_locals
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
-from services.nandi.helpers import *
+from services.nandi.helpers.check_draft_fcl_freight_local import check_draft_fcl_freight_local
 nandi_router = APIRouter()
 
 @nandi_router.post("/create_draft_fcl_freight_rate")

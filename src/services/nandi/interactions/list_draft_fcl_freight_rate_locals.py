@@ -8,7 +8,7 @@ from peewee import fn
 possible_direct_filters = ["id", "commodity", "container_size", "container_type", "port_id", "shipping_line_id", "trade_type", "rate_id", "source", "status", "shipment_serial_id"]
 possible_indirect_filters = []
 
-def list_draft_fcl_freight_rate_locals(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', is_stats_required = True):
+def list_draft_fcl_freight_rate_locals(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', is_stats_required = False):
     query = get_query(sort_by, sort_type)
 
     if filters:
@@ -16,7 +16,6 @@ def list_draft_fcl_freight_rate_locals(filters = {}, page_limit = 10, page = 1, 
             filters = json.loads(filters)
 
             direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-
             query = get_filters(direct_filters, query, DraftFclFreightRateLocal)
 
     stats = get_stats(filters, is_stats_required) or {}
