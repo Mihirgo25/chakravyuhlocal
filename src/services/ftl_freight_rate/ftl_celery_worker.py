@@ -3,7 +3,7 @@ from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import adding_mu
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate import create_ftl_freight_rate
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def ftl_bulk_operation_perform_action_functions(self, action_name,object,sourced_by_id,procured_by_id):
+def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_id,procured_by_id):
     try:
         eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')")
     except Exception as exc:

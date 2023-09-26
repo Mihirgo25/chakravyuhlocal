@@ -87,10 +87,6 @@ from services.ftl_freight_rate.interactions.get_ftl_freight_rate_min_max_validit
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_cards import (
     get_ftl_freight_rate_cards,
 )
-from services.ftl_freight_rate.interactions.extend_ftl_freight_rates import (
-    extend_ftl_freight_rate,
-)
-
 ftl_freight_router = APIRouter()
 
 
@@ -913,27 +909,6 @@ def get_ftl_freight_rate_cards_api(
         }
         list = get_ftl_freight_rate_cards(request)
         return JSONResponse(status_code=200, content=json_encoder(list))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
-
-
-@ftl_freight_router.post("/extend_ftl_freight_rates")
-def extend_ftl_freight_rates_data(
-    request: ExtendFtlFreightRates, resp: dict = Depends(authorize_token)
-):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-    if resp["isAuthorized"]:
-        request.performed_by_id = resp["setters"]["performed_by_id"]
-        request.performed_by_type = resp["setters"]["performed_by_type"]
-    try:
-        data = extend_ftl_freight_rate(request.dict(exclude_none=True))
-        return JSONResponse(content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
