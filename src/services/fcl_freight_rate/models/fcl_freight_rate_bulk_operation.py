@@ -5,7 +5,7 @@ from playhouse.postgres_ext import *
 from micro_services.client import *
 from fastapi import HTTPException
 from datetime import datetime,timedelta
-from configs.definitions import FCL_FREIGHT_CHARGES
+from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
 from configs.global_constants import FREE_DAYS_TYPES, ALL_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
@@ -28,7 +28,7 @@ from services.fcl_freight_rate.helpers.adjust_markup_price import adjusted_price
 
 
 
-ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
+ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate','add_local_conditions','delete_local_rate_line_item']
 MARKUP_TYPES = ['net','percent','absolute']
 BATCH_SIZE = 1000
 
@@ -79,6 +79,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_extend_validity_data(self):
         data = self.data
         
+        if self.sourced_by_id is None or self.procured_by_id is None:
+             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+           
         if data.get('markup') and data.get('markup_type') and data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
         
@@ -91,6 +94,10 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def validate_delete_freight_rate_data(self):
         data = self.data
+
+        if self.sourced_by_id is None or self.procured_by_id is None:
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+        
         if data['validity_end'] < data['validity_start']:
             raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start')
         
@@ -107,10 +114,17 @@ class FclFreightRateBulkOperation(BaseModel):
 
         
     def validate_delete_local_rate_data(self):
+
+        if self.sourced_by_id is None or self.procured_by_id is None:
+             raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+        
         return True
     
     def validate_add_freight_rate_markup_data(self):
         data = self.data
+
+        if self.sourced_by_id is None or self.procured_by_id is None:
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         if float(data['markup']) == 0:
             raise HTTPException(status_code=400, detail='markup cannot be 0')
@@ -147,6 +161,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_add_local_rate_markup_data(self):
         data = self.data
 
+        if self.sourced_by_id is None or self.procured_by_id is None:
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+
         if float(data['markup']) == 0:
             raise HTTPException(status_code=400, detail='markup cannot be 0')
 
@@ -162,9 +179,35 @@ class FclFreightRateBulkOperation(BaseModel):
         
         if str(data['markup_type']).lower() == 'percent':
             return
+
+    def validate_delete_local_rate_line_item_data(self):
+        data = self.data
+        
+        fcl_freight_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+
+        charge_codes = fcl_freight_charges_dict.keys()
+
+        if data['line_item_code'] not in charge_codes:
+            raise HTTPException(status_code=400, detail='line_item_code is invalid')
+        
+    def validate_add_local_conditions_data(self):
+        data = self.data
+        
+        fcl_freight_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+
+        charge_codes = fcl_freight_charges_dict.keys()
+        line_items = data['line_items']
+
+        for line_item in line_items:
+            if line_item['code'] not in charge_codes:
+                raise HTTPException(status_code=400, detail='line_item_code is invalid')
+        
         
     def validate_update_free_days_limit_data(self):
         data = self.data
+
+        if self.sourced_by_id is None or self.procured_by_id is None:
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         if int(data['free_limit']) <= 0:
             raise HTTPException(status_code=400, detail='free_limit cannot be less than or equal to 0')
@@ -182,6 +225,9 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def validate_add_freight_line_item_data(self):
         data = self.data
+
+        if self.sourced_by_id is None or self.procured_by_id is None:
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
@@ -203,6 +249,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_update_free_days_data(self):
         data = self.data
 
+        if self.sourced_by_id is None or self.procured_by_id is None:
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+
         if data['free_days_type'] not in FREE_DAYS_TYPES:
             raise HTTPException(status_code=400, detail='free_days_type is invalid')
         
@@ -223,6 +272,9 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_update_weight_limit_data(self):
         data = self.data
 
+        if self.sourced_by_id is None or self.procured_by_id is None:
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+
         if int(data['free_limit']) <= 0:
             raise HTTPException(status_code=400, detail='free_limit cannot be less than or equal to 0')
         
@@ -239,6 +291,10 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def validate_extend_freight_rate_data(self):
         data = self.data
+
+        if self.sourced_by_id is None or self.procured_by_id is None:
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
+        
         if data.get("extend_for_flash_booking"):
             return
 
@@ -257,6 +313,9 @@ class FclFreightRateBulkOperation(BaseModel):
         
     def validate_extend_freight_rate_to_icds_data(self):
         data = self.data
+
+        if self.sourced_by_id is None or self.procured_by_id is None:
+            raise HTTPException(status_code=400, detail='procured_by_id and sourced_by_id cannot be None')
 
         if data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
@@ -439,20 +498,26 @@ class FclFreightRateBulkOperation(BaseModel):
     def perform_batch_delete_freight_rate_action(self, batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
         fcl_freight_rates = list(batch_query.dicts())
-        
+        validity_start = datetime.strptime(data['validity_start'], "%Y-%m-%d")
+        validity_end = datetime.strptime(data['validity_end'], "%Y-%m-%d")
+            
+        if data.get('delete_all_validities') == True:
+            validity_start -= timedelta(days=60)
+            validity_end += timedelta(days=60)
+            
         for freight in fcl_freight_rates:
             count += 1
 
             if FclFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
                 progress = int((count * 100.0) / total_count)
                 self.set_progress_percent(progress)
-                continue
+                continue           
 
             delete_fcl_freight_rate({
                 'id': str(freight["id"]),
                 'performed_by_id': self.performed_by_id,
-                'validity_start': datetime.strptime(data['validity_start'],"%Y-%m-%d"),
-                'validity_end': datetime.strptime(data['validity_end'],"%Y-%m-%d"),
+                'validity_start': validity_start,
+                'validity_end': validity_end,
                 'bulk_operation_id': self.id,
                 'sourced_by_id': sourced_by_id,
                 'procured_by_id': procured_by_id,
@@ -1352,5 +1417,167 @@ class FclFreightRateBulkOperation(BaseModel):
         self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()
-        
 
+
+    def perform_add_local_conditions_action(self, sourced_by_id=None, procured_by_id=None, cogo_entity_id=None):
+        data = self.data
+        total_affected_rates = 0
+        count = 0
+        page_count = 1
+
+        if not data['filters']:
+            raise HTTPException(status_code=400, detail='filters cannot be empty')
+
+        filters = data['filters']
+        total_count = list_fcl_freight_rate_locals(filters= filters, get_count = True)['list']
+
+        while True:
+            batch_wise_local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page = page_count, page_limit = BATCH_SIZE)['list']
+            page_count += 1
+
+            if not batch_wise_local_rates:
+                break
+
+            for local in batch_wise_local_rates:
+                count += 1
+
+                if FclFreightRateAudit.get_or_none(bulk_operation_id = self.id,object_id = local['id']):
+                    progress = int((count * 100.0) / total_count)
+                    self.set_progress_percent(progress)
+                    continue
+
+                line_items = data['line_items']
+                local_line_items = ((local.get('data') or {}).get('line_items',[]) or [])
+                local_line_items_codes = []
+                if local_line_items:
+                    for local_line_item in local_line_items:
+                        local_line_items_codes.append(local_line_item['code'])
+
+                line_items_codes = []
+                line_items_seperation = {}
+                new_line_items = []
+                for line_item in line_items:
+                    code = line_item["code"]
+                    if code in local_line_items_codes:
+                        line_items_codes.append(code)
+                        if not line_item["conditions"]:
+                            key = "Default_{}".format(code)
+                        else:
+                            key = code
+                        if key not in line_items_seperation:
+                            line_items_seperation[key] = []
+                        line_items_seperation[key].append(line_item)
+                    else:
+                        new_line_items.append({key: value for key, value in line_item.items() if key in ['code', 'unit', 'price', 'currency', 'conditions']})
+
+                if  line_items_seperation:
+                    completed_codes = []
+                    for line_item in line_items:
+                        local_line_items = local['data'].get('line_items')
+                        code = line_item["code"]
+                        if code not in completed_codes:
+
+                            if "Default_{}".format(code) in line_items_seperation and code not in line_items_seperation:
+                                matching_line_items = [t for t in local['data']['line_items'] if t['code'] == code]
+                                local_line_items = [item for item in local_line_items if item not in matching_line_items]
+                                for t in line_items_seperation[f"Default_{code}"]:
+                                    local_line_items.append(t)
+                                local['data']['line_items'] = local_line_items
+
+                            if "Default_{}".format(code) in line_items_seperation and code in line_items_seperation:
+                                matching_line_items = [t for t in local['data']['line_items'] if t['code'] == code]
+                                local_line_items = [item for item in local_line_items if item not in matching_line_items]
+                                for t in line_items_seperation[f"Default_{code}"]:
+                                    local_line_items.append(t)
+                                for t in line_items_seperation[code]:
+                                    local_line_items.append(t)
+                                local['data']['line_items'] = local_line_items
+
+                            if not "Default_{}".format(code) in line_items_seperation and code in line_items_seperation:
+                                matching_conditions_line_items = [t for t in local['data']['line_items'] if t['code'] == code and t.get('conditions')]
+                                local_line_items = [item for item in local_line_items if item not in matching_conditions_line_items]
+                                for t in line_items_seperation[code]:
+                                    local_line_items.append(t)
+                                local['data']['line_items'] = local_line_items
+
+                            completed_codes.append(code)
+
+                
+                local['data'] = (local.get('data') or {})
+                if 'line_items' not in local['data']:
+                    local['data']['line_items'] = []
+
+                if new_line_items:
+                    for items in new_line_items:
+                        local['data']['line_items'].append(items)
+
+                try:
+                    update_fcl_freight_rate_local({
+                        'id': local['id'],
+                        'performed_by_id': self.performed_by_id,
+                        'sourced_by_id': local.get('sourced_by_id'),
+                        'procured_by_id': local.get('procured_by_id'),
+                        'bulk_operation_id': self.id,
+                        'data': local['data']
+                    })
+                except :
+                    pass
+
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
+
+            total_affected_rates += count
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()
+
+
+    def perform_delete_local_rate_line_item_action(self, sourced_by_id=None, procured_by_id=None, cogo_entity_id=None):
+        data = self.data
+        total_affected_rates = 0
+
+        filters = (data['filters'] or {})
+        
+        page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+
+        local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page_limit= page_limit)['list']
+        total_count = len(local_rates)
+        count = 0
+
+        for local in local_rates:
+            count += 1
+
+            if FclFreightRateAudit.get_or_none(bulk_operation_id = self.id,object_id = local['id']):
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
+                continue
+
+            if not (local.get('data') or {}).get('line_items'):
+                continue
+
+            line_items = [t for t in local['data'].get('line_items',[]) if t.get('code') == data['line_item_code'] and t.get('conditions')]
+
+            if not line_items:
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
+
+            local['data']['line_items'] = [t for t in local['data'].get('line_items',[]) if t not in line_items]
+
+            update_fcl_freight_rate_local({
+                'id': local['id'],
+                'performed_by_id': self.performed_by_id,
+                'sourced_by_id': local.get('sourced_by_id'),
+                'procured_by_id': local.get('procured_by_id'),
+                'bulk_operation_id': self.id,
+                'data': local['data']
+            })
+
+            total_affected_rates += 1
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+            
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()
