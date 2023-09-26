@@ -306,6 +306,7 @@ def get_fcl_freight_map_view_statistics_api(
     "/get_fcl_freight_rate_world", response_model=FclFreightRateWorldResponse
 )
 async def get_fcl_freight_rate_world_api(
+    filters: Annotated[Json, Query()] = {},
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
@@ -314,7 +315,7 @@ async def get_fcl_freight_rate_world_api(
         )
 
     try:
-        response = await get_fcl_freight_rate_world()
+        response = await get_fcl_freight_rate_world(filters)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
