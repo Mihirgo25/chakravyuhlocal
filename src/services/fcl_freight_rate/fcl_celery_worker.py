@@ -7,7 +7,9 @@ from services.fcl_freight_rate.workers.update_fcl_freight_rate_job_on_rate_addit
     update_fcl_freight_rate_job_on_rate_addition,
 )
 from services.fcl_freight_rate.workers.create_jobs_for_predicted_fcl_freight_rate import create_jobs_for_predicted_fcl_freight_rate
+from services.fcl_freight_rate.workers.create_sailing_schedule_port_pair_coverage import create_sailing_schedules_port_pair_coverages
 from celery.schedules import crontab
+
 
 tasks = {
     'update_fcl_freight_jobs_status_to_backlogs': {
@@ -52,4 +54,12 @@ def update_fcl_freight_rate_jobs_to_backlog_delay(self):
             raise self.retry(exc=exc)
 
         
-
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def create_sailing_schedule_port_pair_coverage_delay (self,request):
+    try:
+        return create_sailing_schedules_port_pair_coverages(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
