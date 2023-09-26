@@ -9,26 +9,6 @@ from fastapi.encoders import jsonable_encoder
 from services.rate_sheet.helpers import *
 import chardet
 from libs.parse_numeric import parse_numeric
-from database.rails_db import get_operators
-
-
-def get_airport_id(port_code, country_code):
-    input = {"filters": {"type": "airport", "port_code": port_code, "status": "active"}}
-    try:
-        locations_data = maps.list_locations(input)
-        airport_ids = locations_data["list"][0]["id"]
-    except:
-        airport_ids = None
-    return airport_ids
-
-
-def get_airline_id(airline_name):
-    try:
-        airline_name = airline_name.strip()
-        airline_id = get_operators(short_name=airline_name, operator_type = 'airline')[0]['id']
-    except:
-        airline_id = None
-    return airline_id
 
 
 def process_air_freight_freight(params, converted_file, update):
