@@ -10,6 +10,8 @@ from services.bramhastra.models.fcl_freight_rate_request_statistics import (
 from services.bramhastra.enums import RequestAction, Status
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
 
+import uuid
+
 EXCLUDE_UPDATE_KEYS = {
     FclFreightRateRequestStatistic.rate_request_id.name,
     FclFreightRateRequestStatistic.origin_continent_id.name,
@@ -119,7 +121,7 @@ class Request:
         if fcl_freight_action is None:
             return
         if action == RequestAction.create.name:
-            setattr(fcl_freight_action, FclFreightAction.rate_request_created, True)
+            setattr(fcl_freight_action, FclFreightAction.rate_request_created.name, True)
             rate_requested_ids = getattr(
                 fcl_freight_action, FclFreightAction.rate_requested_ids.name
             )
@@ -131,6 +133,7 @@ class Request:
                 rate_requested_ids.append(
                     self.params.get(FclFreightRateRequestStatistic.rate_request_id.name)
                 )
+            rate_requested_ids = [uuid.UUID(uuid_str) for uuid_str in rate_requested_ids]
             setattr(
                 fcl_freight_action,
                 FclFreightAction.rate_requested_ids.name,
