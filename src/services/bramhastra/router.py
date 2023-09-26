@@ -626,38 +626,6 @@ def list_fcl_freight_rate_trends_api(
         )
 
 
-@bramhastra.get("/list_fcl_freight_rate_trends")
-def list_fcl_freight_rate_trends_api(
-    filters: Annotated[Json, Query()] = {},
-):
-    try:
-        response = list_fcl_freight_rate_trends(filters)
-        return JSONResponse(status_code=200, content=response)
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
-
-
-@bramhastra.get("/list_fcl_freight_rate_trends")
-def list_fcl_freight_rate_trends_api(
-    filters: Annotated[Json, Query()] = {},
-):
-    try:
-        response = list_fcl_freight_rate_trends(filters)
-        return JSONResponse(status_code=200, content=response)
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
-
-
 @bramhastra.get("/get_fcl_freight_rate_differences")
 def get_fcl_freight_rate_differences_api(
     filters: Annotated[Json, Query()] = {},
