@@ -14,6 +14,7 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
+import uuid
 
 
 class Feedback:
@@ -131,6 +132,7 @@ class Feedback:
                 feedback_ids.append(
                     self.params.get(FeedbackFclFreightRateStatistic.feedback_id.name)
                 )
+            feedback_ids = [uuid.UUID(uuid_str) for uuid_str in feedback_ids]
             setattr(
                 fcl_freight_action,
                 FclFreightAction.feedback_ids.name,

@@ -6,6 +6,7 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 )
 from micro_services.client import maps
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.bramhastra.enums import FclFilterTypes
 
 DEFAULT_PARAMS = {
     "origin_port_id",
@@ -164,7 +165,7 @@ async def use_rates_affected_filter(
     query = [
         f"""SELECT toUnixTimestamp(rate_updated_at,'Asia/Tokyo')*1000 AS day,COUNT(*) as rates_count FROM brahmastra.{FclFreightAction._meta.table_name}"""
     ]
-    where = get_direct_indirect_filters(filters)
+    where = get_direct_indirect_filters(filters, date=FclFilterTypes.time_series.value)
     if where:
         query.append(f"WHERE {where}")
     query.append("GROUP BY day ORDER BY day ASC")
