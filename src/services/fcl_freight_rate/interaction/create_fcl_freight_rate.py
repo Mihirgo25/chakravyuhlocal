@@ -223,7 +223,7 @@ def create_fcl_freight_rate(request):
         
     send_stats(action,request,freight,port_to_region_id_mapping)
 
-    if row["mode"]  not in ["predicted", "cluster_extension"] and row['rate_type'] == "market_place":
+    if row["mode"]  not in ["predicted", "cluster_extension"] and row['rate_type'] == "market_place" and request.get('tag') != 'trend_GRI':
         update_fcl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
 
     return {"id": freight.id}
