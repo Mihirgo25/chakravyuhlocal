@@ -1,8 +1,7 @@
 from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
 from services.ftl_freight_rate.interactions.list_ftl_freight_rates import list_ftl_freight_rates
-from micro_services.client import maps
+from micro_services.client import maps, shipment
 from datetime import datetime
-from database.rails_db import list_shipment_flash_booking_rates
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from fastapi.encoders import jsonable_encoder
 import json
@@ -42,20 +41,20 @@ def get_ftl_freight_validity_dates_in_batches(request):
 def get_flash_booking_validity_dates_in_batches(request):
     flash_bookings_date_count = 1
     result = {'min_validity_end_date': None, 'max_validity_end_date': None}
-    offset = 0
+    page = 1
 
     while flash_bookings_date_count>0:
-        flash_booking_batch_data = list_shipment_flash_booking_rates(request['shipment_id'], request['preferred_currency'], offset, BATCH_SIZE)
+        flash_booking_batch_data = shipment.list_shipment_flash_booking_rates({'filters':{'shipment_id':request['shipment_id'], 'preferred_currency':request['preferred_currency']}, 'page': page,'page_limit': BATCH_SIZE})['list']
         result = get_result_from_batch(result, flash_booking_batch_data)
         flash_bookings_date_count = len(flash_booking_batch_data)
-        offset += BATCH_SIZE
+        page += 1
         
     return result
 
 def get_result_from_batch(result, batch_data):
     for row in batch_data:
         if row['validity_end'] != None:
-            row['validity_end'] = str(row['validity_end'])
+            row['validity_end'] = str(row['validity_end'])[:10]
             result['min_validity_end_date'] = (min(result['min_validity_end_date'], row['validity_end'])
                                         if result['min_validity_end_date'] != None else row['validity_end'])
             result['max_validity_end_date'] = (max(result['max_validity_end_date'], row['validity_end'])

@@ -641,36 +641,3 @@ def get_organization_partner(id):
         sentry_sdk.capture_exception(e)
         return all_result
 
-def list_shipment_flash_booking_rates(shipment_id, currency, offset, limit):
-    all_result = []
-    try:
-        conn = get_connection()
-        with conn:
-            with conn.cursor() as cur:
-                sql = '''
-                        SELECT 
-                            validity_end 
-                            FROM shipment_flash_booking_rates
-                        WHERE 
-                            shipment_id = %s 
-                            AND 
-                            currency = %s 
-                            AND 
-                            validity_end is not null 
-                        OFFSET %s LIMIT %s
-                      '''
-                
-                cur.execute(sql, (shipment_id, currency, offset, limit))
-                result = cur.fetchall()
-
-                for res in result:
-                    new_obj = {
-                        "validity_end": str(res[0]),
-                    }
-                    all_result.append(new_obj)
-                cur.close()
-        conn.close()
-        return all_result
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return all_result
