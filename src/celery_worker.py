@@ -81,6 +81,12 @@ from services.air_freight_rate.workers.air_freight_critical_port_pairs_scheduler
 from services.air_freight_rate.workers.air_freight_expiring_rates_scheduler import (
     air_freight_expiring_rates_scheduler,
 )
+from services.haulage_freight_rate.workers.haulage_freight_expiring_rates_scheduler import (
+    haulage_freight_expiring_rates_scheduler,
+)
+from services.fcl_customs_rate.workers.fcl_customs_expiring_rates_scheduler import (
+    fcl_customs_expiring_rates_scheduler,
+)
 
 
 CELERY_CONFIG = {
@@ -214,6 +220,7 @@ celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
 celery.autodiscover_tasks(['services.air_freight_rate.air_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.fcl_freight_rate.fcl_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.fcl_customs_rate.fcl_customs_celery_worker'], force=True)
 
 
 
@@ -942,6 +949,8 @@ def create_job_for_expiring_rates_delay(self):
         # may insert 8k to 10k records on odd day for each fcl and air
         fcl_freight_expiring_rates_scheduler()
         air_freight_expiring_rates_scheduler()
+        haulage_freight_expiring_rates_scheduler()
+        fcl_customs_expiring_rates_scheduler()
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass
