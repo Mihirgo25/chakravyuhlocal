@@ -7,12 +7,12 @@ import math
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from database.db_session import rd
-from services.bramhastra.enums import RedisKeys, FclParentMode
+from services.bramhastra.enums import RedisKeys, FclParentMode, FclFilterTypes
 import concurrent.futures
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
 import sys
 
-ALLOWED_TIME_PERIOD = 6
+ALLOWED_TIME_PERIOD = 10000
 
 MAX_ALLOWABLE_DEFAULT_BAS_DIFF = 100
 
@@ -22,7 +22,7 @@ from services.bramhastra.interactions.get_fcl_freight_rate_differences import (
 
 
 def get_fcl_freight_rate_charts(filters):
-    where = get_direct_indirect_filters(filters)
+    where = get_direct_indirect_filters(filters, date=FclFilterTypes.time_series.value)
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         accuracy_future = executor.submit(get_accuracy, filters, where)
@@ -56,7 +56,7 @@ def get_accuracy(filters, where):
 
     clickhouse = ClickHouse()
     queries = [
-        f"""SELECT parent_mode as mode,toDate(updated_at) AS day,AVG(abs(bas_standard_price_accuracy)*sign) AS average_accuracy FROM brahmastra.{FclFreightAction._meta.table_name}"""
+        f"""SELECT parent_mode as mode,toDate(updated_at) AS day,AVG(bas_standard_price_accuracy*sign) AS average_accuracy FROM brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     queries.append(" WHERE ")
@@ -167,7 +167,9 @@ def is_json_needed(filters):
         else filters.get("end_date")
     )
     duration = relativedelta(end_date, start_date)
-    return duration.years > 4
+    return (duration.years * 12) + (duration.months) + (
+        duration.days / 30.44
+    ) > ALLOWED_TIME_PERIOD
 
 
 def get_link():
