@@ -61,8 +61,9 @@ def execute_transaction_code(request):
 
 
 def get_create_params(request):
+    params = ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id']
     expiration_time = datetime.now() + timedelta(seconds = EXPECTED_TAT_RATE_FEEDBACK_REVERT * 60 * 60)
-    return {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id']} | ({'status': 'active' , 'expiration_time': expiration_time})
+    return {key:value for key,value in request.items() if key not in params} | ({'status': 'active' , 'expiration_time': expiration_time})
 
 def get_relevant_supply_agents(service, origin_locations, destination_locations):
     supply_agents_data = get_partner_users_by_expertise(service, origin_locations, destination_locations)
@@ -77,17 +78,25 @@ def get_relevant_supply_agents(service, origin_locations, destination_locations)
 
 
 def send_notification_to_relevant_supply_agents(request):
-    locations_data = FtlFreightRateRequest.select(FtlFreightRateRequest.origin_location_id, FtlFreightRateRequest.origin_country_id, FtlFreightRateRequest.origin_city_id, FtlFreightRateRequest.destination_location_id, FtlFreightRateRequest.destination_country_id, FtlFreightRateRequest.destination_city_id).where(FtlFreightRateRequest.source_id == request['source_id']).limit(1).dicts().get()
+    locations_data = FtlFreightRateRequest.select(
+                    FtlFreightRateRequest.origin_location_id, 
+                    FtlFreightRateRequest.origin_country_id, 
+                    FtlFreightRateRequest.origin_city_id, 
+                    FtlFreightRateRequest.destination_location_id, 
+                    FtlFreightRateRequest.destination_country_id, 
+                    FtlFreightRateRequest.destination_city_id
+                    ).where(FtlFreightRateRequest.source_id == request['source_id']).limit(1).dicts().get()
     origin_locations = list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['origin_location_id', 'origin_country_id', 'origin_city_id']]))
     destination_locations =   list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['destination_location_id', 'destination_country_id', 'destination_city_id']]))
 
     supply_agents_user_ids = get_relevant_supply_agents('ftl_freight', origin_locations, destination_locations)
 
+    obj = {'filters': { 'id': [str(locations_data['origin_location_id']),str(locations_data['destination_location_id'])]}}
+
     try:
-        route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_location_id']),str(locations_data['destination_location_id'])]}})['list']
+        route_data = maps.list_locations(obj)['list']
     except Exception as error_message:
         raise HTTPException(status_code=400, detail=error_message)
-
 
     route = {key['id']:key['display_name'] for key in route_data}
     try:
@@ -95,7 +104,6 @@ def send_notification_to_relevant_supply_agents(request):
         send_notifications_to_supply_agents(request, request_info)
     except Exception as error_message:
         raise HTTPException(status_code=400, detail=error_message)
-
 
 
 def send_notifications_to_supply_agents(request, request_info):
