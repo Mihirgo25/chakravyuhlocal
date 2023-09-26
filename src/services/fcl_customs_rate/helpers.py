@@ -1,5 +1,5 @@
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
-from configs.fcl_customs_rate_constants import DEFAULT_RATE_TYPE
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from micro_services.client import organization
 from database.db_session import rd
 from libs.parse_numeric import parse_numeric
