@@ -1,4 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJob
+from services.fcl_freight_rate.models.fcl_freight_rate_job_mappings import (
+    FclFreightRateJobMapping,
+)
 from services.fcl_freight_rate.helpers.generate_csv_file_url_for_fcl import (
     generate_csv_file_url_for_fcl,
 )
@@ -15,7 +18,6 @@ possible_direct_filters = [
     "commodity",
     "user_id",
     "serial_id",
-    "status"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 
@@ -46,7 +48,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "container_type",
     "sources",
     "origin_main_port_id",
-    "destination_main_port_id"
+    "destination_main_port_id",
 ]
 
 
@@ -64,16 +66,15 @@ def list_fcl_freight_rate_jobs(
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-            
-        query = apply_filters(query, filters)
 
+        query = apply_filters(query, filters)
 
     if generate_csv_url:
         return generate_csv_file_url_for_fcl(query)
 
     if page_limit:
         query = query.paginate(page, page_limit)
-    
+
     query = sort_query(sort_by, sort_type, query)
 
     data = get_data(query)
@@ -141,7 +142,9 @@ def apply_end_date_filter(query, filters):
         end_date = datetime.strptime(end_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
-        query = query.where(FclFreightRateJob.created_at.cast("date") <= end_date.date())
+        query = query.where(
+            FclFreightRateJob.created_at.cast("date") <= end_date.date()
+        )
     return query
 
 
@@ -157,3 +160,10 @@ def apply_filters(query, filters):
 
     return query
 
+
+def apply_status_filters(query, filters):
+    query = query.join(
+        FclFreightRateJobMapping,
+        on=(FclFreightRateJobMapping.job_id == FclFreightRateJob.id),
+    ).where(FclFreightRateJobMapping.status == filters.get("status"))
+    return query
