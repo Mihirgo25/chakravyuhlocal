@@ -3,6 +3,21 @@ from playhouse.shortcuts import model_to_dict
 from fastapi.encoders import jsonable_encoder
 from operator import attrgetter
 
+default_fields = [
+    'line_items',
+    'is_line_items_error_messages_present',
+    'is_line_items_info_messages_present',
+    'line_items_error_messages',
+    'line_items_info_messages',
+    'truck_body_type',
+    'transit_time',
+    'detention_free_time',
+    'validity_start',
+    'validity_end',
+    'unit',
+    'minimum_chargeable_weight'
+]
+
 def get_ftl_freight_rate(request):
 
     if not all_fields_present(request):
@@ -19,8 +34,10 @@ def all_fields_present(request):
         if not request.get(fields):
             return False
     return True
+
 def find_ftl_freight_rate(request):
-    query = FtlFreightRate.select()
+    fields = [getattr(FtlFreightRate, key) for key in default_fields]
+    query = FtlFreightRate.select(*fields)
     for key in request:
         if request.get(key) is not None:
             query = query.where(attrgetter(key)(FtlFreightRate) == request[key])
