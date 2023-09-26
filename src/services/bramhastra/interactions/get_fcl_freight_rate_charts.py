@@ -167,7 +167,7 @@ def is_json_needed(filters):
         else filters.get("end_date")
     )
     duration = relativedelta(end_date, start_date)
-    return duration.months > 6
+    return duration.years > 4
 
 
 def get_link():
