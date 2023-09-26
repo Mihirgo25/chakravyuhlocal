@@ -12,11 +12,6 @@ from configs.env import DEFAULT_USER_ID
 
 
 def create_fcl_customs_rate_job(request, source):
-    object_type = "Fcl_Customs_Rate_Job"
-    query = "create table if not exists fcl_customs_rate_audit_{} partition of fcl_customs_rate_audit for values in ('{}')".format(
-        object_type.lower(), object_type.replace("_", "")
-    )
-    db.execute_sql(query)
     with db.atomic():
       return execute_transaction_code(request, source)
 
@@ -62,7 +57,8 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = FclCustomsRateJobMapping.create(
         source_id=request.get("rate_id"),
         job_id= jobs_id,
-        source = source
+        source = source,
+        status = "pending"
     )
     return mapping_id
 

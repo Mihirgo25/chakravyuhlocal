@@ -11,11 +11,6 @@ from configs.env import DEFAULT_USER_ID
 
 
 def create_haulage_freight_rate_job(request, source):
-    object_type = "Haulage_Freight_Rate_Job"
-    query = "create table if not exists haulage_services_audits_{} partition of haulage_services_audits for values in ('{}')".format(
-        object_type.lower(), object_type.replace("_", "")
-    )
-    db.execute_sql(query)
     with db.atomic():
       return execute_transaction_code(request, source)
     
@@ -67,7 +62,8 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = HaulageFreightRateJobMapping.create(
         source_id=request.get("rate_id"),
         job_id= jobs_id,
-        source = source
+        source = source,
+        status = "pending"
     )
     return mapping_id
 

@@ -5,11 +5,6 @@ from services.haulage_freight_rate.interactions.create_haulage_freight_rate_job 
 import datetime
 from playhouse.postgres_ext import ServerSide
 from playhouse.shortcuts import model_to_dict
-from configs.haulage_freight_rate_constants import CRITICAL_PORTS_INDIA_VIETNAM
-from services.air_freight_rate.constants.air_freight_rate_constants import (
-    CRITICAL_AIRPORTS_INDIA_VIETNAM,
-)
-from fastapi.encoders import jsonable_encoder
 from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
 
 
@@ -38,7 +33,7 @@ def haulage_freight_expiring_rates_scheduler():
     haulage_query = HaulageFreightRate.select(
         *[getattr(HaulageFreightRate, col) for col in required_columns]
     ).where(
-        HaulageFreightRate.last_rate_available_date == DAYS_TO_EXPIRE,
+        HaulageFreightRate.validity_end == DAYS_TO_EXPIRE,
         HaulageFreightRate.source.not_in(["predicted", "cluster_extension"]),
         HaulageFreightRate.rate_type == "market_place",
         HaulageFreightRate.service_provider_id != DEFAULT_SERVICE_PROVIDER_ID,
