@@ -26,6 +26,7 @@ class HaulageFreightRateJob(BaseModel):
     container_size = TextField(index=True, null=True)
     container_type = TextField(index=True, null=True)
     commodity = TextField(index=True, null=True)
+    transport_modes_keyword = TextField(index=True, null=True)
     sources = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     user_id = UUIDField(index=True, null=True)
     assigned_to = BinaryJSONField(null=True)
@@ -66,11 +67,12 @@ class HaulageFreightRateJob(BaseModel):
           "id": location["id"],
           "name": location["name"],
           "is_icd": location["is_icd"],
-          "port_code": location["port_code"],
+          "type": location["type"],
+          "cluster_id": location["cluster_id"],
+          "city_id": location["city_id"],
           "country_id": location["country_id"],
-          "continent_id": location["continent_id"],
-          "trade_id": location["trade_id"],
-          "country_code": location["country_code"]
+          "country_code": location["country_code"],
+          "display_name": location["display_name"]
         }
         return loc_data
       

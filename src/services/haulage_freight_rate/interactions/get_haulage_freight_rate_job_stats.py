@@ -33,10 +33,8 @@ STATISTICS = {
     "weekly_backlog_count": 0,
 }
 DYNAMIC_STATISTICS = {
-    "critical_ports": 0,
     "expiring_rates": 0,
     "spot_search": 0,
-    "cancelled_shipments": 0,
 }
 
 

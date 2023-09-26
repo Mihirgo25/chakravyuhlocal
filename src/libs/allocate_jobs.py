@@ -3,6 +3,7 @@ from services.air_freight_rate.constants.air_freight_rate_constants import (
     AIR_COVERAGE_USERS,
 )
 from configs.fcl_freight_rate_constants import FCL_COVERAGE_USERS
+from configs.haulage_freight_rate_constants import HAULAGE_COVERAGE_USERS
 
 
 def allocate_jobs(service_type: str) -> str:
@@ -21,7 +22,7 @@ def allocate_jobs(service_type: str) -> str:
         users = AIR_COVERAGE_USERS
         redis_key = "last_assigned_user_air"
     elif service_type.upper() == "HAULAGE":
-        users = HAULAGE_COVERAGE_USERS   # users where to define? and what?
+        users = HAULAGE_COVERAGE_USERS
         redis_key = "last_assigned_user_haulage"
 
     last_assigned_user = rd.get(redis_key)

@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_user
 from database.db_session import db
 from configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
-from services.haulage_freight_rate.models.haulage_services_audit import HaulageServiceAudit
+from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from configs.env import DEFAULT_USER_ID 
 
 
@@ -37,7 +37,7 @@ def execute_transaction_code(request, source):
         'rate_type' : request.get('rate_type'),
     }
 
-    init_key = f'{str(params.get("origin_location") or "")}:{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}'
+    init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}'
     haulage_freight_rate_job = HaulageFreightRateJob.select().where(HaulageFreightRateJob.init_key == init_key, HaulageFreightRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
@@ -79,7 +79,7 @@ def create_job_object(params):
 
 
 def create_audit(jobs_id, request):
-    HaulageServiceAudit.create(
+    HaulageFreightRateAudit.create(
         action_name = 'create',
         object_id = jobs_id,
         object_type = 'HaulageFreightRateJob',
