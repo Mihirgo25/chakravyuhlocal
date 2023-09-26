@@ -2,7 +2,10 @@ from database.db_session import rd
 from services.air_freight_rate.constants.air_freight_rate_constants import (
     AIR_COVERAGE_USERS,
 )
-from configs.fcl_freight_rate_constants import FCL_COVERAGE_USERS
+from configs.fcl_freight_rate_constants import (
+    FCL_COVERAGE_USERS,
+    FCL_LOCAL_COVERAGE_USERS,
+)
 from configs.haulage_freight_rate_constants import HAULAGE_COVERAGE_USERS
 from configs.fcl_customs_rate_constants import FCL_CUSTOMS_COVERAGE_USERS
 
@@ -28,6 +31,9 @@ def allocate_jobs(service_type: str) -> str:
     elif service_type.upper() == "FCL_CUSTOMS":
         users = FCL_CUSTOMS_COVERAGE_USERS
         redis_key = "last_assigned_user_fcl_customs"
+    elif service_type.upper() == "FCL_LOCALS":
+        users = FCL_LOCAL_COVERAGE_USERS
+        redis_key = "last_assigned_user_fcl_locals"
 
     last_assigned_user = rd.get(redis_key)
     if not last_assigned_user:
