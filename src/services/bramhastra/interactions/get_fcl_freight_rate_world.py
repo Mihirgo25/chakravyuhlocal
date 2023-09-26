@@ -5,18 +5,17 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
 
-FILTER_MAPPING = {
-    "import":"origin",
-    "export": "destination"
-}
-async def get_fcl_freight_rate_world(filters):
+TRADE_MAPPINGS = {"import": "origin", "export": "destination"}
 
+
+async def get_fcl_freight_rate_world(filters):
     statistics = await get_count_distribution(filters)
     count = await get_total_count()
     return {
         "total_rates": count,
         "statistics": statistics,
     }
+
 
 async def get_total_count():
     query = "SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.fcl_freight_rate_statistics WHERE validity_end >= toDate(now())"
@@ -29,13 +28,10 @@ async def get_count_distribution(filters):
     trade = "origin"
     location = "country"
     if "trade_type" in filters:
-        trade = FILTER_MAPPING[filters["trade_type"]]
-    
+        trade = TRADE_MAPPINGS[filters["trade_type"]]
     if "location_type" in filters:
-        location = filters["location_type"]    
-    
+        location = filters["location_type"]
     clickhouse = ClickHouse()
-
     query = f"""
             WITH clean_rates AS
             (
@@ -56,5 +52,4 @@ async def get_count_distribution(filters):
             FROM clean_rates
         ) AS combined_countries
         GROUP BY {location}_id"""
-
     return jsonable_encoder(clickhouse.execute(query))
