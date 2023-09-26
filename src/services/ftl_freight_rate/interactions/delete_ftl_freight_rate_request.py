@@ -16,7 +16,7 @@ def execute_transaction_code(request):
     objects = find_ftl_freight_rate_request_object(request)
 
     if not objects:
-      raise HTTPException(status_code=400, detail="freight rate request is not found")
+      raise HTTPException(status_code=404, detail="freight rate request is not found")
 
     for obj in objects:
         obj.status = 'inactive'

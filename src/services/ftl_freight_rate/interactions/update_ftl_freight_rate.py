@@ -11,9 +11,7 @@ def create_audit(ftl_id, request):
         'validity_start': str(request.get('validity_start')),
         'validity_end': str(request.get('validity_end')),
         'minimum_chargeable_weight': request.get('minimum_chargeable_weight'),
-        'truck_body_type': request.get('truck_body_type'),
-        'sourced_by_id' : request.get("sourced_by_id"),
-        'procured_by_id' : request.get("procured_by_id")
+        'truck_body_type': request.get('truck_body_type')
     }
 
     FtlFreightRateAudit.create(
@@ -22,6 +20,8 @@ def create_audit(ftl_id, request):
         object_type = 'FtlFreightRate',
         performed_by_id = request.get("performed_by_id"),
         bulk_operation_id = request.get("bulk_operation_id"),
+        sourced_by_id = request.get("sourced_by_id"),
+        procured_by_id = request.get("procured_by_id"),
         data = audit_data
     )
 
@@ -43,6 +43,7 @@ def execute_transaction_code(request):
     rate_object.set_platform_price()
     rate_object.set_is_best_price()
     rate_object.update_platform_prices_for_other_service_providers()
+    rate_object.rate_not_available_entry = False
 
     create_audit(rate_object.id, request)
 

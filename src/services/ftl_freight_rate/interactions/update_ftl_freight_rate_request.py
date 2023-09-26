@@ -16,7 +16,7 @@ def execute_transaction_code(request):
     object = find_object(request)
 
     if not object:
-        raise HTTPException(status_code=400, detail="Freight rate request id not found")
+        raise HTTPException(status_code=404, detail="Freight rate request id not found")
 
     if request.get("closing_remarks"):
         if "rate_added" in request.get("closing_remarks"):

@@ -79,7 +79,7 @@ class FtlFreightRate(BaseModel):
 
     def set_locations(self):
         ids = [str(self.origin_location_id), str(self.destination_location_id)]
-        locations_response = maps.list_locations({'filters':{"id": ids}, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True}})
+        locations_response = maps.list_locations({'filters':{"id": ids}, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True, 'display_name':True, 'postal_code':True}})
         locations = []
         if 'list' in locations_response:
             locations = locations_response["list"]
@@ -103,7 +103,9 @@ class FtlFreightRate(BaseModel):
           "cluster_id": location["cluster_id"],
           "city_id": location["city_id"],
           "country_id": location["country_id"],
-          "country_code": location["country_code"]
+          "country_code": location["country_code"],
+          "display_name": location["display_name"],
+          "postal_code": location["postal_code"]
         }
         return loc_data
 

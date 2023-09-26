@@ -63,6 +63,7 @@ def get_ftl_freight_rate_cards(request):
     query = select_fields()
     query = initialize_query(query, request)
     rate_list = ignore_non_eligible_service_providers(request, query)
+    rate_list = process_ftl_freight_rates(request, rate_list)
     rate_list = build_response_list(rate_list, request)
 
     if request.get("include_additional_response_data"):
@@ -382,35 +383,38 @@ def ignore_non_eligible_service_providers(request, query_result):
         if str(data.get("service_provider_id")) in ids:
             final_list.append(data)
 
-    return check_for_prediction(request, final_list)
+    return final_list
 
-
-def check_for_prediction(request, rate_list):
-    response = None
-    if (
-        len(rate_list) == 0
-        and request.get("predicted_rate") is True
-        and request.get("origin_location_id") is not None
-        and request.get("destination_location_id") is not None
+def process_ftl_freight_rates(request, rate_list):
+    if(
+        len(rate_list) == 0 and
+        request.get("predicted_rate") is True and
+        request.get("origin_location_id") is not None and
+        request.get("destination_location_id") is not None
     ):
-        rate_estimation_params = {
-            "origin_location_id": request.get("origin_location_id"),
-            "destination_location_id": request.get("destination_location_id"),
-            "trip_type": request.get("trip_type"),
-            "truck_type": request.get("truck_type"),
-            "commodity": request.get("commodity"),
-            "weight": request.get("weight"),
-        }
-        response = get_ftl_freight_rate_estimation(rate_estimation_params)
-    if response is not None:
-        request["predicted_rate"] = False
-        rate_list = get_ftl_freight_rate_cards(request)["list"]
+        get_predicted_ftl_freight_rate(request, rate_list)
 
-    final_rate_list = []
+        query = select_fields()
+        query = initialize_query(query, request)
+        rate_list = ignore_non_eligible_service_providers(request, query)
+
+    # ignore predicted rate in case of manual rates being present
     if len(rate_list) > 1:
-        final_rate_list = [ftl_freight_rate for ftl_freight_rate in rate_list if ftl_freight_rate['source']=='manual']
+        rate_list = [ftl_freight_rate for ftl_freight_rate in rate_list if ftl_freight_rate['source']=='manual']
 
-    return final_rate_list
+    return rate_list
+
+def get_predicted_ftl_freight_rate(request, rate_list):
+    rate_estimation_params = {
+        "origin_location_id": request.get("origin_location_id"),
+        "destination_location_id": request.get("destination_location_id"),
+        "trip_type": request.get("trip_type"),
+        "truck_type": request.get("truck_type"),
+        "commodity": request.get("commodity"),
+        "weight": request.get("weight")
+        }
+
+    get_ftl_freight_rate_estimation(rate_estimation_params)
 
 
 def additional_response_data(list_of_data):
