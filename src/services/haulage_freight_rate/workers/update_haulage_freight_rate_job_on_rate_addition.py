@@ -19,8 +19,8 @@ def update_haulage_freight_rate_job_on_rate_addition(request, id):
     }
 
     params = {
-        "origin_location_id": request.get("origin_port_id"),
-        "destination_location_id": request.get("destination_port_id"),
+        "origin_location_id": request.get("origin_location_id"),
+        "destination_location_id": request.get("destination_location_id"),
         "container_size": request.get("container_size"),
         "container_type": request.get("container_type"),
         "commodity": request.get("commodity"),
