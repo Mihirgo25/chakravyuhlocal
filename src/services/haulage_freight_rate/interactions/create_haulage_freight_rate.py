@@ -119,8 +119,6 @@ def create_haulage_freight_rate(request):
 
     delay_haulage_functions.apply_async(kwargs={'request':request},queue='low')
     get_multiple_service_objects_haulage(haulage_freight_rate, is_new_rate)
-    if not haulage_freight_rate.service_provider:
-        breakpoint()
 
     if request.get('haulage_freight_rate_request_id'):
         update_haulage_freight_rate_request_delay.apply_async(kwargs={'request':{'haulage_freight_rate_request_id': request.get('haulage_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')
