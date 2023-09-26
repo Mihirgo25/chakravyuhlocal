@@ -20,6 +20,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_feedback impo
 from services.fcl_freight_rate.interaction.create_fcl_weight_slabs_configuration import create_fcl_weight_slabs_configuration
 from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster import get_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local_conditions import get_fcl_freight_rate_local_conditions_data
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import list_fcl_freight_rate_locals
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_local_agents import list_fcl_freight_rate_local_agents
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_tasks import list_fcl_freight_rate_tasks
@@ -349,6 +350,51 @@ def get_fcl_freight_rate_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.get("/get_fcl_freight_rate_local_conditions")
+def get_fcl_freight_rate_data(
+    id: str = None,
+    origin_port_id: str = None,
+    origin_main_port_id: str = None,
+    destination_port_id: str = None,
+    destination_main_port_id: str = None,
+    container_size: str = None,
+    container_type: str = None,
+    commodity: str = None,
+    shipping_line_id: str = None,
+    service_provider_id: str = None,
+    importer_exporter_id: str = None,
+    cogo_entity_id: str = None,
+    rate_type: str = "market_place",
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'id':id,
+        'origin_port_id':origin_port_id,
+        'origin_main_port_id':origin_main_port_id,
+        'destination_port_id':destination_port_id,
+        'destination_main_port_id' : destination_main_port_id,
+        'container_size' : container_size,
+        'container_type' : container_type,
+        'commodity' : commodity,
+        'shipping_line_id' : shipping_line_id,
+        'service_provider_id': service_provider_id,
+        'importer_exporter_id': importer_exporter_id,
+        'cogo_entity_id': cogo_entity_id,
+        'rate_type':rate_type
+    }
+
+    # try:
+    data = get_fcl_freight_rate_local_conditions_data(request)
+    data = json_encoder(data)
+    return JSONResponse(status_code=200, content=data)
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.get("/get_fcl_freight_rate_for_lcl")
