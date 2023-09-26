@@ -7,7 +7,7 @@ current_processing_key = "spot_search_count_haulage"
 
 
 def build_init_key(requirements):
-    init_key = f'{str(requirements.get("origin_location") or "")}:{str(requirements.get("origin_location_id") or "")}:{str(requirements.get("destination_location") or "")}:{str(requirements.get("destination_location_id") or "")}:{str(requirements.get("shipping_line_id") or "")}:{str(requirements.get("service_provider_id") or "")}:{str(requirements.get("container_size") or  "")}:{str(requirements.get("container_type") or "")}:{str(requirements.get("commodity") or "")}:{str(requirements.get("rate_type") or "")}'
+    init_key = f'{str(requirements.get("origin_location_id") or "")}:{str(requirements.get("destination_location_id") or "")}:{str(requirements.get("shipping_line_id") or "")}:{str(requirements.get("service_provider_id") or "")}:{str(requirements.get("container_size") or  "")}:{str(requirements.get("container_type") or "")}:{str(requirements.get("commodity") or "")}:{str(requirements.get("rate_type") or "")}'
     return init_key
 
 

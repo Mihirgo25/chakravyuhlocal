@@ -1005,3 +1005,11 @@ class DeleteHaulageFreightRateJob(BaseModel):
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+
+class DeleteFclCustomsRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
