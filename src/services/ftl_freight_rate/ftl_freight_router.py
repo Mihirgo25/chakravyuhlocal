@@ -392,6 +392,7 @@ def delete_ftl_freight_rates_feedback_api(
 @ftl_freight_router.get("/list_ftl_freight_rate_requests")
 def list_ftl_freight_rate_request_api(
     filters: str = None,
+    includes: str = None,
     page_limit: int = 10,
     page: int = 1,
     sort_by: str = "created_at",
@@ -413,6 +414,7 @@ def list_ftl_freight_rate_request_api(
             is_stats_required,
             spot_search_details_required,
             performed_by_id,
+            includes
         )
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
@@ -427,6 +429,7 @@ def list_ftl_freight_rate_request_api(
 @ftl_freight_router.get("/list_ftl_freight_rates")
 def list_ftl_freight_rates_api(
     filters: str = None,
+    includes: str = None,
     page_limit: int = 10,
     page: int = 1,
     sort_by: str = "updated_at",
@@ -441,6 +444,7 @@ def list_ftl_freight_rates_api(
     try:
         data = list_ftl_freight_rates(
             filters,
+            includes,
             page_limit,
             page,
             sort_by,
@@ -761,6 +765,7 @@ def get_ftl_freight_rate_api(
 @ftl_freight_router.get("/list_ftl_freight_rate_feedbacks")
 def list_ftl_freight_rate_feedbacks_api(
     filters: str = None,
+    includes: str = None,
     spot_search_details_required: bool = False,
     page_limit: int = 10,
     page: int = 1,
@@ -774,6 +779,7 @@ def list_ftl_freight_rate_feedbacks_api(
     try:
         data = list_ftl_freight_rate_feedbacks(
             filters,
+            includes,
             spot_search_details_required,
             page_limit,
             page,

@@ -11,8 +11,8 @@ POSSIBLE_DIRECT_FILTERS = ['id','origin_location_id','origin_cluster_id','origin
 
 POSSIBLE_INDIRECT_FILTERS = ['origin_location_ids','destination_location_ids','importer_exporter_present','is_rate_available','procured_by_id','updated_at','validity_till']
 
-def list_ftl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by='updated_at', sort_type ='desc', return_query = False, pagination_data_required = False, all_rates_for_cogo_assured = False):
-    query = get_query(all_rates_for_cogo_assured, sort_by, sort_type)
+def list_ftl_freight_rates(filters = {}, includes = {}, page_limit = 10, page = 1, sort_by='updated_at', sort_type ='desc', return_query = False, pagination_data_required = False, all_rates_for_cogo_assured = False):
+    query = get_query(all_rates_for_cogo_assured, sort_by, sort_type, includes)
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -34,16 +34,17 @@ def list_ftl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by='upd
 
     return {'list': data } | (pagination_data)
 
-def get_query(all_rates_for_cogo_assured, sort_by, sort_type):
+def get_query(all_rates_for_cogo_assured, sort_by, sort_type, includes):
+   if includes and  not isinstance(includes, dict):
+    includes = json.loads(includes)
+
+   ftl_all_fields = list(FtlFreightRate._meta.fields.keys())
+   required_ftl_fields = [a for a in includes.keys() if a in ftl_all_fields] if includes else ftl_all_fields
+   ftl_fields = [getattr(FtlFreightRate, key) for key in required_ftl_fields]
+
    if all_rates_for_cogo_assured:
     query = FtlFreightRate.select(
-       FtlFreightRate.id,
-       FtlFreightRate.origin_location_id,
-       FtlFreightRate.destination_location_id,
-       FtlFreightRate.truck_type,
-       FtlFreightRate.trip_type,
-       FtlFreightRate.commodity,
-       FtlFreightRate.line_items
+        *ftl_fields
        ).where(
        FtlFreightRate.updated_at > datetime.now() - timedelta(days = 1),
        FtlFreightRate.line_items != '[]',
@@ -52,7 +53,7 @@ def get_query(all_rates_for_cogo_assured, sort_by, sort_type):
        )
     return query
 
-   query = FtlFreightRate.select()
+   query = FtlFreightRate.select(*ftl_fields)
    query = query.order_by(eval('FtlFreightRate.{}.{}()'.format(sort_by, sort_type)))
 
    return query

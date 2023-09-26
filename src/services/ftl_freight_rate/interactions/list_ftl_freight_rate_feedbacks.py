@@ -16,8 +16,8 @@ from database.rails_db import get_organization
 possible_direct_filters = ['feedback_type', 'performed_by_id', 'closed_by_id', 'status', 'origin_location_id', 'destination_location_id', 'origin_country_id', 'destination_country_id', 'service_provider_id']
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id']
 
-def list_ftl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
-    query = FtlFreightRateFeedback.select()
+def list_ftl_freight_rate_feedbacks(filters = {}, includes = {}, spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
+    query = get_query(includes)
 
     if filters:
         if type(filters) != dict:
@@ -35,6 +35,18 @@ def list_ftl_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
     data = get_data(query,spot_search_details_required)
 
     return {'list': jsonable_encoder(data) } | (pagination_data) | (stats)
+
+def get_query(includes):
+    if includes and  not isinstance(includes, dict):
+        includes = json.loads(includes)
+
+    ftl_feedback_all_fields = list(FtlFreightRateFeedback._meta.fields.keys())
+    required_ftl_feedback_fields = [a for a in includes.keys() if a in ftl_feedback_all_fields] if includes else ftl_feedback_all_fields
+    ftl_feedback_fields = [getattr(FtlFreightRateFeedback, key) for key in required_ftl_feedback_fields]
+
+    query = FtlFreightRateFeedback.select(*ftl_feedback_fields)
+
+    return query
 
 def get_page(query, page, page_limit):
     query = query.order_by(FtlFreightRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
@@ -76,7 +88,6 @@ def apply_similar_id_filter(query, filters):
     return query
 
 def get_data(query, spot_search_details_required):
-    query = query.select()
     data = json_encoder(list(query.dicts()))
 
     ftl_freight_rate_ids = []

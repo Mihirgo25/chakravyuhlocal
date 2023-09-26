@@ -68,7 +68,7 @@ class FtlFreightRate(BaseModel):
     procured_by = BinaryJSONField(null=True)
     rate_type = CharField(default='market_place', choices = RATE_TYPES, index=True)
     tags = BinaryJSONField(null=True)
-    init_key = TextField(index=True, null=True)
+    init_key = TextField(index=True, null=True, unique=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -158,7 +158,7 @@ class FtlFreightRate(BaseModel):
     def validate_duplicate_line_items(self):
         self.line_items = self.line_items or []
         if len(set(map(lambda t: str(t['code']).upper(), self.line_items))) != len(self.line_items):
-            raise HTTPException(status_code=500, detail="Contains Duplicates")
+            raise HTTPException(status_code=403, detail="Contains Duplicates")
 
     def validate_truck_body_type(self):
         if self.truck_body_type not in BODY_TYPE:
@@ -238,7 +238,9 @@ class FtlFreightRate(BaseModel):
 
         result = self.get_line_items_total_price(line_items)
 
-        rates = FtlFreightRate.select().where(
+        rates = FtlFreightRate.select(
+            FtlFreightRate.line_items
+        ).where(
             FtlFreightRate.origin_location_id == self.origin_location_id,
             FtlFreightRate.destination_location_id == self.destination_location_id,
             FtlFreightRate.truck_type == self.truck_type,

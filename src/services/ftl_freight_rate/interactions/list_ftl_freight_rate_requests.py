@@ -12,8 +12,8 @@ from micro_services.client import spot_search
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity__less_than', 'similar_id']
 possible_direct_filters = ['origin_location_id','serial_id','destination_location_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_country_id', 'destination_country_id']
 
-def list_ftl_freight_rate_requests(filters, page_limit, page, sort_by, sort_type,is_stats_required,spot_search_details_required,performed_by_id):
-    query = get_query(sort_by, sort_type)
+def list_ftl_freight_rate_requests(filters, page_limit, page, sort_by, sort_type,is_stats_required,spot_search_details_required,performed_by_id, includes = {}):
+    query = get_query(sort_by, sort_type, includes)
 
     if filters:
         if type(filters) != dict:
@@ -33,8 +33,15 @@ def list_ftl_freight_rate_requests(filters, page_limit, page, sort_by, sort_type
 
     return {'list': jsonable_encoder(data) } | (pagination_data) | (stats)
 
-def get_query(sort_by, sort_type):
-    query = FtlFreightRateRequest.select().order_by(eval("FtlFreightRateRequest.{}.{}()".format(sort_by, sort_type)))
+def get_query(sort_by, sort_type, includes):
+    if includes and  not isinstance(includes, dict):
+        includes = json.loads(includes)
+
+    ftl_request_all_fields = list(FtlFreightRateRequest._meta.fields.keys())
+    required_ftl_request_fields = [a for a in includes.keys() if a in ftl_request_all_fields] if includes else ftl_request_all_fields
+    ftl_request_fields = [getattr(FtlFreightRateRequest, key) for key in required_ftl_request_fields]
+
+    query = FtlFreightRateRequest.select(*ftl_request_fields).order_by(eval("FtlFreightRateRequest.{}.{}()".format(sort_by, sort_type)))
     return query
 
 
@@ -45,7 +52,7 @@ def apply_pagination(query, page, page_limit):
     return query, total_count
 
 def get_page(query, page, page_limit):
-    return query.select().order_by(FtlFreightRateRequest.created_at.desc()).paginate(page, page_limit)
+    return query.order_by(FtlFreightRateRequest.created_at.desc()).paginate(page, page_limit)
 
 
 def get_pagination_data(query, page, page_limit):
