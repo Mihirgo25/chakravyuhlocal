@@ -1,4 +1,3 @@
-from micro_services.client import *
 from database.rails_db import get_organization, get_operators, get_user, list_organization_users
 
 def get_multiple_service_objects_haulage(haulage_freight_object, is_new_rate=True):
