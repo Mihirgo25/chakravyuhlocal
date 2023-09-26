@@ -4,6 +4,12 @@ from services.haulage_freight_rate.interactions.update_haulage_freight_rate_requ
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate import create_haulage_freight_rate
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate_platform_prices import update_haulage_freight_rate_platform_prices
 from services.haulage_freight_rate.workers.create_jobs_for_predicted_haulage_freight_rate import create_jobs_for_predicted_haulage_freight_rate
+from services.haulage_freight_rate.workers.update_haulage_freight_rate_job_on_rate_addition import (
+    update_haulage_freight_rate_job_on_rate_addition,
+)
+from services.haulage_freight_rate.workers.update_haulage_freight_rate_jobs_to_backlog import (
+    update_haulage_freight_rate_jobs_to_backlog,
+)
 
 
 @celery.task(bind = True, max_retries=3, retry_backoff = True)    
@@ -69,3 +75,24 @@ def create_jobs_for_predicted_haulage_freight_rate_delay(self, is_predicted, req
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_haulage_freight_rate_job_on_rate_addition_delay(self, request, id):
+    try:
+        return update_haulage_freight_rate_job_on_rate_addition(request, id)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+
+
+@celery.task(bind=True, max_retries=3, retry_backoff=True)
+def update_haulage_freight_rate_jobs_to_backlog_delay(self):
+    try:
+        return update_haulage_freight_rate_jobs_to_backlog()
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
