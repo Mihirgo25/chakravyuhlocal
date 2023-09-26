@@ -10,8 +10,6 @@ def create_audit(request, freight_id):
     audit_data["validity_end"] = request.get("validity_end").isoformat()
     audit_data["line_items"] = request.get("line_items")
     audit_data["Ftl_freight_rate_request_id"] = request.get("Ftl_freight_rate_request_id")
-    audit_data["sourced_by_id"] = request.get("sourced_by_id")
-    audit_data["procured_by_id"] = request.get("procured_by_id")
 
     audit_id = FtlFreightRateAudit.create(
         rate_sheet_id=request.get("rate_sheet_id"),
@@ -31,7 +29,7 @@ def create_ftl_freight_rate(request):
       return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    from services.ftl_freight_rate.ftl_celery_worker import delay_ftl_functions, update_ftl_freight_rate_request_delay, send_missing_or_dislike_rate_notifications_to_kam, send_missing_or_dislike_rate_notifications_to_platform
+    from services.ftl_freight_rate.ftl_celery_worker import adding_multiple_service_objects, update_ftl_freight_rate_request_delay, send_missing_or_dislike_rate_notifications_to_kam, send_missing_or_dislike_rate_notifications_to_platform
 
     params = {
       'rate_sheet_id':request.get('rate_sheet_id'),
@@ -59,13 +57,12 @@ def execute_transaction_code(request):
       'rate_type': request.get("rate_type", DEFAULT_RATE_TYPE)
   }
 
-    init_key = f'{str(params["origin_location_id"])}:{str(params["destination_location_id"])}:{str(params["truck_type"])}:{str(params["commodity"] or "")}:{str(params["service_provider_id"])}:{str(params["importer_exporter_id"] or "")}:{str(params["truck_body_type"])}:{str(params["rate_type"])}'
+    init_key = f'{str(params["origin_location_id"])}:{str(params["destination_location_id"])}:{str(params["truck_type"])}:{str(params["commodity"] or "")}:{str(params["service_provider_id"])}:{str(params["importer_exporter_id"] or "")}:{str(params["truck_body_type"])}:{str(params["rate_type"])}:{str(params["trip_type"])}'
 
     ftl_freight_rate = (
         FtlFreightRate.select()
         .where(
           FtlFreightRate.init_key == init_key,
-          FtlFreightRate.rate_type == params['rate_type']
         )
         .first()
       )
@@ -83,19 +80,20 @@ def execute_transaction_code(request):
     ftl_freight_rate.set_platform_price()
     ftl_freight_rate.set_is_best_price()
     ftl_freight_rate.update_line_item_messages(ftl_freight_rate.possible_charge_codes())
+
     try:
       ftl_freight_rate.save()
     except Exception as e:
       raise HTTPException(status_code=400, detail="rate not saved")
 
     if not ftl_freight_rate.importer_exporter_id:
-        ftl_freight_rate.delete_rate_not_available_entry()
+      ftl_freight_rate.delete_rate_not_available_entry()
 
     create_audit(request, ftl_freight_rate.id)
 
     ftl_freight_rate.update_platform_prices_for_other_service_providers()
 
-    delay_ftl_functions.apply_async(kwargs={'ftl_object':ftl_freight_rate,'request':request},queue='low')
+    adding_multiple_service_objects.apply_async(kwargs={'ftl_object':ftl_freight_rate,'request':request},queue='low')
 
     if request.get('ftl_freight_rate_request_id'):
       update_ftl_freight_rate_request_delay.apply_async(kwargs={'request':{'ftl_freight_rate_request_id': request.get('ftl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')

@@ -5,7 +5,7 @@ import httpx, json
 from datetime import datetime
 import dateutil.parser as parser
 from micro_services.client import organization
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from services.ftl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def get_land_route_from_valhalla(location_ids):
     params = {
@@ -63,6 +63,9 @@ def get_path_data(origin_location_id, destination_location_id, location_data):
 
 def adding_multiple_service_object(ftl_object,request):
     from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
-    if not FtlFreightRate.select().where(FtlFreightRate.service_provider_id==request["service_provider_id"], FtlFreightRate.rate_not_available_entry==False).exists():
+    
+    query = FtlFreightRate.select().where(FtlFreightRate.service_provider_id==request["service_provider_id"], FtlFreightRate.rate_not_available_entry==False).exists()
+
+    if not query:
         organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
     get_multiple_service_objects(ftl_object)

@@ -55,7 +55,7 @@ def find_object(request):
     if object:
         return object
     else:
-        raise HTTPException(status_code=400, detail="Rate id not found")
+        raise HTTPException(status_code=404, detail="Rate id not found")
 
 def get_delete_params():
     data = {
