@@ -13,7 +13,7 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delay_ftl_functions(self,ftl_object,request):
+def adding_multiple_service_objects(self,ftl_object,request):
     from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
     try:
        adding_multiple_service_object(ftl_object, request)
