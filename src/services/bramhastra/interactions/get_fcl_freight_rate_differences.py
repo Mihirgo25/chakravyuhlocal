@@ -62,9 +62,10 @@ def get_rate(filters: dict) -> list:
 def format_charts(charts: list) -> list:
     result_dict = dict()
     range_val = 20
-
-    min_diff = int(charts[0].get("deviation", "0"))
-
+    min_diff =0 
+    if len(charts)>0:
+        min_diff = int(charts[0].get("deviation", "0"))
+    
     range_min = min_diff - (min_diff % range_val)
     range_max = range_min + range_val
 
