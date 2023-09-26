@@ -10,10 +10,8 @@ from services.nandi.interactions.update_draft_fcl_freight_rate import update_dra
 from services.nandi.interactions.update_draft_fcl_freight_rate_local import update_draft_fcl_freight_rate_local_data
 from services.nandi.interactions.list_draft_fcl_freight_rates import list_draft_fcl_freight_rates
 from services.nandi.interactions.list_draft_fcl_freight_rate_locals import list_draft_fcl_freight_rate_locals
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
-from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
 from services.nandi.helpers import *
 nandi_router = APIRouter()
 
@@ -142,18 +140,8 @@ def create_fcl_freight_rate_local_for_draft(request: CreateFclFreightDraftLocal,
             'trade_type': request.get('trade_type'),
             'rate_type':request.get('rate_type','market_place')
         }
-        is_rate_exists = get_draft_rate_with_shipment_id(get_local_params)
-        if is_rate_exists == False:
-            fcl_freight_local = get_fcl_freight_rate_local(get_local_params)
-            if 'id' not in fcl_freight_local:
-                fcl_freight_local = create_fcl_freight_rate_local(request)
-            else:
-                if matching_local_charges(fcl_freight_local, request['data'].get('line_items')):
-                    return 
-            request['rate_id'] = fcl_freight_local.get('id')
-            draft_fcl_freight_local = create_draft_fcl_freight_rate_local_data(request)
-            return JSONResponse(status_code=200, content=json_encoder(draft_fcl_freight_local))
-        return JSONResponse(status_code = 200, content = json_encoder(is_rate_exists))
+        response = check_draft_fcl_freight_local(get_local_params, request)
+        return JSONResponse(status_code=200, content=json_encoder(response))
     except HTTPException as e:
         raise
     except Exception as e:
