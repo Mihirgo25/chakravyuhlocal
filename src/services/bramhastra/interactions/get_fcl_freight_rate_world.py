@@ -26,10 +26,10 @@ async def get_total_count():
 
 
 async def get_count_distribution(filters):
-    transportation = "origin"
+    trade = "origin"
     location = "country"
-    if "transportation_type" in filters:
-        transportation = FILTER_MAPPING[filters["transportation_type"]]
+    if "trade_type" in filters:
+        trade = FILTER_MAPPING[filters["trade_type"]]
     
     if "location_type" in filters:
         location = filters["location_type"]    
@@ -40,11 +40,11 @@ async def get_count_distribution(filters):
             WITH clean_rates AS
             (
                 SELECT
-                    {transportation}_{location}_id,
+                    {trade}_{location}_id,
                     rate_id
                 FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE validity_end >= toDate(now())
                 GROUP BY
-                    {transportation}_{location}_id,
+                    {trade}_{location}_id,
                     rate_id
             )
         SELECT
@@ -52,7 +52,7 @@ async def get_count_distribution(filters):
             COUNT(*) AS rate_count
         FROM
         (
-            SELECT {transportation}_{location}_id AS {location}_id
+            SELECT {trade}_{location}_id AS {location}_id
             FROM clean_rates
         ) AS combined_countries
         GROUP BY {location}_id"""
