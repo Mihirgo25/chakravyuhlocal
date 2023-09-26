@@ -10,7 +10,16 @@ from services.fcl_customs_rate.workers.update_fcl_customs_rate_job_on_rate_addit
 from services.fcl_customs_rate.workers.create_jobs_for_predicted_fcl_customs_rate import create_jobs_for_predicted_fcl_customs_rate
 from celery.schedules import crontab
 
+tasks = {
+    'update_fcl_customs_jobs_status_to_backlogs': {
+        'task': 'services.fcl_customs_rate.fcl_customs_celery_worker.update_fcl_customs_rate_jobs_to_backlog_delay',
+        'schedule': crontab(hour=23, minute=0),
+        'options': {'queue': 'fcl_customs_freight_rate'}
+    },
+}
 
+for name, task_info in tasks.items():
+    celery.conf.beat_schedule[name] = task_info
 
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)

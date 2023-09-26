@@ -43,7 +43,8 @@ def select_fields():
         HaulageFreightRate.validity_start,
         HaulageFreightRate.validity_end,
         HaulageFreightRate.service_provider,
-        HaulageFreightRate.sourced_by_id
+        HaulageFreightRate.sourced_by_id,
+        HaulageFreightRate.source
     )
     return freight_query
 
@@ -195,7 +196,7 @@ def build_response_object(result, requirements):
         "haulage_type": result["haulage_type"],
         "transport_modes": result["transport_modes"],
         "line_items": [],
-        "source": "spot_rates" if requirements["predicted_rate"] else "predicted",
+        "source": result.get("source") or "spot_rates" if requirements["predicted_rate"] else "predicted",
         "updated_at": result["updated_at"],
         "tags": [],
         "transit_time": result["transit_time"],
@@ -305,7 +306,6 @@ def get_predicted_rate(requirements, data):
         and requirements.get("origin_location_id")
         and requirements.get("destination_location_id")
     ):
-        is_predicted = True
         keys_to_slice = [
             "origin_location_id",
             "destination_location_id",
@@ -329,7 +329,9 @@ def get_predicted_rate(requirements, data):
         if response:
             requirements["predicted_rate"] = False
             data = get_haulage_freight_rate_cards(requirements)["list"]
-
+    
+    if data and data[0].get('source') == 'predicted':
+        is_predicted = True
     return data,is_predicted
 
 def ignore_non_active_shipping_lines(data):

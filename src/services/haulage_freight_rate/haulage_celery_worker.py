@@ -10,8 +10,19 @@ from services.haulage_freight_rate.workers.update_haulage_freight_rate_job_on_ra
 from services.haulage_freight_rate.workers.update_haulage_freight_rate_jobs_to_backlog import (
     update_haulage_freight_rate_jobs_to_backlog,
 )
+from celery.schedules import crontab
 
+tasks = {
+    'update_haulage_freight_jobs_status_to_backlogs': {
+        'task': 'services.haulage_freight_rate.haulage_celery_worker.update_haulage_freight_rate_jobs_to_backlog_delay',
+        'schedule': crontab(hour=23, minute=0),
+        'options': {'queue': 'haulage_freight_rate'}
+    },
+}
 
+for name, task_info in tasks.items():
+    celery.conf.beat_schedule[name] = task_info
+    
 @celery.task(bind = True, max_retries=3, retry_backoff = True)    
 def bulk_operation_perform_action_functions_haulage(self, action_name,object,sourced_by_id,procured_by_id):
     try:
