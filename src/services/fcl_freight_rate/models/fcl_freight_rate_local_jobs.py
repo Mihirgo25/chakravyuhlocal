@@ -16,7 +16,9 @@ class BaseModel(Model):
 class FclFreightRateLocalJob(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     port_id = UUIDField(index=True, null=True)
+    port = BinaryJSONField(index=True, null=True)
     main_port_id = UUIDField(index=True, null=True)
+    main_port = BinaryJSONField(index=True, null=True)
     shipping_line_id = UUIDField(null=True, index=True)
     shipping_line = BinaryJSONField(null=True)
     service_provider_id = UUIDField(null=True, index=True)
@@ -77,3 +79,17 @@ class FclFreightRateLocalJob(BaseModel):
                 for key, value in shipping_line[0].items()
                 if key in ["id", "business_name", "short_name", "logo_url"]
             }
+
+    def set_port(self):
+        if self.port:
+            return
+
+        if not self.port_id:
+            return
+
+        location_ids = [str(self.port_id)]
+        if self.main_port_id:
+            location_ids.append(str(self.main_port_id))
+        ports = maps.list_locations({"filters": {"id": location_ids}})["list"]
+        for port in ports:
+            self.main_port = port
