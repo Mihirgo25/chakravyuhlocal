@@ -78,7 +78,7 @@ def create_haulage_freight_rate(request):
         ).first()
     )
     
-
+    
     if not haulage_freight_rate:
         haulage_freight_rate = HaulageFreightRate(init_key = init_key)
         for key in list(params.keys()):
