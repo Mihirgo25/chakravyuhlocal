@@ -111,10 +111,10 @@ async def get_lifecycle_statistics(filters, where):
     checkout = [generate_sum_query("checkout")]
     shipment = [generate_sum_query("shipment")]
 
-    confirmed = [avg_group_by_query("shipment_confirmed_by_importer_exporter")]
-    completed = [avg_group_by_query("shipment_completed")]
-    aborted = [avg_group_by_query("shipment_aborted")]
-    cancelled = [avg_group_by_query("shipment_cancelled")]
+    confirmed = [avg_group_by_query(1)]
+    completed = [avg_group_by_query(4)]
+    aborted = [avg_group_by_query(3)]
+    cancelled = [avg_group_by_query(2)]
 
     revenue_desk = [generate_sum_query("revenue_desk_visit")]
     so1 = [generate_sum_query("so1_select")]
@@ -123,15 +123,15 @@ async def get_lifecycle_statistics(filters, where):
 
     feedbacks_created = [
         f"""
-        SELECT COUNT(DISTINCT rate_id) AS feedbacks_created FROM brahmastra.{FclFreightAction._meta.table_name} WHERE spot_search > 0
+        SELECT COUNT(DISTINCT rate_id) AS feedbacks_created FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback = 0
         """
     ]
-    disliked = [count_boolean_query("disliked")]
-    liked = [count_boolean_query("liked")]
+    disliked = [count_boolean_query(0)]
+    liked = [count_boolean_query(1)]
 
     feedback_closed = [
         f"""
-        SELECT COUNT() AS feedback_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE mode = 'disliked_rate'
+        SELECT COUNT(DISTINCT rate_id) AS feedback_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback = 1
         """
     ]
 
@@ -143,24 +143,24 @@ async def get_lifecycle_statistics(filters, where):
 
     feedback_rates_added = [
         f"""
-        SELECT COUNT(*) AS feedback_rates_added FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name}
+        SELECT COUNT(DISTINCT rate_id) AS feedback_rates_added FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE feedback = 2
         """
     ]
 
     # Rate Request
     rates_requested = [
         f"""
-        SELECT COUNT(DISTINCT rate_request_id) AS rates_requested FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name}
+        SELECT COUNT(DISTINCT rate_request_id) AS rates_requested FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request =0
         """
     ]
     rates_reverted = [
         f"""
-        SELECT COUNT(DISTINCT rate_request_id) AS rates_reverted FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_rate_reverted = 1
+        SELECT COUNT(DISTINCT rate_request_id) AS rates_reverted FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request = 2
         """
     ]
     rates_closed = [
         f"""
-        SELECT COUNT(DISTINCT rate_request_id) AS rates_closed FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name}
+        SELECT COUNT(DISTINCT rate_request_id) AS rates_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request =1
         """
     ]
 
@@ -314,7 +314,7 @@ def count_boolean_query(column):
 
 def avg_group_by_query(column):
     return f"""
-    SELECT COUNT(DISTINCT shipment_id) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} = 1 
+    SELECT COUNT(DISTINCT shipment_id) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state = {column}
     """
 
 
