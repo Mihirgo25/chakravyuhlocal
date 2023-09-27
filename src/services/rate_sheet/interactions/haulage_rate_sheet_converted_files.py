@@ -216,8 +216,8 @@ def create_haulage_freight_freight_rate(
     object["origin_location_id"] = get_location_id(rows[0]['origin_location'])
     object["destination_location_id"] = get_location_id(rows[0]['destination_location'])
     object["shipping_line_id"] = get_shipping_line_id(rows[0]["shipping_line"])
-    object['transit_time'] = int(object['transit_time'])
-    object['detention_free_time'] = int(object['detention_free_time'])
+    object['transit_time'] = parse_numeric(object['transit_time'])
+    object['detention_free_time'] = parse_numeric(object['detention_free_time'])
     object["transport_modes"] = object["transport_modes"].split(',')
     object["rate_type"] = "market_place"
 
@@ -228,7 +228,7 @@ def create_haulage_freight_freight_rate(
             keys_to_extract = ['code', 'unit', 'price', 'currency']
             line_item = dict(filter(lambda item: item[0] in keys_to_extract, data.items()))
             if 'price' in line_item:
-                line_item['price'] = float(line_item['price'])
+                line_item['price'] = parse_numeric(line_item['price'])
             line_item['remarks'] = list(set([data["remark1"], data["remark2"], data["remark3"]]))
             line_item["slabs"] = []
             object['line_items'].append(line_item)
