@@ -5,7 +5,7 @@ import httpx, json
 from datetime import datetime
 import dateutil.parser as parser
 from micro_services.client import organization
-from services.ftl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def get_land_route_from_valhalla(location_ids):
     params = {

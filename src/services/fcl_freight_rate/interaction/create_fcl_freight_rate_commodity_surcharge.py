@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_commodity_surcharge impor
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from celery_worker import update_multiple_service_objects,update_freight_objects_for_commodity_surcharge
 def create_audit(request, commodity_surcharge_id):
 

@@ -65,10 +65,4 @@ def get_multiple_service_objects(freight_object, is_new_rate=True):
                 elif hasattr(freight_object,'performed_by_org'):
                     freight_object.performed_by_org = organization
 
-    # if hasattr(freight_object,'rate_sheet_id'):
-    #     rate_sheet_data = RateSheet.select(RateSheet.serial_id,RateSheet.file_name,RateSheet.created_at,RateSheet.updated_at).dicts().get()
-    #     rate_sheet_data['serial_id'] = str(rate_sheet_data['serial_id'])
-    #     freight_object.rate_sheet = rate_sheet_data
-
-
     freight_object.save()
