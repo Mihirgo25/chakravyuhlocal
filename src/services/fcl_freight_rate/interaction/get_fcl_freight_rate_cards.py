@@ -408,7 +408,7 @@ def build_local_line_item_object(line_item, request):
 def add_local_objects(freight_query_result, response_object, request):
     response_object['origin_local'] = {
         'id': freight_query_result['origin_local'].get('id'),
-        'service_provider_id': freight_query_result['origin_local']['service_provider_id'] if freight_query_result['origin_local'].get('service_provider_id') else response_object['service_provider_id'],
+        'service_provider_id': response_object['service_provider_id'],
         'source': freight_query_result['origin_local']['source'] if freight_query_result['origin_local'].get('source') else response_object['source'],
         'line_items': []
     } if 'origin_local' in freight_query_result and freight_query_result['origin_local'] else { 'line_items': [], 'service_provider_id': response_object['service_provider_id'], 'source':  response_object['source'] }
