@@ -416,11 +416,7 @@ def add_local_objects(freight_query_result, response_object, request):
     response_object['destination_local'] = {}
     if freight_query_result.get('destination_local'):
         response_object['destination_local']['id'] =  freight_query_result['destination_local'].get('id')
-        if freight_query_result['destination_local'].get('service_provider_id'):
-            response_object['destination_local']['service_provider_id'] = freight_query_result['destination_local']['service_provider_id']
-        else:
-            response_object['destination_local']['service_provider_id'] = response_object['service_provider_id']
-
+        response_object['destination_local']['service_provider_id'] = response_object['service_provider_id']
         if freight_query_result['destination_local'].get('source'):
             response_object['destination_local']['source'] = freight_query_result['destination_local']['source']
         else:
