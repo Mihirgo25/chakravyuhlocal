@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
+from pydantic import Json
 
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_agent import create_fcl_freight_rate_local_agent
@@ -2013,34 +2014,20 @@ def get_fcl_freight_rate_job_csv_url_api(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
-# class FCLRequest(BaseModel):
-#     origin_port_id: str
-#     origin_trade_id: str
-#     origin_continent_id: str
-#     destination_port_id: str
-#     destination_trade_id: str
-#     destination_continent_id: str
-#     port_pairs: dict
-#     sailing_schedules_required: bool
-#     validity_start: str
-#     list: list
-#     spot_search_object: dict
-#     origin_port: dict
-#     destination_port: dict
-from pydantic import Json
+
 @fcl_freight_router.get('/get_fcl_freight_rate_cards_schedules')
 def get_fcl_freight_rate_cards_schedules_data(
-    filters: Json = Query(None)
-    # resp: dict = Depends(authorize_token)
+    filters: Json = Query(None),
+    resp: dict = Depends(authorize_token)
 ):
-    
-    # Uncomment the authorization code if needed
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    # try:
-    print(filters)
-    resp = get_fcl_freight_rate_cards_schedules(
-        filters
-    )
-    return JSONResponse(status_code=200, content=json_encoder(resp))
+    try:
+        resp = get_fcl_freight_rate_cards_schedules(filters)
+        return JSONResponse(status_code=200, content=json_encoder(resp))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

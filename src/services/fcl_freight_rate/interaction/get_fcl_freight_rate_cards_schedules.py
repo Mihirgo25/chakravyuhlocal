@@ -7,65 +7,6 @@ from configs.fcl_freight_rate_constants import (
 )
 import json
 
-def get_sailing_schedules_data(
-    origin_port_id,
-    destination_port_id,
-    shipping_line_ids,
-    validity_start,
-    page_limit,
-    sort_by,
-    sort_type,
-    request_source,
-):
-    data = {
-        "origin_port_id": origin_port_id,
-        "destination_port_id": destination_port_id,
-        "filters": {
-            # 'shipping_line_id': shipping_line_ids,
-            "departure_start": validity_start
-        },
-        "page_limit": page_limit,
-        "sort_by": sort_by,
-        "sort_type": sort_type,
-        "request_source": request_source,
-    }
-
-    schedules = common.get_sailing_schedules(data)
-
-    return schedules
-
-
-def get_fake_schedules_data(
-    origin_port_id,
-    origin_trade_id,
-    origin_continent_id,
-    destination_port_id,
-    destination_trade_id,
-    destination_continent_id,
-):
-    data = {
-        "origin_port_id": origin_port_id,
-        "origin_trade_id": origin_trade_id,
-        "origin_continent_id": origin_continent_id,
-        "destination_port_id": destination_port_id,
-        "destination_trade_id": destination_trade_id,
-        "destination_continent_id": destination_continent_id,
-    }
-
-    fake_schedules = common.get_fake_sailing_schedules(data)
-
-    return fake_schedules
-
-
-def get_predicted_transit_time_data(origin_port_id, destination_port_id):
-    data = {
-        "origin_port_id": origin_port_id,
-        "destination_port_id": destination_port_id,
-    }
-    predicted_transit_time = common.get_predicted_transit_time(data)
-   
-    return predicted_transit_time
-
 
 def get_fcl_freight_rate_cards_schedules(filters):
     
@@ -83,6 +24,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
     origin_port=filters.get('origin_port')
     destination_port=filters.get('destination_port')
     
+    
     fake_schedules = []
     sailing_schedules_hash = {}
     
@@ -92,17 +34,20 @@ def get_fcl_freight_rate_cards_schedules(filters):
         def get_sailing_schedules_new(port_pair, shipping_line):
             origin_port_id = port_pair.split("_")[0]
             destination_port_id = port_pair.split("_")[1]
-
-            schedules = get_sailing_schedules_data(
-                origin_port_id=origin_port_id,
-                destination_port_id=destination_port_id,
-                shipping_line_ids=list(set(shipping_line)),
-                validity_start=validity_start,
-                page_limit=1000,
-                sort_by="departure",
-                sort_type="asc",
-                request_source="spot_search",
-            )
+            
+            data = {
+                "origin_port_id": origin_port_id,
+                "destination_port_id": destination_port_id,
+                "filters": {
+                    # 'shipping_line_id': shipping_line_ids,
+                    "departure_start": validity_start
+                },
+                "page_limit": 1000,
+                "sort_by": "departure",
+                "sort_type": "asc",
+                "request_source": "spot_search",
+            }
+            schedules = common.get_sailing_schedules(data)
 
             return [
                 {
@@ -114,7 +59,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
             ]
 
         sailing_schedules = []
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             executors = [
                 executor.submit(get_sailing_schedules_new, port_pair, shipping_line)
                 for port_pair, shipping_line in port_pairs.items()
@@ -136,20 +81,9 @@ def get_fcl_freight_rate_cards_schedules(filters):
 
             schedule_data = {
                 k: sailing_schedule.get(k, None)
-                for k in [
-                    "departure",
-                    "arrival",
-                    "number_of_stops",
-                    "transit_time",
-                    "legs",
-                    "si_cutoff",
-                    "vgm_cutoff",
-                    "schedule_type",
-                    "reliability_score",
-                    "terminal_cutoff",
-                    "source",
-                ]
-            }
+                for k in [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type",
+                    "reliability_score","terminal_cutoff", "source" ]
+                }
 
             sailing_schedules_hash.setdefault(key, []).append(schedule_data)
     
@@ -163,33 +97,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
                 "destination_continent_id": destination_continent_id,
             }
 
-        # fake_schedules = common.get_fake_sailing_schedules(data)
-        
-        fake_schedules= [
-                            {
-                                "departure":"2023-09-28",
-                                "arrival":"2023-10-06",
-                                "number_of_stops":0,
-                                "transit_time":8,
-                                "source":"fake"
-                            },
-                            {
-                                "departure":"2023-10-05",
-                                "arrival":"2023-10-13",
-                                "number_of_stops":0,
-                                "transit_time":8,
-                                "source":"fake"
-                            },
-                            {
-                                "departure":"2023-10-12",
-                                "arrival":"2023-10-20",
-                                "number_of_stops":0,
-                                "transit_time":8,
-                                "source":"fake"
-                            }
-                          ]
-
-
+        fake_schedules = common.get_fake_sailing_schedules(data)
 
     grouping = {}
 
@@ -239,11 +147,11 @@ def get_fcl_freight_rate_cards_schedules(filters):
                     )
 
                     if avg_transit_time is None:
-                        predicted_transit_time = get_predicted_transit_time_data(
-                            origin_port_id=data["origin_port_id"],
-                            destination_port_id=data["destination_port_id"],
-                        )
-
+                        data = {
+                                    "origin_port_id": origin_port_id,
+                                    "destination_port_id": destination_port_id,
+                                }
+                        predicted_transit_time = common.get_predicted_transit_time(data)
 
                     fallback_schedules = FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES
                    
@@ -295,9 +203,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
                             "legs": sailing_schedule.get("legs"),
                             "si_cutoff": sailing_schedule.get("si_cutoff"),
                             "vgm_cutoff": sailing_schedule.get("vgm_cutoff"),
-                            "reliability_score": sailing_schedule.get(
-                                "reliability_score"
-                            ),
+                            "reliability_score": sailing_schedule.get("reliability_score"),
                             "schedule_type": sailing_schedule.get("schedule_type"),
                             "terminal_cutoff": sailing_schedule.get("terminal_cutoff"),
                             "schedule_source": sailing_schedule.get("source"),
@@ -324,9 +230,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
                         "transit_time": None,
                         "validity_start": freight_object.get("validity_start"),
                         "validity_end": freight_object.get("validity_end"),
-                        "schedule_type": freight_object.get(
-                            "schedule_type", DEFAULT_SCHEDULE_TYPES
-                        ),
+                        "schedule_type": freight_object.get("schedule_type", DEFAULT_SCHEDULE_TYPES),
                         "validity_id": freight_object.get("validity_id"),
                         "likes_count": freight_object.get("likes_count"),
                         "dislikes_count": freight_object.get("dislikes_count"),
@@ -348,9 +252,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
                     "price": line_item["total_price"],
                     'organization_id':spot_search_object["importer_exporter_id"],
                     'source':"default"
-                
                 }
-             
             ).get("price", 0)
             for line_item in (
                 data.get("origin_local", {}).get("line_items", [])
@@ -369,9 +271,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
                     "price": line_item["total_price"],
                     'organization_id':spot_search_object["importer_exporter_id"],
                     'source':"default"
-
                     }
-                
                 ).get("price", 0)
                 for line_item in freight["line_items"]
             )
@@ -381,24 +281,12 @@ def get_fcl_freight_rate_cards_schedules(filters):
             if sailing_schedules_required and data["source"] != "cogo_assured_rate":
                 key_elements = [
                     data["shipping_line_id"],
-                    str(freight["departure"])
-                    if freight["departure"] is not None
-                    else "",
-                    str(freight["arrival"])
-                    if freight["arrival"] is not None
-                    else "",
-                    str(freight["number_of_stops"])
-                    if freight["number_of_stops"] is not None
-                    else "",
-                    data["origin_main_port_id"]
-                    if data["origin_main_port_id"] is not None
-                    else "",
-                    data["destination_main_port_id"]
-                    if data["destination_main_port_id"] is not None
-                    else "",
-                    str(detention_free_limit)
-                    if detention_free_limit is not None
-                    else "",
+                    str(freight["departure"]) if freight["departure"] is not None else "",
+                    str(freight["arrival"]) if freight["arrival"] is not None else "",
+                    str(freight["number_of_stops"]) if freight["number_of_stops"] is not None else "",
+                    data["origin_main_port_id"] if data["origin_main_port_id"] is not None else "",
+                    data["destination_main_port_id"] if data["destination_main_port_id"] is not None else "",
+                    str(detention_free_limit) if detention_free_limit is not None else "",
                     data["source"],
                 ]
 
@@ -407,24 +295,12 @@ def get_fcl_freight_rate_cards_schedules(filters):
             else:
                 key_elements = [
                     data["shipping_line_id"],
-                    str(freight["validity_start"])
-                    if freight["validity_start"] is not None
-                    else "",
-                    str(freight["validity_end"])
-                    if freight["validity_end"] is not None
-                    else "",
-                    str(freight["number_of_stops"])
-                    if freight["number_of_stops"] is not None
-                    else "",
-                    data["origin_main_port_id"]
-                    if data["origin_main_port_id"] is not None
-                    else "",
-                    data["destination_main_port_id"]
-                    if data["destination_main_port_id"] is not None
-                    else "",
-                    str(detention_free_limit)
-                    if detention_free_limit is not None
-                    else "",
+                    str(freight["validity_start"]) if freight["validity_start"] is not None else "",
+                    str(freight["validity_end"]) if freight["validity_end"] is not None else "",
+                    str(freight["number_of_stops"]) if freight["number_of_stops"] is not None  else "",
+                    data["origin_main_port_id"] if data["origin_main_port_id"] is not None else "",
+                    data["destination_main_port_id"] if data["destination_main_port_id"] is not None else "",
+                    str(detention_free_limit) if detention_free_limit is not None else "",
                     data["source"],
                 ]
 
@@ -437,11 +313,10 @@ def get_fcl_freight_rate_cards_schedules(filters):
                 grouping[key] = {
                     "total_price": total_price,
                     "freight_price": freight_price,
-                    "data": data  
+                    "data": {**data,'freights' : [freight]}  
                 }
             
     
     rates = [v["data"] for v in grouping.values()]
-
     
     return rates
