@@ -64,10 +64,10 @@ def create_audit(request, freight_rate_request_id):
         performed_by_id=request["performed_by_id"],
         data={
             "closing_remarks": request.get("closing_remarks"),
-            "performed_by_id": request.get("performed_by_id"),
-            "sourced_by_id": request.get("sourced_by_id"),
-            "procured_by_id": request.get("procured_by_id"),
+            "performed_by_id": request.get("performed_by_id")
         },
         object_id=freight_rate_request_id,
-        object_type="FtlFreightRateRequest"
+        object_type="FtlFreightRateRequest",
+        sourced_by_id = request.get("sourced_by_id"),
+        procured_by_id = request.get("procured_by_id")
     )
