@@ -152,3 +152,36 @@ class Paginate(Bramhastra):
     
 class SelectTypes(Bramhastra):
     SO1 = "SO1"
+
+class ShipmentState(Bramhastra):
+    received = 0
+    confirmed_by_importer_exporter = 1
+    cancelled = 2
+    aborted = 3
+    completed = 4
+
+class FeedbackType(Bramhastra):
+    disliked = 0
+    liked = 1
+
+class FeedbackState(Bramhastra):
+    created = 1
+    closed = 0
+    rate_added = 2
+
+class ShipmentServiceState(Bramhastra):
+    containers_gated_out = 0
+    containers_gated_in = 1
+    cancelled = 2
+    awaiting_service_provider_confirmation = 3
+    confirmed_by_service_provider = 4
+    vessel_arrived= 5
+    vessel_departed= 6
+    completed= 7
+    aborted= 8
+    init= 9
+
+class RateRequestEnum(Bramhastra):
+    created = 1
+    closed = 0
+    rate_added = 2        
