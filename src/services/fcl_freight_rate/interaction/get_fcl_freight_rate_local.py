@@ -4,7 +4,7 @@ from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def get_fcl_freight_rate_local(request):
-    details = {}  
+    details = {}
     if all_fields_present(request):
         object = find_object(request)
         if object:
