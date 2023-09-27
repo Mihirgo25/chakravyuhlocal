@@ -344,18 +344,18 @@ class FtlFreightRate(BaseModel):
 
     def detail(self):
         ftl_freight = {
-            'line_items': self.line_items,
             'transit_time': self.transit_time,
             'detention_free_time': self.detention_free_time,
-            'trip_type': self.truck_body_type,
+            'truck_body_type': self.truck_body_type,
             'validity_start': self.validity_start,
             'validity_end': self.validity_end,
-            'trailer_type': self.unit,
+            'line_items': self.line_items,
             'line_items_info_messages': self.line_items_info_messages,
             'is_line_items_info_messages_present': self.is_line_items_info_messages_present,
             'line_items_error_messages': self.line_items_error_messages,
             'is_line_items_error_messages_present': self.is_line_items_error_messages_present,
-            'minimum_chargeable_weight': self.minimum_chargeable_weight
+            'unit': self.unit,
+            'minimum_chargeable_weight': self.minimum_chargeable_weight,
         }
 
         return {'ftl_freight': ftl_freight}

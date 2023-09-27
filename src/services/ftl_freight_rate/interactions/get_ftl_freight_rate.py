@@ -38,13 +38,16 @@ def all_fields_present(request):
 def find_ftl_freight_rate(request):
     fields = [getattr(FtlFreightRate, key) for key in default_fields]
     query = FtlFreightRate.select(*fields)
+
     for key in request:
         if request.get(key) is not None:
             query = query.where(attrgetter(key)(FtlFreightRate) == request[key])
     object = query.first()
 
-    object = {} if object is None else jsonable_encoder(model_to_dict(object))
-    return object
+    details = {}
+    if object:
+        details = object.detail()
+    return details
 
 def get_ftl_params(request):
     params = {}
