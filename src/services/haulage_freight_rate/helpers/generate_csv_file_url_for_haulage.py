@@ -13,8 +13,8 @@ def get_haulage_freight_coverage_required_data(haulage_coverage_data):
         required_data = {}
         required_data['origin_location'] = coverage_data['origin_location']['name']
         required_data['destination_location'] = coverage_data['destination_location']['name']
-        required_data['origin_location_id'] = coverage_data['origin_location_id']['port_code']
-        required_data['destination_location_id'] = coverage_data['destination_location_id']['port_code']
+        required_data['origin_location_id'] = coverage_data['origin_location']['id']
+        required_data['destination_location_id'] = coverage_data['destination_location']['id']
         required_data['commodity'] = coverage_data['commodity']
         required_data['container_type']  = coverage_data['container_type']
         required_data['container_size'] = coverage_data['container_size']

@@ -50,7 +50,8 @@ def generate_csv_file_url_for_fcl_customs(query):
 
 def get_fcl_customs_coverage_required_data(coverage_data):
     required_data = {}
-    required_data['location'] = coverage_data['location']
+    required_data['location'] = coverage_data['location']['name']
+    required_data['port_code'] = coverage_data['location']['port_code']
     required_data['commodity'] = coverage_data['commodity']
     required_data['container_type']  = coverage_data['container_type']
     required_data['container_size'] = coverage_data['container_size']

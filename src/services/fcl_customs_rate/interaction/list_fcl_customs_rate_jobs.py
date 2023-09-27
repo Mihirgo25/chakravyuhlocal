@@ -35,7 +35,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "service_provider",
     "service_provider_id",
     "location",
-    "locatipn_id",
+    "location_id",
     "serial_id",
     "container_type",
     "sources",
