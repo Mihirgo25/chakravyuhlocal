@@ -126,3 +126,11 @@ class DeleteAirCustomsRate(BaseModel):
   performed_by_id: str
   performed_by_type: str = None
   bulk_operation_id: str = None
+  
+class DeleteAirCustomsRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None

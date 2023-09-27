@@ -1,13 +1,13 @@
-from services.fcl_customs_rate.interaction.create_fcl_customs_rate_job import (
-    create_fcl_customs_rate_job,
+from services.air_customs_rate.interaction.create_air_customs_rate_job import (
+    create_air_customs_rate_job,
 )
 from database.db_session import rd
 
-current_processing_key = "spot_search_count_fcl_customs"
+current_processing_key = "spot_search_count_air_customs"
 
 
 def build_init_key(requirements):
-    init_key = f'{str(requirements.get("location_id") or "")}:{str(requirements.get("service_provider_id") or "")}:{str(requirements.get("container_size") or  "")}:{str(requirements.get("container_type") or "")}:{str(requirements.get("commodity") or "")}:{str(requirements.get("rate_type") or "")}'
+    init_key = f'{str(requirements.get("airport_id") or "")}:{str(requirements.get("service_provider_id") or "")}:{str(requirements.get("commodity") or "")}:{str(requirements.get("rate_type") or "")}:{str(requirements.get("commodity_type") or "")}:{str(requirements.get("commodity_sub_type") or "")}:{str(requirements.get("stacking_type") or "")}:{str(requirements.get("operation_type") or "")}'
     return init_key
 
 
@@ -31,11 +31,11 @@ def delete_init_key(requirements):
     rd.hdel(current_processing_key, build_init_key(requirements))
 
 
-def create_jobs_for_predicted_fcl_customs_rate(is_predicted, requirements):
+def create_jobs_for_predicted_air_customs_rate(is_predicted, requirements):
     if is_predicted:
         current_count = get_current_predicted_count(requirements)
-        if current_count >= 3:
-            data = create_fcl_customs_rate_job(requirements, "spot_search")
+        if current_count >= 5:
+            data = create_air_customs_rate_job(requirements, "spot_search")
             delete_init_key(requirements)
             return {"init_key": requirements}
         else:
