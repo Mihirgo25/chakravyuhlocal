@@ -362,10 +362,6 @@ def build_local_line_item_object(line_item, request):
 
     code_config = fcl_freight_local_charges[line_item['code']]
 
-    is_additional_service = True if 'additional_service' in code_config.get('tags') else None
-    if is_additional_service and line_item['code'] not in request['additional_services']:
-        return None
-
     is_dpd = True if 'dpd' in code_config.get('tags') else False
     if is_dpd and ('import' in code_config.get('trade_types')) and (not request['include_destination_dpd']):
         return None
