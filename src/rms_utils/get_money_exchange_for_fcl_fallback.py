@@ -7,7 +7,7 @@ currency = CurrencyConverter()
 
 def get_money_exchange_for_fcl_fallback(from_currency, to_currency, price):
     from micro_services.client import common
-    resp = common.get_all_exchange_rates(to_currency)
+    resp = common.get_all_exchange_rates({'base_currency':to_currency})
     
     if isinstance(resp, dict) and resp.get('cogofx_currencies', {}).get(from_currency):
         price = float(price)
