@@ -126,7 +126,7 @@ async def get_lifecycle_statistics(filters, where):
 
     feedbacks_created = [
         f"""
-        SELECT COUNT(DISTINCT rate_id) AS feedbacks_created FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback = {FeedbackState.created.name}
+        SELECT COUNT(DISTINCT rate_id) AS feedbacks_created FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_state = {FeedbackState.created.name}
         """
     ]
     disliked = [count_boolean_query({FeedbackType.disliked.name})]
@@ -134,7 +134,7 @@ async def get_lifecycle_statistics(filters, where):
 
     feedback_closed = [
         f"""
-        SELECT COUNT(DISTINCT rate_id) AS feedback_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback = {FeedbackState.closed.name}
+        SELECT COUNT(DISTINCT rate_id) AS feedback_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_state = {FeedbackState.closed.name}
         """
     ]
 
@@ -146,24 +146,24 @@ async def get_lifecycle_statistics(filters, where):
 
     feedback_rates_added = [
         f"""
-        SELECT COUNT(DISTINCT rate_id) AS feedback_rates_added FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE feedback = {FeedbackState.rate_added.name}
+        SELECT COUNT(DISTINCT rate_id) AS feedback_rates_added FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE feedback_state = {FeedbackState.rate_added.name}
         """
     ]
 
     # Rate Request
     rates_requested = [
         f"""
-        SELECT COUNT(DISTINCT rate_request_id) AS rates_requested FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request ={RateRequestEnum.created.name}
+        SELECT COUNT(DISTINCT rate_request_id) AS rates_requested FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state ={RateRequestEnum.created.name}
         """
     ]
     rates_reverted = [
         f"""
-        SELECT COUNT(DISTINCT rate_request_id) AS rates_reverted FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request = {RateRequestEnum.rate_added.name}
+        SELECT COUNT(DISTINCT rate_request_id) AS rates_reverted FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state = {RateRequestEnum.rate_added.name}
         """
     ]
     rates_closed = [
         f"""
-        SELECT COUNT(DISTINCT rate_request_id) AS rates_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request = {RateRequestEnum.closed.name}
+        SELECT COUNT(DISTINCT rate_request_id) AS rates_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state = {RateRequestEnum.closed.name}
         """
     ]
 

@@ -191,7 +191,7 @@ class ShipmentServiceState(Bramhastra):
     aborted= 9
     init= 10
 
-class RateRequestEnum(Bramhastra):
+class RateRequestState(Bramhastra):
     empty = 0
     created = 1
     closed = 2
