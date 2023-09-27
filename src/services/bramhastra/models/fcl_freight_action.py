@@ -116,7 +116,7 @@ class FclFreightAction(BaseModel):
     selected_rate_id = UUIDField(index=True, null=True, default=DEFAULT_UUID)
     selected_validity_id = UUIDField(index=True, null=True, default=DEFAULT_UUID)
     revenue_desk_visit = IntegerField(default=0, null=True)
-    revenue_desk_select = IntegerField(default=0, null=True)
+    so1_visit = IntegerField(default=0, null=True)
     given_priority = IntegerField(default=0, null=True)
     rate_created_at = DateTimeTZField(index=True, null=True)
     rate_updated_at = DateTimeTZField(index=True, null=True)

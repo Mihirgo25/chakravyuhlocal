@@ -56,7 +56,7 @@ class RevenueDesk:
             fcl_freight_action = (
                 FclFreightAction.select()
                 .where(
-                    FclFreightAction.shipment_fcl_freight_service_id
+                    FclFreightAction.shipment_service_id
                     == request.shipment_fcl_freight_service_id
                 )
                 .first()
@@ -76,7 +76,7 @@ class RevenueDesk:
             for key in increment_keys:
                 setattr(model, key, getattr(model, key) + 1)
         if params:
-            for k, v in params.keys():
+            for k, v in params.items():
                 if v is not None:
                     setattr(model, k, v)
         model.save()
@@ -98,15 +98,10 @@ class RevenueDesk:
         )
         if fcl_freight_rate_statistic is not None:
             statistic_increment_keys = {
-                FclFreightRateStatistic.so1_select_count.name
+                FclFreightRateStatistic.so1_visit_count.name
             }
-            total_priority = (fcl_freight_rate_statistic.total_priority or 1) + (
-                request.selected_for_preference.given_priority or 1
-            )
-            update_params = dict(total_priority=total_priority)
-            update_params.update(common_update_params)
             self.update_foreign_reference(
-                fcl_freight_rate_statistic, statistic_increment_keys, update_params
+                fcl_freight_rate_statistic, statistic_increment_keys, common_update_params
             )
         fcl_freight_action = (
             FclFreightAction.select()
@@ -117,9 +112,9 @@ class RevenueDesk:
             .first()
         )
         if fcl_freight_action is not None:
-            action_increment_keys = {FclFreightAction.revenue_desk_select.name}
+            action_increment_keys = {FclFreightAction.so1_visit.name}
             self.update_foreign_reference(
-                fcl_freight_rate_statistic, action_increment_keys, common_update_params
+                fcl_freight_action, action_increment_keys, common_update_params
             )
 
     def set_statistics(self) -> None:
@@ -131,7 +126,7 @@ class RevenueDesk:
             1
             - (
                 self.original_rate[FclFreightAction.bas_standard_price.name]
-                / self.selected_rate[FclFreightAction.bas_standard_price.name]
+                / (self.selected_rate[FclFreightAction.bas_standard_price.name] or 1)
             )
         ) * 100
         self.selected_rate_numerics[key] = 100
@@ -158,7 +153,7 @@ class RevenueDesk:
         original_action = (
             FclFreightAction.select()
             .where(
-                FclFreightAction.shipment_fcl_freight_service_id
+                FclFreightAction.shipment_service_id
                 == request.shipment_fcl_freight_service_id
             )
             .first()
@@ -173,7 +168,7 @@ class RevenueDesk:
             )
             .first()
         )
-        if not original_statistic or selected_statistic:
+        if not (original_statistic or selected_statistic):
             return
         self.update_shipment(
             request.shipment_fcl_freight_service_id, selected_statistic
@@ -185,13 +180,13 @@ class RevenueDesk:
         self.selected_rate_numerics.update(
             {
                 FclFreightAction.selected_fcl_freight_rate_statistic_id.name: selected_statistic.id,
-                FclFreightAction.selected_rate_id: selected_statistic.rate_id,
-                FclFreightAction.selected_validity_id: selected_statistic.validity_id,
-                FclFreightAction.selected_bas_standard_price: selected_statistic.bas_standard_price,
+                FclFreightAction.selected_rate_id.name: selected_statistic.rate_id,
+                FclFreightAction.selected_validity_id.name: selected_statistic.validity_id,
+                FclFreightAction.selected_bas_standard_price.name: selected_statistic.bas_standard_price,
             }
         )
         self.update_foreign_reference(
-            selected_statistic, {FclFreightRateStatistic.so1_select_count}, None
+            selected_statistic, {FclFreightRateStatistic.so1_select_count.name}, None
         )
         self.update_foreign_reference(
             original_statistic, None, self.selected_rate_numerics
