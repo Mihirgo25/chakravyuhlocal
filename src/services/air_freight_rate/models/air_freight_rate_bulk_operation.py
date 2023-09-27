@@ -68,6 +68,13 @@ class AirFreightRateBulkOperation(BaseModel):
                 status_code=400,
                 detail="New End Date Cannot Be Greater Than 120 Days From Current Date",
             )
+        if data.get('rates_greater_than_price')!=None and data.get('rates_less_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
+            raise HTTPException(status_code=400, detail='Greater than price cannot be greater than Less than price')
+        
+        if data.get('rate_sheet_serial_id'):
+            rate_sheet_id = get_rate_sheet_id(data.get('rate_sheet_serial_id'))
+            if not rate_sheet_id:
+                raise HTTPException(status_code=400, detail='Invalid Rate sheet serial id') 
 
 
     def validate_add_freight_rate_markup_data(self):
@@ -153,10 +160,29 @@ class AirFreightRateBulkOperation(BaseModel):
                 status_code=400, detail="Min Price Markup Currency Is Invalid"
             )
     def validate_update_freight_rate_local_data(self):
+        data = self.data
+
+        if data.get('rates_greater_than_price')!=None and data.get('rates_less_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
+            raise HTTPException(status_code=400, detail='Greater than price cannot be greater than Less than price')
+        
+        if data.get('rate_sheet_serial_id'):
+            rate_sheet_id = get_rate_sheet_id(data.get('rate_sheet_serial_id'))
+            if not rate_sheet_id:
+                raise HTTPException(status_code=400, detail='Invalid Rate sheet serial id') 
         return
 
     def validate_update_freight_rate_surcharge_data(self):
+        data = self.data
+
+        if data.get('rates_greater_than_price')!=None and data.get('rates_less_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
+            raise HTTPException(status_code=400, detail='Greater than price cannot be greater than Less than price')
+        
+        if data.get('rate_sheet_serial_id'):
+            rate_sheet_id = get_rate_sheet_id(data.get('rate_sheet_serial_id'))
+            if not rate_sheet_id:
+                raise HTTPException(status_code=400, detail='Invalid Rate sheet serial id') 
         return
+    
     def perform_batch_wise_delete_freight_rate_action(self,count,batches_query,total_count):
         data = self.data
         freight_rates = jsonable_encoder(list(batches_query.dicts()))

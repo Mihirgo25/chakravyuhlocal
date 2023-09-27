@@ -28,6 +28,8 @@ def list_air_freight_rates(revenue_desk_data_required=None,filters = {}, page_li
     query = get_filters(direct_filters, query, AirFreightRate)
     query = apply_indirect_filters(query, indirect_filters)
   if return_count:
+    query = query.where(AirFreightRate.source!='predicted')
+    print(query)
     return {'total_count':query.count()}
   
   if return_query:
