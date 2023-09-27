@@ -149,3 +149,6 @@ class FclDefault(Bramhastra):
 
 class Paginate(Bramhastra):
     global_limit = 1000
+    
+class SelectTypes(Bramhastra):
+    SO1 = "SO1"

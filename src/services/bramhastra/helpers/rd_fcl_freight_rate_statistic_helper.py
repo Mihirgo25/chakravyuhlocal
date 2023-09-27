@@ -9,6 +9,7 @@ from services.bramhastra.models.fcl_freight_action import FclFreightAction
 from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )
+from services.bramhastra.enums import SelectTypes
 
 RATE_KEYS = {
     FclFreightRateStatistic.rate_id.name,
@@ -158,7 +159,7 @@ class RevenueDesk:
         original_action = (
             FclFreightAction.select()
             .where(
-                FclFreightAction.shipment_fcl_freight_service_id
+                FclFreightAction.shipment_service_id
                 == request.shipment_fcl_freight_service_id
             )
             .first()
@@ -196,6 +197,7 @@ class RevenueDesk:
         self.update_foreign_reference(
             original_statistic, None, self.selected_rate_numerics
         )
+        self.selected_rate_numerics["select_type"] = SelectTypes.SO1.value
         self.update_foreign_reference(
             original_action,
             {FclFreightAction.so1_select.name},
