@@ -405,7 +405,7 @@ def get_fcl_freight_local_data(
     rate_type: str = 'market_place',
     shipping_line_id: str = None,
     service_provider_id: str = None,
-    is_parsed: bool = False,
+    get_parsed_values: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -421,7 +421,7 @@ def get_fcl_freight_local_data(
         'rate_type': rate_type,
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id,
-        'is_parsed': is_parsed
+        'get_parsed_values': get_parsed_values
     }
 
     try:
