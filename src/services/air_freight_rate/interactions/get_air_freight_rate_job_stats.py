@@ -162,7 +162,7 @@ def build_daily_details(query, statistics):
 def build_weekly_details(query, statistics):
     query = query.where(
         AirFreightRateJob.created_at.cast("date")
-        >= datetime.now().date() - timedelta(days=7)
+        >= datetime.now().date() - timedelta(days=6)
     )
     weekly_stats_query = query.select(
         AirFreightRateJob.status,

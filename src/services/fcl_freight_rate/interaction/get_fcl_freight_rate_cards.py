@@ -14,6 +14,7 @@ from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
 import traceback
+from libs.get_conditional_line_items import get_filtered_line_items
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
 from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_predicted_fcl_freight_rate_delay
 
@@ -143,7 +144,8 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         FclFreightRateLocal.shipping_line_id << shipping_line_ids,
         FclFreightRateLocal.service_provider_id << list(service_provider_ids.keys()),
         (FclFreightRateLocal.rate_not_available_entry.is_null(True) | (~FclFreightRateLocal.rate_not_available_entry)),
-        (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present))
+        (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present)),
+        ((FclFreightRateLocal.terminal_id == requirements['terminal_id']) | (FclFreightRateLocal.terminal_id == None))
     )
 
     if len(main_port_ids) == 2:
@@ -178,6 +180,11 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
 
     for local_rate in local_rates:
         is_local_cogo_assured = local_rate.get('rate_type') == 'cogo_assured'
+        if local_rate.get('data').get('line_items') and not is_local_cogo_assured:
+            old_line_items = local_rate.get('data').get('line_items')
+            new_line_items = get_filtered_line_items(rate,old_line_items)
+            local_rate['data']['line_items'] = new_line_items
+            local_rate['line_items'] = new_line_items
         if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and (is_rate_cogo_assured == is_local_cogo_assured):
             if shipping_line_id == local_rate['shipping_line_id']:
                 matching_locals[local_rate["service_provider_id"]] = local_rate
@@ -355,10 +362,6 @@ def build_local_line_item_object(line_item, request):
 
     code_config = fcl_freight_local_charges[line_item['code']]
 
-    is_additional_service = True if 'additional_service' in code_config.get('tags') else None
-    if is_additional_service and line_item['code'] not in request['additional_services']:
-        return None
-
     is_dpd = True if 'dpd' in code_config.get('tags') else False
     if is_dpd and ('import' in code_config.get('trade_types')) and (not request['include_destination_dpd']):
         return None
@@ -509,7 +512,8 @@ def build_freight_line_item_object(line_item, request):
         "unit": line_item["unit"],
         "price": line_item["price"],
         "currency": line_item["currency"],
-        "remarks": line_item["remarks"] if 'remarks' in line_item else []
+        "remarks": line_item.get("remarks") or [],
+        "slabs": line_item.get("slabs") or []
     }
 
     fcl_freight_charges = FCL_FREIGHT_CHARGES
@@ -538,7 +542,7 @@ def build_freight_line_item_object(line_item, request):
     line_item['total_price'] = line_item['quantity'] * line_item['price']
     line_item['name'] = code_config.get('name')
     line_item['source'] = 'system'
-
+    del line_item["slabs"]
     return line_item
 
 def build_freight_object(freight_validity, additional_weight_rate, additional_weight_rate_currency, request):

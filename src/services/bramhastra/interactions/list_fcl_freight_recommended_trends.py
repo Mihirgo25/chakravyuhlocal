@@ -58,6 +58,7 @@ def add_service_objects(trends):
                 "port_code": True,
                 "type": True,
                 "flag_icon_url": True,
+                "flag_image_url": True,
             },
             "page_limit": Paginate.global_limit.value,
         }
@@ -77,7 +78,7 @@ def add_service_objects(trends):
 
 
 def get_trends(where: str, filters: dict, limit: int) -> list:
-    select = ",".join([k for k in DIRECT_FILTERS] + LOCATION_KEYS)
+    select = ",".join(LOCATION_KEYS)
 
     aggregate_select = ",".join(
         [

@@ -45,6 +45,8 @@ DEFAULT_REQUIRED_FIELDS = [
     "serial_id",
     "container_type",
     "sources",
+    "origin_main_port_id",
+    "destination_main_port_id"
 ]
 
 
