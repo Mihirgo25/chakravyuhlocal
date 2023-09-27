@@ -3,7 +3,7 @@ from micro_services.client import *
 from database.rails_db import get_operators
 
 def process_conditions(condition_value, condition_key):
-    if condition_key in ["origin_country_id", "destination_country_id", "origin_port_id", "terminal_id"]:
+    if condition_key in ["origin_country_id", "destination_country_id", "origin_port_id", "destination_port_id", "terminal_id"]:
         locations_data = maps.list_locations({"filters": {"id": condition_value}})["list"]
         locations_data = [location["name"] for location in locations_data]
         return locations_data
