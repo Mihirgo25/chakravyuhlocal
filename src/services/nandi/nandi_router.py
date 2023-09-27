@@ -106,7 +106,7 @@ def list_draft_fcl_freight_rate_locals_data(
     page: int = 1,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
-    is_stats_required: bool = True,
+    is_stats_required: bool = False,
     resp: dict = Depends(authorize_token)
     ):
     if resp["status_code"] != 200:
