@@ -64,32 +64,40 @@ class LifeCycleConfig:
                                                             "child": {},
                                                         },
                                                     ],
+                                                    "bottom": [
+                                                        {
+                                                            "name": "revenue_desk",
+                                                            "rates_count": self.input.get(
+                                                                "revenue_desk_count"
+                                                            ),
+                                                            "drop": self.input.get(
+                                                                "revenue_desk_dropoff"
+                                                            ),
+                                                            "child": {
+                                                                "bottom": [
+                                                                    {
+                                                                        "name": "so1",
+                                                                        "rates_count": self.input.get(
+                                                                            "so1_count"
+                                                                        ),
+                                                                        "drop": self.input.get(
+                                                                            "so1_dropoff"
+                                                                        ),
+                                                                        "child": {},
+                                                                    },
+                                                                ],
+                                                            },
+                                                        },
+                                                    ],
                                                 },
                                             },
                                         ],
                                         "bottom": [
                                             {
-                                                "name": "revenue_desk",
-                                                "rates_count": self.input.get(
-                                                    "revenue_desk_count"
-                                                ),
-                                                "drop": self.input.get(
-                                                    "revenue_desk_dropoff"
-                                                ),
-                                                "child": {
-                                                    "bottom": [
-                                                        {
-                                                            "name": "so1",
-                                                            "rates_count": self.input.get(
-                                                                "so1_count"
-                                                            ),
-                                                            "drop": self.input.get(
-                                                                "so1_dropoff"
-                                                            ),
-                                                            "child": {},
-                                                        },
-                                                    ],
-                                                },
+                                                "name": "shipment_received",
+                                                "rates_count": -1,
+                                                "drop": -1,
+                                                "child": {},
                                             },
                                         ],
                                     },
@@ -120,13 +128,9 @@ class LifeCycleConfig:
                                     "child": {
                                         "right": [
                                             {
-                                                "name": "feedback_received",
-                                                "rates_count": self.input.get(
-                                                    "feedback_received_count"
-                                                ),
-                                                "drop": self.input.get(
-                                                    "feedback_received_dropoff"
-                                                ),
+                                                "name": "feedback_closed",
+                                                "rates_count": -1,
+                                                "drop": -1,
                                                 "child": {
                                                     "right": [
                                                         {
@@ -140,7 +144,7 @@ class LifeCycleConfig:
                                                             "child": {
                                                                 "right": [
                                                                     {
-                                                                        "name": "feedback_rates_added",
+                                                                        "name": "rates_added_count",
                                                                         "rates_count": self.input.get(
                                                                             "feedback_rates_added_count"
                                                                         ),
