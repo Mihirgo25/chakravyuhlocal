@@ -16,24 +16,26 @@ def create_draft_fcl_freight_rate_local(request):
         "data" : request.get("data"),
         "source" : request.get("source"),
         "status" : request.get("status"),
-        "invoice_url" : request.get("invoice_url"),
-        "invoice_date" : request.get("invoice_date"),
+        "invoice_url" : [request.get("invoice_url")],
+        "invoice_date" : [request.get("invoice_date")],
         "main_port_id" : request.get("main_port_id"),
         "port" : request.get("port"),
         "port_id" : request.get("port_id"),
         "shipping_line" : request.get("shipping_line"),
         "shipping_line_id" : request.get("shipping_line_id"),
         "trade_type" : request.get("trade_type"),
-        "shipment_serial_id" : request.get("shipment_serial_id")
+        "shipment_serial_id" : request.get("shipment_serial_id"),
+        "performed_by_id": request.get('performed_by_id')
     }
 
     draft_freight_local = DraftFclFreightRateLocal(**row)
     draft_freight_local.set_main_port()
+    draft_freight_local.set_performed_by()
 
     try:
-       draft_freight_local.save()
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="draft fcl local did not save")
+        draft_freight_local.save()
+    except Exception:
+        raise HTTPException(status_code=500, detail="Draft FCL Local did not save")
 
     create_audit(request, draft_freight_local.id)
     return {'id': draft_freight_local.id}

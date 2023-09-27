@@ -2,6 +2,7 @@ from services.nandi.models.draft_fcl_freight_rate_local import DraftFclFreightRa
 from services.nandi.models.draft_fcl_freight_rate_local_audit import DraftFclFreightRateLocalAudit
 from database.db_session import db
 from fastapi import HTTPException
+from database.rails_db import get_user
 
 def update_draft_fcl_freight_rate_local_data(request):
     with db.atomic():
@@ -11,17 +12,20 @@ def execute_transaction_code(request):
     draft_freight_local = DraftFclFreightRateLocal.select().where(DraftFclFreightRateLocal.id == request["id"]).first()
 
     if not draft_freight_local:
-        raise HTTPException(status_code=400, detail="rate does not exist")
+        raise HTTPException(status_code=404, detail="rate does not exist")
 
-    required_fields = ['data', 'source', 'status']
+    required_fields = ['data', 'source', 'status', 'performed_by_id']
 
     for key in required_fields:
       if request.get(key):
           setattr(draft_freight_local, key, request[key])
 
+    if draft_freight_local.performed_by_id:
+        draft_freight_local.performed_by = get_user(str(draft_freight_local.performed_by_id))
+
     try:
        draft_freight_local.save()
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="rate did not update")
 
     create_audit(request, draft_freight_local.id)

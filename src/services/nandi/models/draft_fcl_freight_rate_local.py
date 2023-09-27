@@ -3,6 +3,7 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
 from micro_services.client import *
+from database.rails_db import get_user
 
 class BaseModel(Model):
     class Meta:
@@ -60,3 +61,8 @@ class DraftFclFreightRateLocal(BaseModel):
           "country_code": location["country_code"]
         }
         return loc_data
+
+    def set_performed_by(self):
+      performed_by_data = get_user(str(self.performed_by_id or ''))
+      if performed_by_data:
+          self.performed_by = performed_by_data[0]
