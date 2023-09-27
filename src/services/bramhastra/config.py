@@ -18,7 +18,7 @@ class LifeCycleConfig:
                         "child": {
                             "right": [
                                 {
-                                    "name": "shipment",
+                                    "name": "shipment_received",
                                     "rates_count": self.input.get("shipment_count"),
                                     "drop": self.input.get("shipment_dropoff"),
                                     "child": {
@@ -92,14 +92,6 @@ class LifeCycleConfig:
                                                 },
                                             },
                                         ],
-                                        "bottom": [
-                                            {
-                                                "name": "shipment_received",
-                                                "rates_count": -1,
-                                                "drop": -1,
-                                                "child": {},
-                                            },
-                                        ],
                                     },
                                 },
                             ],
@@ -134,7 +126,7 @@ class LifeCycleConfig:
                                                 "child": {
                                                     "right": [
                                                         {
-                                                            "name": "rate_reverted_feedbacks",
+                                                            "name": "feedbacks_reverted",
                                                             "rates_count": self.input.get(
                                                                 "rate_reverted_feedbacks_count"
                                                             ),
@@ -144,7 +136,7 @@ class LifeCycleConfig:
                                                             "child": {
                                                                 "right": [
                                                                     {
-                                                                        "name": "rates_added_count",
+                                                                        "name": "rates_reverted",
                                                                         "rates_count": self.input.get(
                                                                             "feedback_rates_added_count"
                                                                         ),

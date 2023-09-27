@@ -86,7 +86,7 @@ CREATE TABLE brahmastra.fcl_freight_actions
     selected_validity_id UUID,
     selected_type String,
     revenue_desk_visit UInt8,
-    revenue_desk_select UInt8,
+    so1_visit UInt8,
     given_priority UInt8,
     rate_created_at DateTime,
     rate_updated_at DateTime,

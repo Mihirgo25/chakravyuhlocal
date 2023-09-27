@@ -84,7 +84,7 @@ class FclFreightRateStatistic(BaseModel):
     parent_rate_id = UUIDField(null=True, index=True)
     parent_validity_id = UUIDField(null=True, index=True)
     revenue_desk_visit_count = IntegerField(default = 0)
-    revenue_desk_select_count = IntegerField(default = 0)
+    so1_visit_count = IntegerField(default = 0)
     so1_select_count = IntegerField(default=0)
     parent_mode = CharField(null=True, index=True)
     source = CharField(null=True)

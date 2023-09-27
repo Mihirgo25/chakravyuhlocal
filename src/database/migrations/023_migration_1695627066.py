@@ -93,7 +93,6 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_vessel_arrived_count CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_is_active_count CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_booking_rate_is_too_low_count CASCADE;')
-    migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN so1_visit_count CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN rate_deviation_from_booking_rate CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN rate_deviation_from_cluster_base_rate CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN rate_deviation_from_booking_on_cluster_base_rate CASCADE;')
