@@ -6,6 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_eligible_orgs
 import sentry_sdk, traceback
 from services.fcl_customs_rate.interaction.get_zone_average_customs_rate import get_zone_average_customs_rate
+from services.fcl_customs_rate.fcl_customs_celery_worker import create_jobs_for_predicted_fcl_customs_rate_delay
 
 def get_fcl_customs_rate_cards(request):
     try:
@@ -16,7 +17,8 @@ def get_fcl_customs_rate_cards(request):
             customs_rates = get_zone_average_customs_rate(request)
 
         customs_rates = discard_noneligible_lsps(customs_rates)
-        rate_cards = build_response_list(request, customs_rates)
+        rate_cards, is_predicted = build_response_list(request, customs_rates)
+        create_jobs_for_predicted_fcl_customs_rate_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': request}, queue='critical')
 
         return {'list':rate_cards}
        
@@ -75,16 +77,18 @@ def build_response_list(request, customs_rates):
       else:
         result = rates[0]
 
-      response_object = build_response_object(result, request)
+      response_object, is_predicted = build_response_object(result, request)
       if response_object:
         list.append(response_object) 
-    return list
+    return list, is_predicted
 
     
 def build_response_object(result, request):
+    is_predicted = False
     source = 'spot_rates'
     if result.get('mode') == 'predicted':
         source = 'predicted'
+        is_predicted = True
     elif result.get('rate_type') != 'market_place':
         source = result.get('rate_type')
 
@@ -102,7 +106,7 @@ def build_response_object(result, request):
 
     if not add_customs_clearance(result, response_object, request):
         return  
-    return response_object
+    return response_object, is_predicted
 
 def add_customs_clearance(result, response_object, request):
     if not result.get('customs_line_items'):

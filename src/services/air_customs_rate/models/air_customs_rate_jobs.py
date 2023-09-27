@@ -14,11 +14,10 @@ class BaseModel(Model):
 class AirCustomsRateJob(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     airport_id = UUIDField(index=True, null= True)
+    airport = BinaryJSONField(null=True)
     country_id = UUIDField(index=True, null= True)
     service_provider = BinaryJSONField(null=True)
     service_provider_id = UUIDField(null=True, index=True)
-    airline = BinaryJSONField(null=True)
-    airline_id = UUIDField(null=True, index=True)
     commodity = CharField(null=True, index=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
@@ -36,10 +35,9 @@ class AirCustomsRateJob(BaseModel):
     commodity_type = CharField(null=True)
     commodity_sub_type = CharField(null=True)
     operation_type = CharField(null=True)
-    stacking_type = CharField(null=True)
     price_type = CharField(null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_customs_rate_jobs_serial_id_seq')")],)
-    source = CharField(default = 'manual', null = True, index=True)
+    mode = CharField(default = 'manual', index = True, null = True)
 
     class Meta:
         table_name = 'air_customs_rate_jobs'

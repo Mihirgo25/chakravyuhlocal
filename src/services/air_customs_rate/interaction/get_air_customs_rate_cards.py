@@ -5,6 +5,7 @@ from database.rails_db import  get_eligible_orgs
 from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
 from configs.definitions import AIR_CUSTOMS_CHARGES
 from micro_services.client import common
+from services.air_customs_rate.air_customs_celery_worker import create_jobs_for_predicted_air_customs_rate_delay
 
 def get_air_customs_rate_cards(request):
     try:
@@ -14,8 +15,9 @@ def get_air_customs_rate_cards(request):
         if len(air_customs_rates) > 0:
             customs_rates = discard_noneligible_lsps(air_customs_rates)
             customs_rates = set_shipper_specific_rates(air_customs_rates)
-            rate_cards = build_response_list(customs_rates,request)
+            rate_cards, is_predicted = build_response_list(customs_rates,request)
 
+            create_jobs_for_predicted_air_customs_rate_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': request}, queue='critical')
             return {'list':rate_cards}
         return {'list':[]} 
 
@@ -58,15 +60,17 @@ def build_response_list(query_results,request):
             result = result[0]
         else:
             result = rates[0]
-        response_object = build_response_object(result, request)
+        response_object, is_predicted = build_response_object(result, request)
         if response_object:
             response_list.append(response_object)
-    return response_list
+    return response_list, is_predicted
 
 def build_response_object(result,request):
+    is_predicted = False
     source = 'spot_rates'
     if result.get('mode') == 'predicted':
         source = 'predicted'
+        is_predicted = True
     elif result.get('rate_type') != 'market_place':
         source = result.get('rate_type')
 
@@ -81,7 +85,7 @@ def build_response_object(result,request):
     if not add_customs_clearance(result, response_object,request):
         return None
 
-    return response_object
+    return response_object, is_predicted
 
 def add_customs_clearance(result,response_object,request):
     if not result.get('line_items'):
