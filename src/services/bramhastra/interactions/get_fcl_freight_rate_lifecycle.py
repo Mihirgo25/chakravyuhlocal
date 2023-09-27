@@ -29,9 +29,12 @@ POSSIBLE_DIRECT_FILTERS = {
     "shipping_line_id",
     "importer_exporter_id",
     "container_size",
+    "container_type",
     "commodity",
     "origin_main_port_id",
     "destination_main_port_id",
+    "parent_mode",
+    "rate_type"
 }
 
 POSSIBLE_INDIRECT_FILTERS = {}
@@ -56,6 +59,8 @@ def get_direct_indirect_filters(filters, where):
                 where.append(f"{key} IN %({key})s")
         if key in POSSIBLE_INDIRECT_FILTERS and value:
             eval(f"get_{key}_filter(where)")
+
+    breakpoint()
 
     if where:
         return " AND ".join(where)
@@ -124,9 +129,9 @@ async def get_lifecycle_statistics(filters, where):
     disliked = [count_boolean_query("disliked")]
     liked = [count_boolean_query("liked")]
 
-    feedback_received = [
+    feedback_closed = [
         f"""
-        SELECT COUNT(*) AS feedback_received FROM brahmastra.{FclFreightAction._meta.table_name} WHERE mode = 'disliked_rate'
+        SELECT COUNT() AS feedback_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE mode = 'disliked_rate'
         """
     ]
 
@@ -171,7 +176,7 @@ async def get_lifecycle_statistics(filters, where):
         revenue_desk,
         so1,
         disliked,
-        feedback_received,
+        feedback_closed,
         rate_reverted_feedbacks,
         feedback_rates_added,
         liked,
@@ -256,13 +261,13 @@ async def get_lifecycle_statistics(filters, where):
         "disliked_dropoff": calculate_dropoff(
             result["disliked_count"], result["feedbacks_created"]
         ),
-        "feedback_received_count": result["feedback_received"],
-        "feedback_received_dropoff": calculate_dropoff(
-            result["feedback_received"], result["disliked_count"]
+        "feedback_closed_count": result["feedback_closed"],
+        "feedback_closed_dropoff": calculate_dropoff(
+            result["feedback_closed"], result["disliked_count"]
         ),
         "rate_reverted_feedbacks_count": result["rate_reverted_feedbacks"],
         "rate_reverted_feedbacks_dropoff": calculate_dropoff(
-            result["rate_reverted_feedbacks"], result["feedback_received"]
+            result["rate_reverted_feedbacks"], result["feedback_closed"]
         ),
         "feedback_rates_added_count": result["feedback_rates_added"],
         "feedback_rates_added_dropoff": calculate_dropoff(
