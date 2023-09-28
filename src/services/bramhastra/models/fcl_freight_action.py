@@ -15,10 +15,8 @@ from playhouse.postgres_ext import (
     ArrayField,
 )
 from datetime import datetime
-from services.bramhastra.enums import ImportTypes
-from services.bramhastra.constants import DEFAULT_UUID, DEFAULT_ENUM
-from services.bramhastra.constants import GLOBAL_MIN
-from services.bramhastra.enums import FclModes
+from services.bramhastra.constants import DEFAULT_UUID, DEFAULT_ENUM, GLOBAL_MIN
+from services.bramhastra.enums import FclModes, ImportTypes
 
 
 class BaseModel(Model):
@@ -56,6 +54,7 @@ class FclFreightAction(BaseModel):
     bas_currency = CharField(max_length=3, null=True)
     mode = CharField(index=True)
     parent_mode = CharField(index=True)
+    parent_rate_mode = CharField(index=True, null=True)
     source = CharField(index=True, default=FclModes.manual.value, null=True)
     source_id = UUIDField(index=True, default=DEFAULT_UUID, null=True)
     sourced_by_id = UUIDField(index=True, default=DEFAULT_UUID, null=True)
@@ -81,7 +80,7 @@ class FclFreightAction(BaseModel):
     cargo_weight_per_container = FloatField(null=True, default=0)
     shipment_state = CharField(null=True, default=DEFAULT_ENUM)
     shipment_service_id = UUIDField(null=True, default=DEFAULT_UUID)
-    shipment_cancellation_reason = TextField(null = True, index = True)
+    shipment_cancellation_reason = TextField(null=True, index=True)
     shipment_source_id = UUIDField(null=True, default=DEFAULT_UUID)
     shipment_created_at = DateTimeTZField(null=True)
     shipment_updated_at = DateTimeTZField(null=True)
@@ -101,7 +100,7 @@ class FclFreightAction(BaseModel):
     selected_fcl_freight_rate_statistic_id = BigIntegerField(default=0)
     selected_rate_id = UUIDField(index=True, null=True, default=DEFAULT_UUID)
     selected_validity_id = UUIDField(index=True, null=True, default=DEFAULT_UUID)
-    selected_type = CharField(index = True, null = True)
+    selected_type = CharField(index=True, null=True)
     revenue_desk_state = CharField(null=True, default=DEFAULT_ENUM)
     given_priority = IntegerField(default=0, null=True)
     rate_created_at = DateTimeTZField(index=True, null=True)

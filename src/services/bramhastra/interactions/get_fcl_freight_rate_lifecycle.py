@@ -63,7 +63,6 @@ def get_direct_indirect_filters(filters, where):
         if key in POSSIBLE_INDIRECT_FILTERS and value:
             eval(f"get_{key}_filter(where)")
 
-    breakpoint()
 
     if where:
         return " AND ".join(where)
@@ -284,13 +283,13 @@ def generate_sum_query(column):
 
 def count_boolean_query(column):
     return f"""
-    SELECT SUM({column}) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_type = {column}
+    SELECT SUM({column}) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_type = '{column}'
     """
 
 
 def avg_group_by_query(column):
     return f"""
-    SELECT COUNT(DISTINCT shipment_id) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state = {column}
+    SELECT COUNT(DISTINCT shipment_id) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state = '{column}'
     """
 
 
@@ -300,11 +299,11 @@ def calculate_dropoff(numerator, denominator):
     return (1 - (numerator / denominator)) * 100
 
 def rate_request_query(column):
-    f"""
-    SELECT COUNT(DISTINCT rate_request_id) AS {column}_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state = {column}
+    return f"""
+    SELECT COUNT(DISTINCT rate_request_id) AS {column}_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state = '{column}'
     """
 
 def feedback_query(column):
-    f"""
-    SELECT COUNT(DISTINCT rate_id) AS feedbacks_{column} FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_state = {column}
+    return f"""
+    SELECT COUNT(DISTINCT rate_id) AS feedbacks_{column} FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_state = '{column}'
     """
