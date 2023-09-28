@@ -8,6 +8,7 @@ from configs.fcl_customs_rate_constants import CONTAINER_TYPE_COMMODITY_MAPPINGS
 from database.rails_db import *
 from fastapi import HTTPException
 from configs.definitions import FCL_CUSTOMS_CHARGES
+from database.rails_db import get_eligible_orgs
 import uuid
 
 class BaseModel(Model):
@@ -144,11 +145,8 @@ class FclCustomsRate(BaseModel):
       raise HTTPException(status_code=400, detail="Invalid commodity")
     
     def validate_service_provider_id(self):
-        if not self.service_provider_id:
-            return
-
-        service_provider_data = get_organization(id=self.service_provider_id)
-        if len(service_provider_data) == 0:
+        service_provider_data = get_eligible_orgs(service='fcl_customs')
+        if str(self.service_provider_id) not in service_provider_data:
             raise HTTPException(status_code=400, detail="Invalid service provider ID")
         
     def validate_location_ids(self):
@@ -452,3 +450,4 @@ class FclCustomsRate(BaseModel):
         self.validate_container_size()
         self.validate_container_type()
         self.validate_commodity()
+        self.validate_service_provider_id()
