@@ -4,6 +4,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_properties import FclFrei
 from configs.global_constants import SEARCH_START_DATE_OFFSET
 from datetime import datetime, timedelta
 from libs.get_filters import get_filters
+from libs.apply_eligible_lsp_filters import apply_eligible_lsp_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
 import math
@@ -32,6 +33,9 @@ def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = No
     query = get_filters(direct_filters, query, FclFreightRate)
     query = apply_indirect_filters(query, indirect_filters)
     
+  if not filters or not 'service_provider_id' in filters:
+    query = apply_eligible_lsp_filters(query, FclFreightRate, 'fcl_freight')
+  
   if return_count:
     return {'total_count': query.count()}
   
