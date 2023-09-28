@@ -119,7 +119,7 @@ JSONExtractString(data, 'before', 'validity_id') AS validity_id,
 JSONExtractFloat(data, 'before', 'bas_price') AS bas_price,
 JSONExtractFloat(data, 'before', 'bas_standard_price') AS bas_standard_price,
 JSONExtractFloat(data, 'before', 'standard_price') AS standard_price,
-JSONExtractFloat(data, 'before', 'price Float64') AS price,  -- Note: There seems to be a space in the column name, which should be removed.
+JSONExtractFloat(data, 'before', 'price') AS price,  -- Note: There seems to be a space in the column name, which should be removed.
 JSONExtractString(data, 'before', 'currency') AS currency,
 JSONExtractFloat(data, 'before', 'market_price') AS market_price,
 JSONExtractString(data, 'before', 'bas_currency') AS bas_currency,
@@ -302,7 +302,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_actions TO brahmastra.fcl_
     JSONExtractFloat(data, 'after', 'bas_price') AS bas_price,
     JSONExtractFloat(data, 'after', 'bas_standard_price') AS bas_standard_price,
     JSONExtractFloat(data, 'after', 'standard_price') AS standard_price,
-    JSONExtractFloat(data, 'after', 'price Float64') AS price,  -- Note: There seems to be a space in the column name, which should be removed.
+    JSONExtractFloat(data, 'after', 'price') AS price,  -- Note: There seems to be a space in the column name, which should be removed.
     JSONExtractString(data, 'after', 'currency') AS currency,
     JSONExtractFloat(data, 'after', 'market_price') AS market_price,
     JSONExtractString(data, 'after', 'bas_currency') AS bas_currency,
