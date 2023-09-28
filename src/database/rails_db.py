@@ -2,6 +2,7 @@ import psycopg2
 from configs.env import *
 import sentry_sdk
 from database.db_session import rd
+from libs.get_eligible_organizations import get_eligible_organizations
 import json
 
 def get_connection():
@@ -126,6 +127,9 @@ def get_user(id):
 
 def get_eligible_orgs(service):
     all_result = []
+    all_result = get_eligible_organizations(service, [])
+    if all_result:
+        return all_result
     try:
         conn = get_connection()
         with conn:
@@ -138,6 +142,7 @@ def get_eligible_orgs(service):
                     all_result.append(str(res[0]))
                 cur.close()
         conn.close()
+        get_eligible_organizations(service, all_result)
         return all_result
     except Exception as e:
         sentry_sdk.capture_exception(e)
