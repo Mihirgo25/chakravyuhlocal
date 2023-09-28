@@ -127,9 +127,9 @@ def get_user(id):
 
 def get_eligible_orgs(service):
     all_result = []
-    all_result = get_eligible_organizations(service, [])
-    if all_result:
-        return all_result
+    rd_response = get_eligible_organizations(service, [])
+    if rd_response:
+        return rd_response
     try:
         conn = get_connection()
         with conn:
