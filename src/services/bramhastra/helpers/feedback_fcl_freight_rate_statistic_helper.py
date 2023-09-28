@@ -14,8 +14,9 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
-
+from services.bramhastra.enums import FeedbackState, FeedbackType
 import uuid
+
 
 class Feedback:
     def __init__(self, action, params) -> None:
@@ -107,7 +108,11 @@ class Feedback:
         if fcl_freight_action is None:
             return
         if self.action == FeedbackAction.create.value:
-            setattr(fcl_freight_action, FclFreightAction.feedback_created.name, True)
+            setattr(
+                fcl_freight_action,
+                FclFreightAction.feedback_state.name,
+                FeedbackState.created.name,
+            )
             feedback_ids = getattr(
                 fcl_freight_action, FclFreightAction.feedback_ids.name
             )
@@ -119,7 +124,10 @@ class Feedback:
                 feedback_ids.append(
                     self.params.get(FeedbackFclFreightRateStatistic.feedback_id.name)
                 )
-            feedback_ids = [uuid.UUID(uuid_str) if isinstance(uuid_str, str) else uuid_str for uuid_str in feedback_ids]
+            feedback_ids = [
+                uuid.UUID(uuid_str) if isinstance(uuid_str, str) else uuid_str
+                for uuid_str in feedback_ids
+            ]
             setattr(
                 fcl_freight_action,
                 FclFreightAction.feedback_ids.name,
@@ -130,25 +138,31 @@ class Feedback:
                 self.params.get(FeedbackFclFreightRateStatistic.status.name)
                 == FclFeedbackStatus.inactive.name
             ):
-                setattr(fcl_freight_action, FclFreightAction.feedback_closed.name, True)
+                setattr(
+                    fcl_freight_action,
+                    FclFreightAction.feedback_state.name,
+                    FeedbackState.closed.name,
+                )
             if (
                 self.params.get(FeedbackFclFreightRateStatistic.is_rate_reverted.name)
                 is True
             ):
                 setattr(
-                    fcl_freight_action, FclFreightAction.feedback_rate_added.name, True
+                    fcl_freight_action,
+                    FclFreightAction.feedback_state.name,
+                    FeedbackState.rate_added.name,
                 )
 
         setattr(
             fcl_freight_action,
-            FclFreightAction.liked.name,
-            getattr(fcl_freight_action, FclFreightAction.liked.name) + (1 if 'likes_count' in self.increment_keys else 0),
+            FclFreightAction.feedback_type.name,
+            (
+                FeedbackType.liked.name
+                if "likes_count" in self.increment_keys
+                else FeedbackType.disliked.name
+            ),
         )
-        setattr(
-            fcl_freight_action,
-            FclFreightAction.disliked.name,
-            getattr(fcl_freight_action, FclFreightAction.disliked.name) + (1 if 'dislikes_count' in self.increment_keys else 0),
-        )
+
         setattr(
             fcl_freight_action,
             FclFreightAction.updated_at.name,
@@ -160,8 +174,7 @@ class Feedback:
         return (
             FclFreightAction.select()
             .where(
-                FclFreightAction.spot_search_id
-                == self.params.get("source_id"),
+                FclFreightAction.spot_search_id == self.params.get("source_id"),
                 FclFreightAction.rate_id == self.params.get("rate_id"),
             )
             .first()

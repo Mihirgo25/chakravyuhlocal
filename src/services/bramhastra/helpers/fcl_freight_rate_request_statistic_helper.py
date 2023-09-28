@@ -9,6 +9,7 @@ from services.bramhastra.models.fcl_freight_rate_request_statistics import (
 )
 from services.bramhastra.enums import RequestAction, Status
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.bramhastra.enums import RateRequestState
 
 import uuid
 
@@ -122,7 +123,9 @@ class Request:
             return
         if action == RequestAction.create.name:
             setattr(
-                fcl_freight_action, FclFreightAction.rate_request_created.name, True
+                fcl_freight_action,
+                FclFreightAction.rate_request_state.name,
+                RateRequestState.created.name,
             )
             rate_requested_ids = getattr(
                 fcl_freight_action, FclFreightAction.rate_requested_ids.name
@@ -135,20 +138,27 @@ class Request:
                 rate_requested_ids.append(
                     self.params.get(FclFreightRateRequestStatistic.rate_request_id.name)
                 )
-            rate_requested_ids = [uuid.UUID(uuid_str) if isinstance(uuid_str, str) else uuid_str for uuid_str in rate_requested_ids]
+            rate_requested_ids = [
+                uuid.UUID(uuid_str) if isinstance(uuid_str, str) else uuid_str
+                for uuid_str in rate_requested_ids
+            ]
             setattr(
                 fcl_freight_action,
                 FclFreightAction.rate_requested_ids.name,
                 rate_requested_ids,
             )
         else:
-            if self.params.get('status') == Status.inactive.value:
-                setattr(fcl_freight_action, FclFreightAction.rate_requested_closed.name, True)
+            if self.params.get("status") == Status.inactive.value:
+                setattr(
+                    fcl_freight_action,
+                    FclFreightAction.rate_request_state.name,
+                    RateRequestState.rate_added.name,
+                )
             if self.params.get(FclFreightRateRequestStatistic.is_rate_reverted.name):
                 setattr(
                     fcl_freight_action,
-                    FclFreightAction.rate_request_rate_added.name,
-                    True,
+                    FclFreightAction.rate_request_state.name,
+                    RateRequestState.rate_added.name,
                 )
         setattr(
             fcl_freight_action,
