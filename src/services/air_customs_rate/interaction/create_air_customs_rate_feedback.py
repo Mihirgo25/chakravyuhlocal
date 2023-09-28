@@ -7,6 +7,7 @@ from database.db_migration import db
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import maps
 from celery_worker import create_communication_background
+from services.air_customs_rate.air_customs_celery_worker import create_jobs_for_feedback_air_customs_rate_delay
 
 def create_air_customs_rate_feedback(request):
     with db.atomic():
@@ -53,6 +54,7 @@ def execute_transaction_code(request):
     create_audit(request, air_customs_feedback.id)
     get_multiple_service_objects(air_customs_feedback)
     send_notifications_to_supply_agents(request)
+    create_jobs_for_feedback_air_customs_rate_delay.apply_async(kwargs = {'requirements': request}, queue='critical')
 
     return {
       'id': request.get('rate_id')

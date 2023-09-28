@@ -3,6 +3,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRa
 from database.db_session import db
 from fastapi import HTTPException
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from services.fcl_customs_rate.fcl_customs_celery_worker import delete_jobs_for_feedback_fcl_customs_rate_delay
 
 def delete_fcl_customs_rate_feedback(request):
   with db.atomic():
@@ -27,7 +28,7 @@ def execute_transaction_code(request):
     
     create_audit_for_customs_feedback(request, object, data)
     get_multiple_service_objects(object)
-
+    delete_jobs_for_feedback_fcl_customs_rate_delay.apply_async(kwargs = {'requirements': request}, queue='critical')
   return {'fcl_customs_rate_feedback_ids' : request.get('fcl_customs_rate_feedback_ids')}
 
 
