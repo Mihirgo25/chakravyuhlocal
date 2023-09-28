@@ -16,7 +16,7 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from configs.env import DEFAULT_USER_ID
 
 
-def create_fcl_freight_rate_job(request, source):
+def create_fcl_freight_rate_local_job(request, source):
     object_type = "Fcl_Freight_Rate_Local_Job"
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(
         object_type.lower(), object_type.replace("_", "")
