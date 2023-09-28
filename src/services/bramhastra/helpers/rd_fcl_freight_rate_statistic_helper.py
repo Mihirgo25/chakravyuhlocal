@@ -10,6 +10,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )
 from services.bramhastra.enums import SelectTypes
+from services.bramhastra.enums import RevenueDeskState
 
 RATE_KEYS = {
     FclFreightRateStatistic.rate_id.name,
@@ -63,11 +64,9 @@ class RevenueDesk:
                 .first()
             )
             if fcl_freight_action:
-                action_increment_keys = {
-                    FclFreightAction.revenue_desk_visit.name
-                }
+                self.set_revenue_desk_visit_state(fcl_freight_action, "visited")
                 self.update_foreign_reference(
-                    fcl_freight_action, action_increment_keys, common_update_params
+                    fcl_freight_action, None, common_update_params
                 )
 
     def update_foreign_reference(
@@ -81,6 +80,13 @@ class RevenueDesk:
                 if v is not None:
                     setattr(model, k, v)
         model.save()
+
+    def set_revenue_desk_visit_state(self, model: Model, state: str = "empty") -> None:
+        setattr(
+            model,
+            FclFreightAction.revenue_desk_state.name,
+            getattr(RevenueDeskState, state).name,
+        )
 
     def update_selected_for_preference_count(self, request) -> None:
         common_update_params = {
@@ -98,11 +104,11 @@ class RevenueDesk:
             .first()
         )
         if fcl_freight_rate_statistic is not None:
-            statistic_increment_keys = {
-                FclFreightRateStatistic.so1_visit_count.name
-            }
+            statistic_increment_keys = {FclFreightRateStatistic.so1_visit_count.name}
             self.update_foreign_reference(
-                fcl_freight_rate_statistic, statistic_increment_keys, common_update_params
+                fcl_freight_rate_statistic,
+                statistic_increment_keys,
+                common_update_params,
             )
         fcl_freight_action = (
             FclFreightAction.select()
@@ -113,9 +119,11 @@ class RevenueDesk:
             .first()
         )
         if fcl_freight_action is not None:
-            action_increment_keys = {FclFreightAction.so1_visit.name}
+            self.set_revenue_desk_visit_state(
+                fcl_freight_action, "selected_for_preference"
+            )
             self.update_foreign_reference(
-                fcl_freight_action, action_increment_keys, common_update_params
+                fcl_freight_action, None, common_update_params
             )
 
     def set_statistics(self) -> None:
@@ -193,9 +201,10 @@ class RevenueDesk:
             original_statistic, None, self.selected_rate_numerics
         )
         self.selected_rate_numerics["select_type"] = SelectTypes.SO1.value
+        self.set_revenue_desk_visit_state(original_action, "selected_for_booking")
         self.update_foreign_reference(
             original_action,
-            {FclFreightAction.so1_select.name},
+            None,
             self.original_rate_numerics,
         )
 
