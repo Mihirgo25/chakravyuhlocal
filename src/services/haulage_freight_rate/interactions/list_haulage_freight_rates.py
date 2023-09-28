@@ -208,8 +208,8 @@ def list_haulage_freight_rates(
         )
         query = apply_direct_filters(query, direct_filters)
         query = apply_indirect_filters(query, indirect_filters)
-
-        query = apply_eligible_lsp_filters(query, HaulageFreightRate, 'haulage_freight_rate')
+    
+    query = apply_eligible_lsp_filters(query, HaulageFreightRate, 'haulage_freight')
 
     # pagination
     total_count = query.count() if pagination_data_required else None
