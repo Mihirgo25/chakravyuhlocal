@@ -187,11 +187,15 @@ class HaulageFreightRate(BaseModel):
         if self.transit_time is not None:
             if self.transport_modes[0] == 'trailer' and self.transit_time < 0:
                 raise HTTPException(status_code=400, detail="transit time is invalid")
+        else:
+            raise HTTPException(status_code=400, detail="transit time is required")
     
     def validate_detention_free_time(self):
         if self.detention_free_time is not None:
             if self.transport_modes[0] == 'trailer' and self.detention_free_time < 0:
                 raise HTTPException(status_code=400, detail="detention free time is invalid")
+        else:
+            raise HTTPException(status_code=400, detail="detention free time is required")
 
     def validate_shipping_line_id(self):
         if not self.shipping_line_id and self.haulage_type == 'carrier':
