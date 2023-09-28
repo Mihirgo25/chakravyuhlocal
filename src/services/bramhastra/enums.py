@@ -157,9 +157,10 @@ class ShipmentState(Bramhastra):
     empty = 0
     received = 1
     confirmed_by_importer_exporter = 2
-    cancelled = 3
-    aborted = 4
-    completed = 5
+    in_progress = 3
+    cancelled = 4
+    aborted = 5
+    completed = 6
 
 class FeedbackType(Bramhastra):
     empty = 0
