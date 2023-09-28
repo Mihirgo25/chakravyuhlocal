@@ -4,7 +4,7 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 )
 import math
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
-
+from services.bramhastra.enums import ShipmentState
 
 async def get_fcl_freight_rate_distribution(filters):
     clickhouse = ClickHouse()
@@ -12,12 +12,12 @@ async def get_fcl_freight_rate_distribution(filters):
     queries = [
         f"""WITH rate_distribution as 
                (SELECT parent_mode as mode,
-               SUM(shipment_cancelled) AS shipment_cancelled_count,
-               SUM(shipment_completed) as shipment_completed_count,
-               SUM(shipment_confirmed_by_importer_exporter) AS shipment_confirmed_by_importer_exporter_count,
-               SUM(shipment_aborted) AS shipment_aborted_count, 
-               SUM(shipment_received) AS bookings_created,
-               SUM(shipment_in_progress) AS shipment_in_progress_count
+               COUNT(CASE WHEN {FclFreightAction.shipment_state.name} = '{ShipmentState.cancelled.name}' THEN 1 END) AS shipment_cancelled_count,
+               COUNT(CASE WHEN {FclFreightAction.shipment_state.name} = '{ShipmentState.completed.name}' THEN 1 END) AS shipment_completed_count,
+               COUNT(CASE WHEN {FclFreightAction.shipment_state.name} = '{ShipmentState.confirmed_by_importer_exporter.name}' THEN 1 END) AS shipment_confirmed_by_importer_exporter_count,
+               COUNT(CASE WHEN {FclFreightAction.shipment_state.name} = '{ShipmentState.aborted.name}' THEN 1 END) AS shipment_aborted_count,
+               COUNT(CASE WHEN {FclFreightAction.shipment_state.name} = '{ShipmentState.received.name}' THEN 1 END) AS bookings_created,
+               COUNT(CASE WHEN {FclFreightAction.shipment_state.name} = '{ShipmentState.in_progress.name}' THEN 1 END) AS shipment_in_progress_count
                from brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
