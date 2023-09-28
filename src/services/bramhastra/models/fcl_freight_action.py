@@ -5,7 +5,6 @@ from peewee import (
     IntegerField,
     FloatField,
     DateField,
-    BooleanField,
 )
 from database.db_session import db
 from playhouse.postgres_ext import (
