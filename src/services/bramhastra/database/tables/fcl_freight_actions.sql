@@ -29,6 +29,7 @@ CREATE TABLE brahmastra.fcl_freight_actions
     bas_currency FixedString(3),
     mode FixedString(256),
     parent_mode FixedString(256),
+    parent_rate_mode FixedString(256),
     source FixedString(256),
     source_id UUID,
     sourced_by_id UUID,
