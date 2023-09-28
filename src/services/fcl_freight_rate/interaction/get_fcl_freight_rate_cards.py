@@ -362,10 +362,6 @@ def build_local_line_item_object(line_item, request):
 
     code_config = fcl_freight_local_charges[line_item['code']]
 
-    is_additional_service = True if 'additional_service' in code_config.get('tags') else None
-    if is_additional_service and line_item['code'] not in request['additional_services']:
-        return None
-
     is_dpd = True if 'dpd' in code_config.get('tags') else False
     if is_dpd and ('import' in code_config.get('trade_types')) and (not request['include_destination_dpd']):
         return None
@@ -412,7 +408,7 @@ def build_local_line_item_object(line_item, request):
 def add_local_objects(freight_query_result, response_object, request):
     response_object['origin_local'] = {
         'id': freight_query_result['origin_local'].get('id'),
-        'service_provider_id': freight_query_result['origin_local']['service_provider_id'] if freight_query_result['origin_local'].get('service_provider_id') else response_object['service_provider_id'],
+        'service_provider_id': response_object['service_provider_id'],
         'source': freight_query_result['origin_local']['source'] if freight_query_result['origin_local'].get('source') else response_object['source'],
         'line_items': []
     } if 'origin_local' in freight_query_result and freight_query_result['origin_local'] else { 'line_items': [], 'service_provider_id': response_object['service_provider_id'], 'source':  response_object['source'] }
@@ -420,11 +416,7 @@ def add_local_objects(freight_query_result, response_object, request):
     response_object['destination_local'] = {}
     if freight_query_result.get('destination_local'):
         response_object['destination_local']['id'] =  freight_query_result['destination_local'].get('id')
-        if freight_query_result['destination_local'].get('service_provider_id'):
-            response_object['destination_local']['service_provider_id'] = freight_query_result['destination_local']['service_provider_id']
-        else:
-            response_object['destination_local']['service_provider_id'] = response_object['service_provider_id']
-
+        response_object['destination_local']['service_provider_id'] = response_object['service_provider_id']
         if freight_query_result['destination_local'].get('source'):
             response_object['destination_local']['source'] = freight_query_result['destination_local']['source']
         else:
