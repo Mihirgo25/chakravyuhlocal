@@ -18,7 +18,7 @@ def list_draft_fcl_freight_rate_locals(filters = {}, page_limit = 10, page = 1, 
             direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
             query = get_filters(direct_filters, query, DraftFclFreightRateLocal)
 
-    stats = get_stats(filters, is_stats_required) or {}
+    stats = get_stats(filters, is_stats_required)
     query = query.paginate(page, page_limit)
     data = get_data(query)
     return { 'list': json_encoder(data) } | (stats)

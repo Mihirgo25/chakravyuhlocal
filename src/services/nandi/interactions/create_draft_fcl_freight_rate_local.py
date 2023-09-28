@@ -41,7 +41,6 @@ def create_draft_fcl_freight_rate_local(request):
     return {'id': draft_freight_local.id}
 
 def create_audit(request, draft_fcl_local_id):
-
     try:
         DraftFclFreightRateLocalAudit.create(
         action_name = 'create',
@@ -51,6 +50,5 @@ def create_audit(request, draft_fcl_local_id):
         object_id = draft_fcl_local_id,
         object_type = 'DraftFclFreightRateLocal'
       )
-    except Exception as e:
-      print('errr audit errr', e)
-      raise
+    except Exception:
+      raise HTTPException(status_code = 500, content = 'Unable To Create Audit')
