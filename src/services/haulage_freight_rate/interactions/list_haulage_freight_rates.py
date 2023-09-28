@@ -4,6 +4,7 @@ from libs.get_filters import get_filters
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 import services.haulage_freight_rate.interactions.list_haulage_freight_rates as list_haulage_freight_rate
 from libs.get_applicable_filters import get_applicable_filters
+from libs.apply_eligible_lsp_filters import apply_eligible_lsp_filters
 from libs.json_encoder import json_encoder
 from micro_services.client import common
 from configs.global_constants import SEARCH_START_DATE_OFFSET
@@ -207,6 +208,8 @@ def list_haulage_freight_rates(
         )
         query = apply_direct_filters(query, direct_filters)
         query = apply_indirect_filters(query, indirect_filters)
+
+        query = apply_eligible_lsp_filters(query, HaulageFreightRate, 'haulage_freight_rate')
 
     # pagination
     total_count = query.count() if pagination_data_required else None
