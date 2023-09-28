@@ -8,7 +8,6 @@ from configs.fcl_customs_rate_constants import CONTAINER_TYPE_COMMODITY_MAPPINGS
 from database.rails_db import *
 from fastapi import HTTPException
 from configs.definitions import FCL_CUSTOMS_CHARGES
-from database.rails_db import get_eligible_orgs
 import uuid
 
 class BaseModel(Model):
@@ -147,7 +146,7 @@ class FclCustomsRate(BaseModel):
     def validate_service_provider_id(self):
         service_provider_data = get_eligible_orgs(service='fcl_customs')
         if str(self.service_provider_id) not in service_provider_data:
-            raise HTTPException(status_code=400, detail="Invalid service provider ID")
+            raise HTTPException(status_code=400, detail="Service provider is not Valid for this service")
         
     def validate_location_ids(self):
         location_data = maps.list_locations({'filters':{'id': str(self.location_id)}})['list']

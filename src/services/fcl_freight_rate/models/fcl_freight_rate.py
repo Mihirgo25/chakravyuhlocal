@@ -652,7 +652,7 @@ class FclFreightRate(BaseModel):
       if not self.validate_commodity():
         raise HTTPException(status_code=400, detail="incorrect commodity")
       if not self.validate_service_provider_id():
-        raise HTTPException(status_code = 400, detail = 'Service Provider Id is not Valid for Fcl Freight service') 
+        raise HTTPException(status_code = 400, detail = 'Service provider is not Valid for this service') 
         
 
       self.set_omp_dmp_sl_sp()
