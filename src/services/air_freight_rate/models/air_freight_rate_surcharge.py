@@ -200,7 +200,7 @@ class AirFreightRateSurcharge(BaseModel):
         service_provider_data = get_eligible_orgs(service='air_freight')
         if str(self.service_provider_id) in service_provider_data:
             return True
-        raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
+        raise HTTPException(status_code = 400, detail = 'Service Provider Is Not Valid for this service') 
 
     def validate_airline_id(self):
         airline_data = get_operators(id=self.airline_id,operator_type='airline')
