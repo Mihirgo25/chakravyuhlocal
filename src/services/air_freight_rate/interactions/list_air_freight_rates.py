@@ -28,7 +28,8 @@ def list_air_freight_rates(revenue_desk_data_required=None,filters = {}, page_li
   
     query = get_filters(direct_filters, query, AirFreightRate)
     query = apply_indirect_filters(query, indirect_filters)
-  query = apply_eligible_lsp_filters(query,AirFreightRate,'air_freight')
+  if not filters or not 'service_provider_id' in filters:
+    query = apply_eligible_lsp_filters(query,AirFreightRate,'air_freight')
 
   pagination_data = get_pagination_data(query,page,page_limit,pagination_data_required)
 
