@@ -1,5 +1,5 @@
 from services.air_customs_rate.air_customs_params import *
-from params import CreateRateSheet, UpdateRateSheet
+from params import *
 from rms_utils.auth import authorize_token
 from fastapi import APIRouter, Depends
 from libs.json_encoder import json_encoder
@@ -33,6 +33,7 @@ from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_she
 from services.air_customs_rate.interaction.get_air_customs_rate_job_stats import get_air_customs_rate_job_stats
 from services.air_customs_rate.interaction.delete_air_customs_rate_job import delete_air_customs_rate_job
 from services.air_customs_rate.interaction.list_air_customs_rate_jobs import list_air_customs_rate_jobs
+from services.air_customs_rate.interaction.create_air_customs_rate_job import create_air_customs_rate_job
 
 air_customs_router = APIRouter()
 
@@ -533,3 +534,21 @@ def get_air_customs_rate_job_csv_url_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@air_customs_router.post("/create_air_customs_rate_job")
+def create_fcl_freight_rate_job_api(
+    request: CreateAirCustomsRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    source = request.get('source')
+    try:
+        rate = create_air_customs_rate_job(request.dict(exclude_none=True), source)
+        return JSONResponse(status_code=200, content=json_encoder(rate))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )

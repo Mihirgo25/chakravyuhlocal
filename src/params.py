@@ -1022,3 +1022,35 @@ class CreateFclFreightRateJob(BaseModel):
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+
+class CreateHaulageFreightRateJob(BaseModel):
+    origin_location_id: str = None
+    origin_location: dict = {}
+    destination_location_id: str = None
+    destination_location: dict = {}
+    shipping_line_id: str = None
+    service_provider_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    rate_type: str = None
+
+class CreateFclCustomsRateJob(BaseModel):
+    port_id: str = None
+    service_provider_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    rate_type: str = None
+
+class CreateAirCustomsRateJob(BaseModel):
+    airport_id: str = None
+    service_provider_id: str = None
+    commodity: str = None
+    rate_type: str = None
+    commodity_type: str = None
+    commodity_sub_type: str = None
+    operation_type: str = None
+    shipment_type: str = None
+    stacking_type: str = None
+    price_type: str = None

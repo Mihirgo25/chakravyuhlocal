@@ -73,6 +73,7 @@ from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_she
 from services.haulage_freight_rate.interactions.get_haulage_freight_rate_job_stats import get_haulage_freight_rate_job_stats
 from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_job import delete_haulage_freight_rate_job
 from services.haulage_freight_rate.interactions.list_haulage_freight_rate_jobs import list_haulage_freight_rate_jobs
+from services.haulage_freight_rate.interactions.create_haulage_freight_rate_job import create_haulage_freight_rate_job
 
 haulage_freight_router = APIRouter()
 
@@ -980,3 +981,21 @@ def get_fcl_freight_rate_job_csv_url_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@haulage_freight_router.post("/create_haulage_freight_rate_job")
+def create_haualge_freight_rate_job_api(
+    request: CreateHaulageFreightRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    source = request.get('source')
+    try:
+        rate = create_haulage_freight_rate_job(request.dict(exclude_none=True), source)
+        return JSONResponse(status_code=200, content=json_encoder(rate))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
