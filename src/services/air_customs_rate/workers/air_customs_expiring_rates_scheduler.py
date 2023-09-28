@@ -26,6 +26,7 @@ def air_customs_expiring_rates_scheduler():
         "shipment_type",
         "stacking_type",
         "price_type",
+        "last_rate_available_date"
     ]
 
     air_query = AirCustomsRate.select(

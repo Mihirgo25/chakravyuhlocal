@@ -10,6 +10,12 @@ from services.air_customs_rate.workers.update_air_customs_rate_jobs_to_backlog i
 from services.air_customs_rate.workers.update_air_customs_rate_job_on_rate_addition import (
     update_air_customs_rate_job_on_rate_addition,
 )
+from services.air_customs_rate.interaction.create_air_customs_rate_job import (
+    create_air_customs_rate_job
+)
+from services.air_customs_rate.interaction.delete_air_customs_rate_job import (
+    delete_air_customs_rate_job
+)
 from celery.schedules import crontab
 
 tasks = {
@@ -97,3 +103,43 @@ def update_air_customs_rate_jobs_to_backlog_delay(self):
             pass
         else:
             raise self.retry(exc=exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def create_jobs_for_feedback_air_customs_rate_delay(self, requirements):
+    try:
+        return create_air_customs_rate_job(requirements, "rate_feedback")
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def delete_jobs_for_feedback_air_customs_rate_delay(self, requirements):
+    try:
+        return delete_air_customs_rate_job(requirements)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def create_jobs_for_request_air_customs_rate_delay(self, requirements):
+    try:
+        return create_air_customs_rate_job(requirements, "rate_request")
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def delete_jobs_for_request_air_customs_rate_delay(self, requirements):
+    try:
+        return delete_air_customs_rate_job(requirements)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)

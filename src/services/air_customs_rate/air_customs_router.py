@@ -516,3 +516,20 @@ def delete_air_customs_rate_job_api(
         sentry_sdk.capture_exception(e)
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)})
+    
+@air_customs_router.get("/get_air_customs_rate_job_csv_url")
+def get_air_customs_rate_job_csv_url_api(
+    filters: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_air_customs_rate_jobs(filters, generate_csv_url=True)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
