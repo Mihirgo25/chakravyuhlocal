@@ -22,7 +22,8 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
         
         query = get_filters(direct_filters, query, AirFreightRateSurcharge)
         query = apply_indirect_filters(query, indirect_filters)
-    query = apply_eligible_lsp_filters(query,AirFreightRateSurcharge,'air_freight')
+    if not filters or not 'service_provider_id' in filters:
+        query = apply_eligible_lsp_filters(query,AirFreightRateSurcharge,'air_freight')
 
     if return_query: 
         return { 'list': query }

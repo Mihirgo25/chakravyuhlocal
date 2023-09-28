@@ -25,8 +25,8 @@ sort_by='updated_at',pagination_data_required=True,sort_type='desc',return_query
         query = get_filters(direct_filters, query, AirFreightRateLocal)
         
         query = apply_indirect_filters(query, indirect_filters)
-    
-    query = apply_eligible_lsp_filters(query,AirFreightRateLocal,'air_freight_local')
+    if not filters or not 'service_provider_id' in filters:
+        query = apply_eligible_lsp_filters(query,AirFreightRateLocal,'air_freight_local')
 
     if return_query: 
         return { 'list': json_encoder(list(query.dicts())) }

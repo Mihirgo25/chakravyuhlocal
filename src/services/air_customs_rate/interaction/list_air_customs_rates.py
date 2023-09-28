@@ -19,7 +19,8 @@ def list_air_customs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
 
         query = get_filters(direct_filters, query, AirCustomsRate)
         query = apply_indirect_filters(query, indirect_filters)
-    query = apply_eligible_lsp_filters(query, AirCustomsRate, 'air_customs')
+    if not filters or not 'service_provider_id' in filters:
+        query = apply_eligible_lsp_filters(query, AirCustomsRate, 'air_customs')
 
     if return_query:
         return {'list': query}
