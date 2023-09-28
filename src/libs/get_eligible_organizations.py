@@ -6,7 +6,7 @@ def get_key(service):
 def get_eligible_organizations(service, relevant_ids):
     if relevant_ids:
         rd.set(get_key(service), relevant_ids)
-        rd.expire(get_key(service), 3600)
+        rd.expire(get_key(service), 300)
     else:
         cached_response = rd.get(get_key(service))
     return cached_response
