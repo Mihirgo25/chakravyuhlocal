@@ -154,34 +154,45 @@ class SelectTypes(Bramhastra):
     SO1 = "SO1"
 
 class ShipmentState(Bramhastra):
-    received = 0
-    confirmed_by_importer_exporter = 1
-    cancelled = 2
-    aborted = 3
-    completed = 4
+    empty = 0
+    received = 1
+    confirmed_by_importer_exporter = 2
+    cancelled = 3
+    aborted = 4
+    completed = 5
 
 class FeedbackType(Bramhastra):
-    disliked = 0
-    liked = 1
+    empty = 0
+    disliked = 1
+    liked = 2
 
 class FeedbackState(Bramhastra):
+    empty = 0
     created = 1
-    closed = 0
-    rate_added = 2
+    closed = 2
+    rate_added = 3
+
+class RevenueDeskState(Bramhastra):
+    empty = 0
+    visited = 1
+    selected_for_preference = 2
+    selected_for_booking = 3
 
 class ShipmentServiceState(Bramhastra):
-    containers_gated_out = 0
-    containers_gated_in = 1
-    cancelled = 2
-    awaiting_service_provider_confirmation = 3
-    confirmed_by_service_provider = 4
-    vessel_arrived= 5
-    vessel_departed= 6
-    completed= 7
-    aborted= 8
-    init= 9
+    empty = 0
+    containers_gated_out = 1
+    containers_gated_in = 2
+    cancelled = 3
+    awaiting_service_provider_confirmation = 4
+    confirmed_by_service_provider = 5
+    vessel_arrived= 6
+    vessel_departed= 7
+    completed= 8
+    aborted= 9
+    init= 10
 
-class RateRequestEnum(Bramhastra):
+class RateRequestState(Bramhastra):
+    empty = 0
     created = 1
-    closed = 0
-    rate_added = 2        
+    closed = 2
+    rate_added = 3
