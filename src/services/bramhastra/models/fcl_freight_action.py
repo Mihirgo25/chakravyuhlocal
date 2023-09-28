@@ -112,6 +112,8 @@ class FclFreightAction(BaseModel):
     updated_at = DateTimeTZField(index=True, default=datetime.utcnow())
     operation_created_at = DateTimeTZField(default=datetime.utcnow())
     operation_updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
+    sign = IntegerField(default=1)
+    version = IntegerField(default=1)
 
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()
