@@ -133,6 +133,15 @@ class Feedback:
                 FclFreightAction.feedback_ids.name,
                 feedback_ids,
             )
+            setattr(
+                fcl_freight_action,
+                FclFreightAction.feedback_type.name,
+                (
+                    FeedbackType.liked.name
+                    if "likes_count" in self.increment_keys
+                    else FeedbackType.disliked.name
+                ),
+            )
         else:
             if (
                 self.params.get(FeedbackFclFreightRateStatistic.status.name)
@@ -152,16 +161,6 @@ class Feedback:
                     FclFreightAction.feedback_state.name,
                     FeedbackState.rate_added.name,
                 )
-
-        setattr(
-            fcl_freight_action,
-            FclFreightAction.feedback_type.name,
-            (
-                FeedbackType.liked.name
-                if "likes_count" in self.increment_keys
-                else FeedbackType.disliked.name
-            ),
-        )
 
         setattr(
             fcl_freight_action,

@@ -152,7 +152,7 @@ class Request:
                 setattr(
                     fcl_freight_action,
                     FclFreightAction.rate_request_state.name,
-                    RateRequestState.rate_added.name,
+                    RateRequestState.closed.name,
                 )
             if self.params.get(FclFreightRateRequestStatistic.is_rate_reverted.name):
                 setattr(
