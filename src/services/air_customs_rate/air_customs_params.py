@@ -123,7 +123,7 @@ class UpdateAirCustomsRate(BaseModel):
 
 class DeleteAirCustomsRate(BaseModel):
   id: str
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_type: str = None
   bulk_operation_id: str = None
   
