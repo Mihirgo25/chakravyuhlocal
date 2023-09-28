@@ -34,13 +34,13 @@ def get_draft_rate_with_shipment_id(request):
     invoice_date.append(request['invoice_date'])
     invoice_url.append(request['invoice_url'])
 
-    rate.invoice_date = list(set(invoice_date))
-    rate.invoice_url = list(set(invoice_url))
+    rate.invoice_date = invoice_date
+    rate.invoice_url = invoice_url
 
     line_items = (rate.data or {}).get('line_items')
     if line_items and (request.get('data') or {}).get('line_items'):
         line_items.extend(request['data']['line_items'])
-    rate.data['line_items'] = line_items
+    rate.data = rate.data | ({'line_items' : remove_duplicate_line_items(line_items)})
     rate.save()
 
     return {'id':rate.id}
@@ -57,10 +57,16 @@ def matching_local_charges(fcl_freight_local, invoice_line_items = []):
 
     if len(local_charges_dict.keys()) == len(invoice_charges_dict.keys()):
         for charge_code, price in invoice_charges_dict.items():
-            if charge_code in local_charges_dict and price == local_charges_dict.get(charge_code):
-                continue
-            else:
+            if charge_code not in local_charges_dict and price != local_charges_dict.get(charge_code):
                 return False
     else:
         return False
     return True
+
+def remove_duplicate_line_items(data):
+    unique_items = {}
+    for item in data:
+        unique_items[item["code"]] = item
+
+    unique_data = list(unique_items.values())
+    return unique_data

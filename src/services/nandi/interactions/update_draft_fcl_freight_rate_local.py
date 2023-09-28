@@ -20,8 +20,7 @@ def execute_transaction_code(request):
       if request.get(key):
           setattr(draft_freight_local, key, request[key])
 
-    if draft_freight_local.performed_by_id:
-        draft_freight_local.performed_by = get_user(str(draft_freight_local.performed_by_id))
+    draft_freight_local.set_performed_by()
 
     try:
        draft_freight_local.save()
@@ -42,5 +41,5 @@ def create_audit(request, draft_fcl_local_id):
         object_id = draft_fcl_local_id,
         object_type = 'DraftFclFreightRateLocal'
       )
-    except:
-      raise
+    except Exception:
+      raise HTTPException(status_code = 500, content = 'Unable To Create Audit')

@@ -46,6 +46,6 @@ def find_object(request):
   return object
 
 def all_fields_present(object_params):
-    if  (object_params.get('rate_type') == 'cogo_assured' and object_params.get('port_id') is not None and object_params.get('trade_type') is not None) or ((object_params['port_id'] is not None) and (object_params['trade_type'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None) and (object_params.get('rate_type') is not None)) or (object_params['id'] is not None):
+    if (object_params.get('rate_type') == 'cogo_assured' and object_params.get('port_id') is not None and object_params.get('trade_type') is not None) or ((object_params['port_id'] is not None) and (object_params['trade_type'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None) and (object_params.get('rate_type') is not None)) or (object_params.get('id') is not None):
         return True
     return False
