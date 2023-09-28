@@ -171,11 +171,6 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     },
-    'brahmastra':{
-        'task': 'services.bramhastra.celery.brahmastra_in_delay',
-        'schedule': crontab(minute=0, hour='*/1'),
-        'options': {'queue': 'statistics'}
-    },
     'cluster_extension_by_latest_trends_worker':{
         'task': 'celery_worker.cluster_extension_by_latest_trends_worker',
         'schedule': crontab(minute=0, hour='*/6'),
