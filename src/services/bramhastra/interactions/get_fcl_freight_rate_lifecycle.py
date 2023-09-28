@@ -15,7 +15,7 @@ from services.bramhastra.interactions.list_fcl_freight_rate_request_statistics i
 from services.bramhastra.config import LifeCycleConfig
 import concurrent.futures
 from services.bramhastra.enums import (
-    ShipmentState, FeedbackType, FeedbackState, ShipmentServiceState, RateRequestEnum
+    ShipmentState, FeedbackType, FeedbackState, ShipmentServiceState, RateRequestState
 )
 
 POSSIBLE_DIRECT_FILTERS = {
@@ -123,49 +123,22 @@ async def get_lifecycle_statistics(filters, where):
     so1 = [generate_sum_query("so1_select")]
 
     # Feedback
+    feedbacks_created = [feedback_query(FeedbackState.created.name)]
+    feedback_closed= [feedback_query(FeedbackState.closed.name)]
+    feedback_rates_added = [feedback_query(FeedbackState.rate_added.name)]
 
-    feedbacks_created = [
-        f"""
-        SELECT COUNT(DISTINCT rate_id) AS feedbacks_created FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_state = {FeedbackState.created.name}
-        """
-    ]
     disliked = [count_boolean_query({FeedbackType.disliked.name})]
     liked = [count_boolean_query({FeedbackType.liked.name})]
-
-    feedback_closed = [
-        f"""
-        SELECT COUNT(DISTINCT rate_id) AS feedback_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_state = {FeedbackState.closed.name}
-        """
-    ]
 
     rate_reverted_feedbacks = [
         f"""
         SELECT SUM(is_rate_reverted) AS rate_reverted_feedbacks FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_rate_reverted = True
         """
     ]
+    rates_requested = [rate_request_query(RateRequestState.created.name)]
+    rates_reverted = [rate_request_query(RateRequestState.rate_added.name)]
+    rates_closed = [rate_request_query(RateRequestState.closed.name)]
 
-    feedback_rates_added = [
-        f"""
-        SELECT COUNT(DISTINCT rate_id) AS feedback_rates_added FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE feedback_state = {FeedbackState.rate_added.name}
-        """
-    ]
-
-    # Rate Request
-    rates_requested = [
-        f"""
-        SELECT COUNT(DISTINCT rate_request_id) AS rates_requested FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state ={RateRequestEnum.created.name}
-        """
-    ]
-    rates_reverted = [
-        f"""
-        SELECT COUNT(DISTINCT rate_request_id) AS rates_reverted FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state = {RateRequestEnum.rate_added.name}
-        """
-    ]
-    rates_closed = [
-        f"""
-        SELECT COUNT(DISTINCT rate_request_id) AS rates_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state = {RateRequestEnum.closed.name}
-        """
-    ]
 
     variables = [
         spot_search,
@@ -325,3 +298,13 @@ def calculate_dropoff(numerator, denominator):
     if denominator == 0:
         denominator = 1
     return (1 - (numerator / denominator)) * 100
+
+def rate_request_query(column):
+    f"""
+    SELECT COUNT(DISTINCT rate_request_id) AS {column}_closed FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state = {column}
+    """
+
+def feedback_query(column):
+    f"""
+    SELECT COUNT(DISTINCT rate_id) AS feedbacks_{column} FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_state = {column}
+    """
