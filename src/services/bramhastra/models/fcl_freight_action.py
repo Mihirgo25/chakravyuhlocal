@@ -16,7 +16,7 @@ from playhouse.postgres_ext import (
 )
 from datetime import datetime
 from services.bramhastra.enums import ImportTypes
-from services.bramhastra.constants import DEFAULT_UUID
+from services.bramhastra.constants import DEFAULT_UUID, DEFAULT_ENUM
 from services.bramhastra.constants import GLOBAL_MIN
 from services.bramhastra.enums import FclModes
 
@@ -79,23 +79,22 @@ class FclFreightAction(BaseModel):
     shipment_source = CharField(null=True)
     containers_count = IntegerField(null=True, default=0)
     cargo_weight_per_container = FloatField(null=True, default=0)
-    shipment_state = TextField(null=True)
+    shipment_state = CharField(null=True, default=DEFAULT_ENUM)
     shipment_service_id = UUIDField(null=True, default=DEFAULT_UUID)
     shipment_cancellation_reason = TextField(null = True, index = True)
     shipment_source_id = UUIDField(null=True, default=DEFAULT_UUID)
     shipment_created_at = DateTimeTZField(null=True)
     shipment_updated_at = DateTimeTZField(null=True)
-    shipment_service_state = CharField(null=True)
+    shipment_service_state = CharField(null=True, default=DEFAULT_ENUM)
     shipment_service_is_active = CharField(null=True)
     shipment_service_created_at = DateTimeTZField(null=True)
     shipment_service_updated_at = DateTimeTZField(null=True)
     shipment_service_cancellation_reason = TextField(null=True)
-    feedback_type = CharField(null = True)
-    feedback = CharField(null = True)
+    feedback_type = CharField(null=True, default=DEFAULT_ENUM)
+    feedback_state = CharField(null=True, default=DEFAULT_ENUM)
     feedback_ids = ArrayField(UUIDField, null=True)
-    rate_request = CharField()
+    rate_request_state = CharField(null=True, default=DEFAULT_ENUM)
     rate_requested_ids = ArrayField(UUIDField, null=True)
-    so1_select = IntegerField(default=0, null=True)
     selected_bas_standard_price = FloatField(default=0, null=True)
     bas_standard_price_accuracy = FloatField(default=GLOBAL_MIN)
     bas_standard_price_diff_from_selected_rate = FloatField(default=0)
@@ -103,8 +102,7 @@ class FclFreightAction(BaseModel):
     selected_rate_id = UUIDField(index=True, null=True, default=DEFAULT_UUID)
     selected_validity_id = UUIDField(index=True, null=True, default=DEFAULT_UUID)
     selected_type = CharField(index = True, null = True)
-    revenue_desk_visit = IntegerField(default=0, null=True)
-    revenue_desk_select = IntegerField(default=0, null=True)
+    revenue_desk_state = CharField(null=True, default=DEFAULT_ENUM)
     given_priority = IntegerField(default=0, null=True)
     rate_created_at = DateTimeTZField(index=True, null=True)
     rate_updated_at = DateTimeTZField(index=True, null=True)
