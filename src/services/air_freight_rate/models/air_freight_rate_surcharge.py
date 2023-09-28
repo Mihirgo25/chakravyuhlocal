@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from configs.definitions import AIR_FREIGHT_SURCHARGES
 from micro_services.client import maps
 from services.air_freight_rate.constants.air_freight_rate_constants import *
-from database.rails_db import get_organization,get_operators
+from database.rails_db import get_operators,get_eligible_orgs
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -197,9 +197,8 @@ class AirFreightRateSurcharge(BaseModel):
         return charge_codes
 
     def validate_service_provider_id(self):
-        service_provider_data = get_organization(id=str(self.service_provider_id))
-        if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
-            self.service_provider = service_provider_data[0]
+        service_provider_data = get_eligible_orgs(service='air_freight')
+        if str(self.service_provider_id) in service_provider_data:
             return True
         raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
 

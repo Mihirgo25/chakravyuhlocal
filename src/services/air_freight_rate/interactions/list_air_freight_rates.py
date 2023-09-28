@@ -8,6 +8,7 @@ from configs.global_constants import SEARCH_START_DATE_OFFSET
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_density_wise_rate_card
 from peewee import fn, SQL
 from libs.json_encoder import json_encoder
+from libs.apply_eligible_lsps import apply_eligible_lsps
 
 DEFAULT_INCLUDES = ['id', 'origin_airport_id', 'destination_airport_id', 'airline_id', 'commodity', 'commodity_type', 'commodity_sub_type', 'operation_type', 'service_provider_id', 'length', 'breadth', 'height', 'updated_at', 'created_at', 'maximum_weight', 'shipment_type', 'stacking_type', 'price_type', 'cogo_entity_id', 'rate_type', 'source', 'origin_airport', 'destination_airport', 'service_provider', 'airline', 'procured_by','importer_exporter_id','importer_exporter']
 
@@ -27,6 +28,7 @@ def list_air_freight_rates(revenue_desk_data_required=None,filters = {}, page_li
   
     query = get_filters(direct_filters, query, AirFreightRate)
     query = apply_indirect_filters(query, indirect_filters)
+    query = apply_eligible_lsps(query,AirFreightRate,'air_freight')
 
   pagination_data = get_pagination_data(query,page,page_limit,pagination_data_required)
 

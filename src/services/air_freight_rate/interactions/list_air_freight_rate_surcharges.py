@@ -5,6 +5,7 @@ from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
 import json
 from services.air_freight_rate.constants.air_freight_rate_constants import SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS,DEFAULT_NOT_APPLICABLE_LINE_ITEMS
+from libs.apply_eligible_lsps import apply_eligible_lsps
 
 
 possible_direct_filters = ['id','origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'service_provider_id', 'airline_id', 'is_line_items_info_messages_present', 'commodity', 'is_line_items_error_messages_present', 'operation_type','procured_by_id', 'importer_exporter_id']
@@ -21,7 +22,8 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
         
         query = get_filters(direct_filters, query, AirFreightRateSurcharge)
         query = apply_indirect_filters(query, indirect_filters)
-   
+        query = apply_eligible_lsps(query,AirFreightRateSurcharge,'air_freight')
+
     if return_query: 
         return { 'list': query }
     

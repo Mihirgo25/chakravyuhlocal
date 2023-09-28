@@ -1,0 +1,9 @@
+from operator import attrgetter
+from playhouse.postgres_ext import ArrayField
+from database.rails_db import get_eligible_orgs
+
+def apply_eligible_lsps( query, model,service):
+    eligible_lsps = get_eligible_orgs(service)
+    key = 'service_provider_d'
+    query = query.where(attrgetter(key)(model) << eligible_lsps)
+    return query
