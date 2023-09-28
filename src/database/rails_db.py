@@ -2,7 +2,6 @@ import psycopg2
 from configs.env import *
 import sentry_sdk
 from database.db_session import rd
-from libs.get_eligible_organizations import get_eligible_organizations
 import json
 
 def get_connection():
@@ -126,10 +125,13 @@ def get_user(id):
         return all_result
 
 def get_eligible_orgs(service):
+    key = f"total_eligible_organizations_{service}"
     all_result = []
-    rd_response = get_eligible_organizations(service, [])
-    if rd_response:
-        return rd_response
+    
+    cached_response = rd.get(key)
+    if cached_response:
+        return json.loads(cached_response)
+    
     try:
         conn = get_connection()
         with conn:
@@ -142,7 +144,9 @@ def get_eligible_orgs(service):
                     all_result.append(str(res[0]))
                 cur.close()
         conn.close()
-        get_eligible_organizations(service, all_result)
+        rd.set(key, json.dumps(all_result))
+        rd.expire(key, 300)
+        
         return all_result
     except Exception as e:
         sentry_sdk.capture_exception(e)
@@ -326,6 +330,7 @@ def get_ff_mlo():
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return result
+    
 
 def get_past_air_invoices(origin_location_id,destination_location_id,location_type, interval, interval_type = 'months', offset=0, limit=50):
         all_results =[]
