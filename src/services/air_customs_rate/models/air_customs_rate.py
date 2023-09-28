@@ -199,7 +199,7 @@ class AirCustomsRate(BaseModel):
     def validate_service_provider_id(self):
         service_provider_ids = get_eligible_orgs('air_customs')
         if str(self.service_provider_id) not in service_provider_ids:
-            raise HTTPException(status_code = 400, detail = 'Service Provider not servicable for air customs')
+            raise HTTPException(status_code = 400, detail = 'Service Provider not serviceable for air customs')
 
     def validate_before_save(self):
         self.validate_duplicate_line_items()
