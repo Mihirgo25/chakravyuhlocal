@@ -305,7 +305,7 @@ def filter_out_of_range_value(val):
 
 def generate_sum_query(column):
     return f"""
-        SELECT COUNT(DISTINCT shipment_id) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} > 0
+        SELECT COUNT(DISTINCT {column}) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} > 0
         """
 
 
@@ -317,7 +317,7 @@ def count_boolean_query(column):
 
 def avg_group_by_query(column):
     return f"""
-    SELECT COUNT(DISTINCT shipment_id) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state >= {column}
+    SELECT COUNT(DISTINCT shipment_id) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state = {column}
     """
 
 
