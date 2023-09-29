@@ -1016,12 +1016,16 @@ class DeleteFclCustomsRateJob(BaseModel):
 
 
 class CreateFclFreightRateJob(BaseModel):
-    id: str = None
-    closing_remarks: str = None
-    data: dict = {}
-    rate_id: str = None
-    performed_by_id: str = None
-    performed_by_type: str = None
+    origin_port_id: str = None
+    origin_main_port_id: str = None
+    destination_port_id: str = None
+    destination_main_port_id: str = None
+    shipping_line_id: str = None
+    service_provider_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    rate_type: str = None
 
 class CreateHaulageFreightRateJob(BaseModel):
     origin_location_id: str = None

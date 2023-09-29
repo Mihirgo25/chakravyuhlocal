@@ -6,7 +6,7 @@ from micro_services.client import maps
 from celery_worker import create_communication_background
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
-from services.fcl_customs_rate.fcl_customs_celery_worker import create_jobs_for_request_fcl_customs_rate_delay
+from services.fcl_customs_rate.fcl_customs_celery_worker import create_jobs_for_fcl_customs_rate_request_delay
 
 def create_fcl_customs_rate_request(request):
     with db.atomic():
@@ -46,7 +46,7 @@ def execute_transaction_code(request):
     create_audit(request, customs_request.id)
     get_multiple_service_objects(customs_request)
     send_notifications_to_supply_agents(request)
-    create_jobs_for_request_fcl_customs_rate_delay.apply_async(kwargs = {'requirements': request}, queue='critical')
+    create_jobs_for_fcl_customs_rate_request_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
     
     return {
       'id': customs_request.id

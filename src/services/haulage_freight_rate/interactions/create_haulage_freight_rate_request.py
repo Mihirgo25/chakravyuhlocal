@@ -6,7 +6,7 @@ from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import maps
 from database.db_session import db
 import uuid
-from services.haulage_freight_rate.haulage_celery_worker import create_jobs_for_request_haulage_freight_rate_delay
+from services.haulage_freight_rate.haulage_celery_worker import create_jobs_for_haulage_freight_rate_request_delay
 
 def create_haulage_freight_rate_request(request):
     with db.atomic():
@@ -56,7 +56,7 @@ def execute_transaction_code(request):
 
     send_notifications_to_supply_agents(request)
     
-    create_jobs_for_request_haulage_freight_rate_delay.apply_async(kwargs = {'requirements': request}, queue='critical')
+    create_jobs_for_haulage_freight_rate_request_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
 
     return {
         'id': request_object.id

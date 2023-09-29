@@ -105,7 +105,7 @@ def update_air_customs_rate_jobs_to_backlog_delay(self):
             raise self.retry(exc=exc)
         
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def create_jobs_for_feedback_air_customs_rate_delay(self, requirements):
+def create_jobs_for_air_customs_rate_feedback_delay(self, requirements):
     try:
         return create_air_customs_rate_job(requirements, "rate_feedback")
     except Exception as exc:
@@ -115,7 +115,7 @@ def create_jobs_for_feedback_air_customs_rate_delay(self, requirements):
             raise self.retry(exc= exc)
         
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delete_jobs_for_feedback_air_customs_rate_delay(self, requirements):
+def delete_jobs_for_air_customs_rate_request_delay(self, requirements):
     try:
         return delete_air_customs_rate_job(requirements)
     except Exception as exc:
@@ -125,7 +125,7 @@ def delete_jobs_for_feedback_air_customs_rate_delay(self, requirements):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def create_jobs_for_request_air_customs_rate_delay(self, requirements):
+def create_jobs_for_air_customs_rate_request_delay(self, requirements):
     try:
         return create_air_customs_rate_job(requirements, "rate_request")
     except Exception as exc:
@@ -135,7 +135,7 @@ def create_jobs_for_request_air_customs_rate_delay(self, requirements):
             raise self.retry(exc= exc)
         
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delete_jobs_for_request_air_customs_rate_delay(self, requirements):
+def delete_jobs_for_air_customs_rate_feedback_delay(self, requirements):
     try:
         return delete_air_customs_rate_job(requirements)
     except Exception as exc:
