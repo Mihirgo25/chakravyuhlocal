@@ -1,4 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from libs.get_parsed_conditions import get_parsed_conditions_data
 from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
@@ -9,6 +10,10 @@ def get_fcl_freight_rate_local(request):
         object = find_object(request)
         if object:
           details = object.detail()
+          if request['get_parsed_values'] and details.get('line_items'):
+             old_line_items = details['line_items']
+             parsed_line_items = get_parsed_conditions_data(old_line_items)
+             details['line_items'] = parsed_line_items
     else:
       object=None
 
