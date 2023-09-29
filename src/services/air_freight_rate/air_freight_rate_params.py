@@ -139,6 +139,7 @@ class CreateAirFreightRateSurchargeParams(BaseModel):
     bulk_operation_id: str = None
     rate_sheet_id: str = None
     line_items: list[LineItem]
+    importer_exporter_id:str = None
 
 
 class UpdateAirFreightRateSurchargeParams(BaseModel):
@@ -170,6 +171,7 @@ class CreateAirFreightRateLocalParams(BaseModel):
     rate_sheet_id: str = None
     rate_type: str = "market_place"
     line_items: list[LineItemLocal]
+    importer_exporter_id:str = None
 
 
 class LocalSlabsParams(BaseModel):
@@ -533,3 +535,11 @@ class DeleteAirFreightRateLocal(BaseModel):
 class DeleteAirFreightRateSurcharge(BaseModel):
     id:str
     performed_by_id: str = None
+
+class DeleteAirFreightRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None

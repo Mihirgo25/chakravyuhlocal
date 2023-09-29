@@ -49,6 +49,8 @@ def delete_air_freight_rate_data(request):
         print("Exception in saving freight rate", e)
     
     create_audit(request, air_freight_rate.id)
+    
+    send_stats(request,air_freight_rate)
 
     return {
        'id': air_freight_rate.id
@@ -76,3 +78,11 @@ def find_object(request):
     except :
         air_freight_rate=None
     return air_freight_rate
+
+def send_stats(request, freight):
+    from services.bramhastra.celery import send_air_rate_stats_in_delay
+
+    send_air_rate_stats_in_delay.apply_async(
+        kwargs={"action": "delete", "request": request, "freight": freight},
+        queue="statistics",
+    )

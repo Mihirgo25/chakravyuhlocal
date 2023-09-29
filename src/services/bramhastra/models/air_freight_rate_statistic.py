@@ -120,6 +120,9 @@ class AirFreightRateStatistic(BaseModel):
     rate_deviation_from_cluster_base_rate = FloatField(default=0)
     performed_by_id = UUIDField(index = True,default = DEFAULT_USER_ID, null = True)
     performed_by_type = CharField(default = "agent",null = True)
+    operation_created_at = DateTimeTZField(default = datetime.utcnow())
+    operation_updated_at = DateTimeTZField(default = datetime.utcnow())
+    is_deleted = BooleanField(index = True,default = False)
     
     def save(self, *args, **kwargs):
         self.updated_at = datetime.utcnow()

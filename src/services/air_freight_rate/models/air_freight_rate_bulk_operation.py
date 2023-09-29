@@ -629,6 +629,7 @@ class AirFreightRateBulkOperation(BaseModel):
                 AirServiceAudit.select()
                 .where(
                     AirServiceAudit.object_id == freight["id"],
+                    AirServiceAudit.object_id == freight["id"],
                     AirServiceAudit.bulk_operation_id == self.id
                 )
                 .first()

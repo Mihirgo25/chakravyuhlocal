@@ -12,6 +12,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
 )
 from services.bramhastra.enums import ShipmentServices
 from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.enums import Fcl
 
 
 class Shipment:
@@ -50,15 +51,19 @@ class Shipment:
 
     def format(self):
         shipment = self.params.shipment.dict()
-        rate_id, validity_id = self.get_rate_details_from_initial_quotation(
+        quotation = self.get_rate_details_from_initial_quotation(
             self.params.shipment.source_id
-        ).values()
+        )
+        if quotation is None:
+            return
 
         fcl_freight_rate_statistic = (
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
-                == get_identifier(rate_id=rate_id, validity_id=validity_id)
+                == get_identifier(
+                    rate_id=quotation["rate_id"], validity_id=quotation["validity_id"]
+                )
             )
             .first()
         )
@@ -67,6 +72,10 @@ class Shipment:
             i.shipment_fcl_freight_service_id: i.dict()
             for i in self.params.fcl_freight_services
         }
+
+        if not self.params.buy_quotations:
+            return
+
         for buy_quotation in self.params.buy_quotations:
             if buy_quotation.service_type != ShipmentServices.fcl_freight_service.value:
                 continue
@@ -76,12 +85,14 @@ class Shipment:
                 self.current_currency = buy_quotation.currency
 
             shipment_copy = shipment.copy()
-            shipment_copy["rate_id"] = rate_id
-            shipment_copy["validity_id"] = validity_id
+            shipment_copy["rate_id"] = quotation["rate_id"]
+            shipment_copy["validity_id"] = quotation["validity_id"]
             shipment_copy.update(
                 buy_quotation.dict(exclude={"service_id", "service_type"})
             )
-            shipment_copy.update(shipment_services_hash.get(buy_quotation.service_id))
+            shipment_copy.update(
+                shipment_services_hash.get(buy_quotation.service_id, {})
+            )
             shipment_copy[
                 "fcl_freight_rate_statistic_id"
             ] = fcl_freight_rate_statistic.id
@@ -98,7 +109,7 @@ class Shipment:
                 fcl_freight_rate_statistic.save()
         elif self.action == ShipmentAction.update.value:
             self.create_or_update(fcl_freight_rate_statistic)
-            
+
         fcl_freight_rate_statistic.save()
 
         rate_update_hash = dict()
@@ -115,8 +126,12 @@ class Shipment:
             fcl_freight_rate_statistic.standard_price
             if self.action == ShipmentAction.create.value
             else common.get_money_exchange_for_fcl(
-                self.current_total_price, self.current_currency, "USD"
-            )
+                {
+                    "from_currency": self.current_currency,
+                    "to_currency": Fcl.default_currency.value,
+                    "price": self.current_total_price,
+                }
+            ).get("price", self.current_total_price)
         )
 
         rate_update_hash["booking_rate_count"] = booking_rate_count + 1
@@ -161,7 +176,8 @@ class Shipment:
                         new_row.save()
                         first_row = True
                 for k, v in stat.items():
-                    setattr(shipment, k, v)
+                    if v:
+                        setattr(shipment, k, v)
                 shipment.save()
             else:
                 ShipmentFclFreightRateStatistic.create(**stat)
@@ -184,15 +200,16 @@ class Shipment:
         )
 
         if not shipment_fcl_freight_rate_statistics:
-            raise ValueError(
-                f"""shipment with id: { update_params.get("shipment_id")} not found"""
-            )
+            return
         old_state = shipment_fcl_freight_rate_statistics.first().state
         new_state = update_params.get("state")
 
         fcl_freight_rate_statistic = (
             FclFreightRateStatistic.select()
-            .where(FclFreightRateStatistic.id == shipment_fcl_freight_rate_statistics.first().fcl_freight_rate_statistic_id)
+            .where(
+                FclFreightRateStatistic.id
+                == shipment_fcl_freight_rate_statistics.first().fcl_freight_rate_statistic_id
+            )
             .first()
         )
 
@@ -209,7 +226,9 @@ class Shipment:
                 if new_state != "shipment_received"
                 else "shipment_received_count"
             )
-            rate_update_params[new_key] = getattr(fcl_freight_rate_statistic, new_key) + 1
+            rate_update_params[new_key] = (
+                getattr(fcl_freight_rate_statistic, new_key) + 1
+            )
             rate_update_params[old_key] = (
                 getattr(fcl_freight_rate_statistic, old_key) - 1
             )
@@ -220,7 +239,7 @@ class Shipment:
 
         for shipment_fcl_freight_rate_statistic in shipment_fcl_freight_rate_statistics:
             for k, v in update_params.items():
-                if k in avoid_keys:
+                if k in avoid_keys and not v:
                     continue
                 setattr(shipment_fcl_freight_rate_statistic, k, v)
             shipment_fcl_freight_rate_statistic.save()
@@ -230,7 +249,8 @@ class Shipment:
             for key in self.increment_keys:
                 setattr(row, key, getattr(row, key) + 1)
         for k, v in update_object.items():
-            setattr(row, k, v)
+            if v:
+                setattr(row, k, v)
         row.save()
 
     def get_rate_details_from_initial_quotation(self, source_id):

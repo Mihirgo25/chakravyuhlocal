@@ -4,9 +4,10 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
 import json
+from libs.apply_eligible_lsp_filters import apply_eligible_lsp_filters
 
 
-possible_direct_filters = ['id', 'airport_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'commodity', 'airline_id', 'service_provider_id', 'is_line_items_info_messages_present', 'is_line_items_error_messages_present', 'rate_type','procured_by_id']
+possible_direct_filters = ['id', 'airport_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'commodity', 'airline_id', 'service_provider_id', 'is_line_items_info_messages_present', 'is_line_items_error_messages_present', 'rate_type','procured_by_id','importer_exporter_id']
 
 possible_indirect_filters = ['location_ids','exclude_rate_types','exclude_airline_id']
 
@@ -24,6 +25,10 @@ sort_by='updated_at',pagination_data_required=True,sort_type='desc',return_query
         query = get_filters(direct_filters, query, AirFreightRateLocal)
         
         query = apply_indirect_filters(query, indirect_filters)
+    
+    if not filters or not 'service_provider_id' in filters:
+        query = apply_eligible_lsp_filters(query,AirFreightRateLocal,'air_freight')
+
     if return_query: 
         return { 'list': query }
     if return_count:

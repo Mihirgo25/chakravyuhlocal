@@ -94,3 +94,44 @@ class BrahmastraTrackStatus(Bramhastra):
     
 class BrahmastraTrackModuleTypes(Bramhastra):
     table = "table"
+    
+
+class AirSources(Bramhastra):
+    manual = "manual"
+    predicted = "predicted"
+    rate_extension = "rate_extension"
+    rate_sheet = "rate_sheet"
+    freight_look = "freight_look"
+    cargo_ai = "cargo_ai"
+    
+
+class FclFeedbackClosingRemarks(Bramhastra):
+    rate_added = "rate_added"
+
+class FclFeedbackStatus(Bramhastra):
+    active = "active"
+    inactive = "inactive"
+    
+
+class FclFilterTypes(Bramhastra):
+    validity_range = "validity_range"
+    time_series = "time_series"
+    
+
+class FclChargeCodes(Bramhastra):
+    BAS = "BAS"
+    
+class MapsFilter(Bramhastra):
+    origin_port_code = "origin_port_code"
+    destination_port_code = "destination_port_code"
+    
+class Status(Bramhastra):
+    active = "active"
+    
+class FclDefault(Bramhastra):
+    container_type  = "standard"
+    container_size = "20"
+    commodity = "general"
+    
+class Paginate(Bramhastra):
+    global_limit = 1000
