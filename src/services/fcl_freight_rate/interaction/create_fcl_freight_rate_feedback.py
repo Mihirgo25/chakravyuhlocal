@@ -9,6 +9,7 @@ from celery_worker import update_multiple_service_objects
 from fastapi import HTTPException
 from micro_services.client import *
 from services.bramhastra.celery import send_feedback_statistics_in_delay
+from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_fcl_freight_rate_feedback_delay
 
 
 
@@ -76,6 +77,8 @@ def execute_transaction_code(request):
         set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
         
     send_feedback_statistics_in_delay.apply_async(kwargs = {'action': action,'feedback': feedback, 'request': request},queue = 'statistics')
+
+    create_jobs_for_fcl_freight_rate_feedback_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
 
     return {'id': request['rate_id']}
 

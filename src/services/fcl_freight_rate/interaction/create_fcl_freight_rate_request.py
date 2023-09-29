@@ -3,7 +3,7 @@ from database.db_session import db
 from micro_services.client import *
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from celery_worker import create_communication_background, update_multiple_service_objects, update_fcl_freight_rate_request_in_delay
-from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_request_fcl_freight_rate_delay
+from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_fcl_freight_rate_request_delay
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from datetime import datetime, timedelta
 from configs.fcl_freight_rate_constants import EXPECTED_TAT_RATE_FEEDBACK_REVERT, RATE_FEEDBACK_RELEVANT_ROLE_ID
@@ -59,6 +59,8 @@ def execute_transaction_code(request):
          
         send_request_stats_in_delay.apply_async(kwargs = {'action':action,'object':request_object},queue = 'statistics')
 
+        create_jobs_for_fcl_freight_rate_request_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
+
         return {
         'id': request_object.id
         }
@@ -94,7 +96,6 @@ def set_relevant_supply_agents(request, fcl_freight_rate_request_id):
         print(e)
 
     route = {key['id']:key['display_name'] for key in route_data}
-    create_jobs_for_request_fcl_freight_rate_delay.apply_async(kwargs={'data': request},queue='fcl_freight_rate')
     try:
         request_info = { 'user_ids': supply_agents_user_ids, 'origin_location': route[str(locations_data['origin_port_id'])], 'destination_location': route[str(locations_data['destination_port_id'])]}
         send_notifications_to_supply_agents(request, request_info)

@@ -1,4 +1,5 @@
 from services.fcl_customs_rate.models.fcl_customs_rate_jobs import FclCustomsRateJob
+from services.fcl_customs_rate.models.fcl_customs_rate_job_mappings import FclCustomsRateJobMapping
 from services.fcl_customs_rate.helpers import (
     generate_csv_file_url_for_fcl_customs,
 )
@@ -76,6 +77,10 @@ def list_fcl_customs_rate_jobs(
 
 
 def get_data(query):
+    data = list(query.dicts())
+    for d in data:
+        source_id = FclCustomsRateJobMapping.select(FclCustomsRateJobMapping.source_id).where(FclCustomsRateJobMapping.job_id == d['id']).first()
+        d['source_id'] = source_id.source_id
     return list(query.dicts())
 
 

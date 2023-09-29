@@ -1,4 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJob
+from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobMapping
 from services.air_freight_rate.helpers.generate_csv_file_url_for_air import (
     generate_csv_file_url_for_air,
 )
@@ -88,6 +89,10 @@ def list_air_freight_rate_jobs(
 
 
 def get_data(query):
+    data = list(query.dicts())
+    for d in data:
+        source_id = AirFreightRateJobMapping.select(AirFreightRateJobMapping.source_id).where(AirFreightRateJobMapping.job_id == d['id']).first()
+        d['source_id'] = source_id.source_id
     return list(query.dicts())
 
 

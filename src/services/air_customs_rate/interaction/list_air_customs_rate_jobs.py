@@ -1,4 +1,5 @@
 from services.air_customs_rate.models.air_customs_rate_jobs import AirCustomsRateJob
+from services.air_customs_rate.models.air_customs_rate_job_mappings import AirCustomsRateJobMapping
 from services.air_customs_rate.helpers.generate_csv_file_url_for_air_customs import (
     generate_csv_file_url_for_air_customs,
 )
@@ -82,6 +83,10 @@ def list_air_customs_rate_jobs(
 
 
 def get_data(query):
+    data = list(query.dicts())
+    for d in data:
+        source_id = AirCustomsRateJobMapping.select(AirCustomsRateJobMapping.source_id).where(AirCustomsRateJobMapping.job_id == d['id']).first()
+        d['source_id'] = source_id.source_id
     return list(query.dicts())
 
 
