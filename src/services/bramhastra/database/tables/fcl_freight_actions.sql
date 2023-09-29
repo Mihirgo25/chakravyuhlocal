@@ -59,7 +59,7 @@ CREATE TABLE brahmastra.fcl_freight_actions
     shipment_source_id UUID,
     shipment_created_at DateTime,
     shipment_updated_at DateTime,
-    shipment_service_state Enum('empty'= 0,'containers_gated_out'= 1,'containers_gated_in'= 2,'cancelled'= 3,'awaiting_service_provider_confirmation'= 4,'confirmed_by_service_provider'= 5,'vessel_arrived'= 6,'vessel_departed'= 7,'completed'= 8,'aborted'= 9,'init'= 10),
+    shipment_service_state Enum('empty'= 0,'init'= 1,'containers_gated_out'= 2,'containers_gated_in'= 3,'cancelled'= 4,'awaiting_service_provider_confirmation'= 5,'confirmed_by_service_provider'= 6,'vessel_arrived'= 7,'vessel_departed'= 8,'completed'= 9,'aborted'= 10),
     shipment_service_is_active String, 
     shipment_service_created_at DateTime,
     shipment_service_updated_at DateTime,
