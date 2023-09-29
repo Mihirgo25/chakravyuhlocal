@@ -85,7 +85,11 @@ def list_fcl_freight_rate_jobs(
 
 
 def get_data(query):
-    return list(query.dicts())
+    data = list(query.dicts())
+    for d in data:
+        source_id = FclFreightRateJobMapping.select(FclFreightRateJobMapping.source_id).where(FclFreightRateJobMapping.job_id == d['id']).first()
+        d['source_id'] = source_id.source_id
+    return data
 
 
 def includes_filter(includes):

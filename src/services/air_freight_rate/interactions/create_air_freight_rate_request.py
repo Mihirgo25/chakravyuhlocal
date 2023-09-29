@@ -11,6 +11,7 @@ from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from celery_worker import (
     create_communication_background,
 )
+from services.air_freight_rate.air_celery_worker import create_jobs_for_air_freight_rate_request_delay
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 
@@ -86,7 +87,7 @@ def execute_transaction_code(request):
             send_notification_to_supply_agents(
                  request_object, airports
             )
-
+    create_jobs_for_air_freight_rate_request_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
     return {"id": str(request_object.id)}
 
 
