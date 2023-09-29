@@ -9,12 +9,14 @@ class CommonApiClient:
         self.client=GlobalClient(url = str(get_instance_url('common')),headers={
             "Authorization": "Bearer: " + RUBY_AUTHTOKEN,
             "AuthorizationScope": RUBY_AUTHSCOPE,
-            "AuthorizationScopeId": RUBY_AUTHSCOPEID,
+            "AuthorizationParameters": ":allowed",
+            # "AuthorizationScopeId": RUBY_AUTHSCOPEID,
             "Content-Type": "application/json",
             "Accept": "application/json",
         })
 
     def get_money_exchange_for_fcl(self, data = {}):
+
         cached_resp = get_money_exchange_from_rd(data)
         if cached_resp:
             return { "price": cached_resp }
@@ -60,15 +62,13 @@ class CommonApiClient:
         return self.client.request('GET','get_all_exchange_rates',data)
 
     
-    def get_sailing_schedules(self, data= {}):
-        return self.client.request('GET', 'get_sailing_schedules', data)
+    # def get_sailing_schedules(self, data= {}):
+    #     return self.client.request('GET', 'sailing_schedule/get_sailing_schedules', data, timeout=15000)
 
-    def get_fake_sailing_schedules(self, data= {}):
-        return self.client.request('GET', 'get_fake_sailing_schedules', data)
+    # def get_fake_sailing_schedules(self, data= {}):
+    #     return self.client.request('GET', 'sailing_schedule/get_fake_sailing_schedules', data)
 
-    def get_predicted_transit_time(self, data= {}):
-        return self.client.request('GET', 'get_predicted_transit_time', data)
+    # def get_predicted_transit_time(self, data= {}):
+    #     return self.client.request('GET', 'sailing_schedule/get_predicted_transit_time', data)
 
-    def get_money_exchange(self, data= {}):
-        return self.client.request('GET', 'get_money_exchange', data)
     
