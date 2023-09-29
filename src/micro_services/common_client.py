@@ -55,6 +55,9 @@ class CommonApiClient:
     
     def get_exchange_rate(self, data = {}):
         return self.client.request('GET', 'get_exchange_rate', data)     
+    
+    def get_all_exchange_rates(self, data = {}):
+        return self.client.request('GET','get_all_exchange_rates',data)
 
     
     def get_sailing_schedules(self, data= {}):
