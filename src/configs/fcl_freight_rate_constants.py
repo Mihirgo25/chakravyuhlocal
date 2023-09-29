@@ -223,17 +223,17 @@ SPECIFICITY_TYPE_HIERARCHY = {
 
 REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}
 
-FCL_COVERAGE_USERS = {
-    1: "6addea60-a3de-4067-b08d-ece04be594ab",
-    2: "0b404055-05de-4c2f-836c-86f591183d71",
-    3: "3a1599fa-35af-49be-93f9-7784617e088b",
-    4: "d7f62f2d-2b41-41ae-a9f0-200255de4d8f",
-    5: "2b2b8241-8900-418d-b90d-e755e92f3911",
-    6: "d46a98e6-7848-4862-bb21-c8e727588039",
-    7: "dc100acc-a416-4ff2-8a61-cb265b018fb1",
-    8: "51641e0e-a5da-452a-81fc-ccb8fe6df343"
+FCL_COVERAGE_USERS = [
+  "6addea60-a3de-4067-b08d-ece04be594ab",
+  "0b404055-05de-4c2f-836c-86f591183d71",
+  "3a1599fa-35af-49be-93f9-7784617e088b",
+  "d7f62f2d-2b41-41ae-a9f0-200255de4d8f",
+  "2b2b8241-8900-418d-b90d-e755e92f3911",
+  "d46a98e6-7848-4862-bb21-c8e727588039",
+  "dc100acc-a416-4ff2-8a61-cb265b018fb1",
+  "51641e0e-a5da-452a-81fc-ccb8fe6df343"
     
-}
+]
 
 CRITICAL_PORTS_INDIA_VIETNAM = [
     'eb187b38-51b2-4a5e-9f3c-978033ca1ddf',
