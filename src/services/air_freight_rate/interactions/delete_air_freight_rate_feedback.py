@@ -9,6 +9,7 @@ from database.rails_db import (
     get_organization_partner,
 )
 
+from services.air_freight_rate.air_celery_worker import delete_jobs_for_air_freight_rate_feedback_delay
 
 def delete_air_freight_rate_feedback(request):
     with db.atomic():
@@ -47,7 +48,7 @@ def execute_transaction_code(request):
         else:
             send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')    
 
-
+    delete_jobs_for_air_freight_rate_feedback_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')    
     return {"id":request['air_freight_rate_feedback_ids']}      
 
 def create_audit(request,id):
