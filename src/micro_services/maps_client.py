@@ -69,3 +69,24 @@ class MapsApiClient:
     
     def get_airlines_for_route(self,data={}):
         return self.client.request('GET','get_airline_for_route',data)
+    
+    
+    def get_sailing_schedules(self, data= {}):
+        if 'filters' in data:
+            data['filters'] = json.dumps(data['filters'])
+        self.client.url.set('https://7153-103-143-39-118.ngrok-free.app')
+        return self.client.request('GET', 'location/get_sailing_schedules', data, timeout=3000)
+
+    def get_fake_sailing_schedules(self, data= {}):
+        if 'filters' in data:
+            data['filters'] = json.dumps(data['filters'])
+        self.client.url.set('https://7153-103-143-39-118.ngrok-free.app')
+        return self.client.request('GET', 'location/get_fake_sailing_schedules', data)
+
+    def get_predicted_transit_time(self, data= {}):
+        if 'filters' in data:
+            data['filters'] = json.dumps(data['filters'])
+        self.client.url.set('https://7153-103-143-39-118.ngrok-free.app')
+        return self.client.request('GET', 'location/get_predicted_transit_time', data)
+
+ 

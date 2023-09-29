@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
-from micro_services.client import common
+from micro_services.client import maps, common
 from configs.fcl_freight_rate_constants import (
     FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES,
     DEFAULT_SCHEDULE_TYPES,
@@ -19,7 +19,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
     port_pairs=filters.get('port_pairs')
     sailing_schedules_required=filters.get('sailing_schedules_required')
     validity_start=filters.get('validity_start')
-    list_data=filters.get('list')
+    list_data=filters.get('list_data')
     spot_search_object=filters.get('spot_search_object')
     origin_port=filters.get('origin_port')
     destination_port=filters.get('destination_port')
@@ -45,17 +45,20 @@ def get_fcl_freight_rate_cards_schedules(filters):
                 "page_limit": 1000,
                 "sort_by": "departure",
                 "sort_type": "asc",
-                "request_source": "spot_search",
+                "request_source":"spot_search"
             }
-            schedules = common.get_sailing_schedules(data)
 
+            
+            schedules = maps.get_sailing_schedules(data)
+         
+            
             return [
                 {
                     "origin_port_id": origin_port_id,
                     "destination_port_id": destination_port_id,
                     **t,
                 }
-                for t in schedules["list"]
+                for t in schedules.get('list', [])
             ]
 
         sailing_schedules = []
@@ -86,7 +89,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
                 }
 
             sailing_schedules_hash.setdefault(key, []).append(schedule_data)
-    
+
         rates = []
         data = {
                 "origin_port_id": origin_port_id,
@@ -96,10 +99,15 @@ def get_fcl_freight_rate_cards_schedules(filters):
                 "destination_trade_id": destination_trade_id,
                 "destination_continent_id": destination_continent_id,
             }
+        
 
-        fake_schedules = common.get_fake_sailing_schedules(data)
+        response = maps.get_fake_sailing_schedules(data)
+
+        fake_schedules = response['list']
+
 
     grouping = {}
+
 
     for data in list_data:
         key = []
@@ -115,7 +123,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
         key = ":".join(key)
 
         data_schedules = sailing_schedules_hash.get(key, [])
-        
+
         if not data_schedules:
             data_schedules = fake_schedules
 
@@ -146,13 +154,14 @@ def get_fcl_freight_rate_cards_schedules(filters):
                         else None
                     )
 
+
                     if avg_transit_time is None:
                         data = {
                                     "origin_port_id": origin_port_id,
                                     "destination_port_id": destination_port_id,
                                 }
-                        predicted_transit_time = common.get_predicted_transit_time(data)
-
+                        predicted_transit_time = maps.get_predicted_transit_time(data)
+                    
                     fallback_schedules = FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES
                    
                     for fake_schedule in fallback_schedules:
@@ -192,7 +201,8 @@ def get_fcl_freight_rate_cards_schedules(filters):
             
                 for sailing_schedule in schedules:
                     freight_line_items = list(freight["line_items"])
-
+                    for item in freight_line_items:
+                        item['price'] = float(item['price'])
                     freights.append(
                         {
                             "line_items": json.loads(json.dumps(freight_line_items)),
@@ -220,6 +230,8 @@ def get_fcl_freight_rate_cards_schedules(filters):
         if not sailing_schedules_required or data["source"] == "cogo_assured_rate":
             for freight_object in data["freights"]:
                 freight_line_items = list(freight_object["line_items"])
+                for item in freight_line_items:
+                    item['price'] = float(item['price'])
 
                 freights.append(
                     {
@@ -250,8 +262,8 @@ def get_fcl_freight_rate_cards_schedules(filters):
                     "from_currency": line_item["currency"],
                     "to_currency": currency,
                     "price": line_item["total_price"],
-                    'organization_id':spot_search_object["importer_exporter_id"],
-                    'source':"default"
+                    # 'organization_id':spot_search_object["importer_exporter_id"],
+                    # 'source':"default"
                 }
             ).get("price", 0)
             for line_item in (
@@ -269,14 +281,14 @@ def get_fcl_freight_rate_cards_schedules(filters):
                     "from_currency": line_item["currency"],
                     "to_currency": currency,
                     "price": line_item["total_price"],
-                    'organization_id':spot_search_object["importer_exporter_id"],
-                    'source':"default"
+                    # 'organization_id':spot_search_object["importer_exporter_id"],
+                    # 'source':"default"
                     }
                 ).get("price", 0)
                 for line_item in freight["line_items"]
             )
 
-            total_price = freight_price + locals_price
+            total_price = float(freight_price) + float(locals_price)
 
             if sailing_schedules_required and data["source"] != "cogo_assured_rate":
                 key_elements = [
@@ -318,5 +330,5 @@ def get_fcl_freight_rate_cards_schedules(filters):
             
     
     rates = [v["data"] for v in grouping.values()]
-    
+
     return rates
