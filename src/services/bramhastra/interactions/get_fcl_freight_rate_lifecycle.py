@@ -37,6 +37,7 @@ POSSIBLE_DIRECT_FILTERS = {
     "origin_main_port_id",
     "destination_main_port_id",
     "parent_mode",
+    "parent_rate_mode",
     "rate_type"
 }
 
@@ -160,11 +161,12 @@ async def get_lifecycle_statistics(filters, where):
         rates_closed,
     ]
     if where:
+        query = " AND ".join(where)
         for var in variables:
             if "where" in " ".join(var).lower():
-                var.append(f" AND {where[0]} ")
+                var.append(f" AND {query} ")
             else:
-                var.append(f" WHERE {where[0]} ")   
+                var.append(f" WHERE {query} ")  
 
     missing_rates_filter = filters.copy()
 
@@ -248,12 +250,6 @@ async def get_lifecycle_statistics(filters, where):
             result["rate_reverted_feedbacks"], result["feedbacks_closed"]
         ),
         "feedback_rates_added_count": result["feedbacks_rate_added"],
-        "feedback_rates_added_dropoff": calculate_dropoff(
-            result["feedbacks_rate_added"], result["rate_reverted_feedbacks"]
-        ),
-
-
-
 
         # rate requests
         "rates_requested_count": result["rate_request_created_count"],

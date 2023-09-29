@@ -29,6 +29,7 @@ POSSIBLE_DIRECT_FILTERS = {
     "procured_by_id",
     "rate_type",
     "parent_mode",
+    "parent_rate_mode",
     "sourced_by_id",
     "procured_by_id",
     "rate_id",
