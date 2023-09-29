@@ -171,6 +171,7 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     likes_count: int = None
     dislikes_count: int = None
     closing_remarks: list[str]
+    is_rate_reverted: bool = None
     status: str = "active"
 
     @validator("preferred_freight_rate", pre=True)
@@ -184,7 +185,11 @@ class FeedbackFclFreightRateStatistic(BaseModel):
         if not v:
             v = "USD"
         return v
-
+    
+    @validator("is_rate_reverted", always=True)
+    def add_is_rate_reverted(cls, value, values):
+        closing_remarks = values.get("closing_remarks", [])
+        return value or "rate_added" in closing_remarks
 
 class ApplyFeedbackFclFreightRateStatistics(BaseModel):
     action: str
