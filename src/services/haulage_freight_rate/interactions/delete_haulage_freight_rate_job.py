@@ -13,19 +13,34 @@ def delete_haulage_freight_rate_job(request):
         update_params = {'status':'aborted', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now(), "closing_remarks": request.get('closing_remarks')}
     else:
         update_params = {'status':'completed', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now()}
+    breakpoint()
+    
+    if request.get('haulage_freight_rate_request_ids'):
+        job_id = HaulageFreightRateJobMapping.select("job_id").where(HaulageFreightRateJobMapping.source_id << request['haulage_freight_rate_request_ids']).scalar()
+    elif request.get('haulage_freight_rate_request_ids'):
+        job_id = HaulageFreightRateJobMapping.select("job_id").where(HaulageFreightRateJobMapping.source_id << request['haulage_freight_rate_request_ids']).scalar()
+    else:
+        job_id = request.get('id')
 
-    haulage_freight_rate_job = HaulageFreightRateJob.update(update_params).where(HaulageFreightRateJob.id == request['id'], HaulageFreightRateJob.status.not_in(['completed', 'aborted'])).execute()
+ 
+
+    if not isinstance(job_id, list):
+        job_id = [job_id]
+
+    haulage_freight_rate_job = HaulageFreightRateJob.update(update_params).where(HaulageFreightRateJob.id << job_id, HaulageFreightRateJob.status.not_in(['completed', 'aborted'])).execute()
+
     if haulage_freight_rate_job:
-        create_audit(request['id'], request)
+        create_audit(job_id, request)
 
-    return {'id' : request['id']}
+    return {'id' : job_id}
 
 
 def create_audit(jobs_id, data):
-    HaulageFreightRateAudit.create(
-        action_name = 'delete',
-        object_id = jobs_id,
-        object_type = 'HaulageFreightRateJob',
-        data = data.get('data'),
-        performed_by_id = data.get("performed_by_id")
-    )
+    for job_id in jobs_id:
+        HaulageFreightRateAudit.create(
+            action_name = 'delete',
+            object_id = job_id,
+            object_type = 'HaulageFreightRateJob',
+            data = data.get('data'),
+            performed_by_id = data.get("performed_by_id")
+        )

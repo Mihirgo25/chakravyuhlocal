@@ -11,6 +11,8 @@ from configs.fcl_customs_rate_constants import FCL_CUSTOMS_COVERAGE_USERS
 from services.air_customs_rate.air_customs_rate_constants import (
     AIR_CUSTOMS_COVERAGE_USERS,
 )
+from services.ltl_freight_rate.ltl_freight_rate_constants import LTL_LOCAL_COVERAGE_USERS
+from configs.ftl_freight_rate_constants import FTL_COVERAGE_USERS
 from micro_services.client import common
 
 
@@ -45,6 +47,12 @@ def allocate_jobs(service_type: str) -> str:
     elif service_type.upper() == "AIR_LOCALS":
         users = FCL_LOCAL_COVERAGE_USERS
         redis_key = "last_assigned_user_air_locals"
+    elif service_type.upper() == "LTL":
+        users = LTL_LOCAL_COVERAGE_USERS
+        redis_key = "last_assigned_user_ltl"
+    elif service_type.upper() == "FTL":
+        users = FTL_COVERAGE_USERS
+        redis_key = "last_assigned_user_ftl"
 
     last_assigned_user = rd.get(redis_key)
     if not last_assigned_user:

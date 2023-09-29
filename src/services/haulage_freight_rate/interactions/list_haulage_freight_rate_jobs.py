@@ -1,4 +1,5 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_jobs import HaulageFreightRateJob
+from services.haulage_freight_rate.models.haulage_freight_rate_job_mappings import HaulageFreightRateJobMapping
 from services.haulage_freight_rate.helpers.generate_csv_file_url_for_haulage import (
     generate_csv_file_url_for_haulage,
 )
@@ -82,6 +83,10 @@ def list_haulage_freight_rate_jobs(
 
 
 def get_data(query):
+    data = list(query.dicts())
+    for d in data:
+        source_id = HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.source_id).where(HaulageFreightRateJobMapping.job_id == d['id']).first()
+        d['source_id'] = source_id.source_id
     return list(query.dicts())
 
 

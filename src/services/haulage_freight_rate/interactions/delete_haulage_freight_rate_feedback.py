@@ -6,7 +6,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate_audit import (
 )
 from fastapi import HTTPException
 from database.db_session import db
-from services.haulage_freight_rate.haulage_celery_worker import delete_jobs_for_feedback_haulage_freight_rate_delay
+from services.haulage_freight_rate.haulage_celery_worker import delete_jobs_for_haulage_freight_rate_feedback_delay
 
 
 def delete_haulage_freight_rate_feedback(request):
@@ -46,7 +46,7 @@ def execute_transaction_code(request):
 
         create_audit(request, obj.id, obj.transport_mode)
         get_multiple_service_objects(obj)
-        delete_jobs_for_feedback_haulage_freight_rate_delay.apply_async(kwargs = {'requirements': request}, queue='critical')
+        delete_jobs_for_haulage_freight_rate_feedback_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
     if request.get('haulage_freight_rate_feedback_ids'):
         return {"ids": request["haulage_freight_rate_feedback_ids"]}
     else:
