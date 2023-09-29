@@ -6,8 +6,8 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
-from services.bramhastra.models.fcl_freight_rate_request_statistics import (
-    FclFreightRateRequestStatistic,
+from services.bramhastra.models.fcl_freight_rate_statistic import (
+    FclFreightRateStatistic 
 )
 from services.bramhastra.interactions.list_fcl_freight_rate_request_statistics import (
     get_direct_indirect_filters as get_direct_indirect_filters_for_rate_request,
@@ -131,7 +131,7 @@ async def get_lifecycle_statistics(filters, where):
 
     rate_reverted_feedbacks = [
         f"""
-        SELECT SUM(is_rate_reverted) AS rate_reverted_feedbacks FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE is_rate_reverted = True
+        SELECT COUNT(DISTINCT rate_id) AS rate_reverted_feedbacks FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE source = 'disliked_rate'
         """
     ]
     rates_requested = [rate_request_query(RateRequestState.created.name)]
@@ -192,7 +192,7 @@ async def get_lifecycle_statistics(filters, where):
     lifecycle_statistics = {
         # buisness flow
         "spot_search": result["spot_search"],
-        "spot_search_dropoff": (result["spot_search"]) * 100,
+        
         "checkout_count": result["checkout_count"],
         "checkout_dropoff": calculate_dropoff(
             result["checkout_count"], result["spot_search"]
@@ -235,6 +235,10 @@ async def get_lifecycle_statistics(filters, where):
         "disliked_dropoff": calculate_dropoff(
             result["disliked_count"], result["feedbacks_created"]
         ),
+        "liked_count": result["liked_count"],
+        "liked_dropoff": calculate_dropoff(
+            result["liked_count"], result["spot_search"]
+        ),
         "feedback_closed_count": result["feedbacks_closed"],
         "feedback_closed_dropoff": calculate_dropoff(
             result["feedbacks_closed"], result["disliked_count"]
@@ -247,10 +251,10 @@ async def get_lifecycle_statistics(filters, where):
         "feedback_rates_added_dropoff": calculate_dropoff(
             result["feedbacks_rate_added"], result["rate_reverted_feedbacks"]
         ),
-        "liked_count": result["liked_count"],
-        "liked_dropoff": calculate_dropoff(
-            result["liked_count"], result["spot_search"]
-        ),
+
+
+
+
         # rate requests
         "rates_requested_count": result["rate_request_created_count"],
         "rates_requested_dropoff": calculate_dropoff(
@@ -276,7 +280,7 @@ def filter_out_of_range_value(val):
 
 def generate_sum_query(column):
     return f"""
-        SELECT COUNT(DISTINCT {column}) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} > 0
+        SELECT COUNT(DISTINCT {column}_id) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE {column} > 0
         """
 
 def generate_revenue_select_query(column):
@@ -295,12 +299,6 @@ def avg_group_by_query(column):
     SELECT COUNT(DISTINCT shipment_id) AS shipment_{column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE shipment_state = '{column}'
     """
 
-
-def calculate_dropoff(numerator, denominator):
-    if denominator == 0:
-        denominator = 1
-    return (1 - (numerator / denominator)) * 100
-
 def rate_request_query(column):
     return f"""
     SELECT COUNT(*) AS rate_request_{column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state = '{column}'
@@ -310,3 +308,8 @@ def feedback_query(column):
     return f"""
     SELECT COUNT(DISTINCT rate_id) AS feedbacks_{column} FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_state = '{column}'
     """
+
+def calculate_dropoff(numerator, denominator):
+    if denominator == 0:
+        denominator = 1
+    return round((1 - (numerator / denominator)) * 100,2)

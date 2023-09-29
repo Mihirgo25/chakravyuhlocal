@@ -140,9 +140,6 @@ class LifeCycleConfig:
                                                                         "rates_count": self.input.get(
                                                                             "feedback_rates_added_count"
                                                                         ),
-                                                                        "drop": self.input.get(
-                                                                            "feedback_rates_added_dropoff"
-                                                                        ),
                                                                         "child": {},
                                                                     },
                                                                 ],
