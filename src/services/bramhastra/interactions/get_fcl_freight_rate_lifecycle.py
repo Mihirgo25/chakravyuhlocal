@@ -37,6 +37,7 @@ POSSIBLE_DIRECT_FILTERS = {
     "origin_main_port_id",
     "destination_main_port_id",
     "parent_mode",
+    "parent_rate_mode",
     "rate_type"
 }
 
