@@ -226,8 +226,8 @@ def create_fcl_freight_rate(request):
     if row["mode"]  not in ["predicted", "cluster_extension"] and row['rate_type'] == "market_place":
         update_fcl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
 
-    create_sailing_schedule_port_pair_coverage_delay.apply_async(kwargs = {'request':request},queue = 'low')
-
+    create_sailing_schedule_port_pair_coverage_delay.apply_async(kwargs = {'request':freight},queue = 'low')
+    
     return {"id": freight.id}
 
 def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validities, is_rate_extended_via_bo):
