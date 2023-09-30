@@ -1,3 +1,129 @@
+
+CREATE TABLE brahmastra.kafka_feedback_fcl_freight_rate_statistics
+(
+    `data` String
+)
+ENGINE = Kafka('127.0.0.1:29092', 'arc.public.feedback_fcl_freight_rate_statistics', '001','JSONAsString')
+
+CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_feedback_rate_statistics TO brahmastra.feedback_fcl_freight_rate_statistics
+(
+    `id` UInt256,
+    `fcl_freight_rate_statistic_id` UInt256,
+    `feedback_id` UUID,
+    `validity_id` UUID,
+    `rate_id` UUID,
+    `source` FixedString(256),
+    `source_id` UUID,
+    `performed_by_id` UUID,
+    `performed_by_org_id` UUID,
+    `created_at` DateTime DEFAULT now(),
+    `updated_at` DateTime DEFAULT now(),
+    `importer_exporter_id` UUID,
+    `preferred_freight_rate` Float64 DEFAULT 0,
+    `currency` FixedString(3),
+    `feedbacks` Array(String),
+    `closing_remarks` Array(String),
+    `service_provider_id` UUID,
+    `feedback_type` FixedString(256),
+    `closed_by_id`  UUID,
+    `status` FixedString(256),
+    `serial_id` UInt256,
+    `rate_reverted_count`
+    `sign` Int8 DEFAULT 1,
+    `version` UInt32 DEFAULT 1,
+    `is_rate_reverted` Bool,
+) AS
+SELECT
+    JSONExtractUInt(data, 'before', 'id') AS id
+    JSONExtractUInt(data, 'before', 'fcl_freight_rate_statistic_id') AS fcl_freight_rate_statistic_id
+    JSONExtractString(data, 'before', 'feedback_id') AS feedback_id
+    JSONExtractString(data, 'before', 'validity_id') AS validity_id
+    JSONExtractString(data, 'before', 'rate_id') AS rate_id
+    JSONExtractString(data, 'before', 'source') AS source
+    JSONExtractString(data, 'before', 'source_id') AS source_id
+    JSONExtractString(data, 'before', 'performed_by_id') AS performed_by_id
+    JSONExtractString(data, 'before', 'performed_by_org_id') AS performed_by_org_id
+    parseDateTimeBestEffort(JSONExtractString(data, 'before', 'created_at')) AS created_at
+    parseDateTimeBestEffort(JSONExtractString(data, 'before', 'updated_at')) AS updated_at
+    JSONExtractString(data, 'before', 'importer_exporter_id') AS importer_exporter_id
+    JSONExtractFloat(data, 'before', 'preferred_freight_rate') AS preferred_freight_rate
+    JSONExtractString(data, 'before', 'currency') AS currency
+    JSONExtractArrayRaw(data, 'before', 'feedbacks') AS feedbacks
+    JSONExtractArrayRaw(data, 'before', 'closing_remarks') AS closing_remarks
+    JSONExtractString(data, 'before', 'service_provider_id') AS service_provider_id
+    JSONExtractString(data, 'before', 'feedback_type') AS feedback_type
+    JSONExtractString(data, 'before', 'closed_by_id') AS closed_by_id
+    JSONExtractString(data, 'before', 'status') AS status
+    JSONExtractUInt(data, 'before', 'serial_id') AS serial_id
+    JSONExtractInt(data, 'before', 'rate_reverted_count') AS rate_reverted_count
+    JSONExtractInt8(data, 'before', 'sign') AS sign
+    JSONExtractUInt32(data, 'before', 'version') AS version
+    JSONExtractBool(data, 'before', 'is_rate_reverted') AS is_rate_reverted
+    JSONExtractInt(data, 'source', 'lsn') AS version,
+    -1 AS sign
+    FROM brahmastra.kafka_feedback_fcl_freight_rate_statistics
+    WHERE JSONExtract(data,'op','String') = 'u'
+
+CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_feedback_rate_statistics TO brahmastra.feedback_fcl_freight_rate_statistics
+(
+    `id` UInt256,
+    `fcl_freight_rate_statistic_id` UInt256,
+    `feedback_id` UUID,
+    `validity_id` UUID,
+    `rate_id` UUID,
+    `source` FixedString(256),
+    `source_id` UUID,
+    `performed_by_id` UUID,
+    `performed_by_org_id` UUID,
+    `created_at` DateTime DEFAULT now(),
+    `updated_at` DateTime DEFAULT now(),
+    `importer_exporter_id` UUID,
+    `preferred_freight_rate` Float64 DEFAULT 0,
+    `currency` FixedString(3),
+    `feedbacks` Array(String),
+    `closing_remarks` Array(String),
+    `service_provider_id` UUID,
+    `feedback_type` FixedString(256),
+    `closed_by_id`  UUID,
+    `status` FixedString(256),
+    `serial_id` UInt256,
+    `rate_reverted_count`
+    `sign` Int8 DEFAULT 1,
+    `version` UInt32 DEFAULT 1,
+    `is_rate_reverted` Bool,
+
+) AS
+    SELECT
+    JSONExtractUInt(data, 'after', 'id') AS id
+    JSONExtractUInt(data, 'after', 'fcl_freight_rate_statistic_id') AS fcl_freight_rate_statistic_id
+    JSONExtractString(data, 'after', 'feedback_id') AS feedback_id
+    JSONExtractString(data, 'after', 'validity_id') AS validity_id
+    JSONExtractString(data, 'after', 'rate_id') AS rate_id
+    JSONExtractString(data, 'after', 'source') AS source
+    JSONExtractString(data, 'after', 'source_id') AS source_id
+    JSONExtractString(data, 'after', 'performed_by_id') AS performed_by_id
+    JSONExtractString(data, 'after', 'performed_by_org_id') AS performed_by_org_id
+    parseDateTimeBestEffort(JSONExtractString(data, 'after', 'created_at')) AS created_at
+    parseDateTimeBestEffort(JSONExtractString(data, 'after', 'updated_at')) AS updated_at
+    JSONExtractString(data, 'after', 'importer_exporter_id') AS importer_exporter_id
+    JSONExtractFloat(data, 'after', 'preferred_freight_rate') AS preferred_freight_rate
+    JSONExtractString(data, 'after', 'currency') AS currency
+    JSONExtractArrayRaw(data, 'after', 'feedbacks') AS feedbacks
+    JSONExtractArrayRaw(data, 'after', 'closing_remarks') AS closing_remarks
+    JSONExtractString(data, 'after', 'service_provider_id') AS service_provider_id
+    JSONExtractString(data, 'after', 'feedback_type') AS feedback_type
+    JSONExtractString(data, 'after', 'closed_by_id') AS closed_by_id
+    JSONExtractString(data, 'after', 'status') AS status
+    JSONExtractUInt(data, 'after', 'serial_id') AS serial_id
+    JSONExtractInt(data, 'after', 'rate_reverted_count') AS rate_reverted_count
+    JSONExtractInt8(data, 'after', 'sign') AS sign
+    JSONExtractUInt32(data, 'after', 'version') AS version
+    JSONExtractBool(data, 'after', 'is_rate_reverted') AS is_rate_reverted
+    1 AS sign
+FROM brahmastra.kafka_feedback_fcl_freight_rate_statistics  
+WHERE JSONExtract(data,'op','String') in ('c','u')
+
+
 CREATE TABLE brahmastra.feedback_fcl_freight_rate_statistics
 (
     id UInt256,
