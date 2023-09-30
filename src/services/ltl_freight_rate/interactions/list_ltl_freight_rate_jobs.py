@@ -154,6 +154,8 @@ def apply_filters(query, filters):
 
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
+    
+    query = apply_is_visible_filter(query)
 
     return query
 
@@ -164,3 +166,6 @@ def apply_status_filters(query, filters):
         on=(LtlFreightRateJobMapping.job_id == LtlFreightRateJob.id),
     ).where(LtlFreightRateJobMapping.status == filters.get("status"))
     return query
+
+def apply_is_visible_filter(query):
+    query = query.where(LtlFreightRateJob.is_visible == True)
