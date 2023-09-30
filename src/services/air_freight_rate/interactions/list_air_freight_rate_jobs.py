@@ -53,6 +53,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "serial_id",
     "price_type",
     "sources",
+
 ]
 
 
@@ -93,7 +94,7 @@ def get_data(query):
     for d in data:
         source_id = AirFreightRateJobMapping.select(AirFreightRateJobMapping.source_id).where(AirFreightRateJobMapping.job_id == d['id']).first()
         d['source_id'] = source_id.source_id
-    return list(query.dicts())
+    return data
 
 
 def includes_filters(includes):
@@ -164,4 +165,8 @@ def apply_filters(query, filters):
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
 
+    return query
+
+def apply_is_visible_filter(query):
+    query = query.where(AirFreightRateJob.is_visible == True)
     return query
