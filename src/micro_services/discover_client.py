@@ -17,6 +17,8 @@ def get_instance_url(service_name=None):
         service_port = CHECKOUT_PORT
     if service_name == 'shipment':
         service_port = SHIPMENT_PORT
+    if service_name == 'debezium_connect':
+        service_port = DEBEZIUM_CONNECT_PORT
 
 
     if service_name == 'common':
