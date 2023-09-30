@@ -208,6 +208,7 @@ async def extend_cluster_rates_by_latest_trends(request):
             "destination_port_id": request.get("destination_port_id"),
             "rate_type": "market_place",
             "updated_at_less_than_time": start_time.isoformat(),
+            "exclude_tag": "trend_GRI"
         }
         rate_extension_via_bulk_operation(request)
         request["filters"] = {
@@ -215,6 +216,7 @@ async def extend_cluster_rates_by_latest_trends(request):
             "destination_port_id": request.get("destination_secondary_ports"),
             "rate_type": "market_place",
             "updated_at_less_than_time": start_time.isoformat(),
+            "exclude_tag": "trend_GRI"
         }
         rate_extension_via_bulk_operation(request)
 
