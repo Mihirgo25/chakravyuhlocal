@@ -7,7 +7,7 @@ class LifeCycleConfig:
 
         response["business_flow"] = {
             "name": "spot_search",
-            "rates_count": self.input.get("spot_search"),
+            "rates_count": self.input.get("spot_search_count"),
             "parent": "global_parent",
             "child": {
                 "right": [
@@ -19,7 +19,7 @@ class LifeCycleConfig:
                             "right": [
                                 {
                                     "name": "shipment_received",
-                                    "rates_count": self.input.get("shipment_count"),
+                                    "rates_count": self.input.get("shipments_received"),
                                     "drop": self.input.get("shipment_dropoff"),
                                     "child": {
                                         "right": [
@@ -103,14 +103,14 @@ class LifeCycleConfig:
 
         response["dislike_flow"] = {
             "name": "spot_search",
-            "rates_count": self.input.get("spot_search"),
+            "rates_count": self.input.get("spot_search_count"),
             "parent": "global_parent",
             "child": {
                 "right": [
                     {
                         "name": "feedbacks_created",
-                        "rates_count": self.input.get("feedbacks_created _count"),
-                        "drop": self.input.get("feedbacks_created _dropoff"),
+                        "rates_count": self.input.get("feedbacks_created_count"),
+                        "drop": self.input.get("feedbacks_created_dropoff"),
                         "child": {
                             "right": [
                                 {
@@ -121,24 +121,28 @@ class LifeCycleConfig:
                                         "right": [
                                             {
                                                 "name": "feedback_closed",
-                                                "rates_count": -1,
-                                                "drop": -1,
+                                                "rates_count": self.input.get(
+                                                    "feedback_closed_count"
+                                                ),
+                                                "drop": self.input.get(
+                                                    "feedback_closed_dropoff"
+                                                ),
                                                 "child": {
                                                     "right": [
                                                         {
                                                             "name": "feedbacks_reverted",
                                                             "rates_count": self.input.get(
-                                                                "rate_reverted_feedbacks_count"
+                                                                "feedbacks_with_rate_added"
                                                             ),
                                                             "drop": self.input.get(
-                                                                "rate_reverted_feedbacks_dropoff"
+                                                                "feedbacks_with_rate_added_dropoff"
                                                             ),
                                                             "child": {
                                                                 "right": [
                                                                     {
                                                                         "name": "rates_reverted",
                                                                         "rates_count": self.input.get(
-                                                                            "feedback_rates_added_count"
+                                                                            "rates_source_disliked_count"
                                                                         ),
                                                                         "child": {},
                                                                     },
@@ -166,7 +170,7 @@ class LifeCycleConfig:
 
         response["rate_request_flow"] = {
             "name": "spot_search",
-            "rates_count": self.input.get("spot_search"),
+            "rates_count": self.input.get("spot_search_count"),
             "parent": "global_parent",
             "child": {
                 "right": [
