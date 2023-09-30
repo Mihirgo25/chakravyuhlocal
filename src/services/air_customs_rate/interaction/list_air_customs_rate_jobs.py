@@ -160,3 +160,4 @@ def apply_filters(query, filters):
 
 def apply_is_visible_filter(query):
     query = query.where(AirCustomsRateJob.is_visible == True)
+    return query

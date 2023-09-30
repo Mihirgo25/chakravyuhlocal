@@ -169,3 +169,4 @@ def apply_status_filters(query, filters):
 
 def apply_is_visible_filter(query):
     query = query.where(LtlFreightRateJob.is_visible == True)
+    return query
