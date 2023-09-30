@@ -149,9 +149,11 @@ class FclDefault(Bramhastra):
 
 class Paginate(Bramhastra):
     global_limit = 1000
-    
+
+
 class SelectTypes(Bramhastra):
     SO1 = "SO1"
+
 
 class ShipmentState(Bramhastra):
     empty = 0
@@ -162,10 +164,12 @@ class ShipmentState(Bramhastra):
     aborted = 5
     completed = 6
 
+
 class FeedbackType(Bramhastra):
     empty = 0
     disliked = 1
     liked = 2
+
 
 class FeedbackState(Bramhastra):
     empty = 0
@@ -173,24 +177,27 @@ class FeedbackState(Bramhastra):
     closed = 2
     rate_added = 3
 
+
 class RevenueDeskState(Bramhastra):
     empty = 0
     visited = 1
     selected_for_preference = 2
     selected_for_booking = 3
 
+
 class ShipmentServiceState(Bramhastra):
     empty = 0
-    containers_gated_out = 1
-    containers_gated_in = 2
-    cancelled = 3
-    awaiting_service_provider_confirmation = 4
-    confirmed_by_service_provider = 5
-    vessel_arrived= 6
-    vessel_departed= 7
-    completed= 8
-    aborted= 9
-    init= 10
+    init = 1
+    containers_gated_out = 2
+    containers_gated_in = 3
+    cancelled = 4
+    awaiting_service_provider_confirmation = 5
+    confirmed_by_service_provider = 6
+    vessel_arrived = 7
+    vessel_departed = 8
+    completed = 9
+    aborted = 10
+
 
 class RateRequestState(Bramhastra):
     empty = 0

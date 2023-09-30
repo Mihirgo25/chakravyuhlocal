@@ -6,6 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from math import ceil
 from micro_services.client import maps
 from services.bramhastra.enums import FclFilterTypes
+from services.bramhastra.constants import AGGREGATE_FILTER_MAPPING
 
 HEIRARCHY = ["continent", "country", "port"]
 
@@ -15,40 +16,45 @@ LOCATION_KEYS = {
     "destination_continent_id",
 }
 
-DEFAULT_AGGREGATE_SELECT = {
-    "average_price": "AVG(abs(standard_price))",
-}
+DEFAULT_AGGREGATE_SELECT = {"count": "average_standard_price"}
 
 
 def get_fcl_freight_map_view_statistics(filters, sort_by, sort_type, page_limit, page):
     clickhouse = ClickHouse()
 
-    select_aggregate = ",".join(
-        [
-            f"{v} AS {k}"
-            for k, v in filters.get(
-                "select_aggregate", DEFAULT_AGGREGATE_SELECT
-            ).items()
-        ]
-    )
+    select_aggregate = []
+    for alias, agg_key in filters.get(
+        "select_aggregate", DEFAULT_AGGREGATE_SELECT
+    ).items():
+        if agg_key not in AGGREGATE_FILTER_MAPPING:
+            continue
+        select_aggregate.append(
+            f"{AGGREGATE_FILTER_MAPPING[agg_key]['method']} AS {alias}"
+        )
+    select_aggregate = ",".join(select_aggregate)
 
     grouping = set()
 
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},{select_aggregate} FROM brahmastra.fcl_freight_actions'
+        f'SELECT {",".join(grouping)}, {select_aggregate} FROM brahmastra.fcl_freight_actions'
     ]
 
-    if where := get_direct_indirect_filters(filters, date=FclFilterTypes.time_series.value):
+    if where := get_direct_indirect_filters(
+        filters, date=FclFilterTypes.time_series.value
+    ):
         queries.append(" WHERE ")
         queries.append(where)
+
+    filters.pop("select_aggregate", None)
 
     add_group_by_and_order_by(queries, grouping, sort_by, sort_type)
 
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
     )
+
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     if statistics:

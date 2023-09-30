@@ -81,3 +81,133 @@ UNIQUE_FCL_SPOT_SEARCH_SERVICE_KEYS = {"commodity", "container_size", "container
 GLOBAL_MIN = -1000000000000000  # 10e-15
 
 DIFFERENCE_CHOICE_TYPE = ["rate_request", "feedback"]
+
+AGGREGATE_FILTER_MAPPING = {
+    "average_standard_price": {
+        "state": "",
+        "value": "",
+        "method": "AVG(abs(standard_price))",
+    },
+    "liked": {
+        "state": "feedback_type",
+        "value": "liked",
+        "method": "COUNT(id)",
+    },
+    "disliked": {
+        "state": "feedback_type",
+        "value": "disliked",
+        "method": "COUNT(id)",
+    },
+    "bas_standard_price_accuracy": {
+        "state": "",
+        "value": "",
+        "method": "AVG(bas_standard_price_accuracy)",
+    },
+    "spot_search": {
+        "state": "",
+        "value": "",
+        "method": "COUNT(DISTINCT spot_search_id)",
+    },
+    "checkout": {
+        "state": "",
+        "value": "",
+        "method": "COUNT(checkout)",
+    },
+    "shipment_completed": {
+        "state": "shipment_state",
+        "value": "completed",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "shipment_cancelled": {
+        "state": "shipment_state",
+        "value": "cancelled",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "shipment_aborted": {
+        "state": "shipment_state",
+        "value": "aborted",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "shipment_confirmed_by_importer_exporter": {
+        "state": "shipment_state",
+        "value": "confirmed_by_importer_exporter",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "shipment_in_progress": {
+        "state": "shipment_state",
+        "value": "in_progress",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "shipment_received": {
+        "state": "shipment_state",
+        "value": "received",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "revenue_desk_visit": {
+        "state": "revenue_desk_state",
+        "value": "visited",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "so1_visit": {
+        "state": "revenue_desk_state",
+        "value": "selected_for_preference",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "so1_select": {
+        "state": "revenue_desk_state",
+        "value": "selected_for_booking",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "rate_requests_created": {
+        "state": "rate_request_state",
+        "value": "created",
+        "method": "COUNT(id)",
+    },
+    "rate_requests_reverted": {
+        "state": "rate_request_state",
+        "value": "rate_added",
+        "method": "COUNT(id)",
+    },
+}
+
+AGGREGATE_METHODS_MAPPING = {
+    "shipment_state": {
+        "received": ">0",
+        "confirmed_by_importer_exporter": ">1",
+        "in_progress": "=3",
+        "cancelled": "=4",
+        "aborted": "=5",
+        "completed": "=6",
+    },
+    "feedback_type": {
+        "disliked": "=1",
+        "liked": "=2",
+    },
+    "feedback_state": {
+        "created": ">0",
+        "closed": ">1",
+        "rate_added": "=3",
+    },
+    "revenue_desk_state": {
+        "visited": ">0",
+        "selected_for_preference": ">1",
+        "selected_for_booking": "=3",
+    },
+    "shipment_service_state": {
+        "init": ">0",
+        "containers_gated_out": ">1",
+        "containers_gated_in": ">2",
+        "cancelled": "=4",
+        "awaiting_service_provider_confirmation": "=5",
+        "confirmed_by_service_provider": ">5",
+        "vessel_arrived": ">6",
+        "vessel_departed": ">7",
+        "completed": "=9",
+        "aborted": "=10",
+    },
+    "rate_request_state": {
+        "created": ">0",
+        "closed": ">1",
+        "rate_added": "=3",
+    },
+}
