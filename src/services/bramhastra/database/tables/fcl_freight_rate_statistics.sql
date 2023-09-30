@@ -3,7 +3,7 @@ CREATE TABLE brahmastra.kafka_rate_statistics
 (
     `data` String
 )
-ENGINE = Kafka('127.0.0.1:29092', 'arc.public.fcl_freight_rate_statistics', '001','JSONAsString')
+ENGINE = Kafka('127.0.0.1:29092', 'arc.public.fcl_freight_rate_statistics', '001','JSONAsString');
 
 CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_rate_statistics TO brahmastra.fcl_freight_rate_statistics
 (
@@ -177,9 +177,8 @@ SELECT
     JSONExtractFloat(data, 'before', 'bas_standard_price_accuracy') AS bas_standard_price_accuracy,
     JSONExtractFloat(data, 'before', 'bas_standard_price_diff_from_selected_rate') AS bas_standard_price_diff_from_selected_rate,
     JSONExtractString(data, 'before', 'parent_rate_mode') AS parent_rate_mode
-
     FROM brahmastra.kafka_rate_statistics
-    WHERE JSONExtract(data,'op','String') = 'u'
+    WHERE JSONExtract(data,'op','String') = 'u';
 
 CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_statistics TO brahmastra.rate_statistics
 (
@@ -353,11 +352,10 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_statistics TO brahmas
     JSONExtractFloat(data, 'after', 'bas_standard_price_accuracy') AS bas_standard_price_accuracy,
     JSONExtractFloat(data, 'after', 'bas_standard_price_diff_from_selected_rate') AS bas_standard_price_diff_from_selected_rate,
     JSONExtractString(data, 'after', 'parent_rate_mode') AS parent_rate_mode
-
 FROM brahmastra.kafka_rate_statistics  
-WHERE JSONExtract(data,'op','String') in ('c','u')
+WHERE JSONExtract(data,'op','String') in ('c','u');
 
-CREATE TABLE brahmastra.rate_statistics
+CREATE TABLE brahmastra.fcl_freight_rate_statistics
 (
         id UInt256,
         identifier FixedString(256),

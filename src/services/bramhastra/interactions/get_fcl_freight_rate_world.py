@@ -12,7 +12,7 @@ async def get_fcl_freight_rate_world(filters):
     statistics = await get_count_distribution(filters)
     count = await get_total_count()
     return {
-        "total_rates": count,
+        "total_count": count,
         "statistics": statistics,
     }
 
@@ -45,7 +45,7 @@ async def get_count_distribution(filters):
             )
         SELECT
             {location}_id,
-            COUNT(*) AS rate_count
+            COUNT(*) AS count
         FROM
         (
             SELECT {trade}_{location}_id AS {location}_id

@@ -5,10 +5,10 @@ from configs.definitions import ROOT_DIR
 import peewee
 
 FILES_WITH_KAFKA = [
-    "fcl_freight_actions",
-    "fcl_freight_rate_request_statistics",
-    "fcl_freight_rate_statistics",
-    "feedback_fcl_freight_rate_statistics",
+    "fcl_freight_actions.sql",
+    "fcl_freight_rate_request_statistics.sql",
+    "fcl_freight_rate_statistics.sql",
+    "feedback_fcl_freight_rate_statistics.sql",
 ]
 
 
@@ -45,7 +45,7 @@ class Click:
         with open(sql_file_path, "r") as sql_file:
             sql_script = sql_file.read()
             regex = r"(?<=\n\s{4})(\w+)\s"
-            if sql_file_path in "".join(FILES_WITH_KAFKA):
+            if sql_file_path.split('/')[-1] in "".join(FILES_WITH_KAFKA):
                 regex = r"(?<=\n\s{8})(\w+)\s"
             click_column_names_with_duplicates = re.findall(regex, sql_script)
             click_column_names_set = set()

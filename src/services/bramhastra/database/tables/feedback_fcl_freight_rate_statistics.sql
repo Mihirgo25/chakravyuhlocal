@@ -3,7 +3,7 @@ CREATE TABLE brahmastra.kafka_feedback_fcl_freight_rate_statistics
 (
     `data` String
 )
-ENGINE = Kafka('127.0.0.1:29092', 'arc.public.feedback_fcl_freight_rate_statistics', '001','JSONAsString')
+ENGINE = Kafka('127.0.0.1:29092', 'arc.public.feedback_fcl_freight_rate_statistics', '001','JSONAsString');
 
 CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_feedback_rate_statistics TO brahmastra.feedback_fcl_freight_rate_statistics
 (
@@ -28,7 +28,6 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_feedback_rate_statistics 
     `closed_by_id`  UUID,
     `status` FixedString(256),
     `serial_id` UInt256,
-    `rate_reverted_count` UInt128,
     `sign` Int8 DEFAULT 1,
     `version` UInt32 DEFAULT 1,
     `is_rate_reverted` Bool
@@ -43,8 +42,8 @@ SELECT
     JSONExtractString(data, 'before', 'source_id') AS source_id,
     JSONExtractString(data, 'before', 'performed_by_id') AS performed_by_id,
     JSONExtractString(data, 'before', 'performed_by_org_id') AS performed_by_org_id,
-    parseDateTimeBestEffort(JSONExtractString(data, 'before', 'created_at')) AS, created_at
-    parseDateTimeBestEffort(JSONExtractString(data, 'before', 'updated_at')) AS, updated_at
+    parseDateTimeBestEffort(JSONExtractString(data, 'before', 'created_at')) AS created_at,
+    parseDateTimeBestEffort(JSONExtractString(data, 'before', 'updated_at')) AS updated_at,
     JSONExtractString(data, 'before', 'importer_exporter_id') AS importer_exporter_id,
     JSONExtractFloat(data, 'before', 'preferred_freight_rate') AS preferred_freight_rate,
     JSONExtractString(data, 'before', 'currency') AS currency,
@@ -55,12 +54,11 @@ SELECT
     JSONExtractString(data, 'before', 'closed_by_id') AS closed_by_id,
     JSONExtractString(data, 'before', 'status') AS status,
     JSONExtractUInt(data, 'before', 'serial_id') AS serial_id,
-    JSONExtractInt(data, 'before', 'rate_reverted_count') AS rate_reverted_count,
     -1 AS sign,
     JSONExtractUInt32(data, 'source', 'lsn') AS version,
-    JSONExtractBool(data, 'before', 'is_rate_reverted') AS is_rate_reverted,
+    JSONExtractBool(data, 'before', 'is_rate_reverted') AS is_rate_reverted
     FROM brahmastra.kafka_feedback_fcl_freight_rate_statistics
-    WHERE JSONExtract(data,'op','String') = 'u'
+    WHERE JSONExtract(data,'op','String') = 'u';
 
 CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_feedback_rate_statistics TO brahmastra.feedback_fcl_freight_rate_statistics
 (
@@ -85,11 +83,9 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_feedback_rate_statistics T
     `closed_by_id`  UUID,
     `status` FixedString(256),
     `serial_id` UInt256,
-    `rate_reverted_count` UInt128,
     `sign` Int8 DEFAULT 1,
     `version` UInt32 DEFAULT 1,
     `is_rate_reverted` Bool
-
 ) AS
     SELECT
     JSONExtractUInt(data, 'after', 'id') AS id,
@@ -113,13 +109,13 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_feedback_rate_statistics T
     JSONExtractString(data, 'after', 'closed_by_id') AS closed_by_id,
     JSONExtractString(data, 'after', 'status') AS status,
     JSONExtractUInt(data, 'after', 'serial_id') AS serial_id,
-    JSONExtractInt(data, 'after', 'rate_reverted_count') AS rate_reverted_count,
     1 AS sign,
     JSONExtractUInt32(data, 'after', 'version') AS version,
+    parseDateTimeBestEffort(JSONExtractString(data, 'after', 'operation_created_at')) AS operation_created_at,
+    parseDateTimeBestEffort(JSONExtractString(data, 'after', 'operation_updated_at')) AS operation_updated_at,
     JSONExtractBool(data, 'after', 'is_rate_reverted') AS is_rate_reverted
-
 FROM brahmastra.kafka_feedback_fcl_freight_rate_statistics  
-WHERE JSONExtract(data,'op','String') in ('c','u')
+WHERE JSONExtract(data,'op','String') in ('c','u');
 
 
 CREATE TABLE brahmastra.feedback_fcl_freight_rate_statistics
@@ -145,10 +141,11 @@ CREATE TABLE brahmastra.feedback_fcl_freight_rate_statistics
         closed_by_id  UUID,
         status FixedString(256),
         serial_id UInt256,
-        rate_reverted_count
         sign Int8 DEFAULT 1,
-        version UInt32 DEFAULT 1
-        is_rate_reverted Bool,
+        version UInt32 DEFAULT 1,
+        operation_created_at DateTime DEFAULT now(),
+        operation_updated_at DateTime DEFAULT now(),
+        is_rate_reverted Bool
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (rate_id)

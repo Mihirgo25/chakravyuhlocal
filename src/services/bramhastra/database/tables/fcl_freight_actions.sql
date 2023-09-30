@@ -1,9 +1,8 @@
-
 CREATE TABLE brahmastra.kafka_fcl_freight_actions
 (
     `data` String
 )
-ENGINE = Kafka('127.0.0.1:29092', 'arc.public.fcl_freight_actions', '001','JSONAsString')
+ENGINE = Kafka('127.0.0.1:29092', 'arc.public.fcl_freight_actions', '001','JSONAsString');
 
 CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_actions TO brahmastra.fcl_freight_actions
 (
@@ -36,6 +35,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_actions TO brahmastra.fcl
     `bas_currency` FixedString(3),
     `mode` FixedString(256),
     `parent_mode` FixedString(256),
+    `parent_rate_mode` FixedString(256),
     `source` FixedString(256),
     `source_id` UUID,
     `sourced_by_id` UUID,
@@ -125,6 +125,7 @@ JSONExtractFloat(data, 'before', 'market_price') AS market_price,
 JSONExtractString(data, 'before', 'bas_currency') AS bas_currency,
 JSONExtractString(data, 'before', 'mode') AS mode,
 JSONExtractString(data, 'before', 'parent_mode') AS parent_mode,
+JSONExtractString(data, 'before', 'parent_rate_mode') AS parent_rate_mode,
 JSONExtractString(data, 'before', 'source') AS source,
 JSONExtractString(data, 'before', 'source_id') AS source_id,
 JSONExtractString(data, 'before', 'sourced_by_id') AS sourced_by_id,
@@ -184,7 +185,7 @@ parseDateTimeBestEffort(JSONExtractString(data, 'before', 'operation_updated_at'
 JSONExtractInt(data, 'source', 'lsn') AS version,
 -1 AS sign
 FROM brahmastra.kafka_fcl_freight_actions
-WHERE JSONExtract(data,'op','String') = 'u'
+WHERE JSONExtract(data,'op','String') = 'u';
 
 CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_actions TO brahmastra.fcl_freight_actions
 (
@@ -218,6 +219,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_actions TO brahmastra.fcl_
     `bas_currency` FixedString(3),
     `mode` FixedString(256),
     `parent_mode` FixedString(256),
+    `parent_rate_mode` FixedString(256),
     `source` FixedString(256),
     `source_id` UUID,
     `sourced_by_id` UUID,
@@ -276,7 +278,6 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_actions TO brahmastra.fcl_
     `operation_updated_at` DateTime,
     `sign` Int8 DEFAULT 1,
     `version` UInt8 DEFAULT 1
-
 ) AS
     SELECT
     JSONExtractInt(data, 'after', 'id') AS id,
@@ -308,6 +309,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_actions TO brahmastra.fcl_
     JSONExtractString(data, 'after', 'bas_currency') AS bas_currency,
     JSONExtractString(data, 'after', 'mode') AS mode,
     JSONExtractString(data, 'after', 'parent_mode') AS parent_mode,
+    JSONExtractString(data, 'before', 'parent_rate_mode') AS parent_rate_mode,
     JSONExtractString(data, 'after', 'source') AS source,
     JSONExtractString(data, 'after', 'source_id') AS source_id,
     JSONExtractString(data, 'after', 'sourced_by_id') AS sourced_by_id,
@@ -367,8 +369,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_actions TO brahmastra.fcl_
     JSONExtractFloat(data,'source','lsn') AS version,
     1 AS sign
 FROM brahmastra.kafka_fcl_freight_actions  
-WHERE JSONExtract(data,'op','String') in ('c','u')
-
+WHERE JSONExtract(data,'op','String') in ('c','u');
 
 CREATE TABLE brahmastra.fcl_freight_actions
 (
@@ -401,6 +402,7 @@ CREATE TABLE brahmastra.fcl_freight_actions
         bas_currency FixedString(3),
         mode FixedString(256),
         parent_mode FixedString(256),
+        parent_rate_mode FixedString(256),
         source FixedString(256),
         source_id UUID,
         sourced_by_id UUID,
@@ -424,7 +426,7 @@ CREATE TABLE brahmastra.fcl_freight_actions
         shipment_source String,
         containers_count UInt8,
         cargo_weight_per_container Float64,
-        shipment_state Enum('empty'= 0,'received'= 1,'confirmed_by_importer_exporter'= 2,'cancelled'= 3,'aborted'= 4,'completed'= 5),
+        shipment_state Enum('empty'= 0,'received'= 1,'confirmed_by_importer_exporter'= 2,'in_progress'=3, 'cancelled'= 4,'aborted'= 5,'completed'= 6),
         shipment_service_id UUID,
         shipment_cancellation_reason String,
         shipment_source_id UUID,
@@ -461,5 +463,5 @@ CREATE TABLE brahmastra.fcl_freight_actions
         version UInt8 DEFAULT 1
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (origin_continent_id, parent_mode,origin_country_id, container_size, origin_port_id, rate_id, id)
+PRIMARY KEY (origin_continent_id, parent_mode, origin_country_id, container_size, origin_port_id, rate_id, id)
 ORDER BY (origin_continent_id, parent_mode, origin_country_id, container_size, origin_port_id , rate_id, id, version);
