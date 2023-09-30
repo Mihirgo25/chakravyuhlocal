@@ -672,11 +672,20 @@ class FclFreightRateBulkOperation(BaseModel):
                 
                 if data['markup_type'].lower() == 'percent':
                     markup = float(data['markup'] * line_item['price']) / 100 
+                    
                     if min_allowed_markup and max_allowed_markup:
                         if line_item['currency'] != data['markup_currency']:
                            min_allowed_markup =  common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'] , 'to_currency': line_item['currency'] , 'price': min_allowed_markup}).get('price')
                            max_allowed_markup =  common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'] , 'to_currency': line_item['currency'] , 'price': max_allowed_markup}).get('price')
                         markup = max(min_allowed_markup, min(markup, max_allowed_markup))
+                        
+                        if data.get('tag') == 'trend_GRI' and markup < 0:
+                            min_allowed_price = line_item['market_price'] + min_allowed_markup 
+                            
+                            if  line_item['price'] < min_allowed_price:
+                               continue
+                            markup = max(markup, (min_allowed_price - line_item['price']))
+                            
                 else:
                     markup = data['markup']
                 
