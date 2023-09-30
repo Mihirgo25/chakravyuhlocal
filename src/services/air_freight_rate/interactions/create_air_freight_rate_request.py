@@ -87,6 +87,7 @@ def execute_transaction_code(request):
             send_notification_to_supply_agents(
                  request_object, airports
             )
+    request["rate_id"] = request_object.id
     create_jobs_for_air_freight_rate_request_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
     return {"id": str(request_object.id)}
 

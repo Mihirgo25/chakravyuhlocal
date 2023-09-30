@@ -87,8 +87,9 @@ def execute_transaction_code(request):
         if airports:
             send_air_freight_rate_feedback_notification_in_delay.apply_async(kwargs={'object':feedback,'air_freight_rate':rate,'airports':airports},queue='communication')
     
+    request['rate_id'] = feedback.id
     create_jobs_for_air_freight_rate_feedback_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
-
+    
     return {'id': request['rate_id']}
 
 def update_likes_dislike_count(rate,request):

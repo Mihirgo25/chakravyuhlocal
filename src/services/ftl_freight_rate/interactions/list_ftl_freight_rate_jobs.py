@@ -1,9 +1,6 @@
-from services.ltl_freight_rate.models.ltl_freight_rate_jobs import LtlFreightRateJob
-from services.ltl_freight_rate.models.ltl_freight_rate_job_mappings import (
-    LtlFreightRateJobMapping,
-)
-from services.ltl_freight_rate.helpers.generate_csv_file_url_for_ltl import (
-    generate_csv_file_url_for_ltl,
+from services.ftl_freight_rate.models.ftl_freight_rate_jobs import FtlFreightRateJob
+from services.ftl_freight_rate.helpers.generate_csv_file_url_for_ftl import (
+    generate_csv_file_url_for_ftl,
 )
 import json
 from libs.get_applicable_filters import get_applicable_filters
@@ -17,6 +14,7 @@ possible_direct_filters = [
     "commodity_type",
     "user_id",
     "serial_id",
+    "status"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 
@@ -34,6 +32,9 @@ DEFAULT_REQUIRED_FIELDS = [
     "created_at",
     "updated_at",
     "status",
+    "trip_type",
+    "importer_exporter",
+    "importer_exporter_id",
     "service_provider",
     "service_provider_id",
     "origin_location",
@@ -45,7 +46,7 @@ DEFAULT_REQUIRED_FIELDS = [
 ]
 
 
-def list_ltl_freight_rate_jobs(
+def list_ftl_freight_rate_jobs(
     filters={},
     page_limit=10,
     page=1,
@@ -62,8 +63,9 @@ def list_ltl_freight_rate_jobs(
 
         query = apply_filters(query, filters)
 
+
     if generate_csv_url:
-        return generate_csv_file_url_for_ltl(query)
+        return generate_csv_file_url_for_ftl(query)
 
     if page_limit:
         query = query.paginate(page, page_limit)
@@ -78,30 +80,26 @@ def list_ltl_freight_rate_jobs(
 
 
 def get_data(query):
-    data = list(query.dicts())
-    for d in data:
-        source_id = LtlFreightRateJobMapping.select(LtlFreightRateJobMapping.source_id).where(LtlFreightRateJobMapping.job_id == d['id']).first()
-        d['source_id'] = source_id.source_id
     return list(query.dicts())
 
 
 def includes_filter(includes):
     if includes:
-        ltl_all_fields = list(LtlFreightRateJob._meta.fields.keys())
-        required_ltl_fields = [a for a in includes.keys() if a in ltl_all_fields]
-        ltl_fields = [getattr(LtlFreightRateJob, key) for key in required_ltl_fields]
+        ftl_all_fields = list(FtlFreightRateJob._meta.fields.keys())
+        required_ftl_fields = [a for a in includes.keys() if a in ftl_all_fields]
+        ftl_fields = [getattr(FtlFreightRateJob, key) for key in required_ftl_fields]
     else:
-        ltl_fields = [
-            getattr(LtlFreightRateJob, key) for key in DEFAULT_REQUIRED_FIELDS
+        ftl_fields = [
+            getattr(FtlFreightRateJob, key) for key in DEFAULT_REQUIRED_FIELDS
         ]
-    query = LtlFreightRateJob.select(*ltl_fields)
+    query = FtlFreightRateJob.select(*ftl_fields)
     return query
 
 
 def sort_query(sort_by, sort_type, query):
     if sort_by:
         query = query.order_by(
-            eval("LtlFreightRateJob.{}.{}()".format(sort_by, sort_type))
+            eval("FtlFreightRateJob.{}.{}()".format(sort_by, sort_type))
         )
     return query
 
@@ -114,34 +112,28 @@ def apply_indirect_filters(query, filters):
 
 
 def apply_updated_at_filter(query, filters):
-    query = query.where(LtlFreightRateJob.updated_at > filters["updated_at"])
+    query = query.where(FtlFreightRateJob.updated_at > filters["updated_at"])
     return query
 
 
 def apply_source_filter(query, filters):
-    query = query.where(LtlFreightRateJob.sources.contains(filters["source"]))
+    query = query.where(FtlFreightRateJob.sources.contains(filters["source"]))
     return query
 
 
 def apply_start_date_filter(query, filters):
-    start_date = filters.get("start_date")
-    if start_date:
-        start_date = datetime.strptime(start_date, STRING_FORMAT) + timedelta(
-            hours=5, minutes=30
-        )
-    query = query.where(LtlFreightRateJob.created_at.cast("date") >= start_date.date())
+    start_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
+        hours=5, minutes=30
+    )
+    query = query.where(FtlFreightRateJob.created_at.cast("date") >= start_date.date())
     return query
 
 
 def apply_end_date_filter(query, filters):
-    end_date = filters.get("end_date")
-    if end_date:
-        end_date = datetime.strptime(end_date, STRING_FORMAT) + timedelta(
-            hours=5, minutes=30
-        )
-        query = query.where(
-            LtlFreightRateJob.created_at.cast("date") <= end_date.date()
-        )
+    end_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
+        hours=5, minutes=30
+    )
+    query = query.where(FtlFreightRateJob.created_at.cast("date") <= end_date.date())
     return query
 
 
@@ -150,7 +142,7 @@ def apply_filters(query, filters):
         filters, possible_direct_filters, possible_indirect_filters
     )
     # applying direct filters
-    query = get_filters(direct_filters, query, LtlFreightRateJob)
+    query = get_filters(direct_filters, query, FtlFreightRateJob)
 
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
@@ -159,13 +151,5 @@ def apply_filters(query, filters):
 
     return query
 
-
-def apply_status_filters(query, filters):
-    query = query.join(
-        LtlFreightRateJobMapping,
-        on=(LtlFreightRateJobMapping.job_id == LtlFreightRateJob.id),
-    ).where(LtlFreightRateJobMapping.status == filters.get("status"))
-    return query
-
 def apply_is_visible_filter(query):
-    query = query.where(LtlFreightRateJob.is_visible == True)
+    query = query.where(FtlFreightRateJob.is_visible == True)

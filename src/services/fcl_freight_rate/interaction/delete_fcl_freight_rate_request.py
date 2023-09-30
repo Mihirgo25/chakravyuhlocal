@@ -5,7 +5,6 @@ from database.db_session import db
 from database.rails_db import (
     get_organization_partner,
 )
-from services.fcl_freight_rate.fcl_celery_worker import delete_jobs_for_fcl_freight_rate_request_delay
 
 def delete_fcl_freight_rate_request(request):
     with db.atomic():
@@ -14,6 +13,7 @@ def delete_fcl_freight_rate_request(request):
 def execute_transaction_code(request):
     from celery_worker import send_closed_notifications_to_sales_agent_function,send_closed_notifications_to_user_request
     from services.bramhastra.celery import send_delete_request_stats_in_delay
+    from services.fcl_freight_rate.fcl_celery_worker import delete_jobs_for_fcl_freight_rate_request_delay
     objects = find_objects(request)
 
     if not objects:

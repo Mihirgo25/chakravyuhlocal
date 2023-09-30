@@ -64,7 +64,7 @@ def execute_transaction_code(request):
 
 def get_create_params(request):
     if request.get('cargo_readiness_date'):
-        request['cargo_readiness_date'] = request.get('cargo_readiness_date')
+        request['cargo_readiness_date'] = request.get('cargo_readiness_date').isoformat()
     loc_ids = []
 
     if request.get('origin_location_id'):

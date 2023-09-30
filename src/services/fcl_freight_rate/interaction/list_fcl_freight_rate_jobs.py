@@ -76,7 +76,6 @@ def list_fcl_freight_rate_jobs(
         query = query.paginate(page, page_limit)
 
     query = sort_query(sort_by, sort_type, query)
-
     data = get_data(query)
 
     return {
@@ -162,6 +161,8 @@ def apply_filters(query, filters):
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
 
+    query = apply_is_visible_filter(query)
+
     return query
 
 
@@ -171,3 +172,6 @@ def apply_status_filters(query, filters):
         on=(FclFreightRateJobMapping.job_id == FclFreightRateJob.id),
     ).where(FclFreightRateJobMapping.status == filters.get("status"))
     return query
+
+def apply_is_visible_filter(query):
+    query = query.where(FclFreightRateJob.is_visible == True)

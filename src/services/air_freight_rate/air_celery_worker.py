@@ -102,3 +102,6 @@ def delete_jobs_for_air_freight_rate_feedback_delay(self, requirements):
             pass
         else:
             raise self.retry(exc= exc)
+        
+
+        
