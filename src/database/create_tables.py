@@ -10,6 +10,8 @@ from services.ltl_freight_rate.models.ltl_freight_rate_job_mappings import LtlFr
 from services.ltl_freight_rate.models.ltl_freight_rate_audit import LtlFreightRateAudit
 from services.ftl_freight_rate.models.ftl_freight_rate_jobs import FtlFreightRateJob
 from services.ftl_freight_rate.models.ftl_freight_rate_job_mappings import FtlFreightRateJobMapping
+from services.fcl_cfs_rate.models.fcl_cfs_rate_jobs import FclCfsRateJob
+from services.fcl_cfs_rate.models.fcl_cfs_rate_job_mappings import FclCfsRateJobMapping
  
 
 
@@ -25,6 +27,7 @@ class Table:
             db.execute_sql('CREATE SEQUENCE ltl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;')
             db.execute_sql('CREATE SEQUENCE ltl_freight_rate_audits_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;')
             db.execute_sql('CREATE SEQUENCE ftl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;')
+            db.execute_sql('CREATE SEQUENCE fcl_cfs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;')
             db.create_tables(models)
             db.close()
             print("created table")
@@ -34,6 +37,6 @@ class Table:
 
 
 if __name__ == "__main__":
-    models = [FtlFreightRateJob, FtlFreightRateJobMapping, HaulageFreightRateJob, HaulageFreightRateJobMapping, FclCustomsRateJob, FclCustomsRateJobMapping, AirCustomsRateJob, AirCustomsRateJobMapping, LtlFreightRateJob, LtlFreightRateJobMapping, LtlFreightRateAudit]
+    models = [FtlFreightRateJob, FtlFreightRateJobMapping, HaulageFreightRateJob, HaulageFreightRateJobMapping, FclCustomsRateJob, FclCustomsRateJobMapping, AirCustomsRateJob, AirCustomsRateJobMapping, LtlFreightRateJob, LtlFreightRateJobMapping, LtlFreightRateAudit, FclCfsRateJob, FclCfsRateJobMapping]
 
     Table().create_tables(models)

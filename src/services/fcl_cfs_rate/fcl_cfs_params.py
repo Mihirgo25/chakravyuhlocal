@@ -125,3 +125,20 @@ class UpdateFclCfsRatePlatformPrice(BaseModel):
   performed_by_type: str
   importer_exporter_id: str = None
   is_line_items_error_messages_present: bool = False
+
+class DeleteFclCfsRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+
+class CreateFclCfsRateJob(BaseModel):
+    location_id: str = None
+    service_provider_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    rate_type: str = None
