@@ -104,23 +104,4 @@ def delete_jobs_for_air_freight_rate_feedback_delay(self, requirements):
             raise self.retry(exc= exc)
         
 
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def create_jobs_for_air_freight_rate_feedback_delay(self, requirements):
-    try:
-        return create_air_freight_rate_job(requirements, "rate_feedback")
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
         
-        
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delete_jobs_for_air_freight_rate_feedback_delay(self, requirements):
-    try:
-        return delete_air_freight_rate_job(requirements, "rate_feedback")
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)

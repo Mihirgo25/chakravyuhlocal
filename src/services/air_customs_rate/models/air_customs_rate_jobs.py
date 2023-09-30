@@ -36,6 +36,7 @@ class AirCustomsRateJob(BaseModel):
     commodity_sub_type = CharField(null=True)
     operation_type = CharField(null=True)
     price_type = CharField(null=True)
+    is_visible = BooleanField(null=True,default=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_customs_rate_jobs_serial_id_seq')")],)
     mode = CharField(default = 'manual', index = True, null = True)
 
