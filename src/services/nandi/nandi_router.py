@@ -15,22 +15,6 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_f
 from services.nandi.helpers.check_fcl_freight_local_for_draft import check_fcl_freight_rate_local_for_draft
 nandi_router = APIRouter()
 
-@nandi_router.post("/create_draft_fcl_freight_rate")
-def create_draft_fcl_freight_rate(request: CreateDraftFclFreightRate, resp: dict = Depends(authorize_token)):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-    if resp["isAuthorized"]:
-        request.performed_by_id = resp["setters"]["performed_by_id"]
-        request.performed_by_type = resp["setters"]["performed_by_type"]
-    try:
-        draft_freight = create_draft_fcl_freight_rate_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=json_encoder(draft_freight))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
 @nandi_router.post("/update_draft_fcl_freight_rate")
 def update_draft_fcl_freight_rate(request: UpdateDraftFclFreightRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
@@ -113,17 +97,6 @@ def create_fcl_freight_rate_local_for_draft(request: CreateFclFreightDraftLocal,
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         request = request.dict(exclude_none=False)
-        # get_local_params = {
-        #     'port_id': request.get('port_id'),
-        #     'main_port_id': request.get('main_port_id'),
-        #     'container_size': request.get('container_size'),
-        #     'container_type': request.get('container_type'),
-        #     'commodity': request.get('commodity'),
-        #     'shipping_line_id': request.get('shipping_line_id'),
-        #     'service_provider_id': request.get('service_provider_id'),
-        #     'trade_type': request.get('trade_type'),
-        #     'rate_type':request.get('rate_type','market_place')
-        # }
         response = check_fcl_freight_rate_local_for_draft(request)
         return JSONResponse(status_code=200, content=json_encoder(response))
     except HTTPException as e:

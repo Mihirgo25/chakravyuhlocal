@@ -4,6 +4,8 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import 
 from services.nandi.interactions.create_draft_fcl_freight_rate_local import create_draft_fcl_freight_rate_local_data
 
 def check_fcl_freight_rate_local_for_draft(request):
+    if not request.get('rate_type'):
+        request['rate_type'] = 'market_place'
     rate_exists_response = get_draft_rate_with_shipment_id(request)
     if rate_exists_response == False:
         fcl_freight_local = get_fcl_freight_rate_local(request)
@@ -37,10 +39,11 @@ def get_draft_rate_with_shipment_id(request):
     rate.invoice_date = invoice_date
     rate.invoice_url = invoice_url
 
-    line_items = (rate.data or {}).get('line_items')
-    if line_items and (request.get('data') or {}).get('line_items'):
-        line_items.extend(request['data']['line_items'])
-    rate.data = rate.data | ({'line_items' : remove_duplicate_line_items(line_items)})
+    existing_line_items = (rate.data or {}).get('line_items', [])
+    new_line_items = (request.get('data') or {}).get('line_items', [])
+
+    merged_line_items = remove_duplicate_line_items(existing_line_items + new_line_items)
+    rate.data = rate.data | ({'line_items' : merged_line_items})
     rate.save()
 
     return {'id':rate.id}
