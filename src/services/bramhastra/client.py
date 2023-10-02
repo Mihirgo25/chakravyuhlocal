@@ -1,9 +1,13 @@
 from clickhouse_driver import Client
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
-from configs.env import CLICK_DATABASE_HOST, CLICK_DATABASE_PASSWORD
-from services.bramhastra.enums import AppEnv
-from configs.env import ENVIRONMENT_TYPE
+from configs.env import (
+    CLICK_DATABASE_HOST,
+    CLICK_DATABASE_PASSWORD,
+    ENVIRONMENT_TYPE,
+    APP_ENV,
+)
+from services.bramhastra.enums import AppEnv, EnvironmentType
 import logging
 import time
 
@@ -19,7 +23,10 @@ class ClickHouse:
         start_time = time.perf_counter_ns()
         result = self.client.execute(query, parameters, with_column_types=True)
         end_time = time.perf_counter_ns()
-        if ENVIRONMENT_TYPE == "cli":
+        if (
+            ENVIRONMENT_TYPE == EnvironmentType.cli.value
+            or APP_ENV == AppEnv.development.value
+        ):
             logger.debug((query, parameters))
             logger.info("Execution Time: %.2f ms" % ((end_time - start_time) / 1e6))
         if result is not None:

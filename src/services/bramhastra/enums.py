@@ -91,6 +91,12 @@ class ImportTypes(Bramhastra):
 
 class AppEnv(Bramhastra):
     production = "production"
+    development = "development"
+    
+    
+class EnvironmentType(Bramhastra):
+    cli = "cli"
+    app = "app"
 
 
 class BrahmastraTrackStatus(Bramhastra):
