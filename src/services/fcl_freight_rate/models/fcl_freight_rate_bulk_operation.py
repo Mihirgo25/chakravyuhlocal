@@ -709,21 +709,26 @@ class FclFreightRateBulkOperation(BaseModel):
                 new_validities.append(validity_object)
            
             if freight['rate_type']=='cogo_assured' and new_validities:
-                freight_rate_object =get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,validity_start,validity_end,is_system_operation)
+                freight_rate_object = get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,is_system_operation)
                 price_params = {'price': new_validities[0]['line_items'][0].get('price'), 'currency': new_validities[0]['line_items'][0].get('currency')}
                 response = get_suggested_cogo_assured_fcl_freight_rates(price_params)
                 freight_rate_object['validities'] = response['data'].get('validities')
                 freight_rate_object['weight_limit'] = freight['weight_limit']
+                freight_rate_object['validity_start'] = validity_start
+                freight_rate_object['validity_end'] = validity_end
                 
-                id =create_fcl_freight_rate_data(freight_rate_object)
+                create_fcl_freight_rate_data(freight_rate_object)
                
                 
             else:      
                 for validity_object in new_validities:
-                    freight_rate_object =get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,validity_start,validity_end,is_system_operation)
+                    freight_rate_object = get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,is_system_operation)
                     freight_rate_object['line_items'] = validity_object['line_items']
                     freight_rate_object['schedule_type'] = validity_object['schedule_type']
                     freight_rate_object['payment_term'] = validity_object['payment_term']
+                    freight_rate_object['validity_start'] = validity_object['validity_start']
+                    freight_rate_object['validity_end'] = validity_object['validity_end']
+                    
                     create_fcl_freight_rate_data(freight_rate_object)
 
             total_affected_rates += 1
