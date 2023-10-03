@@ -28,12 +28,6 @@ from services.bramhastra.router import bramhastra
 from micro_services.client import *
 from database.db_support import get_db
 
-import cython
-if cython.compiled:
-    print("Yep, I'm compiled.")
-else:
-    print("Just a lowly interpreted script.")
-
 
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
