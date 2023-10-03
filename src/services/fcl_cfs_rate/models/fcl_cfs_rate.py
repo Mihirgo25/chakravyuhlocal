@@ -144,6 +144,7 @@ class FclCfsRate(BaseModel):
         self.validate_container_size()
         self.validate_container_type()
         self.validate_commodity()
+        self.validate_service_provider_id()
 
     def mandatory_cfs_charge_codes(self):
         return [
@@ -313,13 +314,9 @@ class FclCfsRate(BaseModel):
         return False
         
     def validate_service_provider_id(self):
-        if not self.service_provider_id:
-            return
-        service_provider_data = get_organization(id=self.service_provider_id)
-        if len(service_provider_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid service provider ID")
-        
-        return True
+        service_provider_data = get_eligible_orgs(service='fcl_cfs')
+        if str(self.service_provider_id) not in service_provider_data:
+            raise HTTPException(status_code=400, detail="Service provider is not Valid for this service")
 
     def detail(self):
         return {

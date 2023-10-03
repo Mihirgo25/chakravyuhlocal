@@ -186,7 +186,7 @@ celery.conf.beat_schedule = {
     },
     'cluster_extension_by_latest_trends_worker':{
         'task': 'celery_worker.cluster_extension_by_latest_trends_worker',
-        'schedule': crontab(minute=0, hour='*/6'),
+        "schedule": crontab(hour=23, minute=00),
         'options': {'queue': 'fcl_freight_rate'}
     },
     'cache_data_worker':{

@@ -9,6 +9,8 @@ from configs.global_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_TYPES, TRANSPORT_MODES, TRIP_TYPES, HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS, TRAILER_TYPES
 from configs.haulage_freight_rate_constants import RATE_TYPES
 from libs.get_applicable_filters import is_valid_uuid
+from database.rails_db import get_eligible_orgs
+
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -230,6 +232,12 @@ class HaulageFreightRate(BaseModel):
         if invalid_haulage_line_items:
             raise HTTPException(status_code=400, detail="Invalid line items")
         
+    def validate_service_provider_id(self):
+        service_provider_data = get_eligible_orgs(service='haulage_freight')
+        if str(self.service_provider_id) in service_provider_data:
+            return True
+        raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
+        
     def validate_before_save(self):
         self.validate_container_size()
         self.validate_container_type()
@@ -245,6 +253,7 @@ class HaulageFreightRate(BaseModel):
         self.validate_duplicate_line_items()
         self.validate_invalid_line_items()
         self.validate_slabs()
+        self.validate_service_provider_id()
         return True
         
       

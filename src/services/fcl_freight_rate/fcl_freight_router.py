@@ -363,7 +363,6 @@ def get_fcl_freight_rate_data(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-
 @fcl_freight_router.get("/get_fcl_freight_rate_for_lcl")
 def get_fcl_freight_rate_for_lcl_func(
     origin_port_id: str = None,
@@ -419,6 +418,7 @@ def get_fcl_freight_local_data(
     rate_type: str = 'market_place',
     shipping_line_id: str = None,
     service_provider_id: str = None,
+    get_parsed_values: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -433,7 +433,8 @@ def get_fcl_freight_local_data(
         'commodity' : commodity,
         'rate_type': rate_type,
         'shipping_line_id' : shipping_line_id,
-        'service_provider_id': service_provider_id
+        'service_provider_id': service_provider_id,
+        'get_parsed_values': get_parsed_values
     }
 
     try:
