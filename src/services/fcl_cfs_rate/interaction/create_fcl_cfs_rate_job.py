@@ -24,6 +24,7 @@ def execute_transaction_code(request, source):
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
         'sources' : [source],
+        'trade_type': request.get('trade_type'),
         'rate_type' : request.get('rate_type'),
     }
     init_key = f'{str(params.get("location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}'

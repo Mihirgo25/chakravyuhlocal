@@ -61,6 +61,9 @@ class FclCfsRateJob(BaseModel):
       for location in locations:
         if str(self.location_id) == str(location['id']):
           self.location = self.get_required_location_data(location)
+          self.country_id = self.location.get('country_id')
+          self.continent_id = self.location.get('continent_id')
+          self.trade_id = self.location.get('trade_id')
       
       return True
 
@@ -74,6 +77,7 @@ class FclCfsRateJob(BaseModel):
           "country_id": location["country_id"],
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
-          "country_code": location["country_code"]
+          "country_code": location["country_code"],
+          "continent_id": location["continent_id"]
         }
         return loc_data

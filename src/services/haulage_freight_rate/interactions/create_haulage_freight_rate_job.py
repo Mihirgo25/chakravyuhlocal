@@ -17,7 +17,9 @@ def create_haulage_freight_rate_job(request, source):
 def execute_transaction_code(request, source):
 
     request = jsonable_encoder(request)
-
+    transport_modes = request.get('transport_modes',[])
+    transport_modes = list(set(transport_modes))
+    transport_modes.sort()
     params = {
         'origin_location' : request.get('origin_location'),
         'destination_location' : request.get('destination_location'),
@@ -29,6 +31,7 @@ def execute_transaction_code(request, source):
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
         'sources' : [source],
+        'transport_modes_keyword': '_'.join(transport_modes),
         'rate_type' : request.get('rate_type'),
     }
 

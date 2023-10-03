@@ -1043,6 +1043,7 @@ class CreateHaulageFreightRateJob(BaseModel):
     container_size: str = None
     container_type: str = None
     commodity: str = None
+    transport_modes: list[str]=None
     rate_type: str = None
 
 class CreateFclCustomsRateJob(BaseModel):
@@ -1054,4 +1055,5 @@ class CreateFclCustomsRateJob(BaseModel):
     container_size: str = None
     container_type: str = None
     commodity: str = None
+    trade_type: str = None
     rate_type: str = None

@@ -23,6 +23,7 @@ def execute_transaction_code(request, source):
         'container_size' : request.get('container_size'),
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
+        'trade_type': request.get('trade_type'),
         'sources' : [source],
         'rate_type' : request.get('rate_type'),
     }

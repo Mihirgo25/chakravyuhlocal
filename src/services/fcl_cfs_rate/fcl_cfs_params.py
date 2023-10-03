@@ -144,4 +144,5 @@ class CreateFclCfsRateJob(BaseModel):
     container_size: str = None
     container_type: str = None
     commodity: str = None
+    trade_type: str = None
     rate_type: str = None
