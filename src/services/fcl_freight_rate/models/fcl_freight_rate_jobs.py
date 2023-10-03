@@ -40,7 +40,7 @@ class FclFreightRateJob(BaseModel):
     closing_remarks = TextField(null=True)
     rate_type = TextField(null=True)
     init_key = TextField(index=True, null=True)
-    is_visible = BooleanField(null=True,default=True)
+    is_visible = BooleanField(default=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_jobs_serial_id_seq')")],)
 
     class Meta:

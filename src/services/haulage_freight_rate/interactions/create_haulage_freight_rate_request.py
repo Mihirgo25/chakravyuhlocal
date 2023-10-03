@@ -56,6 +56,8 @@ def execute_transaction_code(request):
 
     send_notifications_to_supply_agents(request)
     
+    request['source_id'] = request_object.id
+        
     create_jobs_for_haulage_freight_rate_request_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
 
     return {

@@ -9,7 +9,7 @@ from services.fcl_freight_rate.helpers.get_multiple_service_objects import (
     get_multiple_service_objects,
 )
 from services.fcl_freight_rate.fcl_locals_celery_worker import (
-    create_jobs_for_feedback_fcl_freight_rate_local_delay,
+    create_jobs_for_request_fcl_freight_rate_local_delay,
 )
 
 
@@ -69,7 +69,7 @@ def execute_transaction_code(request):
 
     get_multiple_service_objects(local_request)
 
-    create_jobs_for_feedback_fcl_freight_rate_local_delay.apply_async(
+    create_jobs_for_request_fcl_freight_rate_local_delay.apply_async(
         kwargs={"requirements": request}, queue="critical"
     )
 

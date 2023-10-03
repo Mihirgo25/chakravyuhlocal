@@ -45,3 +45,5 @@ IMPORT_CARGO_HANDLING_TYPES = [
     'non_enpanelled_cfs_dock_destuffing', 
     'non_enpanelled_cfs_factory_destuffing'
     ]
+
+FCL_CFS_COVERAGE_USERS = []

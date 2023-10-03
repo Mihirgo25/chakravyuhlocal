@@ -38,7 +38,7 @@ class FtlFreightRateJob(BaseModel):
     closed_by = BinaryJSONField(null=True)
     closing_remarks = TextField(null=True)
     rate_type = TextField(null=True)
-    is_visible = BooleanField(null=True,default=True)
+    is_visible = BooleanField(default=True)
     init_key = TextField(index=True, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('ftl_freight_rate_jobs_serial_id_seq')")],)
 
