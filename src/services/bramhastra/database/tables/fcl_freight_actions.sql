@@ -182,7 +182,7 @@ parseDateTimeBestEffort(JSONExtractString(data, 'before', 'created_at')) AS crea
 parseDateTimeBestEffort(JSONExtractString(data, 'before', 'updated_at')) AS updated_at,
 parseDateTimeBestEffort(JSONExtractString(data, 'before', 'operation_created_at')) AS operation_created_at,
 parseDateTimeBestEffort(JSONExtractString(data, 'before', 'operation_updated_at')) AS operation_updated_at,
-toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'before'), 'updated_at'), 6)) AS version,
+toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'before'), 'operation_updated_at'), 6)) AS version,
 -1 AS sign
 FROM brahmastra.kafka_fcl_freight_actions
 WHERE JSONExtract(data,'op','String') = 'u';
@@ -303,7 +303,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_actions TO brahmastra.fcl_
     JSONExtractFloat(data, 'after', 'bas_price') AS bas_price,
     JSONExtractFloat(data, 'after', 'bas_standard_price') AS bas_standard_price,
     JSONExtractFloat(data, 'after', 'standard_price') AS standard_price,
-    JSONExtractFloat(data, 'after', 'price') AS price,  -- Note: There seems to be a space in the column name, which should be removed.
+    JSONExtractFloat(data, 'after', 'price') AS price, 
     JSONExtractString(data, 'after', 'currency') AS currency,
     JSONExtractFloat(data, 'after', 'market_price') AS market_price,
     JSONExtractString(data, 'after', 'bas_currency') AS bas_currency,
@@ -366,7 +366,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_actions TO brahmastra.fcl_
     parseDateTimeBestEffort(JSONExtractString(data, 'after', 'updated_at')) AS updated_at,
     parseDateTimeBestEffort(JSONExtractString(data, 'after', 'operation_created_at')) AS operation_created_at,
     parseDateTimeBestEffort(JSONExtractString(data, 'after', 'operation_updated_at')) AS operation_updated_at,
-    toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'after'), 'updated_at'), 6)) AS version,
+    toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'after'), 'operation_updated_at'), 6)) AS version,
     1 AS sign
 FROM brahmastra.kafka_fcl_freight_actions  
 WHERE JSONExtract(data,'op','String') in ('c','u');
