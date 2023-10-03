@@ -19,7 +19,7 @@ def create_audit(request):
     )
 
 
-def update_air_freight_rate_markup(request):
+def extend_air_freight_rate(request):
     with db.atomic():
         return execute_transaction_code(request)
 

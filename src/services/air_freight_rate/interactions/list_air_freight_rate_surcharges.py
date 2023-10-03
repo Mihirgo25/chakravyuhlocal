@@ -87,12 +87,16 @@ def apply_location_ids_filter(query,filters):
     query = query.where(AirFreightRateSurcharge.destination_location_ids.contains(locations_ids))
     return query 
 
-
 def apply_exclude_rate_types_filter(query, filters):
-  query=query.where(~AirFreightRateSurcharge.rate_type << filters['exclude_rate_types'])
-  return query
+    rate_types = filters['exclude_rate_types']
+    if not isinstance(rate_types, list):
+        rate_types = [rate_types]
+    query=query.where(~AirFreightRateSurcharge.rate_type << rate_types)
+    return query
 
 def apply_exclude_airline_id_filter(query, filters):
-  airline_ids = filters['exclude_airline_id']
-  query=query.where(~AirFreightRateSurcharge.airline_id << airline_ids)
-  return query
+    airline_ids = filters['exclude_airline_id']
+    if not isinstance(airline_ids, list):
+        airline_ids = [airline_ids]
+    query=query.where(~AirFreightRateSurcharge.airline_id << airline_ids)
+    return query

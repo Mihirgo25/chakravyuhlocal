@@ -8,7 +8,7 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.air_freight_rate.interactions.delete_air_freight_rate import delete_air_freight_rate
 from services.air_freight_rate.interactions.delete_air_freight_rate_local import delete_air_freight_rate_local
 from services.air_freight_rate.interactions.update_air_freight_rate_local import update_air_freight_rate_local
-from services.air_freight_rate.interactions.update_air_freight_rate_markup import update_air_freight_rate_markup
+from services.air_freight_rate.interactions.extend_air_freight_rate import extend_air_freight_rate
 from services.air_freight_rate.interactions.update_air_freight_rate import update_air_freight_rate
 from services.air_freight_rate.interactions.list_air_freight_rates import list_air_freight_rates
 from services.air_freight_rate.interactions.list_air_freight_rate_surcharges import list_air_freight_rate_surcharges
@@ -380,7 +380,7 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.save()
                 continue
 
-            update_air_freight_rate_markup(
+            extend_air_freight_rate(
                 {
                     "id": freight["id"],
                     "performed_by_id": self.performed_by_id,
@@ -436,9 +436,12 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.progress = (count * 100.0) / int(total_count)
                 self.save()
                 continue
+            line_items = []
             if line_item_codes or self.data.get('rates_greater_than_price') or self.data.get('rates_less_than_price'):
                 line_items = [line_item for line_item in freight['line_items'] if line_item['code'] not in line_item_codes]
                 line_items = freight_service_price_wise_filter(line_items,self.data)
+            
+            if line_items:
                 update_air_freight_rate_surcharge(
                         {
                         'id': freight['id'],
@@ -504,9 +507,12 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.save()
                 continue
             
+            line_items = []
             if line_item_codes or self.data.get('rates_greater_than_price') or self.data.get('rates_less_than_price'):
                 line_items = [line_item for line_item in freight['line_items'] if line_item['code'] not in line_item_codes]
                 line_items = freight_service_price_wise_filter(line_items,self.data)
+            
+            if line_items:
                 update_air_freight_rate_local(
                         {
                         'id': freight['id'],
