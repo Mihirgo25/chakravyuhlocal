@@ -37,6 +37,12 @@ from services.air_freight_rate.models.air_freight_rate_local_jobs_mapping import
     AirFreightRateLocalJobMapping,
 )
 
+from services.lcl_customs_rate.models.lcl_customs_rate_jobs import LclCustomsRateJob
+from services.lcl_customs_rate.models.lcl_customs_rate_job_mappings import (
+    LclCustomsRateJobMapping,
+)
+from services.lcl_customs_rate.models.lcl_customs_rate_audit import LclCustomsRateAudit
+
 
 class Table:
     def __init__(self) -> None:
@@ -45,32 +51,36 @@ class Table:
     def create_tables(self, models):
         try:
             db.execute_sql(
-                "CREATE SEQUENCE haulage_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"
+                """
+              CREATE SEQUENCE haulage_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+             
+              CREATE SEQUENCE lcl_customs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+            
+            
+              CREATE SEQUENCE fcl_customs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+            
+            
+              CREATE SEQUENCE air_customs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+            
+            
+              CREATE SEQUENCE ltl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+            
+            
+              CREATE SEQUENCE ltl_freight_rate_audits_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+            
+            
+              CREATE SEQUENCE ftl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+            
+            
+              CREATE SEQUENCE fcl_cfs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+            
+            
+              CREATE SEQUENCE fcl_freight_rate_local_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+
+            
+              CREATE SEQUENCE air_freight_rate_local_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"""
             )
-            db.execute_sql(
-                "CREATE SEQUENCE fcl_customs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"
-            )
-            db.execute_sql(
-                "CREATE SEQUENCE air_customs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"
-            )
-            db.execute_sql(
-                "CREATE SEQUENCE ltl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"
-            )
-            db.execute_sql(
-                "CREATE SEQUENCE ltl_freight_rate_audits_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"
-            )
-            db.execute_sql(
-                "CREATE SEQUENCE ftl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"
-            )
-            db.execute_sql(
-                "CREATE SEQUENCE fcl_cfs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"
-            )
-            db.execute_sql(
-                "CREATE SEQUENCE fcl_freight_rate_local_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"
-            )
-            db.execute_sql(
-                "CREATE SEQUENCE air_freight_rate_local_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"
-            )
+
             db.create_tables(models)
             db.close()
             print("created table")
@@ -81,8 +91,6 @@ class Table:
 
 if __name__ == "__main__":
     models = [
-        FtlFreightRateJob,
-        FtlFreightRateJobMapping,
         HaulageFreightRateJob,
         HaulageFreightRateJobMapping,
         FclCustomsRateJob,
@@ -98,6 +106,11 @@ if __name__ == "__main__":
         FclFreightRateLocalJobMapping,
         AirFreightRateLocalJob,
         AirFreightRateLocalJobMapping,
+        FtlFreightRateJob,
+        FtlFreightRateJobMapping,
+        LclCustomsRateJob,
+        LclCustomsRateJobMapping,
+        LclCustomsRateAudit,
     ]
 
     Table().create_tables(models)
