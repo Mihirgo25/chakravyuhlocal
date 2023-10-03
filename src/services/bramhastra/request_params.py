@@ -108,9 +108,25 @@ class Rate(BaseModel):
 
 class SpotSearchFclFreightRateStatistic(BaseModel):
     spot_search_id: str = None
-    spot_search_fcl_freight_services_id: str = None
+    spot_search_fcl_freight_service_id: str = None
     rates: list[Rate] = []
     updated_at: datetime
+    created_at: datetime
+    origin_port_id: str
+    origin_main_port_id: str = None
+    origin_country_id: str = None
+    origin_trade_id: str = None
+    origin_continent_id: str = None
+    destination_port_id: str
+    destination_main_port_id: str = None
+    destination_country_id: str = None
+    destination_trade_id: str = None
+    destination_continent_id: str = None
+    container_size: str
+    container_type: str
+    commodity: str
+    containers_count: int
+    importer_exporter_id: str
 
 
 class ApplySpotSearchFclFreightRateStatistic(BaseModel):
@@ -185,11 +201,12 @@ class FeedbackFclFreightRateStatistic(BaseModel):
         if not v:
             v = "USD"
         return v
-    
+
     @validator("is_rate_reverted", always=True)
     def add_is_rate_reverted(cls, value, values):
         closing_remarks = values.get("closing_remarks", [])
         return value or "rate_added" in closing_remarks
+
 
 class ApplyFeedbackFclFreightRateStatistics(BaseModel):
     action: str
