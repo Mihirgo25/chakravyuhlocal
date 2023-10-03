@@ -106,8 +106,9 @@ if APP_ENV != "production":
 
 @app.on_event("startup")
 def startup():
-    if db.is_closed():
-        db.connect()
+    if APP_ENV == "development":
+        if db.is_closed():
+            db.connect()
     # insert_wagon_type()
     # insert_dbcargo_rates()
     # insert_france_germany_rates()
