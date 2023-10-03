@@ -49,7 +49,6 @@ def generate_queries(filters, where):
     queries.append(" ".join(query_present))
     for time_unit, details in filters.get("frequency", {}).items():
         queries.append(get_query(time_unit, details, where))
-    return queries
 
 
 def get_query(time_unit, details, where):

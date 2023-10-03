@@ -48,7 +48,10 @@ def main():
 
     click = ClickHouse()
 
-    click.execute("drop database brahmastra")
+    try:
+        click.execute("drop database brahmastra")
+    except Exception:
+        pass
 
     click.execute("create database brahmastra")
 
@@ -62,21 +65,21 @@ def main():
     
     print("executing action")
     
-    execute_action(click)
+    # execute_action(click)
 
     print("started inserting fcl")
 
-    execute_fcl(click)
+    # execute_fcl(click)
 
     print("started inserting air")
 
-    execute_air(click)
+    # execute_air(click)
 
     print("completed")
     
     print('start inseting_request')
     
-    execute_request(click)
+    # execute_request(click)
     
     print("completed")
     

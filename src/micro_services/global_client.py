@@ -5,13 +5,17 @@ import re
 from fastapi.encoders import jsonable_encoder
 from contextvars import ContextVar
 import urllib
+import logging
+
+logger = logging.getLogger("httpx")
+
 
 def http_build_query(data):
     parents = list()
     pairs = dict()
 
     def renderKey(parents):
-        depth, outStr = 0, ''
+        depth, outStr = 0, ""
         for x in parents:
             s = "[%s]" if depth > 0 or isinstance(x, int) else "%s"
             outStr += s % str(x)
@@ -33,46 +37,52 @@ def http_build_query(data):
             pairs[renderKey(parents)] = str(data)
 
         return pairs
+
     return urllib.parse.urlencode(r_urlencode(data))
+
+
 class GlobalClient:
-    def __init__(self, url,headers):
+    def __init__(self, url, headers):
         self.client = httpx.Client()
-        if APP_ENV !='production':
-            self.url = ContextVar('client_base_url', default=RUBY_ADDRESS_URL)
+        if APP_ENV != "production":
+            self.url = ContextVar("client_base_url", default=RUBY_ADDRESS_URL)
         else:
             self.url = url
         self.headers = headers
 
-    def request(self, method, action, data={}, params={}, timeout = 15):
-            
+    def request(self, method, action, data={}, params={}, timeout=15):
         if isinstance(data, dict):
             data = jsonable_encoder(data)
         if isinstance(params, dict):
             params = jsonable_encoder(params)
-                    
+
         kwargs = {
             "headers": self.headers,
             "url": self.normalize_url(action),
             "timeout": timeout,
         }
-        
-        if method == 'POST' and data:
-            kwargs['data'] = json.dumps(data)
-        elif method == 'GET':
-            if data: 
+
+        if method == "POST" and data:
+            kwargs["data"] = json.dumps(data)
+        elif method == "GET":
+            if data:
                 prefinal_url = str(http_build_query(data))
-                final_url = re.sub(r'%5D%5B\d%5D','%5D%5B%5D',prefinal_url)
-                final_url = re.sub(r'%5D%5B\d+%5D','%5D%5B%5D',prefinal_url)
-                kwargs['url'] = kwargs['url'] + '?' + final_url  # Rails backend
+                final_url = re.sub(r"%5D%5B\d%5D", "%5D%5B%5D", prefinal_url)
+                final_url = re.sub(r"%5D%5B\d+%5D", "%5D%5B%5D", prefinal_url)
+                kwargs["url"] = kwargs["url"] + "?" + final_url  # Rails backend
             else:
-                kwargs['params'] = params  # Python Backend   
+                kwargs["params"] = params  # Python Backend
         try:
-            if method == 'GET':
+            if method == "GET":
                 response = self.client.get(**kwargs)
             else:
                 response = self.client.post(**kwargs)
+            if APP_ENV == "development" or ENVIRONMENT_TYPE == "shell":
+                logger.info(
+                    f"Execution Time: {response.elapsed.total_seconds()*1000}ms"
+                )
         except httpx.TimeoutException as exc:
-            return { 'status_code': 408 }
+            return {"status_code": 408}
 
         try:
             response.raise_for_status()
@@ -85,5 +95,5 @@ class GlobalClient:
             return e
 
     def normalize_url(self, action):
-        url = self.url.get() if APP_ENV!='production' else self.url
+        url = self.url.get() if APP_ENV != "production" else self.url
         return url + "/" + action

@@ -89,6 +89,9 @@ class Click:
             missing_in_array2 = [
                 item for item in model_columns if item not in click_columns
             ]
+            
+            if 'sign' in missing_in_array1 and 'version' in missing_in_array1 and len(missing_in_array1):
+                return
 
             message = "Arrays do not match exactly"
             if missing_in_array1:

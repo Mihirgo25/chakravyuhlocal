@@ -55,7 +55,7 @@ SELECT
     JSONExtractString(data, 'before', 'status') AS status,
     JSONExtractUInt(data, 'before', 'serial_id') AS serial_id,
     -1 AS sign,
-    JSONExtractUInt32(data, 'source', 'lsn') AS version,
+    JSONExtractUInt(data, 'source', 'lsn') AS version,
     JSONExtractBool(data, 'before', 'is_rate_reverted') AS is_rate_reverted
     FROM brahmastra.kafka_feedback_fcl_freight_rate_statistics
     WHERE JSONExtract(data,'op','String') = 'u';
@@ -110,7 +110,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_feedback_rate_statistics T
     JSONExtractString(data, 'after', 'status') AS status,
     JSONExtractUInt(data, 'after', 'serial_id') AS serial_id,
     1 AS sign,
-    JSONExtractUInt32(data, 'after', 'version') AS version,
+    JSONExtractUInt(data, 'after', 'version') AS version,
     parseDateTimeBestEffort(JSONExtractString(data, 'after', 'operation_created_at')) AS operation_created_at,
     parseDateTimeBestEffort(JSONExtractString(data, 'after', 'operation_updated_at')) AS operation_updated_at,
     JSONExtractBool(data, 'after', 'is_rate_reverted') AS is_rate_reverted
