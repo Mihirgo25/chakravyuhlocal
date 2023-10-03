@@ -29,10 +29,14 @@ def delete_air_freight_rate_job(request):
     air_freight_rate_job = AirFreightRateJob.update(update_params).where(AirFreightRateJob.id << job_ids, AirFreightRateJob.status.not_in(['completed', 'aborted'])).execute()
 
     if air_freight_rate_job:
-        create_audit(job_ids, request)
+        update_mapping(update_params['status'], job_ids)
+        create_audit(job_ids, request) 
 
     return {'id' : job_ids}
 
+def update_mapping(status, jobs_ids):
+    update_params = {'status': status,  "updated_at": datetime.now()}
+    AirFreightRateJobMapping.update(update_params).where(AirFreightRateJobMapping.job_id << jobs_ids, AirFreightRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
 
 def create_audit(jobs_ids, data):
     for job_id in jobs_ids:

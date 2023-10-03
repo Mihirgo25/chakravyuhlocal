@@ -71,7 +71,8 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = AirFreightRateJobMapping.create(
         source_id=request.get("source_id"),
         job_id= jobs_id,
-        source = source
+        source = source,
+        status = 'pending'
     )
     return mapping_id
 

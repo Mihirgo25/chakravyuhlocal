@@ -491,6 +491,9 @@ class DeleteAirFreightRateJob(BaseModel):
     performed_by_type: str = None
 
 class CreateAirFreightRateJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
     origin_airport_id: str = None
     destination_airport_id: str = None
     airline_id: str = None

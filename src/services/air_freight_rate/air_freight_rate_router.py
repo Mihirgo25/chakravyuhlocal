@@ -1376,7 +1376,7 @@ def get_air_freight_rate_job_csv_url_api(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
-@air_freight_router.post("/create_fcl_freight_rate_job")
+@air_freight_router.post("/create_air_freight_rate_job")
 def create_air_freight_rate_job_api(
     request: CreateAirFreightRateJob, resp: dict = Depends(authorize_token)
 ):

@@ -49,10 +49,14 @@ def delete_fcl_freight_rate_job(request):
     fcl_freight_rate_job = FclFreightRateJob.update(update_params).where(FclFreightRateJob.id << job_ids, FclFreightRateJob.status.not_in(['completed', 'aborted'])).execute()
     
     if fcl_freight_rate_job:
+        update_mapping(update_params['status'], job_ids)
         create_audit(job_ids, request)
 
     return {"id": job_ids}
 
+def update_mapping(status, jobs_ids):
+    update_params = {'status': status,  "updated_at": datetime.now()}
+    FclFreightRateJobMapping.update(update_params).where(FclFreightRateJobMapping.job_id << jobs_ids, FclFreightRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
 
 def create_audit(jobs_ids, data):
     for job_id in jobs_ids:

@@ -1016,6 +1016,9 @@ class DeleteFclCustomsRateJob(BaseModel):
 
 
 class CreateFclFreightRateJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
     origin_port_id: str = None
     origin_main_port_id: str = None
     destination_port_id: str = None
@@ -1028,6 +1031,9 @@ class CreateFclFreightRateJob(BaseModel):
     rate_type: str = None
 
 class CreateHaulageFreightRateJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
     origin_location_id: str = None
     origin_location: dict = {}
     destination_location_id: str = None
@@ -1040,6 +1046,9 @@ class CreateHaulageFreightRateJob(BaseModel):
     rate_type: str = None
 
 class CreateFclCustomsRateJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
     port_id: str = None
     service_provider_id: str = None
     container_size: str = None
@@ -1048,6 +1057,9 @@ class CreateFclCustomsRateJob(BaseModel):
     rate_type: str = None
 
 class CreateAirCustomsRateJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
     airport_id: str = None
     service_provider_id: str = None
     commodity: str = None

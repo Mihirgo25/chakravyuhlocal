@@ -34,10 +34,15 @@ def delete_haulage_freight_rate_job(request):
     haulage_freight_rate_job = HaulageFreightRateJob.update(update_params).where(HaulageFreightRateJob.id << job_ids, HaulageFreightRateJob.status.not_in(['completed', 'aborted'])).execute()
 
     if haulage_freight_rate_job:
+        update_mapping(update_params['status'], job_ids)
         create_audit(job_ids, request)
 
     return {'id' : job_ids}
 
+
+def update_mapping(status, jobs_ids):
+    update_params = {'status': status,  "updated_at": datetime.now()}
+    HaulageFreightRateJobMapping.update(update_params).where(HaulageFreightRateJobMapping.job_id << jobs_ids, HaulageFreightRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
 
 def create_audit(jobs_ids, data):
     for job_id in jobs_ids:

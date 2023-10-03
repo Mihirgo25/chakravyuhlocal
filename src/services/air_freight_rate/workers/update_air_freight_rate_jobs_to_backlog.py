@@ -1,4 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJob
+from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobMapping
 from datetime import datetime, timedelta
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from fastapi.encoders import jsonable_encoder
@@ -28,6 +29,8 @@ def update_air_freight_rate_jobs_to_backlog():
 
         rows_updated = air_query.execute()
 
+        AirFreightRateJobMapping.update(status="backlog").where(AirFreightRateJobMapping.job_id.in_(affected_ids)).execute()
+        
         total_updated += rows_updated
 
         for affected_id in affected_ids:

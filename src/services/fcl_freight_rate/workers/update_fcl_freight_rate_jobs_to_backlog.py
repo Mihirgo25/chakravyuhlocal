@@ -1,4 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJob
+from services.fcl_freight_rate.models.fcl_freight_rate_job_mappings import FclFreightRateJobMapping
 from datetime import datetime, timedelta
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from fastapi.encoders import jsonable_encoder
@@ -26,6 +27,8 @@ def update_fcl_freight_rate_jobs_to_backlog():
         )
         
         rows_updated = fcl_query.execute()
+
+        FclFreightRateJobMapping.update(status="backlog").where(FclFreightRateJobMapping.job_id.in_(affected_ids)).execute()
         
         total_updated += rows_updated
         
