@@ -671,7 +671,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     continue
                 
                 if data['markup_type'].lower() == 'percent':
-                    markup = float(data['markup'] * line_item['price']) / 100 
+                    markup = float(data['markup'] * abs(line_item['price'])) / 100 
                     
                     if min_allowed_markup and max_allowed_markup:
                         if line_item['currency'] != data['markup_currency']:
