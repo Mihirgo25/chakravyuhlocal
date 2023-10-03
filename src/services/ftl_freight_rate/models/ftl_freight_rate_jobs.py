@@ -50,11 +50,7 @@ class FtlFreightRateJob(BaseModel):
         return super(FtlFreightRateJob, self).save(*args, **kwargs)
 
     def set_locations(self):
-      ids = [str(self.origin_location_id), str(self.destination_location_id)]
-      if self.origin_location_id:
-        ids.append(str(self.origin_location_id))
-      if self.destination_location_id:
-        ids.append(str(self.destination_location_id))
+      ids = [str(self.origin_location_id), str(self.destination_location_id)]    
 
       obj = {'filters':{"id": ids, "type":'seaport'}}
       locations_response = maps.list_locations(obj)

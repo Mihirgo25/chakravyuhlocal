@@ -59,7 +59,8 @@ class AirCustomsRateJob(BaseModel):
 
       for location in locations:
         if str(self.airport_id) == str(location['id']):
-          self.origin_airport = self.get_required_location_data(location)
+          self.airport = self.get_required_location_data(location)
+          self.country_id = self.airport.get("country_id")
         
     def get_required_location_data(self, location):
         loc_data = {

@@ -92,9 +92,9 @@ def get_data(query):
 
 def includes_filters(includes):
     if includes:
-        fcl_all_fields = list(AirCustomsRateJob._meta.fields.keys())
-        required_fcl_fields = [a for a in includes.keys() if a in fcl_all_fields]
-        air_fields = [getattr(AirCustomsRateJob, key) for key in required_fcl_fields]
+        air_all_fields = list(AirCustomsRateJob._meta.fields.keys())
+        required_air_fields = [a for a in includes.keys() if a in air_all_fields]
+        air_fields = [getattr(AirCustomsRateJob, key) for key in required_air_fields]
     else:
         air_fields = [
             getattr(AirCustomsRateJob, key) for key in DEFAULT_REQUIRED_FIELDS
