@@ -140,9 +140,6 @@ async def extend_cluster_rates_by_latest_trends(request):
     else:
         freight_rates = get_freight_rates(request)
         
-        if len(freight_rates) < 3:
-            return
-        
         shipping_line_gri_mapping = {}
         for container_size in ["20", "40", "40HC"]:
             rates = [
@@ -150,8 +147,9 @@ async def extend_cluster_rates_by_latest_trends(request):
                 for rate in freight_rates
                 if rate["container_size"] == container_size
             ]
-            if not rates:
+            if len(rates) < 3:
                 continue
+            
             prices = []
             rate_ids = []
             shipping_line_ids = []
