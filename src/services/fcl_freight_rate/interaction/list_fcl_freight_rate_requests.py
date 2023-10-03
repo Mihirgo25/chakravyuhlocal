@@ -10,7 +10,7 @@ from libs.get_applicable_filters import get_applicable_filters
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
 from micro_services.client import spot_search
-possible_direct_filters = ['origin_port_id', 'destination_port_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id']
+possible_direct_filters = ['origin_port_id', 'destination_port_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id', 'id']
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id', 'service_provider_id']
 
