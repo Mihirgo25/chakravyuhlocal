@@ -92,19 +92,19 @@ def get_date_range_filter(where):
     )
 
 
-def get_rate_updated_at_less_than_filter(where):
+def get_rate_updated_at_less_than_filter(where, value=None):
     where.append("rate_updated_at < %(rate_updated_at_less_than)s")
 
 
-def get_validity_end_greater_than_filter(where):
+def get_validity_end_greater_than_filter(where, value=None):
     where.append("validity_end > %(validity_end_greater_than)s")
 
 
-def get_validity_end_less_than_filter(where):
+def get_validity_end_less_than_filter(where, value=None):
     where.append("validity_end < %(validity_end_less_than)s")
 
 
-def get_stale_rate_filter(where):
+def get_stale_rate_filter(where, value=None):
     where.append("checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0")
 
 
