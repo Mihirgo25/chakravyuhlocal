@@ -1,8 +1,8 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_jobs import (
+from services.fcl_freight_rate.models.fcl_freight_rate_local_jobs import (
     FclFreightRateLocalJob,
 )
 from services.fcl_freight_rate.helpers.generate_csv_file_url_for_fcl_locals import (
-    generate_csv_file_url_for_fcl_locals,
+    generate_csv_file_url_for_fcl_local,
 )
 import json
 from libs.get_applicable_filters import get_applicable_filters
@@ -66,7 +66,7 @@ def list_fcl_freight_rate_local_jobs(
         query = apply_filters(query, filters)
 
     if generate_csv_url:
-        return generate_csv_file_url_for_fcl_locals(query)
+        return generate_csv_file_url_for_fcl_local(query)
 
     if page_limit:
         query = query.paginate(page, page_limit)

@@ -43,7 +43,7 @@ class AirFreightRateLocalJob(BaseModel):
     operation_type = CharField(null=True)
     price_type = CharField(null=True)
     serial_id = BigIntegerField(
-        constraints=[SQL("DEFAULT nextval('air_freight_rate_jobs_serial_id_seq')")],
+        constraints=[SQL("DEFAULT nextval('air_freight_rate_local_jobs_serial_id_seq')")],
     )
 
     class Meta:

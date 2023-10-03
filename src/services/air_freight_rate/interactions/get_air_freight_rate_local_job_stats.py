@@ -2,7 +2,7 @@ from services.air_freight_rate.models.air_freight_rate_local_jobs import (
     AirFreightRateLocalJob,
 )
 from services.air_freight_rate.helpers.generate_csv_file_url_for_air_locals import (
-    generate_csv_file_url_for_air_local,
+    generate_csv_file_url_for_air_locals,
 )
 import json
 from libs.get_applicable_filters import get_applicable_filters

@@ -431,12 +431,15 @@ class LineItem(BaseModel):
     price: float
     currency: str
     remarks: list[str] = []
-    quantity:float 
+    quantity: float
+
 
 class RevertedRateParams(BaseModel):
-    id:str
-    validity_id:str
-    weight_slabs:List[WeightSlab]
+    id: str
+    validity_id: str
+    weight_slabs: List[WeightSlab]
+
+
 class DeleteAirFreightRateFeedbackParams(BaseModel):
     air_freight_rate_feedback_ids: List[str]
     closing_remarks: List[str] = []
@@ -470,8 +473,8 @@ class UpdateAirFreightWarehouseRateParams(BaseModel):
 class UpdateAirFreightRateRequestParams(BaseModel):
     air_freight_rate_request_id: str
     closing_remarks: list[str] = None
-    status: str=None
-    remarks: str=None
+    status: str = None
+    remarks: str = None
     performed_by_id: str
 
 
@@ -482,6 +485,7 @@ class DeleteAirFreightRateRequestParams(BaseModel):
     validity_id: str = None
     performed_by_id: str = None
 
+
 class DeleteAirFreightRateJob(BaseModel):
     id: str = None
     closing_remarks: str = None
@@ -489,6 +493,7 @@ class DeleteAirFreightRateJob(BaseModel):
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+
 
 class CreateAirFreightRateJob(BaseModel):
     source: str = None
@@ -506,3 +511,30 @@ class CreateAirFreightRateJob(BaseModel):
     shipment_type: str = None
     stacking_type: str = None
     price_type: str = None
+
+
+class DeleteAirFreightRateLocalJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+
+class CreateAirFreightRateLocalJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    airport_id: str = None
+    airline_id: str = None
+    trade_type: str = None
+    service_provider_id: str = None
+    commodity: str = None
+    commodity_type: str = None
+    commodity_sub_type: str = None
+    operation_type: str = None
+    shipment_type: str = None
+    stacking_type: str = None
+    price_type: str = None
+    importer_exporter_id: str = None

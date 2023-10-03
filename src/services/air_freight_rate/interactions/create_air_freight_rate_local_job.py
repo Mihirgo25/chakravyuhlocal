@@ -34,11 +34,15 @@ def execute_transaction_code(request, source):
         "airline_id": request.get("airline_id"),
         "trade_type": request.get("trade_type"),
         "service_provider_id": request.get("service_provider_id"),
-        "commodity": request.get("commodity"),
         "sources": [source],
         "rate_type": request.get("rate_type"),
+        "commodity": request.get("commodity"),
         "commodity_type": request.get("commodity_type"),
         "commodity_sub_type": request.get("commodity_sub_type"),
+        "operation_type": request.get("operation_type"),
+        "shipment_type": request.get("shipment_type"),
+        "stacking_type": request.get("stacking_type"),
+        "price_type": request.get("price_type"),
         "importer_exporter_id": request.get("importer_exporter_id"),
     }
 
@@ -78,7 +82,10 @@ def execute_transaction_code(request, source):
 
 def set_jobs_mapping(jobs_id, request, source):
     mapping_id = AirFreightRateLocalJobMapping.create(
-        source_id=request.get("source_id"), job_id=jobs_id, source=source
+        source_id=request.get("source_id"),
+        job_id=jobs_id,
+        source=source,
+        status="pending",
     )
     return mapping_id
 

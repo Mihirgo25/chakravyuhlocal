@@ -1,8 +1,8 @@
 from database.db_session import db
-from services.air_freight_rate.models.air_freight_rate_jobs import (
+from services.air_freight_rate.models.air_freight_rate_local_jobs import (
     AirFreightRateLocalJob,
 )
-from services.air_freight_rate.models.air_freight_rate_jobs_mapping import (
+from services.air_freight_rate.models.air_freight_rate_local_jobs_mapping import (
     AirFreightRateLocalJobMapping,
 )
 from database.rails_db import get_user
@@ -46,15 +46,24 @@ def delete_air_freight_rate_local_job(request):
         .execute()
     )
     if air_freight_rate_job:
+        update_mapping(update_params["status"], request["id"])
         create_audit(request["id"], request)
 
     return {"id": request["id"]}
 
 
-def create_audit(jobs_id, data):
+def update_mapping(status, job_id):
+    update_params = {"status": status, "updated_at": datetime.now()}
+    AirFreightRateLocalJobMapping.update(update_params).where(
+        (AirFreightRateLocalJobMapping.job_id == job_id)
+        & (AirFreightRateLocalJobMapping.status.not_in(["completed", "aborted"]))
+    ).execute()
+
+
+def create_audit(job_id, data):
     AirServiceAudit.create(
         action_name="delete",
-        object_id=jobs_id,
+        object_id=job_id,
         object_type="AirFreightRateLocalJob",
         performed_by_id=data.get("performed_by_id"),
         data=data.get("data"),

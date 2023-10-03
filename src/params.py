@@ -1057,3 +1057,28 @@ class CreateFclCustomsRateJob(BaseModel):
     commodity: str = None
     trade_type: str = None
     rate_type: str = None
+
+
+class CreateFclFreightRateLocalJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    port_id: str = None
+    main_port_id: str = None
+    shipping_line_id: str = None
+    service_provider_id: str = None
+    terminal_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    trade_type: str = None
+    rate_type: str = None
+
+
+class DeleteFclFreightRateLocalJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None

@@ -75,7 +75,10 @@ def execute_transaction_code(request, source):
 
 def set_jobs_mapping(jobs_id, request, source):
     mapping_id = FclFreightRateLocalJobMapping.create(
-        source_id=request.get("rate_id"), job_id=jobs_id, source=source
+        source_id=request.get("source_id"),
+        job_id=jobs_id,
+        source=source,
+        status="pending",
     )
     return mapping_id
 

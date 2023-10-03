@@ -65,8 +65,18 @@ from services.air_freight_rate.interactions.get_air_freight_rate_job_stats impor
 from services.air_freight_rate.interactions.delete_air_freight_rate_job import delete_air_freight_rate_job
 from services.air_freight_rate.interactions.list_air_freight_rate_jobs import list_air_freight_rate_jobs
 from services.air_freight_rate.interactions.create_air_freight_rate_job import create_air_freight_rate_job
-
-
+from services.air_freight_rate.interactions.get_air_freight_rate_local_job_stats import (
+    get_air_freight_rate_local_job_stats,
+)
+from services.air_freight_rate.interactions.delete_air_freight_rate_local_job import (
+    delete_air_freight_rate_local_job,
+)
+from services.air_freight_rate.interactions.list_air_freight_rate_local_jobs import (
+    list_air_freight_rate_local_jobs,
+)
+from services.air_freight_rate.interactions.create_air_freight_rate_local_job import (
+    create_air_freight_rate_local_job,
+)
 air_freight_router = APIRouter()
 
 
@@ -1387,6 +1397,107 @@ def create_air_freight_rate_job_api(
     source = request.source
     try:
         rate = create_air_freight_rate_job(request.dict(exclude_none=True), source)
+        return JSONResponse(status_code=200, content=json_encoder(rate))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+@air_freight_router.get("/get_air_freight_rate_local_job_stats")
+def get_air_freight_rate_local_job_stats_api(
+    filters: str = None, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = get_air_freight_rate_local_job_stats(filters)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@air_freight_router.get("/list_air_freight_rate_local_jobs")
+def list_air_freight_rate_local_jobs_api(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = "updated_at",
+    sort_type: str = "desc",
+    generate_csv_url: bool = False,
+    includes: str = None,
+    resp: dict = Depends(authorize_token),
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = list_air_freight_rate_jobs(
+            filters, page_limit, page, sort_by, sort_type, generate_csv_url, includes
+        )
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@air_freight_router.post("/delete_air_freight_rate_local_job")
+def delete_air_freight_rate_local_job_api(
+    request: DeleteAirFreightRateLocalJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        rate = delete_air_freight_rate_local_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@air_freight_router.get("/get_air_freight_rate_local_job_csv_url")
+def get_air_freight_rate_local_job_csv_url_api(
+    filters: str = None, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = list_air_freight_rate_local_jobs(filters, generate_csv_url=True)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@air_freight_router.post("/create_air_freight_rate_local_job")
+def create_air_freight_rate_job_api(
+    request: CreateAirFreightRateLocalJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    source = request.source
+    try:
+        rate = create_air_freight_rate_local_job(
+            request.dict(exclude_none=True), source
+        )
         return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         sentry_sdk.capture_exception(e)

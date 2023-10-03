@@ -47,7 +47,7 @@ DYNAMIC_STATISTICS = {
 }
 
 
-def get_fcl_freight_rate_job_stats(filters={}):
+def get_fcl_freight_rate_local_job_stats(filters={}):
     query = get_query()
     statistics = STATISTICS.copy()
     dynamic_statistics = DYNAMIC_STATISTICS.copy()
