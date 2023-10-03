@@ -449,7 +449,7 @@ def create_fcl_cfs_rate_job_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
-    source = request.get('source')
+    source = request.source
     try:
         rate = create_fcl_cfs_rate_job(request.dict(exclude_none=True), source)
         return JSONResponse(status_code=200, content=json_encoder(rate))

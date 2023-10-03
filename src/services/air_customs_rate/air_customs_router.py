@@ -502,7 +502,7 @@ def list_air_customs_rate_jobs_api(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-@air_customs_router.post("/delete_air_freight_rate_job")
+@air_customs_router.post("/delete_air_customs_rate_job")
 def delete_air_customs_rate_job_api(
     request: DeleteAirCustomsRateJob, resp: dict = Depends(authorize_token)
 ):
@@ -536,14 +536,14 @@ def get_air_customs_rate_job_csv_url_api(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_customs_router.post("/create_air_customs_rate_job")
-def create_fcl_freight_rate_job_api(
+def create_air_customs_rate_job_api(
     request: CreateAirCustomsRateJob, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
-    source = request.get('source')
+    source = request.source
     try:
         rate = create_air_customs_rate_job(request.dict(exclude_none=True), source)
         return JSONResponse(status_code=200, content=json_encoder(rate))

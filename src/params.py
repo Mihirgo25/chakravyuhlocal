@@ -1055,18 +1055,3 @@ class CreateFclCustomsRateJob(BaseModel):
     container_type: str = None
     commodity: str = None
     rate_type: str = None
-
-class CreateAirCustomsRateJob(BaseModel):
-    source: str = None
-    performed_by_id: str = None
-    performed_by_type: str = None
-    airport_id: str = None
-    service_provider_id: str = None
-    commodity: str = None
-    rate_type: str = None
-    commodity_type: str = None
-    commodity_sub_type: str = None
-    operation_type: str = None
-    shipment_type: str = None
-    stacking_type: str = None
-    price_type: str = None

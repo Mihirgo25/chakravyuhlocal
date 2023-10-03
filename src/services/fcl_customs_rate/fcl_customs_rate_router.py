@@ -538,7 +538,7 @@ def delete_fcl_customs_rate_job_api(
         )
     
 @fcl_customs_router.get("/get_fcl_customs_rate_job_csv_url")
-def get_fcl_freight_rate_job_csv_url_api(
+def get_fcl_customs_rate_job_csv_url_api(
     filters: str = None,
     resp: dict = Depends(authorize_token)
 ):
@@ -555,14 +555,14 @@ def get_fcl_freight_rate_job_csv_url_api(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_customs_router.post("/create_fcl_customs_rate_job")
-def create_fcl_freight_rate_job_api(
+def create_fcl_customs_rate_job_api(
     request: CreateFclCustomsRateJob, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
-    source = request.get('source')
+    source = request.source
     try:
         rate = create_fcl_customs_rate_job(request.dict(exclude_none=True), source)
         return JSONResponse(status_code=200, content=json_encoder(rate))
