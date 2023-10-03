@@ -13,30 +13,34 @@ def delete_haulage_freight_rate_job(request):
         update_params = {'status':'aborted', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now(), "closing_remarks": request.get('closing_remarks')}
     else:
         update_params = {'status':'completed', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now()}
-    breakpoint()
     
-    if request.get('haulage_freight_rate_request_ids'):
-        job_id = HaulageFreightRateJobMapping.select("job_id").where(HaulageFreightRateJobMapping.source_id << request['haulage_freight_rate_request_ids']).scalar()
+   
+    if request.get('haulage_freight_rate_feedback_ids'):
+        job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.source_id << request['haulage_freight_rate_feedback_ids'])]
+    elif request.get('trailer_freight_rate_feedback_ids'):
+        job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.source_id << request['trailer_freight_rate_feedback_ids'])]
     elif request.get('haulage_freight_rate_request_ids'):
-        job_id = HaulageFreightRateJobMapping.select("job_id").where(HaulageFreightRateJobMapping.source_id << request['haulage_freight_rate_request_ids']).scalar()
+        job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.source_id << request['haulage_freight_rate_request_ids'])]
+    elif request.get('trailer_freight_rate_request_ids'):
+        job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.source_id << request['trailer_freight_rate_request_ids'])]
     else:
-        job_id = request.get('id')
+        job_ids = request.get('id')
 
  
 
-    if not isinstance(job_id, list):
-        job_id = [job_id]
+    if not isinstance(job_ids, list):
+        job_ids = [job_ids]
 
-    haulage_freight_rate_job = HaulageFreightRateJob.update(update_params).where(HaulageFreightRateJob.id << job_id, HaulageFreightRateJob.status.not_in(['completed', 'aborted'])).execute()
+    haulage_freight_rate_job = HaulageFreightRateJob.update(update_params).where(HaulageFreightRateJob.id << job_ids, HaulageFreightRateJob.status.not_in(['completed', 'aborted'])).execute()
 
     if haulage_freight_rate_job:
-        create_audit(job_id, request)
+        create_audit(job_ids, request)
 
-    return {'id' : job_id}
+    return {'id' : job_ids}
 
 
-def create_audit(jobs_id, data):
-    for job_id in jobs_id:
+def create_audit(jobs_ids, data):
+    for job_id in jobs_ids:
         HaulageFreightRateAudit.create(
             action_name = 'delete',
             object_id = job_id,
