@@ -1,4 +1,5 @@
 from services.air_customs_rate.models.air_customs_rate_jobs import AirCustomsRateJob
+from services.air_customs_rate.models.air_customs_rate_job_mappings import AirCustomsRateJobMapping
 from datetime import datetime, timedelta
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from fastapi.encoders import jsonable_encoder
@@ -26,6 +27,8 @@ def update_air_customs_rate_jobs_to_backlog():
         )
         
         rows_updated = haulage_query.execute()
+        
+        AirCustomsRateJobMapping.update(status="backlog").where(AirCustomsRateJobMapping.job_id.in_(affected_ids)).execute()
         
         total_updated += rows_updated
         

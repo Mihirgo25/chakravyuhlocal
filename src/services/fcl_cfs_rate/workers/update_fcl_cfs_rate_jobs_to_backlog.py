@@ -1,4 +1,5 @@
 from services.fcl_cfs_rate.models.fcl_cfs_rate_jobs import FclCfsRateJob
+from services.fcl_cfs_rate.models.fcl_cfs_rate_job_mappings import FclCfsRateJobMapping
 from datetime import datetime, timedelta
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi.encoders import jsonable_encoder
@@ -26,6 +27,8 @@ def update_fcl_cfs_rate_jobs_to_backlog():
         )
         
         rows_updated = fcl_query.execute()
+        
+        FclCfsRateJobMapping.update(status="backlog").where(FclCfsRateJobMapping.job_id.in_(affected_ids)).execute()
         
         total_updated += rows_updated
         

@@ -27,9 +27,10 @@ def delete_air_customs_rate_job(request):
     if not isinstance(job_ids, list):
         job_ids = [job_ids]
     
-    fcl_freight_rate_job = AirCustomsRateJob.update(update_params).where(AirCustomsRateJob.id << job_ids, AirCustomsRateJob.status.not_in(['completed', 'aborted'])).execute()
+    air_freight_rate_job = AirCustomsRateJob.update(update_params).where(AirCustomsRateJob.id << job_ids, AirCustomsRateJob.status.not_in(['completed', 'aborted'])).execute()
     
-    if fcl_freight_rate_job:
+    if air_freight_rate_job:
+        update_mapping(update_params['status'], job_ids)
         create_audit(job_ids, request)
 
     return {"id": job_ids}
@@ -44,3 +45,8 @@ def create_audit(jobs_ids, data):
             performed_by_id = data.get("performed_by_id"),
             data = data.get('data')
         )
+        
+def update_mapping(status, job_ids):
+    update_params = {'status':status, "updated_at": datetime.now()}
+    AirCustomsRateJobMapping.update(update_params).where(AirCustomsRateJobMapping.job_id << job_ids, AirCustomsRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
+    

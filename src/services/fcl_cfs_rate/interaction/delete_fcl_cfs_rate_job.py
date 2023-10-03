@@ -29,6 +29,7 @@ def delete_fcl_cfs_rate_job(request):
     fcl_cfs_rate_job = FclCfsRateJob.update(update_params).where(FclCfsRateJob.id << job_ids, FclCfsRateJob.status.not_in(['completed', 'aborted'])).execute()
 
     if fcl_cfs_rate_job:
+        update_mapping(update_params['status'], job_ids)
         create_audit(job_ids, request)
 
     return {'id' : job_ids}
@@ -43,3 +44,7 @@ def create_audit(jobs_ids, data):
             performed_by_id = data.get("performed_by_id"),
             data = data.get('data')
         )
+        
+def update_mapping(status, job_ids):
+    update_params = {'status':status, "updated_at": datetime.now()}
+    FclCfsRateJobMapping.update(update_params).where(FclCfsRateJobMapping.job_id << job_ids, FclCfsRateJobMapping.status.not_in(['completed', 'aborted'])).execute()

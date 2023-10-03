@@ -1,4 +1,5 @@
 from services.fcl_customs_rate.models.fcl_customs_rate_jobs import FclCustomsRateJob
+from services.fcl_customs_rate.models.fcl_customs_rate_job_mappings import FclCustomsRateJobMapping
 from datetime import datetime, timedelta
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from fastapi.encoders import jsonable_encoder
@@ -26,6 +27,8 @@ def update_fcl_customs_rate_jobs_to_backlog():
         )
         
         rows_updated = haulage_query.execute()
+        
+        FclCustomsRateJobMapping.update(status="backlog").where(FclCustomsRateJobMapping.job_id.in_(affected_ids)).execute()
         
         total_updated += rows_updated
         
