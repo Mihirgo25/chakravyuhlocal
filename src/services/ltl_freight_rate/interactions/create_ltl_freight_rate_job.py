@@ -35,7 +35,7 @@ def execute_transaction_code(request, source):
 
     if not ltl_freight_rate_job:
         ltl_freight_rate_job = create_job_object(params)
-        user_id = allocate_jobs('LTL')
+        user_id = allocate_jobs('LTL_FREIGHT')
         ltl_freight_rate_job.user_id = user_id
         ltl_freight_rate_job.assigned_to = get_user(user_id)[0]
         ltl_freight_rate_job.status = 'pending'
