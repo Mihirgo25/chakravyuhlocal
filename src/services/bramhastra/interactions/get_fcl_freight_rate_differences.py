@@ -28,7 +28,7 @@ def get_rate(filters: dict) -> list:
     queries = [
         f"""
             SELECT ROUND(bas_standard_price_diff_from_selected_rate) AS deviation, 
-            COUNT(rate_id) AS count
+            COUNT(DISTINCT rate_id) AS count
             FROM brahmastra.{FclFreightAction._meta.table_name}
         """
     ]
