@@ -11,7 +11,7 @@ from libs.get_filters import get_filters
 from datetime import datetime, timedelta
 
 
-possible_direct_filters = ["location_id", "commodity", "user_id", "serial_id", "status"]
+possible_direct_filters = ["location_id", "commodity", "user_id", "serial_id", "status", "cogo_entity_id"]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 
 

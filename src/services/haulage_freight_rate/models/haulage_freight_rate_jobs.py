@@ -39,6 +39,7 @@ class HaulageFreightRateJob(BaseModel):
     rate_type = TextField(null=True)
     init_key = TextField(index=True, null=True)
     is_visible = BooleanField(default=True)
+    cogo_entity_id = UUIDField(null=True, index=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('haulage_freight_rate_jobs_serial_id_seq')")],)
     source = TextField(default = 'manual',index=True, null = True)
     

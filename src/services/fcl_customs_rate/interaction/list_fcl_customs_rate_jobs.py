@@ -1,6 +1,6 @@
 from services.fcl_customs_rate.models.fcl_customs_rate_jobs import FclCustomsRateJob
 from services.fcl_customs_rate.models.fcl_customs_rate_job_mappings import FclCustomsRateJobMapping
-from services.fcl_customs_rate.helpers import (
+from services.fcl_customs_rate.helpers.generate_csv_file_url_for_fcl_customs import (
     generate_csv_file_url_for_fcl_customs,
 )
 import json
@@ -14,7 +14,8 @@ possible_direct_filters = [
     "commodity",
     "user_id",
     "serial_id",
-    "status"
+    "status",
+    "cogo_entity_id"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 

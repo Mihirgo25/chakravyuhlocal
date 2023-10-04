@@ -41,7 +41,8 @@ class LclFreightRateJob(BaseModel):
     serial_id = BigIntegerField(
         constraints=[SQL("DEFAULT nextval('lcl_freight_rate_jobs_serial_id_seq')")],
     )
-
+    source = TextField(default = 'manual',index=True, null = True)
+    
     class Meta:
         table_name = "lcl_freight_rate_jobs"
 
