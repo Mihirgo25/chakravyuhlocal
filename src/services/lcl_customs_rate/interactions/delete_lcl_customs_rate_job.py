@@ -33,26 +33,40 @@ def delete_lcl_customs_rate_job(request):
             "closed_by": get_user(request.get("performed_by_id"))[0],
             "updated_at": datetime.now(),
         }
-
-    lcl_customs_rate_job = (
-        LclCustomsRateJob.update(update_params)
-        .where(
-            LclCustomsRateJob.id == request["id"],
-            LclCustomsRateJob.status.not_in(["completed", "aborted"]),
-        )
-        .execute()
-    )
+    
+    job_ids = None
+    if request.get('lcl_customs_rate_feedback_ids'):
+        job_ids = [ str(job.job_id) for job in LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.job_id).where(LclCustomsRateJobMapping.source_id << request['lcl_customs_rate_feedback_ids'])]
+    elif request.get('lcl_customs_rate_request_ids'):
+        job_ids = [ str(job.job_id) for job in LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.job_id).where(LclCustomsRateJobMapping.source_id << request['lcl_customs_rate_request_ids'])]
+    elif request.get("id"):
+        job_ids = request.get("id")
+    elif request.get("source_id"):
+        job_ids = request.get('source_id')
+    
+    if not isinstance(job_ids, list):
+        job_ids = [job_ids]
+    
+    lcl_customs_rate_job = LclCustomsRateJob.update(update_params).where(LclCustomsRateJob.id << job_ids, LclCustomsRateJob.status.not_in(['completed', 'aborted'])).execute()
+    
     if lcl_customs_rate_job:
-        create_audit(request["id"], request)
+        update_mapping(update_params['status'], job_ids)
+        create_audit(job_ids, request)
 
-    return {"id": request["id"]}
+    return {"id": job_ids}
 
 
-def create_audit(jobs_id, data):
-    LclCustomsRateAudit.create(
-        action_name="delete",
-        object_id=jobs_id,
-        object_type="LclCustomsRateJob",
-        data=data.get("data"),
-        performed_by_id=data.get("performed_by_id"),
-    )
+def update_mapping(status, job_ids):
+    update_params = {'status':status, "updated_at": datetime.now()}
+    LclCustomsRateJobMapping.update(update_params).where(LclCustomsRateJobMapping.job_id << job_ids, LclCustomsRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
+
+
+def create_audit(jobs_ids, data):
+    for job_id in jobs_ids:
+        LclCustomsRateAudit.create(
+            action_name="delete",
+            object_id=job_id,
+            object_type="LclCustomsRateJob",
+            data=data.get("data"),
+            performed_by_id=data.get("performed_by_id"),
+        )

@@ -35,26 +35,39 @@ def delete_fcl_freight_rate_local_job(request):
             "closed_by": get_user(request.get("performed_by_id"))[0],
             "updated_at": datetime.now(),
         }
-
-    fcl_freight_rate_local_job = (
-        FclFreightRateLocalJob.update(update_params)
-        .where(
-            FclFreightRateLocalJob.id == request["id"],
-            FclFreightRateLocalJob.status.not_in(["completed", "aborted"]),
-        )
-        .execute()
-    )
+    job_ids = None    
+    if request.get('fcl_freight_rate_local_feedback_ids'):
+        job_ids = [ str(job.job_id) for job in FclFreightRateLocalJobMapping.select(FclFreightRateLocalJobMapping.job_id).where(FclFreightRateLocalJobMapping.source_id << request['fcl_freight_rate_local_feedback_ids'])]
+    elif request.get('fcl_freight_rate_local_request_ids'):
+        job_ids = [ str(job.job_id) for job in FclFreightRateLocalJobMapping.select(FclFreightRateLocalJobMapping.job_id).where(FclFreightRateLocalJobMapping.source_id << request['fcl_freight_rate_local_request_ids'])]
+    elif request.get("id"):
+        job_ids = request.get("id")
+    elif request.get("source_id"):
+        job_ids = request.get('source_id')
+    
+    if not isinstance(job_ids, list):
+        job_ids = [job_ids]
+    
+    fcl_freight_rate_local_job = FclFreightRateLocalJob.update(update_params).where(FclFreightRateLocalJob.id << job_ids, FclFreightRateLocalJob.status.not_in(['completed', 'aborted'])).execute()
+    
     if fcl_freight_rate_local_job:
-        create_audit(request["id"], request)
+        update_mapping(update_params['status'], job_ids)
+        create_audit(job_ids, request)
 
-    return {"id": request["id"]}
+    return {"id": job_ids}
 
 
-def create_audit(jobs_id, data):
-    FclServiceAudit.create(
-        action_name="delete",
-        object_id=jobs_id,
-        object_type="FclFreightRateLocalJob",
-        data=data.get("data"),
-        performed_by_id=data.get("performed_by_id"),
-    )
+def update_mapping(status, jobs_ids):
+    update_params = {'status': status,  "updated_at": datetime.now()}
+    FclFreightRateLocalJobMapping.update(update_params).where(FclFreightRateLocalJobMapping.job_id << jobs_ids, FclFreightRateLocalJobMapping.status.not_in(['completed', 'aborted'])).execute()
+
+
+def create_audit(jobs_ids, data):
+    for job_id in jobs_ids:
+        FclServiceAudit.create(
+            action_name="delete",
+            object_id=job_id,
+            object_type="FclFreightRateLocalJob",
+            data=data.get("data"),
+            performed_by_id=data.get("performed_by_id"),
+        )
