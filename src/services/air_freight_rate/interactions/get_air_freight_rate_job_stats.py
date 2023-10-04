@@ -16,7 +16,8 @@ possible_direct_filters = [
     "destination_airport_id",
     "airline_id",
     "commodity",
-    "user_id"
+    "user_id",
+    "cogo_entity_id"
 ]
 possible_indirect_filters = ["updated_at"]
 
