@@ -101,7 +101,7 @@ AGGREGATE_FILTER_MAPPING = {
     "bas_standard_price_accuracy": {
         "state": "",
         "value": "",
-        "method": "(SUM(standard_price*sign)/COUNT(DISTINCT checkout_id))",
+        "method": "(SUM(bas_standard_price_accuracy*sign)/COUNT(DISTINCT checkout_id))",
     },
     "spot_search": {
         "state": "",

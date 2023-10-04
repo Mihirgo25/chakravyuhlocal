@@ -53,7 +53,7 @@ def get_rate(filters: dict) -> list:
     interval = ALLOWED_FREQUENCY_TYPES[filters.get("frequency", "day")]
 
     queries = [
-        f"""SELECT parent_mode as mode,{interval} AS day,{aggregate_select} FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,standard_price,parent_mode,sign FROM brahmastra.fcl_freight_rate_statistics"""
+        f"""SELECT parent_mode as mode,{interval} AS day,{aggregate_select} FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,standard_price,parent_mode,sign,id FROM brahmastra.fcl_freight_rate_statistics"""
     ]
 
     location_object = dict()

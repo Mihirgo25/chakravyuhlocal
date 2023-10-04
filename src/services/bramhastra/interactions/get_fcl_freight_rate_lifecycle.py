@@ -140,10 +140,10 @@ async def get_lifecycle_statistics(filters, where):
         SELECT COUNT(DISTINCT rate_id) AS rates_source_disliked FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE source = 'disliked_rate'
         """
     ]
-    rate_requests_created = [rate_request_query(RateRequestState.created.name)]
-    rate_requests_closed = [rate_request_query(RateRequestState.closed.name)]
+    rate_requests_created = [rate_request_query(RateRequestState.created.name, "=")]
+    rate_requests_closed = [rate_request_query(RateRequestState.closed.name, "=")]
     rate_requests_rate_added = [
-        rate_request_query(RateRequestState.rate_added.name)
+        rate_request_query(RateRequestState.rate_added.name, "=")
     ]
 
     variables = [
@@ -303,7 +303,7 @@ def revenue_desk_query(column, comparator):
 
 def count_boolean_query(column):
     return f"""
-    SELECT COUNT(*) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_type = '{column}'
+    SELECT COUNT(DISTINCT id) AS {column}_count FROM brahmastra.{FclFreightAction._meta.table_name} WHERE feedback_type = '{column}'
     """
 
 
@@ -313,9 +313,9 @@ def shipment_query(column, comparator):
     """
 
 
-def rate_request_query(column):
+def rate_request_query(column, comparator):
     return f"""
-    SELECT COUNT(*) AS rate_requests_{column} FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state = '{column}'
+    SELECT COUNT(DISTINCT id) AS rate_requests_{column} FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state {comparator} '{column}'
     """
 
 

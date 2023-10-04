@@ -77,8 +77,6 @@ class FclFreightRateStatistic(BaseModel):
     procured_by_id = UUIDField(null=True)
     created_at = DateTimeTZField(default=datetime.utcnow())
     updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
-    version = IntegerField(default=1, index=True)
-    sign = IntegerField(default=1)
     status = CharField(default="active")
     last_action = CharField(default="create")
     parent_rate_id = UUIDField(null=True, index=True)

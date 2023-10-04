@@ -15,7 +15,7 @@ FREQUENCY_FUNCS = {"Month": "toYYYYMM", "Week": "toISOWeek"}
 
 
 def list_fcl_freight_rate_trends(filters: dict) -> dict:
-    where = get_direct_indirect_filters(filters, date=None)
+    where = get_direct_indirect_filters(filters)
     return get_rate(filters, where)
 
 

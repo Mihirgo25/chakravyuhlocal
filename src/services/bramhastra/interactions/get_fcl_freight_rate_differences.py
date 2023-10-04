@@ -40,18 +40,13 @@ def get_rate(filters: dict) -> list:
     ):
         set_port_code_filters_and_service_object(filters, location_object)
 
-    where = get_direct_indirect_filters(filters, date=None)
+    where = get_direct_indirect_filters(filters)
 
     if where:
         queries.append(" WHERE ")
         queries.append(where)
 
-        queries.append(
-            """AND (updated_at <= %(end_date)s) AND (updated_at >= %(start_date)s)"""
-        )
-
     queries.append("""GROUP BY deviation ORDER BY deviation;""")
-
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     formatted_charts = format_charts(charts)
@@ -62,10 +57,10 @@ def get_rate(filters: dict) -> list:
 def format_charts(charts: list) -> list:
     result_dict = dict()
     range_val = 20
-    min_diff =0 
-    if len(charts)>0:
+    min_diff = 0
+    if len(charts) > 0:
         min_diff = int(charts[0].get("deviation", "0"))
-    
+
     range_min = min_diff - (min_diff % range_val)
     range_max = range_min + range_val
 

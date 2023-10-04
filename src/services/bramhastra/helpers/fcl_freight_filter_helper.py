@@ -50,7 +50,7 @@ REQUIRED_FILTERS = {
 }
 
 
-def get_direct_indirect_filters(filters, date="validity_range"):
+def get_direct_indirect_filters(filters, date="time_series"):
     if filters is None:
         return
     for k, v in REQUIRED_FILTERS.items():

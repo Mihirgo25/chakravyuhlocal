@@ -41,6 +41,7 @@ def get_fcl_freight_rate_charts(filters):
     chart_type = filters.get("chart_type")
     match chart_type:
         case "deviation":
+            filters.pop("chart_type")
             resp["deviation"] = get_fcl_freight_rate_differences(filters)
 
         case "accuracy":
