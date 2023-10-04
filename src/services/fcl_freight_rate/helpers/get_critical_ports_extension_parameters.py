@@ -29,7 +29,7 @@ def fetch_all_base_port_ids():
 
 def get_critical_ports_extension_parameters():
     all_base_port_ids = fetch_all_base_port_ids()
-    start_time = datetime.now() - timedelta(hours=6)
+    last_updated_at = datetime.now() - timedelta(days=1)
 
     base_port_query = (
         FclFreightRate.select(
@@ -37,7 +37,7 @@ def get_critical_ports_extension_parameters():
         )
         .distinct()
         .where(
-            FclFreightRate.updated_at > start_time,
+            FclFreightRate.updated_at > last_updated_at,
             (
                 (FclFreightRate.origin_port_id << CRITICAL_PORTS_INDIA_VIETNAM)
                 & (FclFreightRate.destination_port_id << all_base_port_ids)
@@ -53,6 +53,7 @@ def get_critical_ports_extension_parameters():
             FclFreightRate.container_type == "standard",
             FclFreightRate.last_rate_available_date
             > datetime.now().date() + timedelta(days=1),
+            ~FclFreightRate.service_provider["category_types"].contains("nvocc"),
             SQL(
                 """
             NOT EXISTS (
@@ -94,7 +95,7 @@ def get_critical_ports_extension_parameters():
     extension_parameters = []
     for latest_updated_port_pair in latest_updated_port_pairs:
         request_data = {
-            "start_time": start_time,
+            "last_updated_at": last_updated_at,
             "origin_port_id": str(latest_updated_port_pair.origin_port_id),
             "destination_port_id": str(latest_updated_port_pair.destination_port_id),
             "container_type": "standard",

@@ -12,6 +12,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreigh
 from micro_services.client import *
 from database.rails_db import get_operators
 import concurrent.futures
+from database.rails_db import get_eligible_orgs
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 
 class UnknownField(object):
@@ -108,7 +109,13 @@ class FclFreightRateLocal(BaseModel):
         if self.container_type and self.commodity not in LOCAL_CONTAINER_COMMODITY_MAPPINGS[self.container_type]:
             return False
         return True
-
+    
+    def validate_service_provider_id(self):
+        eligible_service_providers = get_eligible_orgs(service='fcl_freight')
+        if str(self.service_provider_id) in eligible_service_providers:
+            return True
+        return False
+        
     def validate_before_save(self):
         self.local_data_instance = FclFreightRateLocalData(self.data)
 
@@ -126,6 +133,9 @@ class FclFreightRateLocal(BaseModel):
 
         if not self.validate_commodity():
             raise HTTPException(status_code=400, detail='commodity is not valid')
+        
+        if not self.validate_service_provider_id():
+            raise HTTPException(status_code=400, detail='Service Provider is not valid for this service')
 
         # if not self.local_data_instance.validate_duplicate_charge_codes():
         #     raise HTTPException(status_code=400, detail='duplicate line items present')

@@ -41,6 +41,7 @@ class AirFreightRateJob(BaseModel):
     stacking_type = CharField(null=True)
     price_type = CharField(null=True)
     is_visible = BooleanField(default=True)
+    cogo_entity_id = UUIDField(null=True, index=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_freight_rate_jobs_serial_id_seq')")],)
 
     class Meta:

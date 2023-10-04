@@ -671,12 +671,21 @@ class FclFreightRateBulkOperation(BaseModel):
                     continue
                 
                 if data['markup_type'].lower() == 'percent':
-                    markup = float(data['markup'] * line_item['price']) / 100 
+                    markup = float(data['markup'] * abs(line_item['price'])) / 100 
+                    
                     if min_allowed_markup and max_allowed_markup:
                         if line_item['currency'] != data['markup_currency']:
                            min_allowed_markup =  common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'] , 'to_currency': line_item['currency'] , 'price': min_allowed_markup}).get('price')
                            max_allowed_markup =  common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'] , 'to_currency': line_item['currency'] , 'price': max_allowed_markup}).get('price')
                         markup = max(min_allowed_markup, min(markup, max_allowed_markup))
+                        
+                        if data.get('tag') == 'trend_GRI' and markup < 0:
+                            min_allowed_price = line_item['market_price'] + min_allowed_markup 
+                            
+                            if  line_item['price'] < min_allowed_price:
+                               continue
+                            markup = max(markup, (min_allowed_price - line_item['price']))
+                            
                 else:
                     markup = data['markup']
                 
@@ -700,21 +709,26 @@ class FclFreightRateBulkOperation(BaseModel):
                 new_validities.append(validity_object)
            
             if freight['rate_type']=='cogo_assured' and new_validities:
-                freight_rate_object =get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,validity_start,validity_end,is_system_operation)
+                freight_rate_object = get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,is_system_operation)
                 price_params = {'price': new_validities[0]['line_items'][0].get('price'), 'currency': new_validities[0]['line_items'][0].get('currency')}
                 response = get_suggested_cogo_assured_fcl_freight_rates(price_params)
                 freight_rate_object['validities'] = response['data'].get('validities')
                 freight_rate_object['weight_limit'] = freight['weight_limit']
+                freight_rate_object['validity_start'] = validity_start
+                freight_rate_object['validity_end'] = validity_end
                 
-                id =create_fcl_freight_rate_data(freight_rate_object)
+                create_fcl_freight_rate_data(freight_rate_object)
                
                 
             else:      
                 for validity_object in new_validities:
-                    freight_rate_object =get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,validity_start,validity_end,is_system_operation)
+                    freight_rate_object = get_common_create_params(data,self.id, self.performed_by_id,sourced_by_id, procured_by_id,freight,is_system_operation)
                     freight_rate_object['line_items'] = validity_object['line_items']
                     freight_rate_object['schedule_type'] = validity_object['schedule_type']
                     freight_rate_object['payment_term'] = validity_object['payment_term']
+                    freight_rate_object['validity_start'] = validity_object['validity_start']
+                    freight_rate_object['validity_end'] = validity_object['validity_end']
+                    
                     create_fcl_freight_rate_data(freight_rate_object)
 
             total_affected_rates += 1

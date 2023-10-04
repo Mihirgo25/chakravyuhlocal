@@ -22,14 +22,10 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     """Write your migrations here."""
     migrator.add_fields(AirFreightRateJob, is_visible = BooleanField(default=True))
     migrator.add_fields(FclFreightRateJob, is_visible = BooleanField(default=True))
-    migrator.add_fields(AirCustomsRateJob, is_visible = BooleanField(default=True))
-    migrator.add_fields(FclCustomsRateJob, is_visible = BooleanField(default=True))
-    migrator.add_fields(HaulageFreightRateJob, is_visible = BooleanField(default=True))
-    migrator.add_fields(LtlFreightRateJob, is_visible = BooleanField(default=True))
-    migrator.add_fields(FtlFreightRateJob, is_visible = BooleanField(default=True))
-    migrator.add_fields(FclCfsRateJob, is_visible = BooleanField(default=True))
-
+    migrator.add_fields(AirFreightRateJob, cogo_entity_id = UUIDField(null=True, index=True))
+    migrator.add_fields(FclFreightRateJob, cogo_entity_id = UUIDField(null=True, index=True))
 
     
 def rollback(migrator: Migrator, database, fake=False, **kwargs):
     pass
+
