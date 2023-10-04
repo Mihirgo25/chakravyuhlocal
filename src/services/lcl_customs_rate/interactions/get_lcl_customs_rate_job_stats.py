@@ -11,12 +11,11 @@ from playhouse.postgres_ext import SQL
 possible_direct_filters = [
     "origin_port_id",
     "destination_port_id",
-    "shipping_line_id",
     "commodity",
     "user_id",
     "cogo_entity_id"
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 
 uncommon_filters = ["serial_id", "status"]
 
