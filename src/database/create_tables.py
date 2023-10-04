@@ -13,8 +13,8 @@ class Table:
 
     def create_tables(self,models):
         try:
-            db.execute_sql('CREATE SEQUENCE ftl_freight_rate_request_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;')
-            db.execute_sql('CREATE SEQUENCE ftl_freight_rate_feedback_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;')
+            db.execute_sql('CREATE SEQUENCE ftl_freight_rate_request_serial_id_seq START WITH 2775 INCREMENT BY 1 MINVALUE 0;')
+            db.execute_sql('CREATE SEQUENCE ftl_freight_rate_feedback_serial_id_seq START WITH 2419 INCREMENT BY 1 MINVALUE 0;')
             db.create_tables(models)
             db.close()
             print("created table")
