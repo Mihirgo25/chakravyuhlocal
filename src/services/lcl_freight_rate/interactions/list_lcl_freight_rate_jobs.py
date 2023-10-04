@@ -14,7 +14,6 @@ from datetime import datetime, timedelta
 possible_direct_filters = [
     "origin_port_id",
     "destination_port_id",
-    "shipping_line_id",
     "commodity",
     "user_id",
     "serial_id",
@@ -33,12 +32,9 @@ DEFAULT_REQUIRED_FIELDS = [
     "closed_by_id",
     "closing_remarks",
     "commodity",
-    "container_size",
     "created_at",
     "updated_at",
     "status",
-    "shipping_line",
-    "shipping_line_id",
     "service_provider",
     "service_provider_id",
     "origin_port",
@@ -46,10 +42,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "destination_port",
     "destination_port_id",
     "serial_id",
-    "container_type",
     "sources",
-    "origin_main_port_id",
-    "destination_main_port_id",
 ]
 
 

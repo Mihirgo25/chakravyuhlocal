@@ -43,6 +43,8 @@ from services.lcl_customs_rate.models.lcl_customs_rate_job_mappings import (
 )
 from services.lcl_customs_rate.models.lcl_customs_rate_audit import LclCustomsRateAudit
 
+from services.lcl_freight_rate.models.lcl_freight_rate_jobs import LclFreightRateJob
+from services.lcl_freight_rate.models.lcl_freight_rate_job_mappings import LclFreightRateJobMapping
 
 class Table:
     def __init__(self) -> None:
@@ -111,6 +113,8 @@ if __name__ == "__main__":
         LclCustomsRateJob,
         LclCustomsRateJobMapping,
         LclCustomsRateAudit,
+        LclFreightRateJob,
+        LclFreightRateJobMapping,
     ]
 
     Table().create_tables(models)
