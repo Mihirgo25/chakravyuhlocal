@@ -14,7 +14,7 @@ def delete_haulage_freight_rate_job(request):
     else:
         update_params = {'status':'completed', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now()}
     
-   
+    job_ids = None
     if request.get('haulage_freight_rate_feedback_ids'):
         job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.source_id << request['haulage_freight_rate_feedback_ids'])]
     elif request.get('trailer_freight_rate_feedback_ids'):
@@ -23,8 +23,10 @@ def delete_haulage_freight_rate_job(request):
         job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.source_id << request['haulage_freight_rate_request_ids'])]
     elif request.get('trailer_freight_rate_request_ids'):
         job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.source_id << request['trailer_freight_rate_request_ids'])]
-    else:
-        job_ids = request.get('id')
+    elif request.get("id"):
+        job_ids = request.get("id")
+    elif request.get("source_id"):
+        job_ids = request.get('source_id')
 
  
 

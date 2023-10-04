@@ -83,3 +83,20 @@ class CreateFuelData(BaseModel):
     fuel_unit: str
     currency:str
     
+class CreateFtlFreightRateJob(BaseModel):
+    origin_location_id: str
+    destination_location_id: str
+    importer_exporter_id: str
+    service_provider_id: str
+    truck_type: str
+    truck_body_type: str
+    trip_type: str
+    rate_type: str
+    
+class DeleteFtlFreightRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None

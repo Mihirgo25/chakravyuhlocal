@@ -33,7 +33,8 @@ def delete_fcl_freight_rate_job(request):
             "closed_by": get_user(request.get("performed_by_id"))[0],
             "updated_at": datetime.now(),
         }
-        
+    
+    job_ids = None    
     if request.get('fcl_freight_rate_feedback_ids'):
         job_ids = [ str(job.job_id) for job in FclFreightRateJobMapping.select(FclFreightRateJobMapping.job_id).where(FclFreightRateJobMapping.source_id << request['fcl_freight_rate_feedback_ids'])]
     elif request.get('fcl_freight_rate_request_ids'):
