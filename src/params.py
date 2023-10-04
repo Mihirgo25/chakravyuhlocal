@@ -998,14 +998,6 @@ class DeleteFclFreightRateJob(BaseModel):
     performed_by_id: str = None
     performed_by_type: str = None
 
-class DeleteHaulageFreightRateJob(BaseModel):
-    id: str = None
-    closing_remarks: str = None
-    data: dict = {}
-    rate_id: str = None
-    performed_by_id: str = None
-    performed_by_type: str = None
-
 class DeleteFclCustomsRateJob(BaseModel):
     id: str = None
     closing_remarks: str = None
@@ -1013,7 +1005,6 @@ class DeleteFclCustomsRateJob(BaseModel):
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
-
 
 class CreateFclFreightRateJob(BaseModel):
     source: str = None
@@ -1030,21 +1021,6 @@ class CreateFclFreightRateJob(BaseModel):
     commodity: str = None
     rate_type: str = None
 
-class CreateHaulageFreightRateJob(BaseModel):
-    source: str = None
-    performed_by_id: str = None
-    performed_by_type: str = None
-    origin_location_id: str = None
-    origin_location: dict = {}
-    destination_location_id: str = None
-    destination_location: dict = {}
-    shipping_line_id: str = None
-    service_provider_id: str = None
-    container_size: str = None
-    container_type: str = None
-    commodity: str = None
-    transport_modes: list[str]=None
-    rate_type: str = None
 
 class CreateFclCustomsRateJob(BaseModel):
     source: str = None
@@ -1099,6 +1075,24 @@ class CreateLtlFreightRateJob(BaseModel):
     rate_type: str = None
 
 class DeleteLtlFreightRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+class CreateLclFreightRateJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    origin_port_id: str = None
+    destination_port_id: str = None
+    service_provider_id: str = None
+    commodity: str = None
+    rate_type: str = None
+
+class DeleteLclFreightRateJob(BaseModel):
     id: str = None
     closing_remarks: str = None
     data: dict = {}

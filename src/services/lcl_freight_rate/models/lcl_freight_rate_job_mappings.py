@@ -7,7 +7,7 @@ from params import Slab
 from micro_services.client import *
 from database.rails_db import *
 from micro_services.client import maps
-from services.ltl_freight_rate.models.ltl_freight_rate_jobs import LclFreightRateJob
+from services.lcl_freight_rate.models.lcl_freight_rate_jobs import LclFreightRateJob
 
 
 class BaseModel(Model):
@@ -16,7 +16,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 
-class LtlFreightRateJobMapping(BaseModel):
+class LclFreightRateJobMapping(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     source = TextField(index=True)
     source_id = UUIDField(index=True, null=True)
@@ -30,4 +30,4 @@ class LtlFreightRateJobMapping(BaseModel):
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
-        return super(LtlFreightRateJobMapping, self).save(*args, **kwargs)
+        return super(LclFreightRateJobMapping, self).save(*args, **kwargs)

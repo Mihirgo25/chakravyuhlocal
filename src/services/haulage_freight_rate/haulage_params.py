@@ -189,3 +189,27 @@ class DeleteHaulageFreightRate(BaseModel):
   bulk_operation_id: str = None
   sourced_by_id: str = None
   procured_by_id: str = None
+
+class CreateHaulageFreightRateJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    origin_location_id: str = None
+    origin_location: dict = {}
+    destination_location_id: str = None
+    destination_location: dict = {}
+    shipping_line_id: str = None
+    service_provider_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    transport_mode: str = None
+    rate_type: str = None
+
+class DeleteHaulageFreightRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None

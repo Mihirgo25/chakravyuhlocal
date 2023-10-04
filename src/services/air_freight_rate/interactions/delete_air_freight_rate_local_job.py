@@ -37,34 +37,39 @@ def delete_air_freight_rate_local_job(request):
             "updated_at": datetime.now(),
         }
 
-    air_freight_rate_job = (
-        AirFreightRateLocalJob.update(update_params)
-        .where(
-            AirFreightRateLocalJob.id == request["id"],
-            AirFreightRateLocalJob.status.not_in(["completed", "aborted"]),
+    job_ids = None    
+    if request.get('air_freight_rate_local_feedback_ids'):
+        job_ids = [ str(job.job_id) for job in AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.job_id).where(AirFreightRateLocalJobMapping.source_id << request['air_freight_rate_local_feedback_ids'])]
+    elif request.get('air_freight_rate_local_request_ids'):
+        job_ids = [ str(job.job_id) for job in AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.job_id).where(AirFreightRateLocalJobMapping.source_id << request['air_freight_rate_local_request_ids'])]
+    elif request.get("id"):
+        job_ids = request.get("id")
+    elif request.get("source_id"):
+        job_ids = request.get('source_id')
+    
+    if not isinstance(job_ids, list):
+        job_ids = [job_ids]
+    
+    air_freight_rate_local_job = AirFreightRateLocalJob.update(update_params).where(AirFreightRateLocalJob.id << job_ids, AirFreightRateLocalJob.status.not_in(['completed', 'aborted'])).execute()
+    
+    if air_freight_rate_local_job:
+        update_mapping(update_params['status'], job_ids)
+        create_audit(job_ids, request)
+
+    return {"id": job_ids}
+
+
+def update_mapping(status, jobs_ids):
+    update_params = {'status': status,  "updated_at": datetime.now()}
+    AirFreightRateLocalJobMapping.update(update_params).where(AirFreightRateLocalJobMapping.job_id << jobs_ids, AirFreightRateLocalJobMapping.status.not_in(['completed', 'aborted'])).execute()
+
+
+def create_audit(jobs_ids, data):
+    for job_id in jobs_ids:
+        AirServiceAudit.create(
+            action_name="delete",
+            object_id=job_id,
+            object_type="AirFreightRateLocalJob",
+            performed_by_id=data.get("performed_by_id"),
+            data=data.get("data"),
         )
-        .execute()
-    )
-    if air_freight_rate_job:
-        update_mapping(update_params["status"], request["id"])
-        create_audit(request["id"], request)
-
-    return {"id": request["id"]}
-
-
-def update_mapping(status, job_id):
-    update_params = {"status": status, "updated_at": datetime.now()}
-    AirFreightRateLocalJobMapping.update(update_params).where(
-        (AirFreightRateLocalJobMapping.job_id == job_id)
-        & (AirFreightRateLocalJobMapping.status.not_in(["completed", "aborted"]))
-    ).execute()
-
-
-def create_audit(job_id, data):
-    AirServiceAudit.create(
-        action_name="delete",
-        object_id=job_id,
-        object_type="AirFreightRateLocalJob",
-        performed_by_id=data.get("performed_by_id"),
-        data=data.get("data"),
-    )
