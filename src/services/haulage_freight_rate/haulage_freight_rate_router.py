@@ -998,6 +998,23 @@ def create_haualge_freight_rate_job_api(
             status_code=500, content={"success": False, "error": str(e)}
         )
 
+@haulage_freight_router.get("/get_trailer_freight_rate_job_stats")
+def get_trailer_freight_rate_job_stats_api(
+    filters: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = get_haulage_freight_rate_job_stats(filters)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
 @haulage_freight_router.get("/list_trailer_freight_rate_jobs")
 def list_trailer_freight_rate_jobs_api(
     filters: str = None,
