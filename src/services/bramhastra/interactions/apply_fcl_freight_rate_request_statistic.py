@@ -1,5 +1,5 @@
 from database.db_session import db
-from services.bramhastra.helpers.post_fcl_freight_helper import Request
+from services.bramhastra.helpers.request_fcl_freight_rate_helper import Request
 from services.bramhastra.enums import RequestAction
 from configs.env import APP_ENV
 

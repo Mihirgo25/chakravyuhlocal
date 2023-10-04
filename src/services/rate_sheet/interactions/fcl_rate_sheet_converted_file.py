@@ -3,6 +3,8 @@ from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from micro_services.client import *
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_weight_limit import create_fcl_freight_rate_weight_limit
+from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freight_rates import get_suggested_cogo_assured_fcl_freight_rates
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 from services.rate_sheet.interactions.upload_file import upload_media_file
 from services.rate_sheet.interactions.validate_fcl_freight_object import validate_fcl_freight_object
@@ -59,7 +61,7 @@ def get_importer_exporter_id(importer_exporter_name):
 
 
 def process_fcl_freight_local(params, converted_file, update):
-    valid_headers = ["trade_type", "port", "main_port", "container_size", "container_type", "commodity", "shipping_line", "location", "code", "unit", "lower_limit", "upper_limit", "price", "currency","market_price", "remark1", "remark2", "remark3"]
+    valid_headers = ["trade_type", "port", "main_port", "terminal", "container_size", "container_type", "commodity", "shipping_line", "location", "code", "unit", "lower_limit", "upper_limit", "price", "currency","market_price", "remark1", "remark2", "remark3", "rate_type"]
     total_lines = 0
     original_path = get_original_file_path(converted_file)
 
@@ -131,12 +133,12 @@ def process_fcl_freight_local(params, converted_file, update):
                         (valid_hash(
                             row,
                             ["code", "unit", "price", "currency"],
-                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'lower_limit', 'upper_limit', 'market_price']
+                            ['trade_type', 'port', 'main_port', 'terminal', 'container_type', 'container_size', 'commodity', 'shipping_line', 'lower_limit', 'upper_limit', 'market_price']
                         )
                         or valid_hash(
                             row,
                             ['lower_limit', 'upper_limit', 'price', 'currency'],
-                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'location', 'code', 'unit','market_price']
+                            ['trade_type', 'port', 'main_port', 'terminal', 'container_type', 'container_size', 'commodity', 'shipping_line', 'location', 'code', 'unit','market_price']
                         )
                     )):
                 rows.append(row)
@@ -200,7 +202,9 @@ def create_fcl_freight_local_rate(
     keys_to_extract = ['trade_type', 'container_size', 'container_type', 'commodity']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['main_port_id'] = get_port_id(rows[0].get('main_port'))
+    object['terminal_id'] = get_terminal_id(rows[0].get('terminal'))
     object['port_id'] = get_port_id(rows[0].get('port'))
+    object['rate_type'] = rows[0].get('rate_type') or DEFAULT_RATE_TYPE
 
     object["shipping_line_id"] = get_shipping_line_id(rows[0].get("shipping_line"))
     object['data'] = { 'line_items': [] }
@@ -1221,6 +1225,12 @@ def create_fcl_freight_freight_rate(
     request_params = object
     if 'extend_rates' in rows[0]:
         request_params["is_extended"] = True
+        
+    if object['line_items'] and object.get('rate_type') == 'cogo_assured':
+        price_params = {'price': object['line_items'][0].get('price'), 'currency': object['line_items'][0].get('currency')}
+        response = get_suggested_cogo_assured_fcl_freight_rates(price_params)
+        object['validities'] = response['data'].get('validities')
+
     validation = write_fcl_freight_freight_object(request_params, csv_writer, params, converted_file, last_row)
     if validation.get('valid'):
         object['rate_sheet_validation'] = True

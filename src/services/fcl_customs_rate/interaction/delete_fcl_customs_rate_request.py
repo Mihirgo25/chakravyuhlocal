@@ -13,7 +13,7 @@ def delete_fcl_customs_rate_request(request):
   if not request_objects:
     raise HTTPException(status_code=500, detail = 'Requests Not Found')
     
-  data = {key:value for key,value in request.items() if key != 'fcl_customs_rate_request_ids'},
+  data = {key:value for key,value in request.items() if key != 'fcl_customs_rate_request_ids'}
   for object in request_objects:
     object.status = 'inactive'
     object.closed_by_id = request.get('performed_by_id')

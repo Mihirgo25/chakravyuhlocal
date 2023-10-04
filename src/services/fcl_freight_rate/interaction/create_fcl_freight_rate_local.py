@@ -65,6 +65,7 @@ def execute_transaction_code(request):
         'port_id' : request.get('port_id'),
         'trade_type' : request.get('trade_type'),
         'main_port_id' : request.get('main_port_id'),
+        'terminal_id' : request.get('terminal_id'),
         'container_size' : request.get('container_size'),
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
@@ -74,21 +75,22 @@ def execute_transaction_code(request):
     }
 
     fcl_freight_local = FclFreightRateLocal.select().where(
-        FclFreightRateLocal.port_id == request.get('port_id'),
-        FclFreightRateLocal.trade_type ==request.get('trade_type'),
-        FclFreightRateLocal.main_port_id == request.get('main_port_id'),
-        FclFreightRateLocal.container_size== request.get('container_size'),
-        FclFreightRateLocal.container_type==request.get('container_type'),
-        FclFreightRateLocal.commodity == request.get('commodity'),
-        FclFreightRateLocal.shipping_line_id==request.get('shipping_line_id'),
-        FclFreightRateLocal.service_provider_id==request.get('service_provider_id'),
-        FclFreightRateLocal.rate_type==request.get('rate_type')).first()
+        FclFreightRateLocal.port_id == row['port_id'],
+        FclFreightRateLocal.terminal_id == row['terminal_id'],
+        FclFreightRateLocal.trade_type ==row['trade_type'],
+        FclFreightRateLocal.main_port_id == row['main_port_id'],
+        FclFreightRateLocal.container_size== row['container_size'],
+        FclFreightRateLocal.container_type==row['container_type'],
+        FclFreightRateLocal.commodity == row['commodity'],
+        FclFreightRateLocal.shipping_line_id==row['shipping_line_id'],
+        FclFreightRateLocal.service_provider_id==row['service_provider_id'],
+        FclFreightRateLocal.rate_type==row['rate_type']).first()
 
     if not fcl_freight_local:
         fcl_freight_local = FclFreightRateLocal(**row)
         fcl_freight_local.set_port()
-        fcl_freight_local.data={}
-        
+    
+    fcl_freight_local.set_data(get_normalized_line_items(request.get("data", {}).get("line_items", [])))
     fcl_freight_local.sourced_by_id = request.get("sourced_by_id")
     fcl_freight_local.procured_by_id = request.get("procured_by_id")
     fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
@@ -104,9 +106,6 @@ def execute_transaction_code(request):
     if 'plugin' in request['data']:
         new_free_days['plugin'] = {'slabs': [] } | (request['data']['plugin'] or {})
 
-    if request['data'].get('line_items'):
-        line_items = get_normalized_line_items(request['data']['line_items'])
-        fcl_freight_local.data = fcl_freight_local.data | { 'line_items': line_items }
     if 'rate_sheet_validation' not in request:
         fcl_freight_local.validate_before_save()
         fcl_freight_local.update_special_attributes(new_free_days)
@@ -117,6 +116,7 @@ def execute_transaction_code(request):
         fcl_freight_local.rate_not_available_entry = False
     fcl_freight_local.update_freight_objects()
     create_free_days(fcl_freight_local, request)
+    fcl_freight_local.set_terminal()
 
     try:
       fcl_freight_local.save()

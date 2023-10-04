@@ -1,4 +1,4 @@
-FROM python:3-slim as base
+FROM python:3.11-slim as base
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -33,4 +33,4 @@ FROM base as rms
 CMD ["gunicorn", "main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8110", "--preload", "--access-logfile", "-"]
 
 FROM base as celery
-CMD ["celery" ,"-A" ,"celery_worker.celery" , "worker" ,"-B", "--concurrency", "5", "--loglevel=info" , "-Q" , "communication,critical,low,fcl_freight_rate,bulk_operations,statistics"]
+CMD ["celery" ,"-A" ,"celery_worker.celery" , "worker" ,"-B", "--concurrency", "6", "--loglevel=info" , "-Q" , "communication,critical,low,fcl_freight_rate,bulk_operations,statistics"]

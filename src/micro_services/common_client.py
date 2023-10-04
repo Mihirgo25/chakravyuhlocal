@@ -69,9 +69,11 @@ class CommonApiClient:
         return self.client.request('GET','list_revenue_desk_show_rates',data)
     
     def update_spot_negotiation_locals_rate(self,data = {}):
-     pass
-    def list_revenue_desk_show_rates(self,data = {}):
-        return self.client.request('GET','list_revenue_desk_show_rates',data)
+        return self.client.request('POST','spot_negotiation/update_spot_negotiation_locals_rate',data)
+
     
-    def get_saas_air_schedules(self, data={}):
-        return self.client.request('GET', 'get_saas_air_schedule', data)
+    def get_exchange_rate(self, data = {}):
+        return self.client.request('GET', 'get_exchange_rate', data)     
+    
+    def get_all_exchange_rates(self, data = {}):
+        return self.client.request('GET','get_all_exchange_rates',data)

@@ -3,6 +3,7 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
 from math import ceil
+from libs.apply_eligible_lsp_filters import apply_eligible_lsp_filters
 from micro_services.client import common
 from configs.fcl_freight_rate_constants import RATE_TYPES
 
@@ -23,7 +24,10 @@ def list_fcl_customs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
   
         query = get_filters(direct_filters, query, FclCustomsRate)
         query = apply_indirect_filters(query, indirect_filters)
-
+    
+    if not filters or not 'service_provider_id' in filters:
+        query = apply_eligible_lsp_filters(query, FclCustomsRate, 'fcl_customs')
+    
     if return_query:
         return {'list': query} 
     

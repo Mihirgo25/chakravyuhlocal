@@ -112,7 +112,7 @@ BAS:
   name: 'Basic Freight'
   units: ['per_trailer','per_container']
   condition: true
-  tags: ['mandatory', 'trailer', 'barge']
+  tags: ['mandatory', 'trailer', 'barge', 'slab_cargo_weight_per_container']
 FSC:
   name: 'Fuel Surcharge'
   units: ['per_trailer', 'percentage_of_freight', 'per_container']
@@ -186,5 +186,40 @@ IAFC:
 IAHC:
   name: "IFB Agro Handling"
   units: [ 'per_container' ]
+  condition: true
+  tags: ['additional_service']
+STP:
+  name: "Standard Tariff Pricing"
+  units: ['per_container', 'per_trailer']
+  condition: (origin_location['country_code'] == destination_location['country_code'] == 'SG')
+  tags: ['trailer']
+DHP:
+  name: "Depot Handling Fee"
+  units: [ 'per_container','per_trailer' ]
+  condition: (origin_location['country_code'] == destination_location['country_code'] == 'SG')
+  tags: ['trailer']
+PNT:
+  name: "Portnet Service"
+  units: [ 'per_container','per_trailer' ]
+  condition: (origin_location['country_code'] == destination_location['country_code'] == 'SG')
+  tags: ['trailer']
+CMS:
+  name: "Container Management Service"
+  units: [ 'per_container','per_trailer' ]
+  condition: (origin_location['country_code'] == destination_location['country_code'] == 'SG')
+  tags: ['trailer']
+STHF:
+  name: "Standby Time Handling Fee"
+  units: ['per_trailer', 'per_container']
+  condition: true
+  tags: ['additional_service']
+DSWD:
+  name: "Weekend and Public Holiday Delivery"
+  units: ['per_trailer', 'per_container']
+  condition: true
+  tags: ['additional_service']
+UO8H:
+  name: "Urgent Order (< 8 Hours)"
+  units: ['per_trailer', 'per_container']
   condition: true
   tags: ['additional_service']

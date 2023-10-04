@@ -2,15 +2,16 @@ from peewee import (
     Model,
     UUIDField,
     FloatField,
-    BigIntegerField,
     CharField,
     TextField,
     DateField,
     IntegerField,
+    BooleanField,
 )
 from datetime import datetime
 from database.db_session import db
-from playhouse.postgres_ext import DateTimeTZField
+from playhouse.postgres_ext import DateTimeTZField, BigAutoField
+from services.bramhastra.enums import ImportTypes
 
 
 class BaseModel(Model):
@@ -20,16 +21,16 @@ class BaseModel(Model):
 
 
 class FclFreightRateStatistic(BaseModel):
-    id = BigIntegerField(sequence="fcl_freight_rate_stats_seq")
-    identifier = TextField()
-    validity_id = UUIDField()
-    rate_id = UUIDField()
+    id = BigAutoField(primary_key=True)
+    identifier = TextField(index=True)
+    validity_id = UUIDField(index=True)
+    rate_id = UUIDField(index=True)
     payment_term = CharField()
     schedule_type = CharField()
-    origin_port_id = UUIDField()
-    destination_port_id = UUIDField()
-    origin_main_port_id = UUIDField(null=True)
-    destination_main_port_id = UUIDField(null=True)
+    origin_port_id = UUIDField(index=True)
+    destination_port_id = UUIDField(index=True)
+    origin_main_port_id = UUIDField(null=True, index=True)
+    destination_main_port_id = UUIDField(null=True, index=True)
     origin_region_id = UUIDField(null=True)
     destination_region_id = UUIDField(null=True)
     origin_country_id = UUIDField(null=True)
@@ -46,10 +47,10 @@ class FclFreightRateStatistic(BaseModel):
     validity_start = DateField()
     validity_end = DateField()
     currency = CharField(max_length=3)
-    shipping_line_id = UUIDField(null=True)
-    service_provider_id = UUIDField(null=True)
+    shipping_line_id = UUIDField(null=True, index=True)
+    service_provider_id = UUIDField(null=True, index=True)
     accuracy = FloatField(default=-1.0)
-    mode = CharField()
+    mode = CharField(index=True)
     likes_count = IntegerField(default=0)
     dislikes_count = IntegerField(default=0)
     feedback_recieved_count = IntegerField(default=0)
@@ -75,7 +76,7 @@ class FclFreightRateStatistic(BaseModel):
     destination_detention_id = UUIDField(null=True)
     origin_demurrage_id = UUIDField(null=True)
     destination_demurrage_id = UUIDField(null=True)
-    cogo_entity_id = UUIDField(null=True)
+    cogo_entity_id = UUIDField(null=True, index=True)
     rate_type = CharField()
     sourced_by_id = UUIDField(null=True)
     procured_by_id = UUIDField(null=True)
@@ -95,8 +96,8 @@ class FclFreightRateStatistic(BaseModel):
     revenue_desk_visit_count = IntegerField(default=0)
     so1_visit_count = IntegerField(default=0)
     created_at = DateTimeTZField(default=datetime.utcnow())
-    updated_at = DateTimeTZField(default=datetime.utcnow())
-    version = IntegerField(default=1)
+    updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
+    version = IntegerField(default=1, index=True)
     sign = IntegerField(default=1)
     status = CharField(default="active")
     last_action = CharField(default="create")
@@ -108,21 +109,26 @@ class FclFreightRateStatistic(BaseModel):
     last_indicative_rate = FloatField(default=0)
     average_booking_rate = FloatField(default=0)
     booking_rate_count = FloatField(default=0)
-    parent_rate_id = UUIDField(null=True)
-    parent_validity_id = UUIDField(null=True)
+    parent_rate_id = UUIDField(null=True, index=True)
+    parent_validity_id = UUIDField(null=True, index=True)
     so1_select_count = IntegerField(default=0)
     total_priority = IntegerField(default=0)
-    parent_mode = CharField(null = True)
+    parent_mode = CharField(null=True, index=True)
     source = CharField(null=True)
-    source_id = UUIDField(null=True)
-    performed_by_id = UUIDField(null=True)
-    performed_by_type = CharField(null=True)
-    rate_sheet_id = UUIDField(null=True)
-    bulk_operation_id = UUIDField(null=True)
+    source_id = UUIDField(null=True, index=True)
+    performed_by_id = UUIDField(null=True, index=True)
+    performed_by_type = CharField(null=True, index=True)
+    rate_sheet_id = UUIDField(null=True, index=True)
+    bulk_operation_id = UUIDField(null=True, index=True)
+    operation_created_at = DateTimeTZField(default=datetime.utcnow())
+    operation_updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
+    is_deleted = BooleanField(index = True,default = False)
+    bas_price = FloatField(default = 0,null = True)
+    bas_standard_price = FloatField(default = 0,null = True)
+    bas_currency = CharField(max_length = 3,null = True)
 
     def save(self, *args, **kwargs):
-        self.updated_at = datetime.utcnow()
-        self.validity_updated_at = datetime.utcnow()
+        self.operation_updated_at = datetime.utcnow()
         return super(FclFreightRateStatistic, self).save(*args, **kwargs)
 
     def update_force(self, params):
@@ -132,6 +138,18 @@ class FclFreightRateStatistic(BaseModel):
 
     def refresh(self):
         return type(self).get(self._pk_expr())
+
+    CLICK_KEYS = [
+        "is_deleted",
+        "origin_continent_id",
+        "origin_country_id",
+        "origin_port_id",
+        "shipping_line_id",
+        "rate_id",
+        "validity_id",
+    ]
+
+    IMPORT_TYPE = ImportTypes.csv.value
 
     class Meta:
         table_name = "fcl_freight_rate_statistics"

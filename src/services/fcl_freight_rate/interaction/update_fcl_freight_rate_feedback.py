@@ -22,7 +22,9 @@ def execute_transaction_code(request):
         object.relevant_supply_agent_ids = (UUID(id) for id in request.get("relevant_supply_agent_ids"))
 
     if request.get("reverted_validities"):
-        object.reverted_validities = request.get("reverted_validities")
+        existing_reverted_validities = object.reverted_validities or []
+        new_reverted_validities = existing_reverted_validities + (request.get("reverted_validities") or [])
+        object.reverted_validities = new_reverted_validities
     try:
         object.save()
     except:

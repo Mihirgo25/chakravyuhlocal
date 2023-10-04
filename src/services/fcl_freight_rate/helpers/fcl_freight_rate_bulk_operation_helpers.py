@@ -71,3 +71,28 @@ def get_total_affected_rates(id, total_affected_rates = 0):
     else: 
         return total_affected_rates
     
+def get_common_create_params(data,bulk_operation_id, performed_by_id, sourced_by_id, procured_by_id,freight,is_system_operation):
+    freight_rate_object = {
+            'origin_port_id': str(freight["origin_port_id"]),
+            'origin_main_port_id': str(freight["origin_main_port_id"]) if freight['origin_main_port_id'] else None,
+            'destination_port_id': str(freight["destination_port_id"]),
+            'destination_main_port_id': str(freight["destination_main_port_id"]) if freight['destination_main_port_id'] else None,
+            'container_size': freight["container_size"],
+            'container_type': freight["container_type"],
+            'commodity': freight["commodity"],
+            'shipping_line_id': str(freight["shipping_line_id"]),
+            'importer_exporter_id': str(freight["importer_exporter_id"]) if freight['importer_exporter_id'] else None,
+            'service_provider_id': str(freight["service_provider_id"]),
+            'cogo_entity_id': str(freight["cogo_entity_id"]) if freight['cogo_entity_id'] else None,
+            'bulk_operation_id': bulk_operation_id,
+            'performed_by_id': performed_by_id,
+            'sourced_by_id': str(freight['sourced_by_id']) if  is_system_operation else sourced_by_id,
+            'procured_by_id': str(freight['procured_by_id']) if  is_system_operation else procured_by_id,
+            'source': 'bulk_operation',
+            'mode':freight['mode'],
+            'rate_type': freight['rate_type'],
+            'tag': data.get('tag'),
+            'rate_sheet_validation': True
+        }   
+        
+    return freight_rate_object

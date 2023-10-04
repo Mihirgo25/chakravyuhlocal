@@ -557,7 +557,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
             object = (
                 AirServiceAudit.select()
-                .where(AirServiceAudit.object_id == freight["air_freight_rate_surcharge_id"],
+                .where(AirServiceAudit.object_id == freight["id"],
                        AirServiceAudit.bulk_operation_id == self.id
                 )
                 .first()
@@ -569,7 +569,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
             delete_air_freight_rate_surcharge(
                 {
-                    "id": freight["air_freight_rate_surcharge_id"],
+                    "id": freight["id"],
                     "performed_by_id": self.performed_by_id,
                     "bulk_operation_id": self.id,
                 }
@@ -588,7 +588,7 @@ class AirFreightRateBulkOperation(BaseModel):
             object = (
                 AirServiceAudit.select()
                 .where(
-                    AirServiceAudit.object_id == freight["air_freight_rate_local_id"],
+                    AirServiceAudit.object_id == freight["id"],
                     AirServiceAudit.bulk_operation_id == self.id
                 )
                 .first()
@@ -600,7 +600,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
             delete_air_freight_rate_local(
                 {
-                    "id": freight["air_freight_rate_local_id"],
+                    "id": freight["id"],
                     "performed_by_id": self.performed_by_id,
                     "bulk_operation_id": self.id,
                 }

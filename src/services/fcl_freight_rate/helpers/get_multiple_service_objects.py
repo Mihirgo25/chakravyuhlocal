@@ -17,9 +17,7 @@ def get_multiple_service_objects(freight_object, is_new_rate=True):
                 freight_object.airline = airline[0]
             except:
                 freight_object.airline_detail = airline[0]
-    
-        
-            
+
     user_list =[]
     if hasattr(freight_object,'procured_by_id') and freight_object.procured_by_id:
         user_list.append(freight_object.procured_by_id)
@@ -29,7 +27,7 @@ def get_multiple_service_objects(freight_object, is_new_rate=True):
         user_list.append(freight_object.performed_by_id)
     if hasattr(freight_object,'closed_by_id') and freight_object.closed_by_id:
         user_list.append(freight_object.closed_by_id)
-    if hasattr(freight_object,'completed_by_id'):
+    if hasattr(freight_object,'completed_by_id') and freight_object.completed_by_id:
         user_list.append(freight_object.completed_by_id)
 
     if user_list:
@@ -45,6 +43,7 @@ def get_multiple_service_objects(freight_object, is_new_rate=True):
                 freight_object.closed_by = user
             if hasattr(freight_object,'completed_by_id') and user['id']==str(freight_object.completed_by_id):
                 freight_object.completed_by = user
+
     organization_list=[]
     if hasattr(freight_object,'importer_exporter_id') and freight_object.importer_exporter_id :
         organization_list.append(freight_object.importer_exporter_id)
@@ -52,6 +51,7 @@ def get_multiple_service_objects(freight_object, is_new_rate=True):
         organization_list.append(freight_object.service_provider_id)
     if hasattr(freight_object,'performed_by_org_id') and freight_object.performed_by_org_id:
         organization_list.append(freight_object.performed_by_org_id)
+
     if organization_list:
         organization_data = get_organization(id=organization_list)
         for organization in organization_data:
@@ -72,4 +72,3 @@ def get_multiple_service_objects(freight_object, is_new_rate=True):
 
 
     freight_object.save()
-

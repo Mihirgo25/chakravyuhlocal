@@ -11,7 +11,7 @@ from services.bramhastra.interactions.get_fcl_freight_rate_charts import (
 )
 import json
 from services.rate_sheet.interactions.upload_file import upload_media_file
-from services.bramhastra.enums import DTString, RedisKeys
+from services.bramhastra.enums import RedisKeys
 from database.db_session import rd
 
 

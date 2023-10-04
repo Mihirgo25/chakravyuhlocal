@@ -53,6 +53,8 @@ class AirFreightRateLocal(BaseModel):
     procured_by = BinaryJSONField(null=True)
     rate_type=CharField(null=True,index=True)
     rate_not_available_entry=BooleanField(null=True,default=False)
+    importer_exporter_id = UUIDField(null=True)
+    importer_exporter = BinaryJSONField(null=True)
 
     class Meta:
         table_name = 'air_freight_rate_locals'
@@ -60,7 +62,7 @@ class AirFreightRateLocal(BaseModel):
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
         return super(AirFreightRateLocal, self).save(*args, **kwargs)
-    
+
     def detail(self):
         return {
         'local': {
@@ -77,7 +79,7 @@ class AirFreightRateLocal(BaseModel):
         commodity = self.commodity
         commodity_type = self.commodity_type
         commodity_sub_type = None
-        
+
 
         air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES.get()
         charge_codes={}
@@ -85,7 +87,7 @@ class AirFreightRateLocal(BaseModel):
             if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and 'deleted' not in config['tags']:
                 charge_codes[code] = config
         return charge_codes
-    
+
 
     def update_line_item_messages(self):
         line_items_error_messages = {}
@@ -99,23 +101,21 @@ class AirFreightRateLocal(BaseModel):
             grouped_charge_codes[line_item.get('code')] = line_item
 
         for code,line_items in grouped_charge_codes.items():
-            
-            code_config=air_freight_local_charges_dict.get(code)  
+            code_config=air_freight_local_charges_dict.get(code)
 
             if not code_config:
                 line_items_error_messages[code] = ['is invalid']
                 is_line_items_error_messages_present =True
                 continue
 
-            if self.trade_type not in  code_config['trade_types']:
+            if self.trade_type not in code_config['trade_types']:
                 line_items_error_messages[code] = ["can only be added for {}".format(",".join(code_config['trade_types']))]
 
             if line_items['unit'] not in code_config['units']:
                 line_items_error_messages[code] = [f"can only be having units {', '.join(code_config['units'])}"]
                 is_line_items_error_messages_present = True
                 continue
-            
-            
+
             if not eval(str(code_config['condition'])):
                 line_items_error_messages[code] = ['is invalid']
                 is_line_items_error_messages_present = True
@@ -126,7 +126,7 @@ class AirFreightRateLocal(BaseModel):
                 self.is_line_items_error_messages_present = True
 
         possible_charge_codes=self.possible_charge_codes()
-        
+
         for code, config in possible_charge_codes.items():
             if 'mandatory' in config.get('tags', []):
                 if code not in grouped_charge_codes:
@@ -137,14 +137,12 @@ class AirFreightRateLocal(BaseModel):
                 if grouped_charge_codes.get(code) is None and not line_items_error_messages.get(code):
                     line_items_info_messages[code] = ['can be added for more conversion']
                     is_line_items_info_messages_present = True
-        
+
         self.line_items_error_messages = line_items_error_messages
         self.line_items_info_messages = line_items_info_messages
         self.is_line_items_info_messages_present = is_line_items_info_messages_present
         self.is_line_items_error_messages_present = is_line_items_error_messages_present
         self.save()
-
-
 
     def update_freight_objects(self):
         from services.air_freight_rate.models.air_freight_rate import AirFreightRate
@@ -166,7 +164,7 @@ class AirFreightRateLocal(BaseModel):
                 'destination_local_id':self.id,
                 'destination_local': local
             }
-        
+
         t=AirFreightRate.update(**kwargs).where(
             AirFreightRate.airline_id==self.airline_id,
             AirFreightRate.commodity==self.commodity,
@@ -177,7 +175,7 @@ class AirFreightRateLocal(BaseModel):
             (eval("AirFreightRate.{}_local_id".format(location_key)) == None)
         )
         t.execute()
-    
+
     def validate_duplicate_line_items(self):
         line_items = {}
         for line_item in self.line_items:
@@ -185,7 +183,7 @@ class AirFreightRateLocal(BaseModel):
                 raise HTTPException(status_code = 400, detail = 'Duplicate Line Items')
             line_items[line_item['code']] = True
 
-    
+
     def validate_commodity(self):
         if self.commodity not in COMMODITY:
             raise HTTPException(status_code=400,detail = 'Invalid Commodity')
@@ -195,18 +193,18 @@ class AirFreightRateLocal(BaseModel):
             raise HTTPException(status_code=400,detail = 'Invalid Commodity Type')
 
     def validate_service_provider_id(self):
-        service_provider_data = get_organization(id=str(self.service_provider_id))
-        if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
-            self.service_provider = service_provider_data[0]
+        service_provider_data = get_eligible_orgs(service='air_freight')
+        
+        if str(self.service_provider_id) in service_provider_data:
             return True
-        raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
-    
+        raise HTTPException(status_code = 400, detail = 'Service Provider Is Not Valid for the service') 
+
     def validate(self):
         if not self.airport:
             raise HTTPException(status_code = 400, detail = 'Airport is Invalid')
-        
+
         if not self.airline:
-             raise HTTPException(status_code = 400, detail = 'Airline is Invalid')         
+             raise HTTPException(status_code = 400, detail = 'Airline is Invalid')
         self.validate_duplicate_line_items()
         self.validate_commodity()
         self.validate_commodity_type()
@@ -215,7 +213,7 @@ class AirFreightRateLocal(BaseModel):
         if self.trade_type not in TRADE_TYPES:
             raise HTTPException(status_code = 400, detail = 'Invalid Trade Type')
         return True
-    
+
     def set_locations(self):
         ids = []
         if self.airport_id:
@@ -229,7 +227,7 @@ class AirFreightRateLocal(BaseModel):
         for location in locations:
             if str(self.airport_id) == str(location['id']):
                self.airport = self.get_required_location_data(location)
-    
+
     def set_airline(self):
         if self.airline or not self.airline_id:
             return
@@ -249,8 +247,8 @@ class AirFreightRateLocal(BaseModel):
           "country_code": location["country_code"]
         }
         return loc_data
-    
-    
+
+
     def set_location_ids(self):
         self.country_id = self.airport.get('country_id')
         self.continent_id = self.airport.get('continent_id')

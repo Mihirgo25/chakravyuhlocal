@@ -10,6 +10,8 @@ from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRa
 from services.air_freight_rate.models.air_freight_rate_validity import AirFreightRateValidity
 from fastapi.encoders import jsonable_encoder
 from configs.global_constants import SERVICE_PROVIDER_FF
+from services.air_freight_rate.constants.air_freight_rate_constants import COGOXPRESS
+from services.air_freight_rate.air_celery_worker import update_air_freight_rate_job_on_rate_addition_delay
 
 def update_air_freight_rate(request):
       with db.atomic():
@@ -82,6 +84,11 @@ def execute(request):
 
     if str(object.service_provider_id)== SERVICE_PROVIDER_FF and not request.get('extension_not_required'):
         extend_rate_fun(object,request,validity_object)
+        
+    send_stats(request,object)
+
+    if str(object.service_provider_id) != COGOXPRESS:
+        update_air_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": object.id},queue='fcl_freight_rate')
 
     return {
         'id':object.id
@@ -89,6 +96,8 @@ def execute(request):
 
 def extend_rate_fun(object,request,validity_object):
     from celery_worker import extend_air_freight_rates_in_delay
+    validity_object['validity_start']=datetime.strptime(validity_object.get('validity_start'),'%Y-%m-%d')
+    validity_object['validity_end']=datetime.strptime(validity_object.get('validity_end'),'%Y-%m-%d')
     rate = request | {
         'origin_airport_id':str(object.origin_airport_id),
         'destination_airport_id':str(object.destination_airport_id),
@@ -116,8 +125,8 @@ def extend_rate_fun(object,request,validity_object):
         'initial_gross_weight':validity_object['initial_gross_weight'],
         'available_volume':validity_object['available_volume'],
         'available_gross_weight':validity_object['available_gross_weight'],
-        'validity_start': datetime.combine(request['validity_start'],datetime.min.time()),
-        'validity_end':datetime.combine(request['validity_end'],datetime.min.time())
+        'validity_start': datetime.combine(request.get('validity_start') or  validity_object['validity_start'] ,datetime.min.time()),
+        'validity_end':datetime.combine(request.get('validity_end') or validity_object['validity_end'] ,datetime.min.time())
     }
     extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': rate,'base_to_base':True }, queue='fcl_freight_rate')
 
@@ -162,3 +171,7 @@ def find_object(request):
     except:
         object=None
     return object
+
+def send_stats(request,freight):
+    from services.bramhastra.celery import send_air_rate_stats_in_delay
+    send_air_rate_stats_in_delay.apply_async(kwargs = {'action':'update','request':request,'freight':freight},queue = 'statistics')

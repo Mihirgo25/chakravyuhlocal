@@ -10,6 +10,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 class AirFreightRateValidity(BaseModel):
+    action: str = "create"
     validity_start: datetime.date
     validity_end: datetime.date
     min_price: float

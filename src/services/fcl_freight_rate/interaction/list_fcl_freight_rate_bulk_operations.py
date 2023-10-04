@@ -12,7 +12,7 @@ possible_direct_filters = ['action_name', 'service_provider_id', 'performed_by_i
 possible_indirect_filters = []
 
 def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc',):
-    query = get_query(sort_by, sort_type)
+    query = get_query()
 
     if filters:
         if type(filters) != dict:
@@ -23,6 +23,9 @@ def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 
         query = get_filters(direct_filters, query, FclFreightRateBulkOperation)
 
     pagination_data = get_pagination_data(query, page, page_limit)
+    if(sort_by):
+        query = query.order_by(eval('FclFreightRateBulkOperation.{}.{}()'.format(sort_by,sort_type)))
+        
     query = query.paginate(page, page_limit)
     data = json_encoder(list(query.dicts()))
     data = get_details(data)
@@ -52,12 +55,14 @@ def get_details(data):
         total_affected_rates = parse_numeric(d['data'].get('total_affected_rates')) or 0
         d['data']['total_affected_rates'] = get_total_affected_rates(str(d['id']), total_affected_rates)
         d['progress'] = 100 if progress == 100 else min(get_progress_percent(str(d['id']), progress), 100)
+        
+        if d['data'].get('markup'):
+            d['data']['markup'] = round(d['data']['markup'], 2)
     return data
 
-def get_query(sort_by, sort_type):
+def get_query():
     query = FclFreightRateBulkOperation.select()
-    if(sort_by):
-        query = query.order_by(eval('FclFreightRateBulkOperation.{}.{}()'.format(sort_by,sort_type)))
+   
         
     return query
     

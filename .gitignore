@@ -9,6 +9,7 @@ __pycache__
 .env.prod
 dump.rdb
 src/dump.rdb
+.vscode
 
 # CDK asset staging directory
 .cdk.staging
