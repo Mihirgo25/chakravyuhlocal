@@ -114,22 +114,22 @@ async def get_lifecycle_statistics(filters, where):
 
     checkout_count = [non_zero_distinct_id_query("checkout")]
 
-    shipments_received = [shipment_query(ShipmentState.received.name, ">=")]
+    shipments_received = [shipment_query(ShipmentState.received.name, "=")]
     shipments_confirmed_by_importer_exporter = [
-        shipment_query(ShipmentState.confirmed_by_importer_exporter.name, ">=")
+        shipment_query(ShipmentState.confirmed_by_importer_exporter.name, "=")
     ]
     shipments_completed = [shipment_query(ShipmentState.completed.name, "=")]
     shipments_cancelled = [shipment_query(ShipmentState.cancelled.name, "=")]
     shipments_aborted = [shipment_query(ShipmentState.aborted.name, "=")]
 
-    revenue_desk_visited = [revenue_desk_query(RevenueDeskState.visited.name, ">=")]
+    revenue_desk_visited = [revenue_desk_query(RevenueDeskState.visited.name, "=")]
     revenue_desk_selected_for_booking = [
         revenue_desk_query(RevenueDeskState.selected_for_booking.name, "=")
     ]
 
     # Feedback
-    feedbacks_created = [feedback_query(FeedbackState.created.name, ">=")]
-    feedbacks_closed = [feedback_query(FeedbackState.closed.name, ">=")]
+    feedbacks_created = [feedback_query(FeedbackState.created.name, "=")]
+    feedbacks_closed = [feedback_query(FeedbackState.closed.name, "=")]
     feedbacks_rate_added = [feedback_query(FeedbackState.rate_added.name, "=")]
 
     disliked = [count_boolean_query(FeedbackType.disliked.name)]
@@ -140,10 +140,10 @@ async def get_lifecycle_statistics(filters, where):
         SELECT COUNT(DISTINCT rate_id) AS rates_source_disliked FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE source = 'disliked_rate'
         """
     ]
-    rate_requests_created = [rate_request_query(RateRequestState.created.name, ">=")]
-    rate_requests_closed = [rate_request_query(RateRequestState.closed.name, ">=")]
+    rate_requests_created = [rate_request_query(RateRequestState.created.name)]
+    rate_requests_closed = [rate_request_query(RateRequestState.closed.name)]
     rate_requests_rate_added = [
-        rate_request_query(RateRequestState.rate_added.name, "=")
+        rate_request_query(RateRequestState.rate_added.name)
     ]
 
     variables = [
@@ -313,9 +313,9 @@ def shipment_query(column, comparator):
     """
 
 
-def rate_request_query(column, comparator):
+def rate_request_query(column):
     return f"""
-    SELECT COUNT(*) AS rate_requests_{column} FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state {comparator} '{column}'
+    SELECT COUNT(*) AS rate_requests_{column} FROM brahmastra.{FclFreightAction._meta.table_name} WHERE rate_request_state = '{column}'
     """
 
 
