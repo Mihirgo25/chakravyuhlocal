@@ -50,7 +50,7 @@ REQUIRED_FILTERS = {
 }
 
 
-def get_direct_indirect_filters(filters, date="time_series"):
+def get_direct_indirect_filters(filters, date=FclFilterTypes.time_series.value):
     if filters is None:
         return
     for k, v in REQUIRED_FILTERS.items():

@@ -23,6 +23,9 @@ from services.bramhastra.interactions.get_fcl_freight_rate_differences import (
 
 def get_fcl_freight_rate_charts(filters):
     where = get_direct_indirect_filters(filters, date=FclFilterTypes.time_series.value)
+    chart_type = filters.get("chart_type", None)
+    if chart_type:
+        filters.pop("chart_type")
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         accuracy_future = executor.submit(get_accuracy, filters, where)
@@ -38,10 +41,8 @@ def get_fcl_freight_rate_charts(filters):
         **spot_search_future.result(),
     )
 
-    chart_type = filters.get("chart_type")
     match chart_type:
         case "deviation":
-            filters.pop("chart_type")
             resp["deviation"] = get_fcl_freight_rate_differences(filters)
 
         case "accuracy":
@@ -60,9 +61,8 @@ def get_accuracy(filters, where):
         f"""SELECT parent_mode as mode,toDate(updated_at) AS day,(SUM(bas_standard_price_accuracy*sign)/COUNT(DISTINCT id)) AS average_accuracy FROM brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
-    queries.append(" WHERE ")
-
     if where:
+        queries.append(" WHERE ")
         queries.append(where)
         queries.append(f"AND bas_standard_price_accuracy != {sys.float_info.max}")
 

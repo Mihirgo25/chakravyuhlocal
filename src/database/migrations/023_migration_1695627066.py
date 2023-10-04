@@ -47,7 +47,7 @@ fields_to_remove = [
     'shipment_completed_count',
     'shipment_confirmed_by_importer_exporter_count',
     'shipment_in_progress_count',
-    'shipment_recieved_count',
+    'shipment_received_count',
     'shipment_awaited_service_provider_confirmation_count',
     'shipment_init_count',
     'shipment_containers_gated_in_count',
@@ -55,7 +55,10 @@ fields_to_remove = [
     'shipment_vessel_arrived_count',
     'shipment_is_active_count',
     'shipment_booking_rate_is_too_low_count',
+    'revenue_desk_visit_count',
     'so1_visit_count',
+    'version',
+    'sign',
     'rate_deviation_from_booking_rate',
     'rate_deviation_from_cluster_base_rate',
     'rate_deviation_from_booking_on_cluster_base_rate',
@@ -75,6 +78,10 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.add_fields(FclFreightRateStatistic, shipment_cancelled = IntegerField(default = 0))
     migrator.add_fields(FclFreightRateStatistic, bas_standard_price_accuracy = FloatField(default = -1))
     migrator.add_fields(FclFreightRateStatistic, bas_standard_price_diff_from_selected_rate = FloatField(default=0))
+    migrator.add_fields(FclFreightRateStatistic, parent_rate_mode = CharField(null = True))
+    migrator.sql('Create index fcl_freight_rate_statistic_parent_rate_mode on brahmastra.{FclFreightRateStatistic._meta.table_name} (parent_rate_mode);')
+    migrator.add_fields(FclFreightRateStatistic, revenue_desk_visit_count = IntegerField(default = 0))
+    migrator.add_fields(FclFreightRateStatistic, so1_visit_count = IntegerField(default = 0))
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN accuracy CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN feedback_recieved_count CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN dislikes_rate_reverted_count CASCADE;')
@@ -85,7 +92,7 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_completed_count CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_confirmed_by_importer_exporter_count CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_in_progress_count CASCADE;')
-    migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_recieved_count CASCADE;')
+    migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_received_count CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_awaited_service_provider_confirmation_count CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_init_count CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_containers_gated_in_count CASCADE;')
@@ -93,6 +100,10 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_vessel_arrived_count CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_is_active_count CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN shipment_booking_rate_is_too_low_count CASCADE;')
+    migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN revenue_desk_visit_count CASCADE;')
+    migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN so1_visit_count CASCADE;')
+    migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN version CASCADE;')
+    migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN sign CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN rate_deviation_from_booking_rate CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN rate_deviation_from_cluster_base_rate CASCADE;')
     migrator.sql('ALTER TABLE brahmastra.{FclFreightRateStatistic._meta.table_name} DROP COLUMN rate_deviation_from_booking_on_cluster_base_rate CASCADE;')

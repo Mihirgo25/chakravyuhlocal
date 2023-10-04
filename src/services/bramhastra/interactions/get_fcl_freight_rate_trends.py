@@ -63,7 +63,7 @@ def get_rate(filters: dict) -> list:
     ):
         set_port_code_filters_and_service_object(filters, location_object)
 
-    where = get_direct_indirect_filters(filters)
+    where = get_direct_indirect_filters(filters, date=None)
 
     if where:
         queries.append(" WHERE ")
