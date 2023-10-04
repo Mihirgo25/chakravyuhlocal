@@ -125,7 +125,13 @@ def get_user(id):
         return all_result
 
 def get_eligible_orgs(service):
+    key = f"total_eligible_organizations_{service}"
     all_result = []
+    
+    cached_response = rd.get(key)
+    if cached_response:
+        return json.loads(cached_response)
+    
     try:
         conn = get_connection()
         with conn:
@@ -138,6 +144,9 @@ def get_eligible_orgs(service):
                     all_result.append(str(res[0]))
                 cur.close()
         conn.close()
+        rd.set(key, json.dumps(all_result))
+        rd.expire(key, 300)
+        
         return all_result
     except Exception as e:
         sentry_sdk.capture_exception(e)
@@ -321,6 +330,7 @@ def get_ff_mlo():
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return result
+    
 
 def get_past_air_invoices(origin_location_id,destination_location_id,location_type, interval, interval_type = 'months', offset=0, limit=50):
         all_results =[]
