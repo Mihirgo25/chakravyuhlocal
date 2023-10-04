@@ -1,13 +1,13 @@
 from database.db_session import db
-from services.fcl_freight_rate.models.fcl_freight_rate_local_jobs import (
-    LclFreightRateLocalJob,
+from services.lcl_freight_rate.models.lcl_freight_rate_jobs import (
+    LclFreightRateJob,
 )
-from services.fcl_freight_rate.models.fcl_freight_rate_local_job_mappings import (
-    LclFreightRateLocalJobMapping,
+from services.lcl_freight_rate.models.lcl_freight_rate_job_mappings import (
+    LclFreightRateJobMapping,
 )
 from database.rails_db import get_user
 from datetime import datetime
-from services.fcl_freight_rate.models.fcl_services_audit import LclServiceAudit
+from services.lcl_freight_rate.models.lcl_freight_rate_audit import LclFreightRateAudit
 
 POSSIBLE_CLOSING_REMARKS = [
     "not_serviceable",
@@ -16,7 +16,7 @@ POSSIBLE_CLOSING_REMARKS = [
 ]
 
 
-def delete_lcl_freight_rate_local_job(request):
+def delete_lcl_freight_rate_job(request):
     if (
         request.get("closing_remarks")
         and request.get("closing_remarks") in POSSIBLE_CLOSING_REMARKS
@@ -36,25 +36,25 @@ def delete_lcl_freight_rate_local_job(request):
             "updated_at": datetime.now(),
         }
 
-    fcl_freight_rate_local_job = (
-        LclFreightRateLocalJob.update(update_params)
+    lcl_freight_rate_job = (
+        LclFreightRateJob.update(update_params)
         .where(
-            LclFreightRateLocalJob.id == request["id"],
-            LclFreightRateLocalJob.status.not_in(["completed", "aborted"]),
+            LclFreightRateJob.id == request["id"],
+            LclFreightRateJob.status.not_in(["completed", "aborted"]),
         )
         .execute()
     )
-    if fcl_freight_rate_local_job:
+    if lcl_freight_rate_job:
         create_audit(request["id"], request)
 
     return {"id": request["id"]}
 
 
 def create_audit(jobs_id, data):
-    LclServiceAudit.create(
+    LclFreightRateAudit.create(
         action_name="delete",
         object_id=jobs_id,
-        object_type="LclFreightRateLocalJob",
+        object_type="LclFreightRateJob",
         data=data.get("data"),
         performed_by_id=data.get("performed_by_id"),
     )

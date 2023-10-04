@@ -2,8 +2,8 @@ from services.lcl_customs_rate.models.lcl_customs_rate_jobs import LclCustomsRat
 from services.lcl_customs_rate.models.lcl_customs_rate_job_mappings import (
     LclCustomsRateJobMapping,
 )
-from services.fcl_customs_rate.helpers import (
-    generate_csv_file_url_for_fcl_customs,
+from services.lcl_customs_rate.helpers import (
+    generate_csv_file_url_for_lcl_customs,
 )
 import json
 from libs.get_applicable_filters import get_applicable_filters
@@ -57,7 +57,7 @@ def list_lcl_customs_rate_jobs(
         query = apply_filters(query, filters)
 
     if generate_csv_url:
-        return generate_csv_file_url_for_fcl_customs(query)
+        return generate_csv_file_url_for_lcl_customs(query)
 
     if page_limit:
         query = query.paginate(page, page_limit)
@@ -85,14 +85,14 @@ def get_data(query):
 
 def includes_filter(includes):
     if includes:
-        fcl_all_fields = list(LclCustomsRateJob._meta.fields.keys())
-        required_fcl_fields = [a for a in includes.keys() if a in fcl_all_fields]
-        fcl_fields = [getattr(LclCustomsRateJob, key) for key in required_fcl_fields]
+        lcl_all_fields = list(LclCustomsRateJob._meta.fields.keys())
+        required_lcl_fields = [a for a in includes.keys() if a in lcl_all_fields]
+        lcl_fields = [getattr(LclCustomsRateJob, key) for key in required_lcl_fields]
     else:
-        fcl_fields = [
+        lcl_fields = [
             getattr(LclCustomsRateJob, key) for key in DEFAULT_REQUIRED_FIELDS
         ]
-    query = LclCustomsRateJob.select(*fcl_fields)
+    query = LclCustomsRateJob.select(*lcl_fields)
     return query
 
 
