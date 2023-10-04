@@ -16,12 +16,15 @@ def delete_fcl_cfs_rate_job(request):
     else:
         update_params = {'status':'completed', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now()}
     
+    job_ids = None
     if request.get('fcl_cfs_rate_feedback_ids'):
         job_ids = [ str(job.job_id) for job in FclCfsRateJobMapping.select(FclCfsRateJobMapping.job_id).where(FclCfsRateJobMapping.source_id << request['fcl_cfs_rate_feedback_ids'])]
     elif request.get('fcl_cfs_rate_request_ids'):
         job_ids = [ str(job.job_id) for job in FclCfsRateJobMapping.select(FclCfsRateJobMapping.job_id).where(FclCfsRateJobMapping.source_id << request['fcl_cfs_rate_request_ids'])]
-    else:
-        job_ids = request.get('id')
+    elif request.get("id"):
+        job_ids = request.get("id")
+    elif request.get("source_id"):
+        job_ids = request.get('source_id')
 
     if not isinstance(job_ids, list):
         job_ids = [job_ids]

@@ -17,6 +17,7 @@ possible_direct_filters = [
     "commodity_type",
     "user_id",
     "serial_id",
+    "cogo_entity_id"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 

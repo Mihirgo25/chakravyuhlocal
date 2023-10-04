@@ -42,6 +42,7 @@ class AirFreightRateLocalJob(BaseModel):
     init_key = TextField(index=True, null=True)
     operation_type = CharField(null=True)
     price_type = CharField(null=True)
+    cogo_entity_id = UUIDField(null=True, index=True)
     serial_id = BigIntegerField(
         constraints=[SQL("DEFAULT nextval('air_freight_rate_local_jobs_serial_id_seq')")],
     )

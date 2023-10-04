@@ -1,4 +1,4 @@
-from services.ftl_freight_rate.models.ftl_freight_rate_jobs import FtlFreightRateJob
+from services.lcl_freight_rate.models.lcl_freight_rate_jobs import LclFreightRateJob
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
@@ -9,13 +9,13 @@ from playhouse.postgres_ext import SQL
 
 
 possible_direct_filters = [
-    "origin_location_id",
-    "destination_location_id",
-    "commodity_type",
+    "origin_port_id",
+    "destination_port_id",
+    "commodity",
     "user_id",
-    "cogo_entity_id"
+    "cogo_entity_id",
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date"]
+possible_indirect_filters = ["updated_at"]
 
 uncommon_filters = ["serial_id", "status"]
 
@@ -41,10 +41,7 @@ DYNAMIC_STATISTICS = {
 }
 
 
-
-def get_ftl_freight_rate_job_stats(
-    filters={}
-):
+def get_lcl_freight_rate_job_stats(filters={}):
     query = get_query()
     statistics = STATISTICS.copy()
     dynamic_statistics = DYNAMIC_STATISTICS.copy()
@@ -62,19 +59,17 @@ def get_ftl_freight_rate_job_stats(
         statistics = build_weekly_details(query, statistics)
 
     # remaining filters
-    dynamic_statistics = get_statistics(
-            filters, dynamic_statistics
-        )
+    dynamic_statistics = get_statistics(filters, dynamic_statistics)
 
+    statistics["backlog"] = get_all_backlogs(filters)
     return {
         "dynamic_statistics": dynamic_statistics,
         "statistics": statistics,
     }
 
 
-
 def get_query():
-    query = FtlFreightRateJob.select(FtlFreightRateJob.id)
+    query = LclFreightRateJob.select(LclFreightRateJob.id)
     return query
 
 
@@ -86,39 +81,47 @@ def apply_indirect_filters(query, filters):
 
 
 def apply_updated_at_filter(query, filters):
-    query = query.where(FtlFreightRateJob.updated_at > filters["updated_at"])
+    query = query.where(LclFreightRateJob.updated_at > filters["updated_at"])
     return query
 
 
 def apply_source_filter(query, filters):
-    query = query.where(FtlFreightRateJob.sources.contains(filters["source"]))
+    query = query.where(LclFreightRateJob.sources.contains(filters["source"]))
     return query
 
 
 def apply_start_date_filter(query, filters):
-    start_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
-        hours=5, minutes=30
-    )
-    query = query.where(FtlFreightRateJob.created_at.cast("date") >= start_date.date())
+    start_date = filters.get("start_date")
+    if start_date:
+        start_date = datetime.strptime(start_date, STRING_FORMAT) + timedelta(
+            hours=5, minutes=30
+        )
+        query = query.where(
+            LclFreightRateJob.created_at.cast("date") >= start_date.date()
+        )
     return query
 
 
 def apply_end_date_filter(query, filters):
-    end_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
-        hours=5, minutes=30
-    )
-    query = query.where(FtlFreightRateJob.created_at.cast("date") <= end_date.date())
+    end_date = filters.get("end_date")
+    if end_date:
+        end_date = datetime.strptime(end_date, STRING_FORMAT) + timedelta(
+            hours=5, minutes=30
+        )
+        query = query.where(
+            LclFreightRateJob.created_at.cast("date") <= end_date.date()
+        )
     return query
 
 
 def get_statistics(filters, dynamic_statistics):
-    subquery = FtlFreightRateJob.select(
-        fn.UNNEST(FtlFreightRateJob.sources).alias("element")
+    subquery = LclFreightRateJob.select(
+        fn.UNNEST(LclFreightRateJob.sources).alias("element")
     ).alias("elements")
     subquery = apply_filters(subquery, filters)
     subquery = apply_extra_filters(subquery, filters)
     stats_query = (
-        FtlFreightRateJob.select(
+        LclFreightRateJob.select(
             subquery.c.element, fn.COUNT(subquery.c.element).alias("count")
         )
         .from_(subquery)
@@ -134,11 +137,11 @@ def get_statistics(filters, dynamic_statistics):
 
 def build_daily_details(query, statistics):
     query = query.where(
-        FtlFreightRateJob.created_at.cast("date") == datetime.now().date()
+        LclFreightRateJob.created_at.cast("date") == datetime.now().date()
     )
     daily_stats_query = query.select(
-        FtlFreightRateJob.status, fn.COUNT(FtlFreightRateJob.id).alias("count")
-    ).group_by(FtlFreightRateJob.status)
+        LclFreightRateJob.status, fn.COUNT(LclFreightRateJob.id).alias("count")
+    ).group_by(LclFreightRateJob.status)
 
     total_daily_count = 0
     daily_results = json_encoder(list(daily_stats_query.dicts()))
@@ -156,15 +159,15 @@ def build_daily_details(query, statistics):
 
 def build_weekly_details(query, statistics):
     query = query.where(
-        FtlFreightRateJob.created_at.cast("date")
-        >= datetime.now().date() - timedelta(days=7)
+        LclFreightRateJob.created_at.cast("date")
+        >= datetime.now().date() - timedelta(days=6)
     )
 
     weekly_stats_query = query.select(
-        FtlFreightRateJob.status,
-        fn.COUNT(FtlFreightRateJob.id).alias("count"),
-        FtlFreightRateJob.created_at.cast("date").alias("created_at"),
-    ).group_by(FtlFreightRateJob.status, FtlFreightRateJob.created_at.cast("date"))
+        LclFreightRateJob.status,
+        fn.COUNT(LclFreightRateJob.id).alias("count"),
+        LclFreightRateJob.created_at.cast("date").alias("created_at"),
+    ).group_by(LclFreightRateJob.status, LclFreightRateJob.created_at.cast("date"))
     weekly_stats_query = weekly_stats_query.order_by(SQL("created_at DESC"))
     weekly_results = json_encoder(list(weekly_stats_query.dicts()))
     weekly_stats = {}
@@ -216,7 +219,7 @@ def apply_filters(query, filters):
         filters, possible_direct_filters, possible_indirect_filters
     )
     # applying direct filters
-    query = get_filters(direct_filters, query, FtlFreightRateJob)
+    query = get_filters(direct_filters, query, LclFreightRateJob)
 
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
@@ -230,5 +233,16 @@ def apply_extra_filters(query, filters):
         if filters.get(key):
             applicable_filters[key] = filters[key]
 
-    query = get_filters(applicable_filters, query, FtlFreightRateJob)
+    query = get_filters(applicable_filters, query, LclFreightRateJob)
+    query = apply_start_date_filter(query, filters)
+    query = apply_end_date_filter(query, filters)
     return query
+
+
+def get_all_backlogs(filters):
+    query = LclFreightRateJob.select()
+    if filters.get("user_id"):
+        query = query.where(LclFreightRateJob.user_id == filters.get("user_id"))
+    backlog_count = query.where(LclFreightRateJob.status == "backlog").count()
+
+    return backlog_count

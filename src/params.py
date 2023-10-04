@@ -1082,3 +1082,45 @@ class DeleteFclFreightRateLocalJob(BaseModel):
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+
+class CreateLtlFreightRateJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    origin_location_id: str = None
+    destination_location_id: str = None
+    service_provider_id: str = None
+    commodity_type: str = None
+    trip_type: str = None
+    importer_exporter_id: str = None
+    commodity_weight: str = None
+    truck_type: str = None
+    truck_body_type: str = None
+    rate_type: str = None
+
+class DeleteLtlFreightRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+class CreateLclCustomsRateJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    location_id: str = None
+    service_provider_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    rate_type: str = None
+
+class DeleteLclCustomsRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None

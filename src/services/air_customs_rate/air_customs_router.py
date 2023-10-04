@@ -1,5 +1,5 @@
 from services.air_customs_rate.air_customs_params import *
-from params import *
+from params import CreateRateSheet, UpdateRateSheet
 from rms_utils.auth import authorize_token
 from fastapi import APIRouter, Depends
 from libs.json_encoder import json_encoder

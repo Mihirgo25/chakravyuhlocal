@@ -1,31 +1,21 @@
-from services.air_freight_rate.models.air_freight_rate_local_jobs import (
-    AirFreightRateLocalJob,
+from services.lcl_customs_rate.models.lcl_customs_rate_jobs import LclCustomsRateJob
+from services.lcl_customs_rate.models.lcl_customs_rate_job_mappings import (
+    LclCustomsRateJobMapping,
 )
-from services.air_freight_rate.helpers.generate_csv_file_url_for_air_locals import (
-    generate_csv_file_url_for_air_locals,
+from services.lcl_customs_rate.helpers import (
+    generate_csv_file_url_for_lcl_customs,
 )
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
-from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
-from peewee import fn
-from playhouse.postgres_ext import SQL, Case
 
 
-possible_direct_filters = [
-    "airport_id",
-    "airline_id",
-    "commodity",
-    "user_id",
-    "serial_id",
-    "status",
-    "cogo_entity_id"
-]
+possible_direct_filters = ["location_id", "commodity", "user_id", "serial_id", "status", "cogo_entity_id"]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 
 
-STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
 
 
 DEFAULT_REQUIRED_FIELDS = [
@@ -35,26 +25,21 @@ DEFAULT_REQUIRED_FIELDS = [
     "closed_by_id",
     "closing_remarks",
     "commodity",
+    "container_size",
     "created_at",
     "updated_at",
     "status",
-    "airline",
-    "airline_id",
     "service_provider",
     "service_provider_id",
-    "airport",
-    "airport_id",
-    "shipment_type",
-    "commodity_type",
-    "commodity_sub_type",
-    "operation_type",
+    "location",
+    "location_id",
     "serial_id",
-    "price_type",
+    "container_type",
     "sources",
 ]
 
 
-def list_air_freight_rate_local_jobs(
+def list_lcl_customs_rate_jobs(
     filters={},
     page_limit=10,
     page=1,
@@ -63,7 +48,7 @@ def list_air_freight_rate_local_jobs(
     generate_csv_url=False,
     includes={},
 ):
-    query = includes_filters(includes)
+    query = includes_filter(includes)
 
     if filters:
         if type(filters) != dict:
@@ -72,7 +57,7 @@ def list_air_freight_rate_local_jobs(
         query = apply_filters(query, filters)
 
     if generate_csv_url:
-        return generate_csv_file_url_for_air_locals(query)
+        return generate_csv_file_url_for_lcl_customs(query)
 
     if page_limit:
         query = query.paginate(page, page_limit)
@@ -87,28 +72,34 @@ def list_air_freight_rate_local_jobs(
 
 
 def get_data(query):
+    data = list(query.dicts())
+    for d in data:
+        source_id = (
+            LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.source_id)
+            .where(LclCustomsRateJobMapping.job_id == d["id"])
+            .first()
+        )
+        d["source_id"] = source_id.source_id
     return list(query.dicts())
 
 
-def includes_filters(includes):
+def includes_filter(includes):
     if includes:
-        fcl_all_fields = list(AirFreightRateLocalJob._meta.fields.keys())
-        required_fcl_fields = [a for a in includes.keys() if a in fcl_all_fields]
-        air_fields = [
-            getattr(AirFreightRateLocalJob, key) for key in required_fcl_fields
-        ]
+        lcl_all_fields = list(LclCustomsRateJob._meta.fields.keys())
+        required_lcl_fields = [a for a in includes.keys() if a in lcl_all_fields]
+        lcl_fields = [getattr(LclCustomsRateJob, key) for key in required_lcl_fields]
     else:
-        air_fields = [
-            getattr(AirFreightRateLocalJob, key) for key in DEFAULT_REQUIRED_FIELDS
+        lcl_fields = [
+            getattr(LclCustomsRateJob, key) for key in DEFAULT_REQUIRED_FIELDS
         ]
-    query = AirFreightRateLocalJob.select(*air_fields)
+    query = LclCustomsRateJob.select(*lcl_fields)
     return query
 
 
 def sort_query(sort_by, sort_type, query):
     if sort_by:
         query = query.order_by(
-            eval("AirFreightRateLocalJob.{}.{}()".format(sort_by, sort_type))
+            eval("LclCustomsRateJob.{}.{}()".format(sort_by, sort_type))
         )
     return query
 
@@ -121,12 +112,12 @@ def apply_indirect_filters(query, filters):
 
 
 def apply_updated_at_filter(query, filters):
-    query = query.where(AirFreightRateLocalJob.updated_at > filters["updated_at"])
+    query = query.where(LclCustomsRateJob.updated_at > filters["updated_at"])
     return query
 
 
 def apply_source_filter(query, filters):
-    query = query.where(AirFreightRateLocalJob.sources.contains(filters["source"]))
+    query = query.where(LclCustomsRateJob.sources.contains(filters["source"]))
     return query
 
 
@@ -134,9 +125,7 @@ def apply_start_date_filter(query, filters):
     start_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
         hours=5, minutes=30
     )
-    query = query.where(
-        AirFreightRateLocalJob.created_at.cast("date") >= start_date.date()
-    )
+    query = query.where(LclCustomsRateJob.created_at.cast("date") >= start_date.date())
     return query
 
 
@@ -144,9 +133,7 @@ def apply_end_date_filter(query, filters):
     end_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
         hours=5, minutes=30
     )
-    query = query.where(
-        AirFreightRateLocalJob.created_at.cast("date") <= end_date.date()
-    )
+    query = query.where(LclCustomsRateJob.created_at.cast("date") <= end_date.date())
     return query
 
 
@@ -155,9 +142,16 @@ def apply_filters(query, filters):
         filters, possible_direct_filters, possible_indirect_filters
     )
     # applying direct filters
-    query = get_filters(direct_filters, query, AirFreightRateLocalJob)
+    query = get_filters(direct_filters, query, LclCustomsRateJob)
 
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
 
+    query = apply_is_visible_filter(query)
+
+    return query
+
+
+def apply_is_visible_filter(query):
+    query = query.where(LclCustomsRateJob.is_visible == True)
     return query
