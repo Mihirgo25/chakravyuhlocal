@@ -3,7 +3,6 @@ from math import ceil
 from services.bramhastra.enums import FclFilterTypes, MapsFilter, Status
 from micro_services.client import maps
 from services.bramhastra.constants import (
-    AGGREGATE_METHODS_MAPPING,
     AGGREGATE_FILTER_MAPPING,
 )
 
@@ -115,12 +114,12 @@ def get_select_aggregate_filter(where, obj):
             continue
         column = AGGREGATE_FILTER_MAPPING[agg_key]["state"]
         value = AGGREGATE_FILTER_MAPPING[agg_key]["value"]
+        comparator = AGGREGATE_FILTER_MAPPING[agg_key].get("comparator", "=")
         if not (column and value):
-            return
-        aggregate_method = AGGREGATE_METHODS_MAPPING[column][value]
+            continue
         if is_multiple:
             where.append(" AND ")
-        where.append(f" {column} {aggregate_method} ")
+        where.append(f" {column} {comparator} {value} ")
         is_multiple = True
 
 

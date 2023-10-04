@@ -7,6 +7,7 @@ from math import ceil
 from micro_services.client import maps
 from services.bramhastra.enums import FclFilterTypes
 from services.bramhastra.constants import AGGREGATE_FILTER_MAPPING
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
 
 HEIRARCHY = ["continent", "country", "port"]
 
@@ -38,7 +39,7 @@ def get_fcl_freight_map_view_statistics(filters, sort_by, sort_type, page_limit,
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)}, {select_aggregate} FROM brahmastra.fcl_freight_actions'
+        f'SELECT {",".join(grouping)}, {select_aggregate} FROM brahmastra.{FclFreightAction._meta.table_name}'
     ]
 
     if where := get_direct_indirect_filters(

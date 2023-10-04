@@ -29,7 +29,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_feedback_rate_statistics 
     `status` FixedString(256),
     `serial_id` UInt256,
     `sign` Int8 DEFAULT 1,
-    `version` UInt32 DEFAULT 1,
+    `version` UInt64 DEFAULT 1,
     `operation_created_at` DateTime DEFAULT now(),
     `operation_updated_at` DateTime DEFAULT now(),
     `is_rate_reverted` Bool
@@ -88,7 +88,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_feedback_rate_statistics T
     `status` FixedString(256),
     `serial_id` UInt256,
     `sign` Int8 DEFAULT 1,
-    `version` UInt32 DEFAULT 1,
+    `version` UInt64 DEFAULT 1,
     `operation_created_at` DateTime DEFAULT now(),
     `operation_updated_at` DateTime DEFAULT now(),
     `is_rate_reverted` Bool
@@ -148,7 +148,7 @@ CREATE TABLE brahmastra.feedback_fcl_freight_rate_statistics
         status FixedString(256),
         serial_id UInt256,
         sign Int8 DEFAULT 1,
-        version UInt32 DEFAULT 1,
+        version UInt64 DEFAULT 1,
         operation_created_at DateTime DEFAULT now(),
         operation_updated_at DateTime DEFAULT now(),
         is_rate_reverted Bool

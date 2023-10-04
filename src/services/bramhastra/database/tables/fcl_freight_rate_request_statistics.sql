@@ -37,7 +37,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_rate_request_statistics T
     `created_at` DateTime DEFAULT now(),
     `updated_at` DateTime DEFAULT now(),
     `sign` Int8 DEFAULT 1,
-    `version` UInt32 DEFAULT 1,
+    `version` UInt64 DEFAULT 1,
     `operation_created_at` DateTime,
     `operation_updated_at` DateTime
 ) AS
@@ -110,7 +110,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_request_statistics TO
     `created_at` DateTime DEFAULT now(),
     `updated_at` DateTime DEFAULT now(),
     `sign` Int8 DEFAULT 1,
-    `version` UInt32 DEFAULT 1,
+    `version` UInt64 DEFAULT 1,
     `operation_created_at` DateTime,
     `operation_updated_at` DateTime
 ) AS
@@ -184,7 +184,7 @@ CREATE TABLE brahmastra.fcl_freight_rate_request_statistics
         created_at DateTime DEFAULT now(),
         updated_at DateTime DEFAULT now(),
         sign Int8 DEFAULT 1,
-        version UInt32 DEFAULT 1,
+        version UInt64 DEFAULT 1,
         operation_created_at DateTime,
         operation_updated_at DateTime
 )

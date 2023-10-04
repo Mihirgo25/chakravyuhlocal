@@ -56,7 +56,7 @@ def get_accuracy(filters, where):
 
     clickhouse = ClickHouse()
     queries = [
-        f"""SELECT parent_mode as mode,toDate(updated_at) AS day,AVG(bas_standard_price_accuracy*sign) AS average_accuracy FROM brahmastra.{FclFreightAction._meta.table_name}"""
+        f"""SELECT parent_mode as mode,toDate(updated_at) AS day,(SUM(bas_standard_price_accuracy*sign)/COUNT(DISTINCT id)) AS average_accuracy FROM brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     queries.append(" WHERE ")

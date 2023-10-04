@@ -14,7 +14,7 @@ from services.bramhastra.enums import MapsFilter
 ALLOWED_TIME_PERIOD = 6
 
 DEFAULT_AGGREGATE_SELECT = {
-    "average_price": "AVG(abs(standard_price))",
+    "average_price": "(SUM(standard_price*sign)/COUNT(DISTINCT id))",
     "min_price": "MIN(standard_price)",
     "max_price": "MAX(standard_price)",
 }

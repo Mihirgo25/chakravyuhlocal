@@ -93,7 +93,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_actions TO brahmastra.fcl
     `operation_created_at` DateTime,
     `operation_updated_at` DateTime,
     `sign` Int8 DEFAULT 1,
-    `version` UInt8 DEFAULT 1
+    `version` UInt64 DEFAULT 1
 ) AS
 SELECT
 JSONExtractInt(data, 'before', 'id') AS id,
@@ -460,7 +460,7 @@ CREATE TABLE brahmastra.fcl_freight_actions
         operation_created_at DateTime,
         operation_updated_at DateTime,
         sign Int8 DEFAULT 1,
-        version UInt8 DEFAULT 1
+        version UInt64 DEFAULT 1
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id, parent_mode, origin_country_id, container_size, origin_port_id, rate_id, id)

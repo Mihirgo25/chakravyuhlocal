@@ -36,7 +36,7 @@ CREATE TABLE brahmastra.shipment_fcl_freight_rate_statistics
     created_at DateTime DEFAULT now(),
     updated_at DateTime DEFAULT now(),
     sign Int8 DEFAULT 1,
-    version UInt32 DEFAULT 1
+    version UInt64 DEFAULT 1
 )
 
 ENGINE = VersionedCollapsingMergeTree(sign, version)
@@ -82,6 +82,6 @@ CREATE TABLE brahmastra.stale_shipment_fcl_freight_rate_statistics
     created_at DateTime DEFAULT now(),
     updated_at DateTime DEFAULT now(),
     sign Int8 DEFAULT 1,
-    version UInt32 DEFAULT 1
+    version UInt64 DEFAULT 1
 )
 ENGINE = File(CSV);
