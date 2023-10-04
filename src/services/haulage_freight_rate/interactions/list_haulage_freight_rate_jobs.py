@@ -16,7 +16,8 @@ possible_direct_filters = [
     "commodity",
     "user_id",
     "serial_id",
-    "status"
+    "status",
+    "transport_modes_keyword"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 

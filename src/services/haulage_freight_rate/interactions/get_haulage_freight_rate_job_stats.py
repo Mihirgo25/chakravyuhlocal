@@ -15,7 +15,8 @@ possible_direct_filters = [
     "destination_location_id",
     "shipping_line_id",
     "commodity",
-    "user_id"
+    "user_id",
+    "transport_modes_keyword"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date"]
 
