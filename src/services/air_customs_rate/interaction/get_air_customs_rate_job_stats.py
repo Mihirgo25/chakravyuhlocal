@@ -11,7 +11,8 @@ from playhouse.postgres_ext import SQL, Case
 possible_direct_filters = [
     "airport_id",
     "commodity",
-    "user_id"
+    "user_id",
+    "cogo_entity_id"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date"]
 

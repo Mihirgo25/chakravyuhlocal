@@ -2,7 +2,7 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate_jobs import FclCfsRateJob
 from services.fcl_cfs_rate.models.fcl_cfs_rate_job_mappings import (
     FclCfsRateJobMapping,
 )
-from services.fcl_cfs_rate.helpers import (
+from services.fcl_cfs_rate.helpers.generate_csv_file_url_for_fcl_cfs import (
     generate_csv_file_url_for_fcl_cfs,
 )
 import json
@@ -18,6 +18,7 @@ possible_direct_filters = [
     "commodity",
     "user_id",
     "serial_id",
+    "cogo_entity_id"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 

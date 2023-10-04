@@ -13,7 +13,8 @@ possible_direct_filters = [
     "importer_exporter_id",
     "service_provider_id",
     "commodity",
-    "user_id"
+    "user_id",
+    "cogo_entity_id"
 ]
 possible_indirect_filters = ["updated_at"]
 

@@ -12,7 +12,8 @@ possible_direct_filters = [
     "origin_location_id",
     "destination_location_id",
     "commodity_type",
-    "user_id"
+    "user_id",
+    "cogo_entity_id"
 ]
 possible_indirect_filters = ["updated_at"]
 

@@ -40,6 +40,7 @@ class FtlFreightRateJob(BaseModel):
     rate_type = TextField(null=True)
     is_visible = BooleanField(default=True)
     init_key = TextField(index=True, null=True)
+    cogo_entity_id = UUIDField(null=True, index=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('ftl_freight_rate_jobs_serial_id_seq')")],)
 
     class Meta:
