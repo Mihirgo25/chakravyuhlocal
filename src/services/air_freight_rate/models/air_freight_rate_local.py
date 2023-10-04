@@ -193,11 +193,11 @@ class AirFreightRateLocal(BaseModel):
             raise HTTPException(status_code=400,detail = 'Invalid Commodity Type')
 
     def validate_service_provider_id(self):
-        service_provider_data = get_organization(id=str(self.service_provider_id))
-        if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
-            self.service_provider = service_provider_data[0]
+        service_provider_data = get_eligible_orgs(service='air_freight')
+        
+        if str(self.service_provider_id) in service_provider_data:
             return True
-        raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
+        raise HTTPException(status_code = 400, detail = 'Service Provider Is Not Valid for the service') 
 
     def validate(self):
         if not self.airport:

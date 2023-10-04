@@ -5,6 +5,7 @@ from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from micro_services.client import *
+from libs.apply_eligible_lsp_filters import apply_eligible_lsp_filters
 from playhouse.shortcuts import model_to_dict
 
 possible_direct_filters = ['id', 'port_id', 'country_id', 'terminal_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'trade_type', 'container_size', 'container_type', 'is_line_items_error_messages_present', 'is_line_items_info_messages_present', 'main_port_id', 'rate_type']
@@ -23,7 +24,9 @@ def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
         query = get_filters(direct_filters, query, FclFreightRateLocal)
         query = apply_indirect_filters(query, indirect_filters)
-
+    if not filters or not 'service_provider_id' in filters:
+        query = apply_eligible_lsp_filters(query, FclFreightRateLocal, 'fcl_freight')
+    
     if get_count:
         return {'list':query.count()}
 
