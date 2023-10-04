@@ -16,7 +16,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 
-class LtlFreightRateJobMapping(BaseModel):
+class LclFreightRateJobMapping(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     source = TextField(index=True)
     source_id = UUIDField(index=True, null=True)
@@ -30,4 +30,4 @@ class LtlFreightRateJobMapping(BaseModel):
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
-        return super(LtlFreightRateJobMapping, self).save(*args, **kwargs)
+        return super(LclFreightRateJobMapping, self).save(*args, **kwargs)
