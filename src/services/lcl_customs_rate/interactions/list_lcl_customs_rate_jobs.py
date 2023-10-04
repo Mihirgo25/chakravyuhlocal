@@ -2,9 +2,7 @@ from services.lcl_customs_rate.models.lcl_customs_rate_jobs import LclCustomsRat
 from services.lcl_customs_rate.models.lcl_customs_rate_job_mappings import (
     LclCustomsRateJobMapping,
 )
-from services.lcl_customs_rate.helpers import (
-    generate_csv_file_url_for_lcl_customs,
-)
+from services.lcl_customs_rate.helpers.generate_csv_file_url_for_lcl_customs import generate_csv_file_url_for_lcl_customs
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
