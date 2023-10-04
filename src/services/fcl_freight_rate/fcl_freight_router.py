@@ -2055,7 +2055,7 @@ def get_fcl_freight_rate_local_job_stats_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = get_fcl_freight_rate_job_stats(filters)
+        data = get_fcl_freight_rate_local_job_stats(filters)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
@@ -2125,7 +2125,7 @@ def get_fcl_freight_rate_local_job_csv_url_api(
     
 
 @fcl_freight_router.post("/create_fcl_freight_rate_local_job")
-def create_fcl_freight_rate_job_api(
+def create_fcl_freight_rate_local_job_api(
     request: CreateFclFreightRateLocalJob, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
