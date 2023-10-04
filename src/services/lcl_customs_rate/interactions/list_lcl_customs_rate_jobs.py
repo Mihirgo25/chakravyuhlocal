@@ -39,7 +39,7 @@ DEFAULT_REQUIRED_FIELDS = [
 ]
 
 
-def list_fcl_customs_rate_jobs(
+def list_lcl_customs_rate_jobs(
     filters={},
     page_limit=10,
     page=1,
