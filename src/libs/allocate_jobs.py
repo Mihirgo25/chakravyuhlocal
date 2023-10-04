@@ -6,16 +6,16 @@ from configs.fcl_freight_rate_constants import (
     FCL_COVERAGE_USERS,
     FCL_LOCAL_COVERAGE_USERS,
 )
-from configs.haulage_freight_rate_constants import HAULAGE_COVERAGE_USERS
+from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_COVERAGE_USERS
 from configs.fcl_customs_rate_constants import FCL_CUSTOMS_COVERAGE_USERS
 from services.air_customs_rate.air_customs_rate_constants import (
     AIR_CUSTOMS_COVERAGE_USERS,
 )
 from services.ltl_freight_rate.ltl_freight_rate_constants import LTL_LOCAL_COVERAGE_USERS
-from configs.ftl_freight_rate_constants import FTL_COVERAGE_USERS
+from configs.ftl_freight_rate_constants import FTL_FREIGHT_COVERAGE_USERS
 from configs.fcl_cfs_rate_constants import FCL_CFS_COVERAGE_USERS
 from configs.lcl_customs_rate_constants import LCL_CUSTOMS_COVERAGE_USERS
-from configs.lcl_freight_rate_constants import LCL_COVERAGE_USERS
+from configs.lcl_freight_rate_constants import LCL_FREIGHT_COVERAGE_USERS
 from micro_services.client import common
 
 
@@ -29,42 +29,15 @@ def allocate_jobs(service_type: str) -> str:
     :return: The allocated user
     :rtype: str
     """
-    if service_type.upper() == "FCL":
-        users = FCL_COVERAGE_USERS
-        redis_key = "last_assigned_user_fcl"
-    elif service_type.upper() == "AIR":
-        users = AIR_COVERAGE_USERS
-        redis_key = "last_assigned_user_air"
-    elif service_type.upper() == "HAULAGE":
-        users = HAULAGE_COVERAGE_USERS
-        redis_key = "last_assigned_user_haulage"
-    elif service_type.upper() == "FCL_CUSTOMS":
-        users = FCL_CUSTOMS_COVERAGE_USERS
-        redis_key = "last_assigned_user_fcl_customs"
-    elif service_type.upper() == "AIR_CUSTOMS":
-        users = AIR_CUSTOMS_COVERAGE_USERS
-        redis_key = "last_assigned_user_air_customs"
-    elif service_type.upper() == "LCL_CUSTOMS":
-        users = LCL_CUSTOMS_COVERAGE_USERS
-        redis_key = "last_assigned_user_air_customs"
-    elif service_type.upper() == "FCL_LOCALS":
-        users = FCL_LOCAL_COVERAGE_USERS
-        redis_key = "last_assigned_user_fcl_locals"
-    elif service_type.upper() == "AIR_LOCALS":
-        users = FCL_LOCAL_COVERAGE_USERS
-        redis_key = "last_assigned_user_air_locals"
-    elif service_type.upper() == "LTL":
-        users = LTL_LOCAL_COVERAGE_USERS
-        redis_key = "last_assigned_user_ltl"
-    elif service_type.upper() == "FTL":
-        users = FTL_COVERAGE_USERS
-        redis_key = "last_assigned_user_ftl"
-    elif service_type.upper() == "FCL_CFS":
-        users = FCL_CFS_COVERAGE_USERS
-        redis_key = "last_assigned_user_fcl_cfs"
-    elif service_type.upper() == "LCL":
-        users = LCL_COVERAGE_USERS
-        redis_key = "last_assigned_user_lcl"
+    service_type = service_type.upper()
+    if service_type in ["FCL", "AIR", "HAULAGE", "FCL_CUSTOMS", "AIR_CUSTOMS", "LCL_CUSTOMS",
+                        "FCL_LOCALS", "AIR_LOCALS", "LTL", "FTL", "FCL_CFS", "LCL"]:
+        users = globals()[f"{service_type}_COVERAGE_USERS"]
+        redis_key = f"last_assigned_user_{service_type.lower()}"
+    else:
+        users = None
+        redis_key = None
+    
 
     last_assigned_user = rd.get(redis_key)
     if not last_assigned_user:
