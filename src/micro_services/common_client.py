@@ -10,7 +10,7 @@ class CommonApiClient:
             "Authorization": "Bearer: " + RUBY_AUTHTOKEN,
             "AuthorizationScope": RUBY_AUTHSCOPE,
             "AuthorizationParameters": ":allowed",
-            # "AuthorizationScopeId": RUBY_AUTHSCOPEID,
+            "AuthorizationScopeId": RUBY_AUTHSCOPEID,
             "Content-Type": "application/json",
             "Accept": "application/json",
         })
