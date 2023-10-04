@@ -42,7 +42,7 @@ def execute_transaction_code(request, source):
 
     if not lcl_freight_rate_job:
         lcl_freight_rate_job = create_job_object(params)
-        user_id = allocate_jobs("LCL")
+        user_id = allocate_jobs("LCL_FREIGHT")
         lcl_freight_rate_job.user_id = user_id
         lcl_freight_rate_job.assigned_to = get_user(user_id)[0]
         lcl_freight_rate_job.status = "pending"

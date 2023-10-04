@@ -30,8 +30,8 @@ def allocate_jobs(service_type: str) -> str:
     :rtype: str
     """
     service_type = service_type.upper()
-    if service_type in ["FCL", "AIR", "HAULAGE", "FCL_CUSTOMS", "AIR_CUSTOMS", "LCL_CUSTOMS",
-                        "FCL_LOCALS", "AIR_LOCALS", "LTL", "FTL", "FCL_CFS", "LCL"]:
+    if service_type in ["FCL", "AIR", "HAULAGE_FREIGHT", "FCL_CUSTOMS", "AIR_CUSTOMS", "LCL_CUSTOMS",
+                        "FCL_LOCALS", "AIR_LOCALS", "LTL_FREIGHT", "FTL_FREIGHT", "FCL_CFS", "LCL_FREIGHT"]:
         users = globals()[f"{service_type}_COVERAGE_USERS"]
         redis_key = f"last_assigned_user_{service_type.lower()}"
     else:
