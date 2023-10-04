@@ -61,14 +61,5 @@ class CommonApiClient:
     def get_all_exchange_rates(self, data = {}):
         return self.client.request('GET','get_all_exchange_rates',data)
 
-    
-    # def get_sailing_schedules(self, data= {}):
-    #     return self.client.request('GET', 'sailing_schedule/get_sailing_schedules', data, timeout=15000)
-
-    # def get_fake_sailing_schedules(self, data= {}):
-    #     return self.client.request('GET', 'sailing_schedule/get_fake_sailing_schedules', data)
-
-    # def get_predicted_transit_time(self, data= {}):
-    #     return self.client.request('GET', 'sailing_schedule/get_predicted_transit_time', data)
 
     
