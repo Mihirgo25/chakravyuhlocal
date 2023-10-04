@@ -7,8 +7,6 @@ import sentry_sdk
 from fastapi import HTTPException, Query
 from typing import List, Union
 from params import CreateRateSheet, UpdateRateSheet
-from params import *
-
 
 
 from services.haulage_freight_rate.interactions.get_estimated_haulage_freight_rate import (
@@ -992,6 +990,99 @@ def create_haualge_freight_rate_job_api(
         request.performed_by_id = resp["setters"]["performed_by_id"]
     source = request.source
     try:
+        rate = create_haulage_freight_rate_job(request.dict(exclude_none=True), source)
+        return JSONResponse(status_code=200, content=json_encoder(rate))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+@haulage_freight_router.get("/get_trailer_freight_rate_job_stats")
+def get_trailer_freight_rate_job_stats_api(
+    filters: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = get_haulage_freight_rate_job_stats(filters)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@haulage_freight_router.get("/list_trailer_freight_rate_jobs")
+def list_trailer_freight_rate_jobs_api(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'updated_at',
+    sort_type: str = 'desc',
+    generate_csv_url: bool = False,
+    includes: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_haulage_freight_rate_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, includes)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@haulage_freight_router.post("/delete_trailer_freight_rate_job")
+def delete_trailer_freight_rate_job_api(
+    request: DeleteHaulageFreightRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        rate = delete_haulage_freight_rate_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+    
+@haulage_freight_router.get("/get_trailer_freight_rate_job_csv_url")
+def get_trailer_freight_rate_job_csv_url_api(
+    filters: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_haulage_freight_rate_jobs(filters, generate_csv_url=True)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@haulage_freight_router.post("/create_trailer_freight_rate_job")
+def create_trailer_freight_rate_job_api(
+    request: CreateHaulageFreightRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    source = request.source
+    try:
+        request.transport_mode = 'trailer'
         rate = create_haulage_freight_rate_job(request.dict(exclude_none=True), source)
         return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
