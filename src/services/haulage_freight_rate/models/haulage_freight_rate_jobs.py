@@ -26,6 +26,7 @@ class HaulageFreightRateJob(BaseModel):
     container_size = TextField(index=True, null=True)
     container_type = TextField(index=True, null=True)
     commodity = TextField(index=True, null=True)
+    trip_type = CharField(null = True)
     transport_modes_keyword = TextField(index=True, null=True)
     sources = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     user_id = UUIDField(index=True, null=True)

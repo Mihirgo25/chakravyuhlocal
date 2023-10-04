@@ -15,7 +15,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class FtlFreightRateJob(BaseModel):
-    id = BigAutoField(primary_key=True)
+    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     origin_location_id = UUIDField(null=False,index=True)
     origin_location = BinaryJSONField(null=True)
     destination_location_id = UUIDField(null=False,index=True)
@@ -27,7 +27,10 @@ class FtlFreightRateJob(BaseModel):
     truck_type = CharField(null=False,index = True)
     truck_body_type = CharField(null = False)
     trip_type = CharField(null = True)
-    commodity_type = TextField(null=False)
+    commodity= CharField(null=True)
+    transit_time = TextField(null=True)
+    detention_free_time = TextField(null=True)
+    unit = CharField(null=True)
     sources = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     user_id = UUIDField(index=True, null=True)
     assigned_to = BinaryJSONField(null=True)

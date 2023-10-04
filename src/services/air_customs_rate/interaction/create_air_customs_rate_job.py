@@ -25,15 +25,10 @@ def execute_transaction_code(request, source):
         'commodity' : request.get('commodity'),
         'sources' : [source],
         'rate_type' : request.get('rate_type'),
-        'commodity_type': request.get('commodity_type'),
-        'commodity_sub_type': request.get('commodity_sub_type'),
-        'operation_type': request.get('operation_type'),
-        'shipment_type': request.get('shipment_type'),
-        'stacking_type': request.get('stacking_type'),
-        'price_type': request.get('price_type')
+        'trade_type': request.get('trade_type'),
     }
     
-    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("commodity_type") or "")}:{str(params.get("commodity_sub_type") or "")}:{str(params.get("stacking_type") or "")}:{str(params.get("operation_type") or "")}'
+    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("trade_type") or "")}'
     air_customs_rate_job = AirCustomsRateJob.select().where(AirCustomsRateJob.init_key == init_key, AirCustomsRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 

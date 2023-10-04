@@ -20,16 +20,15 @@ def execute_transaction_code(request, source):
         'origin_location_id' : request.get('origin_location_id'),
         'destination_location_id' : request.get('destination_location_id'),
         'service_provider_id' : request.get('service_provider_id'),
-        'commodity_type' : request.get('commodity_type'),
+        'commodity' : request.get('commodity'),
         'trip_type': request.get('trip_type'),
         'importer_exporter_id': request.get('importer_exporter_id'),
-        'commodity_weight' : request.get('commodity_weight'),
-        'truck_type' : request.get('truck_type'),
-        'truck_body_type' : request.get('truck_body_type'),
+        'transit_time' : request.get('transit_time'),
+        'density_factor' : request.get('density_factor'),
         'sources' : [source],
         'rate_type' : request.get('rate_type'),
     }
-    init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity_type") or  "")}:{str(params.get("trip_type") or "")}:{str(params.get("importer_exporter_id") or "")}:{str(params.get("truck_type") or "")}:{str(params.get("truck_body_type") or "")}:{str(params.get("rate_type") or "")}'
+    init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or  "")}:{str(params.get("trip_type") or "")}:{str(params.get("importer_exporter_id") or "")}:{str(params.get("transit_time") or "")}:{str(params.get("density_factor") or "")}:{str(params.get("rate_type") or "")}'
     ltl_freight_rate_job = LtlFreightRateJob.select().where(LtlFreightRateJob.init_key == init_key, LtlFreightRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 

@@ -26,8 +26,7 @@ class FclFreightRateLocalJob(BaseModel):
     container_size = CharField(null=True, index=True)
     container_type = CharField(null=True, index=True)
     commodity = CharField(null=True, index=True)
-    terminal_id = UUIDField(null=True, index=True)
-    terminal = BinaryJSONField(null=True)
+    trade_type = CharField(null=True)
     sources = ArrayField(
         constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True
     )
