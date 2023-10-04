@@ -908,7 +908,7 @@ def delete_trailer_freight_rates_feedback_api(
         
 
 @haulage_freight_router.get("/get_haulage_freight_rate_job_stats")
-def get_fcl_freight_rate_job_stats_api(
+def get_haulage_freight_rate_job_stats_api(
     filters: str = None,
     resp: dict = Depends(authorize_token)
 ):
@@ -949,7 +949,7 @@ def list_haulage_freight_rate_jobs_api(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @haulage_freight_router.post("/delete_haulage_freight_rate_job")
-def delete_fcl_freight_rate_job_api(
+def delete_haulage_freight_rate_job_api(
     request: DeleteHaulageFreightRateJob, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -966,7 +966,7 @@ def delete_fcl_freight_rate_job_api(
         )
     
 @haulage_freight_router.get("/get_haualge_freight_rate_job_csv_url")
-def get_fcl_freight_rate_job_csv_url_api(
+def get_haulage_freight_rate_job_csv_url_api(
     filters: str = None,
     resp: dict = Depends(authorize_token)
 ):

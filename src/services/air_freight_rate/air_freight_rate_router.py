@@ -1486,7 +1486,7 @@ def get_air_freight_rate_local_job_csv_url_api(
 
 
 @air_freight_router.post("/create_air_freight_rate_local_job")
-def create_air_freight_rate_job_api(
+def create_air_freight_rate_local_job_api(
     request: CreateAirFreightRateLocalJob, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
