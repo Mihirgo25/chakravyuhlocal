@@ -79,6 +79,10 @@ def execute_transaction_code(request):
 
     ftl_freight_rate.set_platform_price()
     ftl_freight_rate.set_is_best_price()
+
+    if 'rate_sheet_validation' not in request:
+        ftl_freight_rate.validate_before_save()
+
     ftl_freight_rate.update_line_item_messages(ftl_freight_rate.possible_charge_codes())
 
     try:

@@ -8,6 +8,7 @@ from micro_services.client  import maps, common
 from configs.definitions import FTL_FREIGHT_CHARGES
 from libs.get_applicable_filters import is_valid_uuid
 from fastapi.encoders import jsonable_encoder
+from database.rails_db import get_eligible_orgs
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -194,6 +195,12 @@ class FtlFreightRate(BaseModel):
         if self.commodity not in COMMODITIES:
             raise HTTPException(status_code=400, detail="Invalid commodity")
 
+    def validate_service_provider_id(self):
+      eligible_service_providers = get_eligible_orgs(service='ftl_freight')
+      if str(self.service_provider_id) in eligible_service_providers:
+        return True
+      return False
+
     def validate_before_save(self):
         self.validate_duplicate_line_items()
         self.validate_truck_body_type()
@@ -204,6 +211,8 @@ class FtlFreightRate(BaseModel):
         self.validate_transit_time()
         self.validate_detention_free_time()
         self.validate_commodity()
+        if not self.validate_service_provider_id():
+            raise HTTPException(status_code = 400, detail = 'Service provider is not Valid for this service')
 
     def mandatory_charge_codes(self,possible_charge_codes):
         charge_codes = {}

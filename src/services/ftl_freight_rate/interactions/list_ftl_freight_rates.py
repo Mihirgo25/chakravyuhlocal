@@ -6,6 +6,7 @@ from math import ceil
 from datetime import datetime, timedelta
 from micro_services.client import common
 from fastapi.encoders import jsonable_encoder
+from libs.apply_eligible_lsp_filters import apply_eligible_lsp_filters
 
 POSSIBLE_DIRECT_FILTERS = ['id','origin_location_id','origin_cluster_id','origin_city_id','destination_location_id','destination_cluster_id','destination_city_id','service_provider_id','importer_exporter_id','truck_type','truck_body_type','commodity','is_line_items_info_messages_present','is_line_items_error_messages_present','trip_type', 'rate_not_available_entry']
 
@@ -21,6 +22,9 @@ def list_ftl_freight_rates(filters = {}, includes = {}, page_limit = 10, page = 
 
         query = get_filters(direct_filters, query, FtlFreightRate)
         query = apply_indirect_filters(query, indirect_filters)
+
+    if not filters or not 'service_provider_id' in filters:
+       query = apply_eligible_lsp_filters(query, FtlFreightRate, 'ftl_freight')
 
     if return_query:
        return {'list': query}
