@@ -15,6 +15,10 @@ POSSIBLE_CLOSING_REMARKS = [
 
 
 def delete_lcl_customs_rate_job(request):
+
+    if isinstance(request.get("closing_remarks"), list):
+        request["closing_remarks"] = request.get("closing_remarks")[0]
+    
     if (
         request.get("closing_remarks")
         and request.get("closing_remarks") in POSSIBLE_CLOSING_REMARKS

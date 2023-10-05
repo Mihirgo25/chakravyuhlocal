@@ -9,12 +9,7 @@ from  configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
 from configs.env import DEFAULT_USER_ID
 
-def create_ftl_freight_rate_job(request, source = "spot_search"):
-    object_type = "Ftl_Freight_Rate_Job"
-    query = "create table if not exists ftl_services_audits_{} partition of ftl_services_audits for values in ('{}')".format(
-        object_type.lower(), object_type.replace("_", "")
-    )
-    db.execute_sql(query)
+def create_ftl_freight_rate_job(request, source):
     with db.atomic():
       return execute_transaction_code(request, source)
 
@@ -39,7 +34,6 @@ def execute_transaction_code(request, source):
     init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("importer_exporter_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("truck_type") or "")}:{str(params.get("truck_body_type") or "")}:{str(params.get("trip_type") or  "")}:{str(params.get("commodity") or "")}:{str(params.get("transit_time") or "")}:{str(params.get("detention_free_time") or "")}:{str(params.get("unit") or "")}:{str(params.get("rate_type") or "")}'
     ftl_freight_rate_job = FtlFreightRateJob.select().where(FtlFreightRateJob.init_key == init_key, FtlFreightRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
-
     if not ftl_freight_rate_job:
         ftl_freight_rate_job = create_job_object(params)
         user_id = allocate_jobs('FTL_FREIGHT')

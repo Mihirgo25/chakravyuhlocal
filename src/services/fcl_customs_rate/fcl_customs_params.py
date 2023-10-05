@@ -147,9 +147,10 @@ class DeleteFclCustomsRate(BaseModel):
 
 class CreateFclCustomsRateJob(BaseModel):
     source: str = None
+    source_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
-    port_id: str = None
+    location_id: str = None
     service_provider_id: str = None
     importer_exporter_id: str = None
     container_size: str = None

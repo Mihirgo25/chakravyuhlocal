@@ -18,7 +18,7 @@ class BaseModel(Model):
 class LclCustomsRateJob(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     location = BinaryJSONField(null=True)
-    location_id = UUIDField(index=True)
+    location_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     service_provider_id = UUIDField(null=True, index=True)
     service_provider = BinaryJSONField(null=True)
@@ -56,7 +56,7 @@ class LclCustomsRateJob(BaseModel):
 
     def set_locations(self):
         ids = self.location_id
-        obj = {"filters": {"id": ids, "type": "seaport"}}
+        obj = {"filters": {"id": ids}}
         locations_response = maps.list_locations(obj)
         locations = []
         if "list" in locations_response:

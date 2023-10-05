@@ -9,6 +9,10 @@ POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_
 
 
 def delete_ltl_freight_rate_job(request):
+
+    if isinstance(request.get("closing_remarks"), list):
+        request["closing_remarks"] = request.get("closing_remarks")[0]
+    
     if request.get('closing_remarks') and request.get('closing_remarks') in POSSIBLE_CLOSING_REMARKS:
         update_params = {'status':'aborted', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now(), "closing_remarks": request.get('closing_remarks')}
     else:

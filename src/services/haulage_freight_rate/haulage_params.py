@@ -192,6 +192,7 @@ class DeleteHaulageFreightRate(BaseModel):
 
 class CreateHaulageFreightRateJob(BaseModel):
     source: str = None
+    source_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     origin_location_id: str = None

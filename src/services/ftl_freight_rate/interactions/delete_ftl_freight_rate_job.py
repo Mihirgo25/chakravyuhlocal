@@ -8,6 +8,10 @@ from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
 POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_in_rate']
 
 def delete_ftl_freight_rate_job(request):
+
+    if isinstance(request.get("closing_remarks"), list):
+        request["closing_remarks"] = request.get("closing_remarks")[0]
+    
     if request.get('closing_remarks') and request.get('closing_remarks') in POSSIBLE_CLOSING_REMARKS:
         update_params = {'status':'aborted', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now(), "closing_remarks": request.get('closing_remarks')}
     else:
@@ -30,7 +34,7 @@ def delete_ftl_freight_rate_job(request):
     
     if ftl_freight_rate_job:
         update_mapping(update_params['status'], job_ids)
-        create_audit(job_ids, request)
+        # create_audit(job_ids, request)
 
     return {"id": job_ids}
 
@@ -44,7 +48,7 @@ def create_audit(jobs_ids, data):
     for job_id in jobs_ids:
         FtlServiceAudit.create(
             action_name = 'delete',
-            object_id = job_id,
+            object_id = 1,
             object_type = 'FtlFreightRateJob',
             data = data.get('data'),
             performed_by_id = data.get("performed_by_id")

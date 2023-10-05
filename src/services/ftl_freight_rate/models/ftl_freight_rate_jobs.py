@@ -20,12 +20,12 @@ class FtlFreightRateJob(BaseModel):
     origin_location = BinaryJSONField(null=True)
     destination_location_id = UUIDField(null=False,index=True)
     destination_location = BinaryJSONField(null=True)
-    service_provider_id = UUIDField(index=True)
+    service_provider_id = UUIDField(null = True, index=True)
     service_provider = BinaryJSONField(null=True)
     importer_exporter_id = UUIDField(null=True)
     importer_exporter = BinaryJSONField(null=True)
-    truck_type = CharField(null=False,index = True)
-    truck_body_type = CharField(null = False)
+    truck_type = CharField(null=True,index = True)
+    truck_body_type = CharField(null = True)
     trip_type = CharField(null = True)
     commodity= CharField(null=True)
     transit_time = TextField(null=True)
@@ -57,7 +57,7 @@ class FtlFreightRateJob(BaseModel):
     def set_locations(self):
       ids = [str(self.origin_location_id), str(self.destination_location_id)]    
 
-      obj = {'filters':{"id": ids, "type":'seaport'}}
+      obj = {'filters':{"id": ids}}
       locations_response = maps.list_locations(obj)
       locations = []
       if 'list' in locations_response:

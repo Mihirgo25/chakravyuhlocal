@@ -53,7 +53,7 @@ class LtlFreightRateJob(BaseModel):
     def set_locations(self):
       ids = [str(self.origin_location_id), str(self.destination_location_id)]
       
-      obj = {'filters':{"id": ids, "type":'seaport'}, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True, 'display_name': True, 'default_params_required': True}}
+      obj = {'filters':{"id": ids}, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True, 'display_name': True, 'default_params_required': True}}
       locations_response = maps.list_locations(obj)
       locations = []
       if 'list' in locations_response:

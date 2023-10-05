@@ -3,6 +3,7 @@ from peewee import *
 
 class CreateLtlFreightRateJob(BaseModel):
     source: str = None
+    source_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     origin_location_id: str = None
@@ -17,8 +18,9 @@ class CreateLtlFreightRateJob(BaseModel):
 
 class DeleteLtlFreightRateJob(BaseModel):
     id: str = None
-    closing_remarks: str = None
-    data: dict = {}
+    closing_remarks: list[str] = None
+    ltl_freight_rate_feedback_ids: list[str] = None
+    ltl_freight_rate_request_ids: list[str] = None
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
