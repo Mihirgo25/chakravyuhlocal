@@ -7,6 +7,7 @@ from micro_services.spot_search_client import SpotSearchApiClient
 from micro_services.checkout_client import CheckoutApiClient
 from micro_services.shipment_client import ShipmentApiClient
 from micro_services.development_client import DevelopmentApiClient
+from micro_services.loki_client import LokiApiClient
 from configs.env import APP_ENV
 
 maps = organization = partner = spot_search = checkout = shipment = None
@@ -21,3 +22,4 @@ else:
     spot_search = SpotSearchApiClient()
     checkout = CheckoutApiClient()
     shipment = ShipmentApiClient()
+    loki = LokiApiClient()
