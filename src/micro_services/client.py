@@ -10,10 +10,10 @@ from micro_services.development_client import DevelopmentApiClient
 from micro_services.loki_client import LokiApiClient
 from configs.env import APP_ENV
 
-maps = organization = partner = spot_search = checkout = shipment = None
+maps = organization = partner = spot_search = checkout = shipment = loki =  None
 
 if APP_ENV != 'production':
-    common = organization = partner = maps = spot_search = checkout = shipment  = DevelopmentApiClient()
+    common = organization = partner = maps = spot_search = checkout = shipment = loki = DevelopmentApiClient()
 else:
     common = CommonApiClient()
     organization = AuthApiClient()

@@ -8,9 +8,10 @@ from micro_services.spot_search_client import SpotSearchApiClient
 from micro_services.partner_client import PartnerApiClient
 from micro_services.shipment_client import ShipmentApiClient
 from micro_services.maps_client import MapsApiClient
+from micro_services.loki_client import LokiApiClient
 
 
-class DevelopmentApiClient(CommonApiClient,AuthApiClient,CheckoutApiClient,SpotSearchApiClient,PartnerApiClient,ShipmentApiClient,MapsApiClient):
+class DevelopmentApiClient(CommonApiClient,AuthApiClient,CheckoutApiClient,SpotSearchApiClient,PartnerApiClient,ShipmentApiClient,MapsApiClient,LokiApiClient):
     def __init__(self):
         self.client=GlobalClient(url = str(get_instance_url('common')),headers={
             "Authorization": "Bearer: " + RUBY_AUTHTOKEN,
