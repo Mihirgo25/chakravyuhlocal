@@ -15,6 +15,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreigh
 from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
+from database.rails_db import get_eligible_orgs
 from micro_services.client import *
 from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import is_price_in_range
 from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM, DEFAULT_RATE_TYPE
@@ -192,6 +193,12 @@ class FclFreightRate(BaseModel):
 
     def validate_commodity(self):
       if self.container_type and self.commodity in FREIGHT_CONTAINER_COMMODITY_MAPPINGS[f"{self.container_type}"]:
+        return True
+      return False
+    
+    def validate_service_provider_id(self):
+      eligible_service_providers = get_eligible_orgs(service='fcl_freight')
+      if str(self.service_provider_id) in eligible_service_providers:
         return True
       return False
 
@@ -453,14 +460,14 @@ class FclFreightRate(BaseModel):
 
         new_validities.append(FclFreightRateValidity(**validity))
 
-      new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end).split('T')[0], '%Y-%m-%d').date() >= datetime.datetime.now().date()]
-      new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start).split('T')[0], '%Y-%m-%d').date())
+      new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end).replace('T', ' ').split()[0], '%Y-%m-%d').date() >= datetime.datetime.now().date()]
+      new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start).replace('T', ' ').split()[0], '%Y-%m-%d').date())
       
       main_validities=[]
       for new_validity in new_validities:
         new_validity.line_items = [dict(line_item) for line_item in new_validity.line_items]
-        new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start).split('T')[0], '%Y-%m-%d').date().isoformat()
-        new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end).split('T')[0], '%Y-%m-%d').date().isoformat()
+        new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start).replace('T', ' ').split()[0], '%Y-%m-%d').date().isoformat()
+        new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end).replace('T', ' ').split()[0], '%Y-%m-%d').date().isoformat()
         new_validity = vars(new_validity)
         new_validity['id'] = new_validity['__data__']['id']
         new_validity.pop('__data__')
@@ -644,6 +651,9 @@ class FclFreightRate(BaseModel):
         raise HTTPException(status_code=400, detail="incorrect container type")
       if not self.validate_commodity():
         raise HTTPException(status_code=400, detail="incorrect commodity")
+      if not self.validate_service_provider_id():
+        raise HTTPException(status_code = 400, detail = 'Service provider is not Valid for this service') 
+        
 
       self.set_omp_dmp_sl_sp()
       self.validate_origin_local()

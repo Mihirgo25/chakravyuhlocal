@@ -204,7 +204,7 @@ PNT:
   condition: (origin_location['country_code'] == destination_location['country_code'] == 'SG')
   tags: ['trailer']
 CMS:
-  name: "Content Management Service"
+  name: "Container Management Service"
   units: [ 'per_container','per_trailer' ]
   condition: (origin_location['country_code'] == destination_location['country_code'] == 'SG')
   tags: ['trailer']

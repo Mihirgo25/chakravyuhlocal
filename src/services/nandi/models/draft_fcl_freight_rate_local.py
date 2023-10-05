@@ -3,6 +3,7 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
 from micro_services.client import *
+from database.rails_db import get_user
 
 class BaseModel(Model):
     class Meta:
@@ -17,17 +18,19 @@ class DraftFclFreightRateLocal(BaseModel):
     rate_id = UUIDField(index=True, null=False)
     data = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     source = CharField(null=False)
-    status = CharField(null=False)
-    invoice_url = TextField(null=True, index=True)
-    invoice_date = DateField(null=True)
+    status = CharField(null=False, index = True)
+    invoice_url = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
+    invoice_date = ArrayField(constraints=[SQL("DEFAULT '{}'::date[]")], field_class=DateField, null=True)
     main_port = BinaryJSONField(null=True)
     main_port_id = UUIDField( null=True)
     port = BinaryJSONField(null=True)
     port_id = UUIDField(index=True, null=True)
-    shipment_serial_id = BigIntegerField(null=True, index= False)
+    shipment_serial_id = BigIntegerField(null=True, index=True)
     shipping_line = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
+    performed_by_id = UUIDField(null=True)
+    performed_by = BinaryJSONField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     
@@ -58,3 +61,8 @@ class DraftFclFreightRateLocal(BaseModel):
           "country_code": location["country_code"]
         }
         return loc_data
+
+    def set_performed_by(self):
+      performed_by_data = get_user(str(self.performed_by_id or ''))
+      if performed_by_data:
+          self.performed_by = performed_by_data[0]

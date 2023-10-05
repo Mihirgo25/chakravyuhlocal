@@ -20,6 +20,7 @@ from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.trailer_freight_rate.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
 from services.extensions.extension_router import extension_router
+from services.air_customs_rate.air_customs_router import air_customs_router
 
 from services.fcl_customs_rate.fcl_customs_rate_router import fcl_customs_router
 from services.fcl_cfs_rate.fcl_cfs_router import fcl_cfs_router
@@ -62,6 +63,7 @@ app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags
 app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'], dependencies=[Depends(get_db)])
 app.include_router(prefix = "/air_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'], dependencies=[Depends(get_db)])
 app.include_router(prefix = "/fcl_freight_rate",router = bramhastra, tags = ['Brahmastra'], dependencies=[Depends(get_db)])
+app.include_router(prefix = "/air_customs_rate", router=air_customs_router, tags = ['Air Customs Rate'], dependencies=[Depends(get_db)])
 
 
 app.add_middleware(
@@ -104,8 +106,9 @@ if APP_ENV != "production":
 
 @app.on_event("startup")
 def startup():
-    if db.is_closed():
-        db.connect()
+    if APP_ENV == "development":
+        if db.is_closed():
+            db.connect()
     # insert_wagon_type()
     # insert_dbcargo_rates()
     # insert_france_germany_rates()
