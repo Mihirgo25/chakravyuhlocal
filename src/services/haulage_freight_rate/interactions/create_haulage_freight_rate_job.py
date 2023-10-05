@@ -31,6 +31,7 @@ def execute_transaction_code(request, source):
         'sources' : [source],
         'transport_modes_keyword': request.get('transport_mode'),
         'rate_type' : request.get('rate_type'),
+        'search_source': request.get('source'),
     }
 
     init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}'

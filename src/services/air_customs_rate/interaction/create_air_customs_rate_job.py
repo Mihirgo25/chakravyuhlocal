@@ -26,6 +26,7 @@ def execute_transaction_code(request, source):
         'sources' : [source],
         'rate_type' : request.get('rate_type'),
         'trade_type': request.get('trade_type'),
+        'search_source': request.get('source'),
     }
     
     init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("trade_type") or "")}'

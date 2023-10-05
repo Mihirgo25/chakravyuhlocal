@@ -532,9 +532,7 @@ class CreateAirFreightRateLocalJob(BaseModel):
     service_provider_id: str = None
     commodity: str = None
     commodity_type: str = None
-    commodity_sub_type: str = None
     operation_type: str = None
     shipment_type: str = None
     stacking_type: str = None
     price_type: str = None
-    importer_exporter_id: str = None

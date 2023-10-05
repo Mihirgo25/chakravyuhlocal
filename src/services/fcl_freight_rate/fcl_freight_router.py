@@ -111,6 +111,8 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local_job_stats 
     get_fcl_freight_rate_local_job_stats,
 )
 
+from services.ltl_freight_rate.ltl_params import CreateLtlFreightRateJob, DeleteLtlFreightRateJob
+
 from services.ltl_freight_rate.interactions.create_ltl_freight_rate_job import (
     create_ltl_freight_rate_job,
 )
@@ -124,6 +126,8 @@ from services.ltl_freight_rate.interactions.get_ltl_freight_rate_job_stats impor
     get_ltl_freight_rate_job_stats,
 )
 
+from services.lcl_customs_rate.lcl_customs_params import CreateLclCustomsRateJob, DeleteLclCustomsRateJob
+
 from services.lcl_customs_rate.interactions.create_lcl_customs_rate_job import (
     create_lcl_customs_rate_job,
 )
@@ -136,6 +140,8 @@ from services.lcl_customs_rate.interactions.list_lcl_customs_rate_jobs import (
 from services.lcl_customs_rate.interactions.get_lcl_customs_rate_job_stats import (
     get_lcl_customs_rate_job_stats,
 )
+
+from services.lcl_freight_rate.lcl_params import CreateLclFreightRateJob, DeleteLclFreightRateJob
 
 from services.lcl_freight_rate.interactions.create_lcl_freight_rate_job import (
     create_lcl_freight_rate_job,

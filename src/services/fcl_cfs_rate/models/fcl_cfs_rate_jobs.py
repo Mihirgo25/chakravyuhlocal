@@ -42,7 +42,7 @@ class FclCfsRateJob(BaseModel):
     is_visible = BooleanField(default=True)
     cogo_entity_id = UUIDField(null=True, index=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_cfs_rate_jobs_serial_id_seq')")],)
-    mode = CharField(default = 'manual', null = True)
+    search_source = TextField(null=True, index=True)
 
     class Meta:
         table_name = 'fcl_cfs_rate_jobs'

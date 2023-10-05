@@ -37,12 +37,14 @@ class AirFreightRateLocalJob(BaseModel):
     shipment_type = CharField(null=True)
     rate_type = TextField(null=True)
     init_key = TextField(index=True, null=True)
+    is_visible = BooleanField(default=True)
     operation_type = CharField(null=True)
     price_type = CharField(null=True)
     cogo_entity_id = UUIDField(null=True, index=True)
     serial_id = BigIntegerField(
         constraints=[SQL("DEFAULT nextval('air_freight_rate_local_jobs_serial_id_seq')")],
     )
+    search_source = TextField(null=True, index=True)
 
     class Meta:
         table_name = "air_freight_rate_local_jobs"

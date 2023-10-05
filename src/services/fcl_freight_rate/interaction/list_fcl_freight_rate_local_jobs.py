@@ -155,4 +155,10 @@ def apply_filters(query, filters):
 
     query = apply_indirect_filters(query, indirect_filters)
 
+    query = apply_is_visible_filter(query)
+
+    return query
+
+def apply_is_visible_filter(query):
+    query = query.where(FclFreightRateLocalJob.is_visible == True)
     return query

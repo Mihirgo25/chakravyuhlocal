@@ -6,7 +6,6 @@ from fastapi.responses import JSONResponse
 import sentry_sdk, traceback
 from fastapi import HTTPException
 import json
-from params import CreateFclCustomsRateJob, DeleteFclCustomsRateJob
 from params import CreateRateSheet, UpdateRateSheet
 
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate

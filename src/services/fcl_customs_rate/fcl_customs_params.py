@@ -144,3 +144,24 @@ class DeleteFclCustomsRate(BaseModel):
   performed_by_type: str = None
   bulk_operation_id: str = None
   rate_type: str = 'market_place'
+
+class CreateFclCustomsRateJob(BaseModel):
+    source: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    port_id: str = None
+    service_provider_id: str = None
+    importer_exporter_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    trade_type: str = None
+    rate_type: str = None
+
+class DeleteFclCustomsRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None

@@ -84,14 +84,18 @@ class CreateFuelData(BaseModel):
     currency:str
     
 class CreateFtlFreightRateJob(BaseModel):
-    origin_location_id: str
-    destination_location_id: str
-    importer_exporter_id: str
-    service_provider_id: str
-    truck_type: str
-    truck_body_type: str
-    trip_type: str
-    rate_type: str
+    origin_location_id: str = None
+    destination_location_id: str = None
+    importer_exporter_id: str = None
+    service_provider_id: str = None
+    truck_type: str = None
+    truck_body_type: str = None
+    trip_type: str = None
+    commodity: str = None
+    transit_time: str = None
+    detention_free_time: str = None
+    unit: str = None
+    rate_type: str = None
     
 class DeleteFtlFreightRateJob(BaseModel):
     id: str = None
