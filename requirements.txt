@@ -32,7 +32,7 @@ flower==1.2.0
 fonttools==4.38.0
 h11==0.14.0
 hijri-converter==2.2.4
-holidays==0.19
+holidays==0.25
 httpcore==0.16.3
 httpx==0.23.3
 humanize==4.4.0
@@ -95,7 +95,7 @@ urllib3==1.26.14
 uvicorn==0.20.0
 vine==5.0.0
 wcwidth==0.2.6
-prophet==1.1.2
+prophet==1.1.4
 currencyconverter== 0.17.6
 geopy==2.3.0
 scikit-learn==1.2.2
