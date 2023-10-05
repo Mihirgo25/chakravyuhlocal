@@ -7,13 +7,18 @@ from services.air_freight_rate.interactions.create_air_freight_rate import creat
 from database.rails_db import get_eligible_orgs
 from configs.env import DEFAULT_USER_ID
 from rms_utils.get_money_exchange_for_fcl_fallback import get_money_exchange_for_fcl_fallback
+from libs.get_distance import get_air_distance
 
 def get_air_freight_rate_prediction(request):
     currency = 'USD'
     origin_airport_id = request.get('origin_airport_id')
-    location = maps.list_locations({ 'filters': { 'id': [origin_airport_id] }})['list'][0]
-    country = location['country_id']
-    continent = location['continent_id']
+    destination_airport_id = request.get('destination_airport_id')
+    locations = maps.list_locations({ 'filters': { 'id': [origin_airport_id, destination_airport_id] }})['list']
+    for location in locations:
+        if location.get('id') == origin_airport_id:
+            country = location['country_id']
+            continent = location['continent_id']
+            break
 
     if continent == '72abc4ba-6368-4501-9a86-8065f5c191f8':
         currency = 'EUR'
@@ -32,7 +37,7 @@ def get_air_freight_rate_prediction(request):
                     { 'unit': 'per_kg', 'currency': currency, 'lower_limit': 500.1, 'upper_limit': 5000.0, 'tariff_price': 60 }]
 
     density_category = get_density_category(request.get('weight'), request.get('volume'), request.get('trade_type'))
-    params = get_params_for_model(currency,request)
+    params = get_params_for_model(request,locations)
     results = []
     for param in params:
         try:
@@ -132,7 +137,7 @@ def get_chargeable_weight(weight,volume):
     chargeable_weight = volumetric_weight if volumetric_weight > weight else weight
     return round(chargeable_weight,2)
 
-def get_params_for_model(currency, request):
+def get_params_for_model(request, locations):
     default_airlines_ids = DEFAULT_AIRLINE_IDS
     params = []
     no_of_airlines = 3
@@ -149,6 +154,20 @@ def get_params_for_model(currency, request):
             if airline_id in top_three_airline_ids:
                 continue
             top_three_airline_ids.append(airline_id)
+
+    for loc in locations:
+        if loc["id"] == request.get('origin_airport_id'):
+            origin_location = (loc["latitude"], loc["longitude"])
+        if loc["id"] == request.get('destination_airport_id'):
+            destination_location = (loc["latitude"], loc["longitude"])
+    try:
+        air_route_distance = maps.get_air_route({'origin_airport_id':request['origin_airport_id'], 'destination_airport_id':request['destination_airport_id'], 'includes':['length']})
+        if air_route_distance and isinstance(air_route_distance, dict):
+            Distance = air_route_distance['length']
+        else:
+            Distance = get_air_distance(origin_location[0],origin_location[1], destination_location[0], destination_location[1])
+    except:
+        Distance = 2500
     
     for id in top_three_airline_ids:
         same_parameter = {
@@ -158,7 +177,8 @@ def get_params_for_model(currency, request):
             'shipment_type':request['packing_type'],
             'stacking_type':request['handling_type'],
             "airline_id": id,
-            "commodity":request['commodity']
+            "commodity":request['commodity'],
+            "air_distance":Distance
         }
         params.append(same_parameter.copy())
 
