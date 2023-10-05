@@ -3,7 +3,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRa
 from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def create_fcl_customs_rate(request):
     with db.atomic():

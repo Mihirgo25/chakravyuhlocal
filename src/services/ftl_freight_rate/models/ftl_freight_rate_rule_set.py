@@ -23,7 +23,7 @@ class FtlFreightRateRuleSet(BaseModel):
     process_currency = CharField(null=False)
     status = CharField(null=False)
     created_at = DateTimeField(default=datetime.datetime.now)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     
 
     def save(self, *args, **kwargs):
