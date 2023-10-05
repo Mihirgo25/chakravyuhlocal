@@ -43,7 +43,7 @@ from services.air_freight_rate.interactions.list_air_freight_rate_feedbacks impo
 from services.air_freight_rate.interactions.list_air_freight_rate_requests import list_air_freight_rate_requests
 from services.air_freight_rate.interactions.list_air_freight_rate_dislikes import list_air_freight_rate_dislikes
 from services.air_freight_rate.interactions.list_air_freight_charge_codes import list_air_freight_charge_codes
-from services.air_freight_rate.interactions.extend_air_freight_rate import extend_air_freight_rate
+from services.air_freight_rate.interactions.extend_air_freight_rate_validity import extend_air_freight_rate_validity
 from services.air_freight_rate.interactions.list_air_freight_rates import list_air_freight_rates
 from services.air_freight_rate.interactions.create_air_freight_rate_bulk_operation import create_air_freight_rate_bulk_operation
 from services.air_freight_rate.interactions.get_air_freight_local_rate_cards import get_air_freight_local_rate_cards
@@ -851,7 +851,7 @@ def create_air_freight_rate_feedback_api(request: CreateAirFreightRateFeedbackPa
         return JSONResponse(status_code=500,content={"success":False,'error':str(e)})
     
 
-@air_freight_router.post("/extend_air_freight_rate")
+@air_freight_router.post("/extend_air_freight_rate_validity")
 def extend_air_freight_rate_api(
     request: UpdateAirFreightRateMarkUpParams, resp: dict = Depends(authorize_token)
 ):
@@ -860,7 +860,7 @@ def extend_air_freight_rate_api(
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
-        data = extend_air_freight_rate(request.dict(exclude_none=True))
+        data = extend_air_freight_rate_validity(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise

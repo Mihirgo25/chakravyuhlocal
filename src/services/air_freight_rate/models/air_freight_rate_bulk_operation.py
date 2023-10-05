@@ -8,7 +8,7 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.air_freight_rate.interactions.delete_air_freight_rate import delete_air_freight_rate
 from services.air_freight_rate.interactions.delete_air_freight_rate_local import delete_air_freight_rate_local
 from services.air_freight_rate.interactions.update_air_freight_rate_local import update_air_freight_rate_local
-from services.air_freight_rate.interactions.extend_air_freight_rate import extend_air_freight_rate
+from services.air_freight_rate.interactions.extend_air_freight_rate_validity import extend_air_freight_rate_validity
 from services.air_freight_rate.interactions.update_air_freight_rate import update_air_freight_rate
 from services.air_freight_rate.interactions.list_air_freight_rates import list_air_freight_rates
 from services.air_freight_rate.interactions.list_air_freight_rate_surcharges import list_air_freight_rate_surcharges
@@ -380,7 +380,7 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.save()
                 continue
 
-            extend_air_freight_rate(
+            extend_air_freight_rate_validity(
                 {
                     "id": freight["id"],
                     "performed_by_id": self.performed_by_id,
