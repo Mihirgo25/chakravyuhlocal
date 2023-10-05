@@ -69,7 +69,7 @@ def execute_transaction_code(request):
 
     if not ftl_freight_rate:
       ftl_freight_rate = FtlFreightRate(init_key = init_key)
-      for key in list(unique_params.keys()):
+      for key in list(params.keys()):
           setattr(ftl_freight_rate, key, params[key])
 
     ftl_freight_rate.set_locations()
@@ -108,4 +108,3 @@ def execute_transaction_code(request):
       update_ftl_freight_rate_request_delay.apply_async(kwargs={'request':{'ftl_freight_rate_request_id': request.get('ftl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')
 
     return {"id": ftl_freight_rate.id}
-
