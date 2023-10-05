@@ -167,7 +167,7 @@ async def use_rates_affected_filter(
     ]
     where = get_direct_indirect_filters(filters, date=FclFilterTypes.time_series.value)
     if where:
-        query.append(f"WHERE {where}")
+        query.append(f"WHERE {where} AND day > 0 ")
     query.append("GROUP BY day ORDER BY day ASC")
     response = dict()
     response["list"] = clickhouse.execute(" ".join(query), filters)
