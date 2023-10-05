@@ -6,7 +6,8 @@ from database.rails_db import *
 from fastapi import HTTPException
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import common
-from configs.definitions import AIR_CUSTOMS_CHARGES, FCL_FREIGHT_CURRENCIES
+from configs.definitions import AIR_CUSTOMS_CHARGES
+from configs.yml_definitions import FCL_FREIGHT_CURRENCIES
 
 from services.air_customs_rate.interaction.list_air_customs_rates import list_air_customs_rates
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
