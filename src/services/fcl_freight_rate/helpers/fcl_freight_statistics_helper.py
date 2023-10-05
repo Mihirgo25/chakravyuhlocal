@@ -28,7 +28,6 @@ def send_rate_stats(action, request, freight):
                     FclFreightRate.destination_trade_id,
                     FclFreightRate.shipping_line_id,
                     FclFreightRate.service_provider_id,
-                    FclFreightRate.accuracy,
                     FclFreightRate.validities,
                     FclFreightRate.mode,
                     FclFreightRate.commodity,
