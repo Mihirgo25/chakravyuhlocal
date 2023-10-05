@@ -11,6 +11,6 @@ def get_user_for_air_freight_rate_job(users):
     results = list(query.dicts())
     
     if results:
-        return results[0]['user_id'].hex
+        return str(results[0]['user_id'])
     else:
         return None
