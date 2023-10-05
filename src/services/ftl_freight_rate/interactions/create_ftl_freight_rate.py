@@ -69,10 +69,15 @@ def execute_transaction_code(request):
 
     if not ftl_freight_rate:
       ftl_freight_rate = FtlFreightRate(init_key = init_key)
-      for key in list(params.keys()):
+      for key in list(unique_params.keys()):
           setattr(ftl_freight_rate, key, params[key])
 
     ftl_freight_rate.set_locations()
+    ftl_freight_rate.line_items = request.get('line_items')
+    ftl_freight_rate.validity_start = request.get('validity_start')
+    ftl_freight_rate.validity_end = request.get('validity_end')
+    ftl_freight_rate.procured_by_id = request.get('procured_by_id')
+    ftl_freight_rate.sourced_by_id = request.get('sourced_by_id')
 
     ftl_freight_rate.validate_validities(ftl_freight_rate.validity_start, ftl_freight_rate.validity_end)
     ftl_freight_rate.rate_not_available_entry = False
@@ -103,3 +108,4 @@ def execute_transaction_code(request):
       update_ftl_freight_rate_request_delay.apply_async(kwargs={'request':{'ftl_freight_rate_request_id': request.get('ftl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')
 
     return {"id": ftl_freight_rate.id}
+
