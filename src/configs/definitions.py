@@ -22,4 +22,4 @@ AIR_FREIGHT_SURCHARGES= Charges('air_freight_surcharges')
 AIR_FREIGHT_WAREHOUSE_CHARGES=Charges('air_freight_warehouse_charges')
 AIR_FREIGHT_CURRENCIES= Charges('currencies')
 HAULAGE_FREIGHT_CHARGES = Charges('haulage_freight_charges')
-
+AIR_CUSTOMS_CHARGES = Charges('air_customs_charges')

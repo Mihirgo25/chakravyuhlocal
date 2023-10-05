@@ -126,6 +126,23 @@ def delete_rates():
         # delete_fcl_freight_rates_delay.apply_async(kwargs={'result':obj},queue='low')
         print('l')  
 
+def migrate_charges():
+    from configs.yml_definitions import LoadYmls
+    from configs.env import DEFAULT_USER_ID
+    from micro_services.client import loki
+    
+    yml_obj = LoadYmls()
+    charges = ['FCL_FREIGHT_CHARGES', 'FCL_FREIGHT_LOCAL_CHARGES', 'FCL_FREIGHT_SEASONAL_CHARGES', 'FCL_CFS_CHARGES', 'FCL_CUSTOMS_CHARGES', 'AIR_FREIGHT_CHARGES', 'AIR_FREIGHT_LOCAL_CHARGES', 'AIR_FREIGHT_SURCHARGES', 'AIR_FREIGHT_WAREHOUSE_CHARGES', 'HAULAGE_FREIGHT_CHARGES', 'AIR_CUSTOMS_CHARGES']
+    
+    for charge in charges:
+        payload = {
+            'serviceChargeType': charge.lower(),
+            'created_by': DEFAULT_USER_ID,
+            'charges': eval(f'yml_obj.{charge}'),
+        }
+        res = loki.migrate_charge_codes(payload)
+        print(res, charge.lower(), '->done')
+
 def rate_extension():
     from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
     eligible_sp = get_ff_mlo()
