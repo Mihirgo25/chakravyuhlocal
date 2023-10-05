@@ -11,7 +11,7 @@ from playhouse.postgres_ext import SQL
 possible_direct_filters = [
     "origin_location_id",
     "destination_location_id",
-    "commodity_type",
+    "commodity",
     "user_id",
     "cogo_entity_id"
 ]

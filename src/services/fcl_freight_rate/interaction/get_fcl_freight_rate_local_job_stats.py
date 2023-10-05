@@ -15,7 +15,6 @@ possible_direct_filters = [
     "main_port_id",
     "shipping_line_id",
     "service_provider_id",
-    "terminal_id",
     "commodity",
     "container_size",
     "container_type",

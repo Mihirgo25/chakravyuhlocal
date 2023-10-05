@@ -17,7 +17,6 @@ possible_direct_filters = [
     "airport_id",
     "airline_id",
     "commodity",
-    "commodity_sub_type",
     "user_id",
     "cogo_entity_id"
 ]

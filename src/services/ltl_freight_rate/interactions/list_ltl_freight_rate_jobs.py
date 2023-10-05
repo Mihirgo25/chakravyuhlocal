@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 possible_direct_filters = [
     "origin_location_id",
     "destination_location_id",
-    "commodity_type",
+    "commodity",
     "user_id",
     "serial_id",
     "cogo_entity_id"
@@ -31,7 +31,9 @@ DEFAULT_REQUIRED_FIELDS = [
     "closed_by",
     "closed_by_id",
     "closing_remarks",
-    "commodity_type",
+    "commodity",
+    "transit_time",
+    "density_factor",
     "created_at",
     "updated_at",
     "status",

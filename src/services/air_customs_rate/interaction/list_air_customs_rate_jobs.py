@@ -39,14 +39,9 @@ DEFAULT_REQUIRED_FIELDS = [
     "service_provider_id",
     "airport",
     "airport_id",
-    "shipment_type",
-    "stacking_type",
-    "commodity_type",
-    "commodity_sub_type",
-    "operation_type",
     "serial_id",
-    "price_type",
     "sources",
+    "trade_type"
 ]
 
 
