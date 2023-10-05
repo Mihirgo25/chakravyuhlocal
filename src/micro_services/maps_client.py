@@ -70,8 +70,8 @@ class MapsApiClient:
     def get_airlines_for_route(self,data={}):
         return self.client.request('GET','get_airline_for_route',data)
     
-    def get_sailing_schedules_port_pair_coverages(self, data={}):
-        return self.client.request('GET','get_sailing_schedules_port_pair_coverage', data)
+    def get_sailing_schedule_port_pair_coverages(self, data={}):
+        return self.client.request('GET','get_sailing_schedule_port_pair_coverages', data)
 
     def create_sailing_schedule_port_pair_coverage(self, data={}):
         return self.client.request('POST','create_sailing_schedule_port_pair_coverage', data)

@@ -6,7 +6,8 @@ def get_shipping_lines_for_prediction(origin_location_ids, destination_location_
 
     origin_port_id = origin_location_ids[0]
     destination_port_id = destination_location_ids[0]
-    serviceable_shipping_lines = maps.get_sailing_schedules_port_pair_coverages(origin_port_id,destination_port_id)
+    coverage_data = {"origin_port_id": origin_port_id, "destination_port_id": destination_port_id}
+    serviceable_shipping_lines = maps.get_sailing_schedule_port_pair_coverages(coverage_data)
     if serviceable_shipping_lines:
         return serviceable_shipping_lines
 
