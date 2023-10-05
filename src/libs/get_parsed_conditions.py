@@ -50,9 +50,11 @@ def get_parsed_conditions_data(line_items):
                 condition_value = conditions["condition_value"]
                 condition_key = conditions["condition_key"]
                 if condition_key == 'shipping_line_id':
-                    conditions['condition_value'] = map_ids_to_names(condition_value, shipping_line_mappings)               
+                    conditions['parsed_value'] = map_ids_to_names(condition_value, shipping_line_mappings)               
                 elif condition_key in LOCATION_IDS:
-                    conditions['condition_value'] = map_ids_to_names(condition_value, location_mappings)
+                    conditions['parsed_value'] = map_ids_to_names(condition_value, location_mappings)
+                else:
+                    conditions['parsed_value'] = conditions['condition_value']
             parsed_line_items.append(item)
         else:
             parsed_line_items.append(item)
