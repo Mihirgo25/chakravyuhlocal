@@ -75,6 +75,8 @@ class FclFreightRateStatistic(BaseModel):
     rate_type = CharField()
     sourced_by_id = UUIDField(null=True)
     procured_by_id = UUIDField(null=True)
+    revenue_desk_visit_count = IntegerField(default = 0)
+    so1_visit_count = IntegerField(default = 0)
     created_at = DateTimeTZField(default=datetime.utcnow())
     updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
     status = CharField(default="active")
@@ -101,8 +103,6 @@ class FclFreightRateStatistic(BaseModel):
     bas_standard_price_accuracy = FloatField(default = -1)
     bas_standard_price_diff_from_selected_rate = FloatField(default=0)
     parent_rate_mode = CharField(index = True, null = True)
-    revenue_desk_visit_count = IntegerField(default = 0)
-    so1_visit_count = IntegerField(default = 0)
 
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()

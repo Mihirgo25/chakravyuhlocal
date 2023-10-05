@@ -411,6 +411,8 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
         rate_type FixedString(256),
         sourced_by_id UUID,
         procured_by_id UUID,
+        revenue_desk_visit_count UInt16,
+        so1_visit_count UInt16,
         created_at DateTime DEFAULT now(),
         updated_at DateTime DEFAULT now(),
         version UInt32 DEFAULT 1,
@@ -438,9 +440,7 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
         shipment_cancelled UInt16,
         bas_standard_price_accuracy Float64,
         bas_standard_price_diff_from_selected_rate Float64,
-        parent_rate_mode String,
-        revenue_desk_visit_count UInt16,
-        so1_visit_count UInt16,
+        parent_rate_mode String
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (is_deleted ,origin_continent_id,origin_country_id,origin_port_id,shipping_line_id,rate_id,validity_id)
