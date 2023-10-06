@@ -4,7 +4,7 @@ from configs.env import *
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from micro_services.client import organization, common
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from services.rate_sheet.interactions.validate_and_process_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
@@ -178,7 +178,7 @@ celery.conf.beat_schedule = {
     },
     'cluster_extension_by_latest_trends_worker':{
         'task': 'celery_worker.cluster_extension_by_latest_trends_worker',
-        'schedule': crontab(minute=0, hour='*/6'),
+        "schedule": crontab(hour=23, minute=00),
         'options': {'queue': 'fcl_freight_rate'}
     },
     'cache_data_worker':{
@@ -211,6 +211,7 @@ celery.conf.beat_schedule = {
 
 celery.autodiscover_tasks(['services.air_customs_rate.air_customs_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.ftl_freight_rate.ftl_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
 celery.autodiscover_tasks(['services.air_freight_rate.air_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.fcl_freight_rate.fcl_celery_worker'], force=True)
@@ -606,6 +607,7 @@ def update_fcl_freight_rate_request_in_delay(self, request):
             pass
         else:
             raise self.retry(exc= exc)
+    
 @celery.task(bind = True, retry_backoff=True, max_retries=1)
 def process_fuel_data_delay(self):
     try:

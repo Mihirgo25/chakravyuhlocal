@@ -3,7 +3,7 @@ from configs.env import *
 import json
 from micro_services.client import maps
 from psycopg2 import sql
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from database.rails_db import get_connection
 from joblib import delayed, Parallel, cpu_count
 import time
@@ -707,4 +707,4 @@ def request_and_feedback():
 
 
 
-
+    
