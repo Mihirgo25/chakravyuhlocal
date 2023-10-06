@@ -3,7 +3,7 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 import uuid
 from database.db_session import db
 from celery_worker import send_notifications_to_supply_agents_local_request
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def create_fcl_freight_rate_local_request(request):
     object_type = 'Fcl_Freight_Rate_Local_Request' 

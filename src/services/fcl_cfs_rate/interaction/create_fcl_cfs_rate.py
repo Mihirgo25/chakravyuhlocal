@@ -5,7 +5,7 @@ from celery_worker import fcl_cfs_functions_delay
 from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def create_audit_for_cfs_rate(request, cfs_object_id):
     audit_data = {

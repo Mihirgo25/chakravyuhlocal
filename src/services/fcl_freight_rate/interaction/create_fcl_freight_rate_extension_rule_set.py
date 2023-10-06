@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import
 from fastapi import HTTPException
 from database.db_session import db
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def get_extension_rule_set_object(request):
   row = {

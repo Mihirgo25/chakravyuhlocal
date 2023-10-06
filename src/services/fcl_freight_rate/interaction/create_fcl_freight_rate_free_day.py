@@ -3,7 +3,7 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 from fastapi import HTTPException
 from datetime import datetime, timedelta
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 
 def create_fcl_freight_rate_free_day(request):
