@@ -2,7 +2,7 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate_feedback import FclCfsRateFeedbac
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def delete_fcl_cfs_rate_feedback(request):
     with db.atomic():

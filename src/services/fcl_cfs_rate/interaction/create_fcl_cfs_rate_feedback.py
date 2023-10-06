@@ -1,7 +1,7 @@
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from services.fcl_cfs_rate.models.fcl_cfs_rate_feedback import FclCfsRateFeedback
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
 from database.db_migration import db
 
@@ -39,7 +39,7 @@ def execute_transaction_code(request):
     for attr, value in create_params.items():
         setattr(cfs_feedback, attr, value)
     
-    cfs_feedback.set_location()
+    cfs_feedback.set_port()
     cfs_feedback.set_spot_search()
 
     try:
