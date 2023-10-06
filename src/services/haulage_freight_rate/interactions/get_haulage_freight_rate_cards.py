@@ -20,8 +20,6 @@ from micro_services.client import common, maps
 from libs.json_encoder import json_encoder
 from fastapi import HTTPException
 from database.rails_db import get_operators
-from services.haulage_freight_rate.haulage_celery_worker import create_jobs_for_predicted_haulage_freight_rate_delay
-
 
 def select_fields():
     freight_query = HaulageFreightRate.select(
@@ -299,7 +297,6 @@ def ignore_non_eligible_service_providers(requirements, data):
 
 
 def get_predicted_rate(requirements, data):
-    is_predicted = False
     if (
         not data
         and requirements.get("predicted_rate")
@@ -330,9 +327,7 @@ def get_predicted_rate(requirements, data):
             requirements["predicted_rate"] = False
             data = get_haulage_freight_rate_cards(requirements)["list"]
     
-    if data and data[0].get('source') == 'predicted':
-        is_predicted = True
-    return data,is_predicted
+    return data
 
 def ignore_non_active_shipping_lines(data):
     shipping_line_ids = list(set(map(lambda ids: ids["shipping_line_id"], data)))
@@ -445,9 +440,7 @@ def get_haulage_freight_rate_cards(requirements):
         list = build_response_list(requirements, list)
 
         # get predicted rate in case of not rates
-        list,is_predicted = get_predicted_rate(requirements, list)
-
-        create_jobs_for_predicted_haulage_freight_rate_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements}, queue='critical')
+        list = get_predicted_rate(requirements, list)
 
         # adding additional response data
         if requirements.get("include_additional_response_data"):

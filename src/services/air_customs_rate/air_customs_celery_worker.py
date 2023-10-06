@@ -1,9 +1,6 @@
 from celery_worker import celery
 from services.air_customs_rate.helpers.update_organization_air_customs import update_organization_air_customs
 from services.air_customs_rate.interaction.create_air_customs_rate import create_air_customs_rate
-from services.air_customs_rate.workers.create_jobs_for_predicted_air_customs_rate import (
-    create_jobs_for_predicted_air_customs_rate,
-)
 from services.air_customs_rate.workers.update_air_customs_rate_jobs_to_backlog import (
     update_air_customs_rate_jobs_to_backlog,
 )
@@ -68,20 +65,6 @@ def send_closed_notifications_to_sales_agent_air_customs_delay(self, object):
             pass
         else:
             raise self.retry(exc= e)
-        
-@celery.task(bind=True, max_retries=1, retry_backoff=True)
-def create_jobs_for_predicted_air_customs_rate_delay(
-    self, is_predicted, requirements
-):
-    try:
-        return create_jobs_for_predicted_air_customs_rate(
-            is_predicted, requirements
-        )
-    except Exception as exc:
-        if type(exc).__name__ == "HTTPException":
-            pass
-        else:
-            raise self.retry(exc=exc)
 
         
 @celery.task(bind=True, max_retries=1, retry_backoff=True)
