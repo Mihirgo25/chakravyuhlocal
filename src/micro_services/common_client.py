@@ -58,3 +58,9 @@ class CommonApiClient:
     
     def get_all_exchange_rates(self, data = {}):
         return self.client.request('GET','get_all_exchange_rates',data)
+    
+    def get_sailing_schedule_port_pair_coverages(self, data={}):
+        return self.client.request('GET','get_sailing_schedule_port_pair_coverages', data)
+
+    def create_sailing_schedule_port_pair_coverage(self, data={}):
+        return self.client.request('POST','create_sailing_schedule_port_pair_coverage', data)
