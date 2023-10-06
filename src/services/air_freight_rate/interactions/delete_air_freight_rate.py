@@ -14,27 +14,24 @@ def delete_air_freight_rate_data(request):
     if not air_freight_rate:
         raise HTTPException(status_code=404,detail="Air Freight Rate Not Found")
 
-    for t in air_freight_rate.validities:
-        if t.get("id") == request.get("validity_id"):
-            air_freight_rate.set_validities(
-                None,
-                None,
-                t.get("min_price"),
-                t.get('currency'),
-                t.get("weight_slabs"),
-                True,
-                request.get("validity_id"),
-                t.get("density_category"),
-                t.get('density_ratio'),
-                t.get('initial_volume'),
-                t.get('initial_gross_weight'),
-                t.get('available_volume'),
-                t.get('available_gross_weight'),
-                air_freight_rate.rate_type,
-                t.get('likes_count'),
-                t.get('dislikes_count')
-            )
-
+    air_freight_rate.set_validities(  
+        request.get("validity_start"),
+        request.get("validity_end"),
+        request.get("min_price"),
+        request.get("currency"),
+        request.get("weight_slabs"),
+        True,
+        None,
+        request.get("density_category"),
+        request.get("density_ratio"),
+        request.get("initial_volume"),
+        request.get("initial_gross_weight"),
+        request.get("available_volume"),
+        request.get("available_gross_weight"),
+        request.get("rate_type"),
+        request.get('likes_count'),
+        request.get('dislikes_count')
+    )
     validities =  air_freight_rate.validities
     total_avaliable_validities = len(validities)
 
@@ -52,6 +49,8 @@ def delete_air_freight_rate_data(request):
         print("Exception in saving freight rate", e)
     
     create_audit(request, air_freight_rate.id)
+    
+    send_stats(request,air_freight_rate)
 
     return {
        'id': air_freight_rate.id
@@ -79,3 +78,11 @@ def find_object(request):
     except :
         air_freight_rate=None
     return air_freight_rate
+
+def send_stats(request, freight):
+    from services.bramhastra.celery import send_air_rate_stats_in_delay
+
+    send_air_rate_stats_in_delay.apply_async(
+        kwargs={"action": "delete", "request": request, "freight": freight},
+        queue="statistics",
+    )

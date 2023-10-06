@@ -1,7 +1,7 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_request import HaulageFreightRateRequest 
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from celery_worker import create_communication_background
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import maps
 from database.db_session import db
@@ -97,7 +97,9 @@ def create_audit(request, request_object_id):
         performed_by_id = performed_by_id,
         data = request,
         object_type = object_type,
-        object_id = request_object_id
+        object_id = request_object_id,
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )
 
 def supply_agents_to_notify(request):
@@ -138,6 +140,3 @@ def send_notifications_to_supply_agents(request):
     for user_id in request_info['user_ids']:
             data['user_id'] = user_id
             create_communication_background.apply_async(kwargs={'data':data},queue='communication')
-
-
-

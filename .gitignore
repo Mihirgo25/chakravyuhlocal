@@ -3,11 +3,13 @@ package-lock.json
 __pycache__
 .pytest_cache
 .venv
+.superset
 *.egg-info
 .env
 .env.prod
 dump.rdb
 src/dump.rdb
+.vscode
 
 # CDK asset staging directory
 .cdk.staging

@@ -1,9 +1,10 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from configs.global_constants import HAZ_CLASSES,CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
-from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS, DEFAULT_SHIPPING_LINE_ID
+from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS, DEFAULT_SHIPPING_LINE_ID,DEFAULT_RATE_TYPE
 from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from fastapi.encoders import jsonable_encoder
+from libs.get_conditional_line_items import get_filtered_line_items
 
 def get_fcl_freight_local_rate_cards(request): 
     try: 
@@ -34,6 +35,8 @@ def initialize_local_query(request):
     shipping_line_ids = None
     if request['shipping_line_id']:
         shipping_line_ids = [request['shipping_line_id'], DEFAULT_SHIPPING_LINE_ID]
+    
+    request['rate_type'] = request.get('rate_type') or DEFAULT_RATE_TYPE
 
     local_agents = get_local_agent_ids(request)
     if local_agents:
@@ -45,14 +48,21 @@ def initialize_local_query(request):
         FclFreightRateLocal.service_provider_id,
         FclFreightRateLocal.main_port_id,
         FclFreightRateLocal.shipping_line_id,
-        FclFreightRateLocal.data
+        FclFreightRateLocal.data,
+        FclFreightRateLocal.rate_type,
+        FclFreightRateLocal.commodity,
+        FclFreightRateLocal.container_size,
+        FclFreightRateLocal.container_type,
+        FclFreightRateLocal.terminal_id
         ).where(
         FclFreightRateLocal.port_id == request['port_id'], 
         FclFreightRateLocal.container_size == request['container_size'], 
         FclFreightRateLocal.container_type == request['container_type'], 
         FclFreightRateLocal.trade_type == request['trade_type'],
         ~ FclFreightRateLocal.is_line_items_error_messages_present,
-        FclFreightRateLocal.service_provider_id.in_(service_provider_ids))
+        FclFreightRateLocal.service_provider_id.in_(service_provider_ids),
+        FclFreightRateLocal.rate_type != 'cogo_assured',
+        (FclFreightRateLocal.terminal_id == request['terminal_id']) | (FclFreightRateLocal.terminal_id == None))
 
     if request['commodity'] in HAZ_CLASSES:
         query = query.where(FclFreightRateLocal.commodity == request['commodity'])
@@ -95,6 +105,10 @@ def build_response_object(result, request):
 
 def build_local_line_items(result, response_object, request):
     response_object['line_items'] = []
+    if result.get('data').get('line_items'):
+            old_line_items = result.get('data').get('line_items')
+            new_line_items = get_filtered_line_items(result,old_line_items)
+            result['data']['line_items'] = new_line_items
 
     for line_item in result['data'].get('line_items'):
         if (line_item.get('location_id')) and (line_item['location_id'] not in [request['port_id'], request['country_id']]):

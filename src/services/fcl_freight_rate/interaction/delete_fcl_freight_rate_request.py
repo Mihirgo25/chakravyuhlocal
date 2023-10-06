@@ -2,6 +2,9 @@ from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreight
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
+from database.rails_db import (
+    get_organization_partner,
+)
 
 def delete_fcl_freight_rate_request(request):
     with db.atomic():
@@ -9,6 +12,7 @@ def delete_fcl_freight_rate_request(request):
 
 def execute_transaction_code(request):
     from celery_worker import send_closed_notifications_to_sales_agent_function,send_closed_notifications_to_user_request
+    from services.bramhastra.celery import send_delete_request_stats_in_delay
     objects = find_objects(request)
 
     if not objects:
@@ -27,11 +31,15 @@ def execute_transaction_code(request):
 
         create_audit(request, obj.id)
 
-        if obj.source == 'spot_search' and obj.performed_by_type == 'user':
+        id = str(obj.performed_by_org_id)
+        org_users = get_organization_partner(id)
+
+        if obj.performed_by_type == 'user' and org_users and  obj.source != 'checkout':
             send_closed_notifications_to_user_request.apply_async(kwargs={'object':obj},queue='critical')
         else:
             send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='critical')
-
+    
+        send_delete_request_stats_in_delay.apply_async(kwargs = {'obj':obj},queue = 'statistics')
 
     return {'fcl_freight_rate_request_ids' : request['fcl_freight_rate_request_ids']}
 
@@ -49,5 +57,4 @@ def create_audit(request, freight_rate_request_id):
     performed_by_id = request['performed_by_id'],
     data = {'closing_remarks' : request['closing_remarks'], 'performed_by_id' : request['performed_by_id']},    #######already performed_by_id column is present do we need to also save it in data?
     object_id = freight_rate_request_id,
-    object_type = 'FclFreightRateRequest'
-    )
+    object_type = 'FclFreightRateRequest')

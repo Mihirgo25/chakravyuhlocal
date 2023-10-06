@@ -8,29 +8,26 @@ from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
-from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
+from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE, EXTENSION_ENABLED_MODES, DEFAULT_VALUE_PROPS
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
+import sentry_sdk
 
 def add_rate_properties(request,freight_id):
+    request["value_props"] = request.get("value_props") or DEFAULT_VALUE_PROPS
     validate_value_props(request["value_props"])
-    rp = FclFreightRateProperties.select(FclFreightRateProperties.id).where(FclFreightRateProperties.rate_id == freight_id).first()
+    rp = FclFreightRateProperties.select(FclFreightRateProperties.id).where(FclFreightRateProperties.rate_id == str(freight_id)).first()
     if not rp :
         FclFreightRateProperties.create(
             rate_id = freight_id,
-            created_at = datetime.now(),
-            updated_at = datetime.now(),
             value_props = request["value_props"],
-            t_n_c = request["t_n_c"],
-            available_inventory = request["available_inventory"],
-            used_inventory = request.get("used_inventory"),
-            shipment_count = request["shipment_count"],
-            volume_count=request["volume_count"]
+            t_n_c = request.get("t_n_c") or [],
+            available_inventory = request.get("available_inventory") or 100,
+            used_inventory = request.get("used_inventory") or 0,
+            shipment_count = request.get("shipment_count") or 0,
+            volume_count=request.get("volume_count") or 0
         )
-    # rp = FclFreightRateProperties.select().where(FclFreightRateProperties.rate_id == freight_id).first()
-    # rp.validate_value_props()
-
 
 def create_audit(request, freight_id):
 
@@ -69,11 +66,19 @@ def create_fcl_freight_rate_data(request):
     # origin_port_id = str(request.get("origin_port_id"))
     # query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
     # db.execute_sql(query)
-    with db.atomic():
-      return create_fcl_freight_rate(request)
+    with db.atomic() as transaction:
+        try:
+            return create_fcl_freight_rate(request)
+        except:
+            transaction.rollback()
+            raise
+  
 
 def create_fcl_freight_rate(request):
     from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay, update_fcl_freight_rate_feedback_in_delay
+    from services.fcl_freight_rate.fcl_celery_worker import update_fcl_freight_rate_job_on_rate_addition_delay
+
+    action = 'update'
     request = { key: value for key, value in request.items() if value }
     row = {
         'origin_port_id': request.get('origin_port_id'),
@@ -113,8 +118,9 @@ def create_fcl_freight_rate(request):
         freight = FclFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
+        action = 'create'
 
-    freight.set_locations()
+    port_to_region_id_mapping = freight.set_locations()
     freight.set_origin_location_ids()
     freight.set_destination_location_ids()
     freight.sourced_by_id = request.get("sourced_by_id")
@@ -154,7 +160,7 @@ def create_fcl_freight_rate(request):
         freight.validate_line_items(line_items)
 
     if row["rate_type"] == "cogo_assured":
-        freight.set_validities_for_cogo_assured_rates(request['validities'])
+        freight.set_validities_for_cogo_assured_rates(request.get('validities'))
     else:
         freight.set_validities(
             request["validity_start"].date(),
@@ -178,7 +184,7 @@ def create_fcl_freight_rate(request):
 
     freight.update_special_attributes()
 
-    freight.update_local_references()  
+    freight.update_local_references()
 
     try:
         freight.save()
@@ -187,12 +193,12 @@ def create_fcl_freight_rate(request):
 
     if row['rate_type'] == 'cogo_assured':
         try:
-            add_rate_properties(request,freight.id)
+            add_rate_properties(request, freight.id)
         except Exception as e:
-            print(e)
-    
+            raise
+        
     # adjust_cogoassured_price(row, request)    
-    
+
     create_audit(request, freight.id)
     
     if not request.get('importer_exporter_id') and not request.get("rate_not_available_entry"):
@@ -213,7 +219,12 @@ def create_fcl_freight_rate(request):
         update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
 
     if request.get('fcl_freight_rate_feedback_id'):
-        update_fcl_freight_rate_feedback_in_delay({'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')})
+        update_fcl_freight_rate_feedback_in_delay.apply_async(kwargs={'request':{'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')}},queue='critical')
+        
+    send_stats(action,request,freight,port_to_region_id_mapping)
+
+    if row["mode"]  not in ["predicted", "cluster_extension"] and row['rate_type'] == "market_place":
+        update_fcl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
 
     return {"id": freight.id}
 
@@ -230,10 +241,11 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'service_provider_id': freight.service_provider_id,
         'extend_rates_for_existing_system_rates': True
     }
-    if row["mode"] == 'manual' and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
+    if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
-
-    adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
+    
+    if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and row['rate_type'] == "market_place":
+        adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
 
 def adjust_cogoassured_price(row, request):
     from celery_worker import create_fcl_freight_rate_delay
@@ -299,12 +311,11 @@ def validities_for_cogo_assured(request):
 def validate_value_props(v_props):
     for prop in v_props:
         name = prop.get('name')
-        # print(name)
         if name not in VALUE_PROPOSITIONS:
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
 
-
-    
-
-
+def send_stats(action,request,freight,port_to_region_id_mapping):
+    from services.bramhastra.celery import send_fcl_rate_stats_in_delay
+    request['port_to_region_id_mapping'] = port_to_region_id_mapping
+    send_fcl_rate_stats_in_delay.apply_async(kwargs = {'action':action,'request':request,'freight':freight},queue = 'statistics')

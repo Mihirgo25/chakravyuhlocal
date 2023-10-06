@@ -2,7 +2,7 @@ from services.air_freight_rate.models.air_freight_rate_local import AirFreightRa
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from database.db_session import db
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def create_air_freight_rate_local(request):
     object_type='Air_Freight_Rate_Local'
@@ -19,7 +19,8 @@ def execute_transaction_code(request):
         'commodity':request.get('commodity'),
         'service_provider_id':request.get('service_provider_id'),
         'commodity_type': request.get('commodity_type'),
-        'rate_type': request.get('rate_type')
+        'rate_type': request.get('rate_type'),
+        'importer_exporter_id':request.get('importer_exporter_id')
     }
 
     air_freight_local=AirFreightRateLocal.select().where(
@@ -29,8 +30,9 @@ def execute_transaction_code(request):
         AirFreightRateLocal.commodity== request.get('commodity'),
         AirFreightRateLocal.commodity_type == request.get('commodity_type'),
         AirFreightRateLocal.rate_type == request.get('rate_type'),
-        AirFreightRateLocal.service_provider_id==request.get('service_provider_id')).first()
-    
+        AirFreightRateLocal.service_provider_id==request.get('service_provider_id'),
+        AirFreightRateLocal.importer_exporter_id == request.get('importer_exporter_id')).first()
+
     if not air_freight_local:
         air_freight_local=AirFreightRateLocal(**row)
         air_freight_local.set_locations()
@@ -46,10 +48,11 @@ def execute_transaction_code(request):
     air_freight_local.line_items = old_line_items
     air_freight_local.sourced_by_id = request.get('sourced_by_id')
     air_freight_local.procured_by_id = request.get('procured_by_id')
+    air_freight_local.rate_not_available_entry = False
     if 'rate_sheet_validation' not in request:
         air_freight_local.validate()
-    
-    
+
+
     try:
         air_freight_local.save()
     except Exception:
@@ -91,5 +94,5 @@ def create_audit(request,air_freight_local_id):
         data = audit_data,
         object_id = air_freight_local_id,
         object_type = 'AirFreightRateLocal')
-    
+
     return id

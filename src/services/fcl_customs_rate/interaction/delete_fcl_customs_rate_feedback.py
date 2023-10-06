@@ -2,7 +2,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate_feedback import FclCustom
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from database.db_session import db
 from fastapi import HTTPException
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def delete_fcl_customs_rate_feedback(request):
   with db.atomic():
@@ -12,12 +12,13 @@ def execute_transaction_code(request):
   feedback_objects = find_feedback_objects(request)
   if not feedback_objects:
     raise HTTPException(status_code=500, detail = 'Feedbacks Not Found')
-    
+
   data = {key:value for key,value in request.items() if key != 'fcl_customs_rate_feedback_ids'},
   for object in feedback_objects:
     object.status = 'inactive'
     object.closed_by_id = request.get('performed_by_id')
     object.closing_remarks = request.get('closing_remarks')
+    object.reverted_rate = request.get('reverted_rate')
 
     try:
         object.save()

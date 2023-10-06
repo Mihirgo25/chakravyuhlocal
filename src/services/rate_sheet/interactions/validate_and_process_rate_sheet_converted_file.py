@@ -2,7 +2,10 @@ from services.rate_sheet.models.rate_sheet import RateSheet
 import services.rate_sheet.interactions.fcl_rate_sheet_converted_file as process_rate_sheet
 import services.rate_sheet.interactions.air_rate_sheet_converted_file as process_air_rate_sheet
 import services.rate_sheet.interactions.fcl_customs_rate_sheet_converted_file as process_customs_rate_sheet
+import services.rate_sheet.interactions.air_customs_rate_sheet_converted_file as process_air_customs_rate_sheet
 import services.rate_sheet.interactions.haulage_rate_sheet_converted_files as process_haulage_rate_sheet
+import services.rate_sheet.interactions.ftl_rate_sheet_converted_files as process_ftl_rate_sheet
+import services.rate_sheet.interactions.fcl_cfs_rate_sheet_converted_file as process_cfs_rate_sheet
 from services.rate_sheet.interactions.send_rate_sheet_notification import send_rate_sheet_notifications
 
 from services.rate_sheet.helpers import *
@@ -19,12 +22,24 @@ def validate_and_process_rate_sheet_converted_file(params):
             getattr(process_customs_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
                 params, converted_file, rate_sheet
             )
+        elif converted_file['service_name'] == 'fcl_cfs':
+            getattr(process_cfs_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
+                params, converted_file, rate_sheet
+            )
         elif converted_file['service_name'] == 'haulage_freight':
             getattr(process_haulage_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
                 params, converted_file, rate_sheet
             )
         elif converted_file['service_name'] == 'trailer_freight':
             getattr(process_haulage_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
+                params, converted_file, rate_sheet
+            )
+        elif converted_file['service_name'] == 'ftl_freight':
+            getattr(process_ftl_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
+                params, converted_file, rate_sheet
+            )
+        elif converted_file['service_name'] == 'air_customs':
+            getattr(process_air_customs_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
                 params, converted_file, rate_sheet
             )
         else:

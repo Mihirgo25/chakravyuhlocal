@@ -190,23 +190,27 @@ SHIPPING_LINES_FOR_PREDICTION = ['b2f92d49-6180-43bd-93a5-4d64f5819a9b','fb1aa2f
 #Maersk, cma, hapag, msc, oocl
 # maersk = 'c3649537-0c4b-4614-b313-98540cffcf40'
 
-EXTENSION_ENABLED_MODES = ['manual']
+EXTENSION_ENABLED_MODES = ['manual', 'flash_booking', 'missing_rate', 'disliked_rate', 'spot_negotation', 'rate_sheet']
 
 COGO_ASSURED_SHIPPING_LINE_ID = 'e6da6a42-cc37-4df2-880a-525d81251547' #cogo-line
 
 DEFAULT_SHIPPING_LINE_ID = 'e6da6a42-cc37-4df2-880a-525d81251547' #cogo-line
 
-DEFAULT_PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+DEFAULT_PROCURED_BY_ID = "2dbe768e-929d-4e54-baf0-309ef68c978b" #cogo-envision
 
 COGO_ASSURED_SERVICE_PROVIDER_ID = "5dc403b3-c1bd-4871-b8bd-35543aaadb36"
 
 DEFAULT_SOURCED_BY_ID = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
 
-VALUE_PROPOSITIONS =  ['confirmed_space_and_inventory', 'standard_local_charges', 'competitive_price', 'fixed_exchange_rate', 'priority_booking']
+VALUE_PROPOSITIONS = ['confirmed_space_and_inventory', 'standard_local_charges', 'competitive_price', 'fixed_exchange_rate', 'priority_booking']
+
+DEFAULT_VALUE_PROPS = [{"name": "confirmed_space_and_inventory", "free_limit": None}]
 
 RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
 
 DEFAULT_RATE_TYPE = 'market_place'
+
+DEFAULT_PERFORMED_BY_TYPE = 'system'
 
 VN_ENTITY_ID = 'b67d40b1-616c-4471-b77b-de52b4c9f2ff'
 
@@ -215,3 +219,32 @@ SPECIFICITY_TYPE_HIERARCHY = {
     'shipping_line':2,
     'cogoport':3
 }
+
+
+REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}
+
+FCL_COVERAGE_USERS = {
+    1: "6addea60-a3de-4067-b08d-ece04be594ab",
+    2: "0b404055-05de-4c2f-836c-86f591183d71",
+    3: "3a1599fa-35af-49be-93f9-7784617e088b",
+    4: "d7f62f2d-2b41-41ae-a9f0-200255de4d8f",
+    5: "2b2b8241-8900-418d-b90d-e755e92f3911",
+    6: "d46a98e6-7848-4862-bb21-c8e727588039",
+    7: "dc100acc-a416-4ff2-8a61-cb265b018fb1",
+    8: "51641e0e-a5da-452a-81fc-ccb8fe6df343"
+    
+}
+
+CRITICAL_PORTS_INDIA_VIETNAM = [
+    'eb187b38-51b2-4a5e-9f3c-978033ca1ddf',
+    '7aa6ac82-c295-497f-bfe1-90294cdfa7a9',
+    '3c843f50-867c-4b07-bb57-e61af97dabfe',
+    'b0a48e84-48d5-438b-841a-e800fb68e439',
+    'c2d6fb91-2875-4d73-b12b-dd1b78fdfe8a',
+    '76fdeee3-1c7f-4f6e-a5d2-2a729445f2d9'
+]
+
+MIN_ALLOWED_PERCENTAGE_CHANGE = -3
+MAX_ALLOWED_PERCENTAGE_CHANGE = 15
+MIN_ALLOWED_MARKUP = -50
+MAX_ALLOWED_MARKUP = 100

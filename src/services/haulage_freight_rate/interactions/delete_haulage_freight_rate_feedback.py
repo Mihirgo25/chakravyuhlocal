@@ -20,7 +20,7 @@ def execute_transaction_code(request):
         {"ids": deleted_haulage_freight_rate_ids}
     """
 
-    from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+    from libs.get_multiple_service_objects import get_multiple_service_objects
 
 
     objects = find_objects(request)
@@ -86,4 +86,6 @@ def create_audit(request, freight_rate_feedback_id, transport_mode):
         },
         object_id=freight_rate_feedback_id,
         object_type=object_type,
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )

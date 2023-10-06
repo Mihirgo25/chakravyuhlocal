@@ -80,6 +80,7 @@ class PostFclFreightRate(BaseModel):
     cogo_entity_id: str = None
     mode: str = None
     source: str = "rms_upload"
+    source_id: str = None
     is_extended: bool = None
     rate_not_available_entry: bool = False
     rate_type: str = "market_place"
@@ -191,17 +192,19 @@ class PostFclFreightRateLocal(BaseModel):
     procured_by_id: str = None
     sourced_by_id: str = None
     trade_type: str
+    terminal_id: str = None
     port_id: str = None
     country_id: str = None
     main_port_id: str = None
     container_size: str
     container_type: str
     commodity: str = None
-    shipping_line_id: str
-    service_provider_id: str
+    shipping_line_id: str = None
+    service_provider_id: str = None
     selected_suggested_rate_id: str = None
     source: str = None
     data: Data = {}
+    rate_type: str = 'market_place'
     rate_not_available_entry: bool = False
 
 
@@ -209,11 +212,12 @@ class UpdateFclFreightRateLocal(BaseModel):
     id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
-    procured_by_id: str
-    sourced_by_id: str
+    procured_by_id: str = None
+    sourced_by_id: str = None
     bulk_operation_id: str = None
     selected_suggested_rate_id: str = None
     data: Data
+    rate_type: str = 'market_place'
     rate_not_available_entry: bool = False
 
 
@@ -296,6 +300,7 @@ class GetFclFreightRateLocal(BaseModel):
     commodity: str = None
     shipping_line_id: str = None
     service_provider_id: str = None
+    rate_type: str = 'market_place'
 
 
 class GetFclFreightRateCard(BaseModel):
@@ -393,6 +398,7 @@ class CreateFclFreightRateFeedback(BaseModel):
     service_provider_id: str = None
     attachment_file_urls: List[str] = []
     commodity_description: str = None
+    rate_type: str = None
 
 
 class CreateFclFreightRateNotAvailable(BaseModel):
@@ -476,6 +482,7 @@ class CreateFclFreightRateTask(BaseModel):
     shipment_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+    spot_negotiation_rate_id: str = None
     rate: LocalData = None
 
 
@@ -827,6 +834,7 @@ class DeleteFreightRate(BaseModel):
     comparison_charge_code: str = "BAS"
     rates_greater_than_price: float = None
     rates_less_than_price: float = None
+    delete_all_validities: bool = False
 
 
 class AddFreightRateMarkup(BaseModel):
@@ -842,6 +850,10 @@ class AddFreightRateMarkup(BaseModel):
     rates_greater_than_price: float = None
     rates_less_than_price: float = None
     tag: str = None
+    is_system_operation: bool=False
+    affect_market_price: bool=True
+    min_allowed_markup: float=None 
+    max_allowed_markup: float=None 
 
 
 class AddLocalRateMarkup(BaseModel):
@@ -905,13 +917,20 @@ class UpdateFreeDaysLimit(BaseModel):
 class DeleteLocalRate(BaseModel):
     filters: dict = {}
 
+class AddLocalConditions(BaseModel):
+    filters: dict = {}
+    line_items: list[LineItem] = None
+
+class DeleteLocalRateLineItem(BaseModel):
+    filters: dict = {}
+    line_item_code: str
 
 class CreateBulkOperation(BaseModel):
     performed_by_id: str = None
     performed_by_type: str = None
     service_provider_id: str = None
-    procured_by_id: str
-    sourced_by_id: str
+    procured_by_id: str = None
+    sourced_by_id: str = None
     cogo_entity_id: str = None
     extend_validity: ExtendValidty = None
     delete_freight_rate: DeleteFreightRate = None
@@ -924,6 +943,8 @@ class CreateBulkOperation(BaseModel):
     update_weight_limit: UpdateWeightLimit = None
     extend_freight_rate: ExtendFreightRate = None
     extend_freight_rate_to_icds: ExtendFreightRateToIcds = None
+    add_local_conditions: AddLocalConditions = None
+    delete_local_rate_line_item: DeleteLocalRateLineItem = None
 
 
 class UpdateFclFreightRateTask(BaseModel):
@@ -934,6 +955,7 @@ class UpdateFclFreightRateTask(BaseModel):
     status: str = None
     closing_remarks: str = None
     validate_closing_remarks: str = None
+    add_rate_in_rms: bool = True
 
 
 class UpdateRateProperties(BaseModel):
@@ -944,9 +966,35 @@ class UpdateRateProperties(BaseModel):
     volume_count: int = 0
     value_props: List[dict] = []
     t_n_c: List[str] = []
+    increment_used_inventory: int = 0
+    increment_shipment_count: int = 0
+    increment_volume_count: int = 0
 
 
 class FclLocationCluster(BaseModel):
     base_port_id: str
     location_ids: List[str]
     map_zone_id: str
+
+
+class CreateCriticalPortTrendIndex(BaseModel):
+    performed_by_id: str = None
+    performed_by_type: str = None
+    origin_port_id: str
+    destination_port_id: str
+    min_allowed_percentage_change: float = -100
+    max_allowed_percentage_change: float = 100
+    min_allowed_markup: float = -1000
+    max_allowed_markup: float = 1000
+    manual_gri: float = None
+    approval_status: str = 'active'
+
+    
+class DeleteFclFreightRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+

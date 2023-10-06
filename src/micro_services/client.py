@@ -7,7 +7,7 @@ from micro_services.spot_search_client import SpotSearchApiClient
 from micro_services.checkout_client import CheckoutApiClient
 from micro_services.shipment_client import ShipmentApiClient
 from micro_services.development_client import DevelopmentApiClient
-from configs.env import *
+from configs.env import APP_ENV
 
 maps = organization = partner = spot_search = checkout = shipment = None
 

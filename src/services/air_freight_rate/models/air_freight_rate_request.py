@@ -239,7 +239,7 @@ class AirFreightRateRequest(BaseModel):
         return loc_data
 
 
-    def send_closed_notifications_to_user_request(self):
+    def send_closed_notifications_to_user(self):
            
            params = {
                'spot_search_id':str(self.source_id),

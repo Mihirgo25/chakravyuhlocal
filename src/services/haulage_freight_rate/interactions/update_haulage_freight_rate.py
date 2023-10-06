@@ -19,6 +19,8 @@ def create_audit(haulage_id, request, transport_modes):
         performed_by_id = request.get("performed_by_id"),
         bulk_operation_id = request.get("bulk_operation_id"),
         data = audit_data,
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )
 
 def update_haulage_freight_rate(request):

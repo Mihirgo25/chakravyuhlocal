@@ -5,22 +5,32 @@ from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from micro_services.client import *
+from libs.apply_eligible_lsp_filters import apply_eligible_lsp_filters
 from playhouse.shortcuts import model_to_dict
 
-possible_direct_filters = ['id', 'port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'trade_type', 'container_size', 'container_type', 'is_line_items_error_messages_present', 'is_line_items_info_messages_present', 'main_port_id']
-possible_indirect_filters = ['is_detention_missing', 'is_demurrage_missing', 'is_plugin_missing', 'location_ids', 'commodity', 'procured_by_id', 'is_rate_available', 'updated_at_greater_than', 'updated_at_less_than']
+possible_direct_filters = ['id', 'port_id', 'country_id', 'terminal_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'trade_type', 'container_size', 'container_type', 'is_line_items_error_messages_present', 'is_line_items_info_messages_present', 'main_port_id', 'rate_type']
+possible_indirect_filters = ['is_detention_missing', 'is_demurrage_missing', 'is_plugin_missing', 'location_ids', 'commodity', 'procured_by_id', 'is_rate_available', 'updated_at_greater_than', 'updated_at_less_than', 'except_shipping_line_id']
 
-def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='updated_at', sort_type='desc', return_query=False):
-    query = get_query(sort_by, sort_type, page, page_limit)
+def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='updated_at', sort_type='desc', return_query=False, get_count = False):
+    query = get_query(sort_by, sort_type)
 
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-
+            
+        if filters.get('rate_type') == 'all':
+            filters.pop('rate_type')
+            
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-
         query = get_filters(direct_filters, query, FclFreightRateLocal)
         query = apply_indirect_filters(query, indirect_filters)
+    if not filters or not 'service_provider_id' in filters:
+        query = apply_eligible_lsp_filters(query, FclFreightRateLocal, 'fcl_freight')
+    
+    if get_count:
+        return {'list':query.count()}
+
+    query = query.paginate(page, page_limit)
 
     if return_query:
         items = [model_to_dict(item) for item in query.execute()]
@@ -31,7 +41,7 @@ def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='
     return { 'list': data }
 
 
-def get_query(sort_by, sort_type, page, page_limit):
+def get_query(sort_by, sort_type):
     query = FclFreightRateLocal.select(
                 FclFreightRateLocal.id,
                 FclFreightRateLocal.port_id,
@@ -57,8 +67,9 @@ def get_query(sort_by, sort_type, page, page_limit):
                 FclFreightRateLocal.main_port,
                 FclFreightRateLocal.service_provider,
                 FclFreightRateLocal.procured_by,
-                FclFreightRateLocal.sourced_by
-            ).order_by(eval('FclFreightRateLocal.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
+                FclFreightRateLocal.sourced_by,
+                FclFreightRateLocal.rate_type
+            ).order_by(eval('FclFreightRateLocal.{}.{}()'.format(sort_by,sort_type)))
     return query
 
 def get_data(query):
@@ -136,7 +147,7 @@ def apply_is_rate_available_filter(query, filters):
 
 def apply_location_ids_filter(query, filters):
     location_ids = filters['location_ids']
-    query = query.where(FclFreightRateLocal.location_ids.contains(location_ids))
+    query = query.where(FclFreightRateLocal.location_ids.contains_any(location_ids))
     return query
 
 def apply_commodity_filter(query, filters):
@@ -146,6 +157,13 @@ def apply_commodity_filter(query, filters):
         query = query.where((FclFreightRateLocal.commodity == None) | (FclFreightRateLocal.commodity.in_(filters['commodity'])))
     else:
         query = query.where(FclFreightRateLocal.commodity.in_(filters['commodity']))
+    return query
+
+def apply_except_shipping_line_id_filter(query, filters):
+    shipping_line_ids = filters['except_shipping_line_id']
+    if not isinstance(shipping_line_ids, list):
+        shipping_line_ids = [shipping_line_ids]
+    query=query.where(~FclFreightRateLocal.shipping_line_id << shipping_line_ids)
     return query
 
 def apply_updated_at_greater_than_filter(query, filters):

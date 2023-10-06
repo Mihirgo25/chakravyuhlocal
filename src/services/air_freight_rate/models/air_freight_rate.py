@@ -86,6 +86,8 @@ class AirFreightRate(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
     init_key = TextField(index=True, null=True,unique=True)
+    importer_exporter_id = UUIDField(index=True,null=True)
+    importer_exporter = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
@@ -214,9 +216,8 @@ class AirFreightRate(BaseModel):
             raise HTTPException(status_code = 400, detail = 'Destination Airport Cannot be in the Same Origin Country')
 
     def validate_service_provider_id(self):
-        service_provider_data = get_organization(id=str(self.service_provider_id))
-        if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
-            self.service_provider = service_provider_data[0]
+        service_provider_data = get_eligible_orgs(service='air_freight')
+        if str(self.service_provider_id) in service_provider_data:
             return True
         raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
            
@@ -435,6 +436,7 @@ class AirFreightRate(BaseModel):
                 min_density_weight=float(density_ratio.replace(' ','').split(':')[-1])
                 max_density_weight=MAX_CARGO_LIMIT
         for validity_object in self.validities:
+            validity_object['action'] = 'unchanged'
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
             validity_start = validity_start
@@ -450,10 +452,7 @@ class AirFreightRate(BaseModel):
                 if validity_object.get('min_density_weight') > min_density_weight and max_density_weight > validity_object.get('min_density_weight'):
                     max_density_weight = validity_object.get('min_density_weight')
 
-            if deleted and validity_id and str(validity_id)== str(validity_object.get('id')):
-                continue
-            
-            if ((validity_object.get('density_category') == density_category and max_density_weight == validity_object.get("max_density_weight") and min_density_weight == validity_object.get("min_density_weight")) or (rate_type in ["promotional", "consolidated"])) and not deleted:
+            if ((validity_object.get('density_category') == density_category and max_density_weight == validity_object.get("max_density_weight") and min_density_weight == validity_object.get("min_density_weight")) or (rate_type in ["promotional", "consolidated"])):
                 if validity_object_validity_start > validity_end:
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
@@ -464,22 +463,26 @@ class AirFreightRate(BaseModel):
                     min_price = validity_object.get("min_price")
 
                 if validity_object_validity_start >= validity_start and validity_object_validity_end <= validity_end and validity_id != validity_object.get('id'):
-                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs, deleted)
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
-                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs, deleted)
                     validity_object['validity_end'] = validity_start - datetime.timedelta(days=1)
+                    validity_object['action'] = 'update'
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end: 
-                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs, deleted)
                     validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
+                    validity_object['action'] = 'update'
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
-                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs, deleted)
                     old_validity1 = AirFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)})
-                    old_validity2 = AirFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)})
+                    old_validity2 = AirFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1),'id':uuid.uuid1()})
+                    old_validity1.action = 'update'
+                    old_validity2.action = 'create'
                     new_validities.append(old_validity1)
                     new_validities.append(old_validity2)
                     params = self.get_air_freight_rate_audit({'validity_id':old_validity1.id, 'action_name':['create','update']})
@@ -493,7 +496,7 @@ class AirFreightRate(BaseModel):
             #     new_validities.append(AirFreightRateValidity(**validity_object))
             #     self.min_price = validity_object.get("min_price")
             #     continue
-        if not deleted :
+        if not deleted or new_weight_slabs:
             new_validity_object = {
             "validity_start": validity_start,
             "validity_end": validity_end,
@@ -513,8 +516,12 @@ class AirFreightRate(BaseModel):
             }
             if validity_id:
                 new_validity_object['id'] = validity_id
+                new_validity_object['action'] = 'update'
+
             else:
                 new_validity_object['id'] = uuid.uuid1()
+                new_validity_object['action'] = 'create'
+
             
             new_validities.append(AirFreightRateValidity(**new_validity_object))
             self.min_price = new_validity_object["min_price"]
@@ -534,22 +541,22 @@ class AirFreightRate(BaseModel):
           new_validity['id'] = str(new_validity['id'])
           main_validities.append(new_validity)
         self.validities = main_validities
+
         if not deleted:
             return new_validity_object['id'],new_weight_slabs
 
 
-    def merging_weight_slabs(self,old_weight_slabs,new_weight_slabs):
+    def merging_weight_slabs(self,old_weight_slabs,new_weight_slabs,deleted):
         final_old_weight_slabs = old_weight_slabs
-        
         if  len(final_old_weight_slabs)==0 or new_weight_slabs[0]['currency'] != final_old_weight_slabs[0]['currency']:
             return new_weight_slabs
 
         for new_weight_slab in new_weight_slabs:
-            final_old_weight_slabs = self.merge_slab(final_old_weight_slabs,new_weight_slab)
+            final_old_weight_slabs = self.merge_slab(final_old_weight_slabs,new_weight_slab,deleted)
 
         return final_old_weight_slabs
 
-    def merge_slab(self,old_weight_slabs,new_weight_slab):
+    def merge_slab(self,old_weight_slabs,new_weight_slab,deleted):
         final_old_weight_slabs=[]
         for old_weight_slab in old_weight_slabs:
             if old_weight_slab['lower_limit'] >= int(new_weight_slab['upper_limit']):
@@ -582,7 +589,9 @@ class AirFreightRate(BaseModel):
                 new_weight_slab['lower_limit'] = new_weight_slab['lower_limit'] + 0.1
                 new_weight_slab['upper_limit'] = new_weight_slab['upper_limit']
                 continue
-        final_old_weight_slabs.append(new_weight_slab)
+        
+        if not deleted:
+            final_old_weight_slabs.append(new_weight_slab)
 
         
         return final_old_weight_slabs

@@ -125,6 +125,7 @@ def get_haulage_freight_rate_api(
     transit_time: int = None,
     detention_free_time: int = None,
     trailer_type: str = None,
+    validity_end: str = None,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
@@ -150,6 +151,7 @@ def get_haulage_freight_rate_api(
         "transit_time": transit_time,
         "detention_free_time": detention_free_time,
         "trailer_type": trailer_type,
+        "validity_end": validity_end
     }
     request = {key: value for key, value in request.items() if value is not None}
     try:
@@ -319,7 +321,7 @@ def list_haulage_freight_rates_api(
     page: int = 1,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
-    pagination_data_required: bool = True,
+    pagination_data_required: bool = False,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
