@@ -1,6 +1,6 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_jobs import HaulageFreightRateJob
 from services.haulage_freight_rate.models.haulage_freight_rate_job_mappings import HaulageFreightRateJobMapping
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from libs.allocate_jobs import allocate_jobs
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_user

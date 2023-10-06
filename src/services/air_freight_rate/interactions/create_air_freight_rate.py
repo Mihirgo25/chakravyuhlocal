@@ -3,7 +3,7 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from database.db_session import db
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from configs.global_constants import SERVICE_PROVIDER_FF
 
 def create_audit(request, freight_id,validity_id):

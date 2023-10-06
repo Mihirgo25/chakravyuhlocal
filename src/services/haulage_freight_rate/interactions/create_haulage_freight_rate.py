@@ -3,7 +3,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFre
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from configs.haulage_freight_rate_constants import DEFAULT_RATE_TYPE
 from fastapi.encoders import jsonable_encoder
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 
 def create_audit(request, freight_id):

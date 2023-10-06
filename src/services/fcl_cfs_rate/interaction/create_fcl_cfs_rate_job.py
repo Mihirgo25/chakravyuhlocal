@@ -1,6 +1,6 @@
 from services.fcl_cfs_rate.models.fcl_cfs_rate_jobs import FclCfsRateJob
 from services.fcl_cfs_rate.models.fcl_cfs_rate_job_mappings import FclCfsRateJobMapping
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from libs.allocate_jobs import allocate_jobs
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder

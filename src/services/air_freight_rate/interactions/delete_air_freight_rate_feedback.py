@@ -4,7 +4,7 @@ from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from celery_worker import send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from database.rails_db import (
     get_organization_partner,
 )

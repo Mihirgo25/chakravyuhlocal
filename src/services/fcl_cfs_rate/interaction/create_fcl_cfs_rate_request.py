@@ -4,8 +4,9 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from celery_worker import send_notifications_to_supply_agents_cfs_request_delay
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from services.fcl_cfs_rate.fcl_cfs_celery_worker import create_jobs_for_fcl_cfs_rate_request_delay
+
 
 def create_fcl_cfs_rate_request(request):
     with db.atomic():

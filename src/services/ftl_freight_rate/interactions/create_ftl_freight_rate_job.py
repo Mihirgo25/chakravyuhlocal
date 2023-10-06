@@ -1,6 +1,6 @@
 from services.ftl_freight_rate.models.ftl_freight_rate_jobs import FtlFreightRateJob
 from services.ftl_freight_rate.models.ftl_freight_rate_job_mappings import FtlFreightRateJobMapping
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from libs.allocate_jobs import allocate_jobs
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder

@@ -2,9 +2,8 @@ from services.lcl_freight_rate.models.lcl_freight_rate_jobs import LclFreightRat
 from services.lcl_freight_rate.models.lcl_freight_rate_job_mappings import (
     LclFreightRateJobMapping,
 )
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import (
-    get_multiple_service_objects,
-)
+from libs.get_multiple_service_objects import get_multiple_service_objects
+
 from libs.allocate_jobs import allocate_jobs
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder

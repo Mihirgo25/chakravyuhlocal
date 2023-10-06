@@ -2,7 +2,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate_request import FclCustoms
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from services.fcl_customs_rate.fcl_customs_celery_worker import delete_jobs_for_fcl_customs_rate_request_delay
 
 def delete_fcl_customs_rate_request_data(request):

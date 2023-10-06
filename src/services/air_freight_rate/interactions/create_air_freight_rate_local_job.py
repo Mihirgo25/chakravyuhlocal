@@ -4,9 +4,7 @@ from services.air_freight_rate.models.air_freight_rate_local_jobs import (
 from services.air_freight_rate.models.air_freight_rate_local_jobs_mapping import (
     AirFreightRateLocalJobMapping,
 )
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import (
-    get_multiple_service_objects,
-)
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from libs.allocate_jobs import allocate_jobs
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_user

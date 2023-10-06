@@ -43,7 +43,7 @@ from services.air_freight_rate.interactions.list_air_freight_rate_feedbacks impo
 from services.air_freight_rate.interactions.list_air_freight_rate_requests import list_air_freight_rate_requests
 from services.air_freight_rate.interactions.list_air_freight_rate_dislikes import list_air_freight_rate_dislikes
 from services.air_freight_rate.interactions.list_air_freight_charge_codes import list_air_freight_charge_codes
-from services.air_freight_rate.interactions.update_air_freight_rate_markup import update_air_freight_rate_markup
+from services.air_freight_rate.interactions.extend_air_freight_rate_validity import extend_air_freight_rate_validity
 from services.air_freight_rate.interactions.list_air_freight_rates import list_air_freight_rates
 from services.air_freight_rate.interactions.create_air_freight_rate_bulk_operation import create_air_freight_rate_bulk_operation
 from services.air_freight_rate.interactions.get_air_freight_local_rate_cards import get_air_freight_local_rate_cards
@@ -378,6 +378,7 @@ def list_air_freight_rate_locals_api(
     sort_by: str = "updated_at",
     sort_type: str = "desc",
     return_query: bool = False,
+    return_count: bool = False,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
@@ -388,7 +389,8 @@ def list_air_freight_rate_locals_api(
                                             page=page,
                                             sort_by= sort_by,
                                             sort_type= sort_type, 
-                                            return_query= return_query)
+                                            return_query= return_query,
+                                            return_count = return_count)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
@@ -482,6 +484,7 @@ def list_air_freight_rate_surcharges_api(
     return_query: bool = False,
     includes: str = None,
     resp: dict = Depends(authorize_token),
+    return_count: bool = False,
     require_eligible_lineitems: bool = False
 ):
     if resp["status_code"] != 200:
@@ -493,6 +496,7 @@ def list_air_freight_rate_surcharges_api(
                                                 page=page, 
                                                 pagination_data_required=pagination_data_required,
                                                 return_query=return_query, 
+                                                return_count = return_count,
                                                 includes=includes,require_eligible_lineitems=require_eligible_lineitems)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
@@ -859,8 +863,8 @@ def create_air_freight_rate_feedback_api(request: CreateAirFreightRateFeedbackPa
         return JSONResponse(status_code=500,content={"success":False,'error':str(e)})
     
 
-@air_freight_router.post("/update_air_freight_rate_markup")
-def update_air_freight_rate_markup_api(
+@air_freight_router.post("/extend_air_freight_rate_validity")
+def extend_air_freight_rate_api(
     request: UpdateAirFreightRateMarkUpParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -868,7 +872,7 @@ def update_air_freight_rate_markup_api(
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
-        data = update_air_freight_rate_markup(request.dict(exclude_none=True))
+        data = extend_air_freight_rate_validity(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
@@ -1047,7 +1051,7 @@ def list_air_freight_rates_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
-    return_query: bool = False,
+    return_count: bool = False,
     older_rates_required: bool = False,
     all_rates_for_cogo_assured: bool = False,
     sort_by: str = 'updated_at',
@@ -1063,7 +1067,7 @@ def list_air_freight_rates_api(
             filters= filters,
             page_limit =page_limit,
             page= page,
-            return_query=return_query,
+            return_count=return_count,
             older_rates_required= older_rates_required,
             all_rates_for_cogo_assured= all_rates_for_cogo_assured,
             sort_by=sort_by,
@@ -1181,7 +1185,7 @@ def delete_air_freight_rate_request_api(request:DeleteAirFreightRateRequestParam
         return JSONResponse(status_code=500, content={"success":False , "error":str(e)})    
 
 @air_freight_router.post("/delete_air_freight_rate_surcharge")
-def delete_air_freight_rate_surcharge_api(request:DeleteAirFreightRateSurchargeParams, resp:dict = Depends(authorize_token)):
+def delete_air_freight_rate_surcharge_api(request:DeleteAirFreightRateSurcharge, resp:dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     if resp['isAuthorized']:
@@ -1196,7 +1200,7 @@ def delete_air_freight_rate_surcharge_api(request:DeleteAirFreightRateSurchargeP
         return JSONResponse(status_code=500 , content={"success":False, "error":str(e)})
 
 @air_freight_router.post("/delete_air_freight_rate_local")
-def delete_air_freight_rate_local_api(request:DeleteAirFreightRateLocalParams, resp:dict = Depends(authorize_token)):
+def delete_air_freight_rate_local_api(request:DeleteAirFreightRateLocal, resp:dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     if resp['isAuthorized']:
