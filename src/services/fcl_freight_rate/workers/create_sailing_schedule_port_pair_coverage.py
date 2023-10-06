@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from micro_services.client import maps
+from micro_services.client import common
 
 
 
@@ -26,4 +26,4 @@ def create_sailing_schedules_port_pair_coverages(request):
     #                     FclFreightRate.rate_not_available_entry == False)
 
     # if not fcl_freight_query.exists():
-    return maps.create_sailing_schedule_port_pair_coverage(data)
+    return common.create_sailing_schedule_port_pair_coverage(data)
