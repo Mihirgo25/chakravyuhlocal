@@ -6,8 +6,8 @@ def get_service(service):
 def get_instance_url(service_name=None):
     if APP_ENV != 'production':
         url = RUBY_ADDRESS_URL
-        if service_name in ["organization", "partner", "user"]:
-            url = url + "/{}".format(service_name)
+        if service_name in ["organization", "partner", "user", "loki"]:
+            url = url + "/{}".format(get_service(service_name))
         return url
     service_port = COMMON_SERVICE_PORT
     if service_name in ['organization', 'user', 'lead', 'partner']:
