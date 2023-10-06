@@ -2,7 +2,7 @@ from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def update_air_customs_rate(request):
     with db.atomic():

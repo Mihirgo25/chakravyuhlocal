@@ -411,3 +411,23 @@ AVERAGE_SPEEDS = {
 SINGAPORE_HAZARDOUS_RATE = 1.05
 
 SINGAPORE_REEFER_RATE = 1.15
+
+DEFAULT_RATE_TYPE = 'market_place'  
+
+RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
+
+BODY_TYPE = ['open', 'closed']
+
+TRIP_TYPES = ['one_way', 'round_trip']
+
+VALID_UNITS = ['per_truck', 'per_ton']
+
+AIR_HAZARDOUS_COMMODITIES = ['hazardous']
+
+COMMODITIES = [None] + HAZ_CLASSES + AIR_HAZARDOUS_COMMODITIES + CONSUMER_DURABLE_COMMODITIES
+
+ENVISION_USER_ID = '2dbe768e-929d-4e54-baf0-309ef68c978b'
+
+PREDICTED_PRICE_SERVICE_PROVIDER = "5dc403b3-c1bd-4871-b8bd-35543aaadb36"
+
+DEFAULT_FTL_NOTIFICATION_RECIPIENT_ID = "dee5c548-e771-42f3-84f7-61e0222b96aa"

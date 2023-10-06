@@ -22,7 +22,7 @@ class FtlServiceAudit(BaseModel):
     performed_by_id = UUIDField(index=True,null=True)
     rate_sheet_id = UUIDField(index=True, null=True)
     source = CharField(null=True)
-    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
+    updated_at = DateTimeField(default=datetime.datetime.now)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

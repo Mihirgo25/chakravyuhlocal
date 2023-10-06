@@ -4,7 +4,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate_audit import Haul
 from fastapi import HTTPException
 from database.db_session import db
 from fastapi.encoders import jsonable_encoder
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from micro_services.client import maps
 
 

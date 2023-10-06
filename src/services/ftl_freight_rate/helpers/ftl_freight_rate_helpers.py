@@ -2,7 +2,10 @@
 from micro_services.client import maps
 from libs.get_distance import get_distance
 import httpx, json
-
+from datetime import datetime
+import dateutil.parser as parser
+from micro_services.client import organization
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def get_land_route_from_valhalla(location_ids):
     params = {
@@ -21,6 +24,11 @@ def get_road_route(origin_location_id, destination_location_id):
         return data
     return None
 
+def convert_date_format(date):
+    if not date:
+        return date
+    parsed_date = parser.parse(date, dayfirst=True)
+    return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
 
 
 def get_transit_time(distance):
@@ -52,3 +60,12 @@ def get_path_data(origin_location_id, destination_location_id, location_data):
          'time': transit_time,
          'is_valhala':False
     }
+
+def adding_multiple_service_object(ftl_object,request):
+    from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
+    
+    query = FtlFreightRate.select().where(FtlFreightRate.service_provider_id==request["service_provider_id"], FtlFreightRate.rate_not_available_entry==False).exists()
+
+    if not query:
+        organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+    get_multiple_service_objects(ftl_object)
