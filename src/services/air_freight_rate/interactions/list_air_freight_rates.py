@@ -14,10 +14,10 @@ DEFAULT_INCLUDES = ['id', 'origin_airport_id', 'destination_airport_id', 'airlin
 
 POSSIBLE_DIRECT_FILTERS = ['id', 'origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'airline_id', 'commodity', 'operation_type', 'service_provider_id', 'rate_not_available_entry', 'price_type', 'shipment_type', 'stacking_type', 'commodity_type', 'cogo_entity_id', 'rate_type','source','importer_exporter_id','price_type']
 
-POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'last_rate_available_date_greater_than', 'procured_by_id', 'is_rate_not_available_entry', 'origin_location_ids', 'destination_location_ids', 'density_category', 'partner_id', 'available_volume_range', 'available_gross_weight_range', 'achieved_volume_percentage', 'achieved_gross_weight_percentage', 'updated_at','not_predicted_rate','date','exclude_source']
+POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'last_rate_available_date_greater_than', 'procured_by_id', 'is_rate_not_available_entry', 'origin_location_ids', 'destination_location_ids', 'density_category', 'partner_id', 'available_volume_range', 'available_gross_weight_range', 'achieved_volume_percentage', 'achieved_gross_weight_percentage', 'updated_at','not_predicted_rate','date','exclude_source','validity_id','exclude_rate_types','exclude_airline_id']
 
 
-def list_air_freight_rates(revenue_desk_data_required=None,filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, older_rates_required = False,all_rates_for_cogo_assured = False,pagination_data_required = True, includes = {}):
+def list_air_freight_rates(revenue_desk_data_required=None,filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_count = False,return_query = False, older_rates_required = False,all_rates_for_cogo_assured = False,pagination_data_required = True, includes = {}):
 
   query = get_query(all_rates_for_cogo_assured, sort_by, sort_type, older_rates_required, includes)
   if filters:
@@ -30,7 +30,12 @@ def list_air_freight_rates(revenue_desk_data_required=None,filters = {}, page_li
     query = apply_indirect_filters(query, indirect_filters)
   if not filters or not 'service_provider_id' in filters:
     query = apply_eligible_lsp_filters(query,AirFreightRate,'air_freight')
-
+  if return_count:
+    query = query.where(AirFreightRate.source!='predicted')
+    return {'total_count':query.count()}
+  
+  if return_query:
+     return {'list':query}
   pagination_data = get_pagination_data(query,page,page_limit,pagination_data_required)
 
   query = query.paginate(page,page_limit)
@@ -204,6 +209,21 @@ def apply_exclude_source_filter(query, filters):
   if not isinstance(exclude_sources, list):
     exclude_sources = [exclude_sources]
   query = query.where(AirFreightRate.source.not_in(exclude_sources))
+  return query
+
+def apply_validity_id_filter(query,filters):
+  query = query.where(
+     (SQL("(validity->>'id')"))<< filters['validity_id'] 
+  )
+  return query
+
+def apply_exclude_rate_types_filter(query, filters):
+  query=query.where(~AirFreightRate.rate_type << filters['exclude_rate_types'])
+  return query
+
+def apply_exclude_airline_id_filter(query, filters):
+  airline_ids = filters['exclude_airline_id']
+  query=query.where(~AirFreightRate.airline_id << airline_ids)
   return query
 
 def get_data(query,revenue_desk_data_required):

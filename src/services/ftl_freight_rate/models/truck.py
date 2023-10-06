@@ -17,7 +17,7 @@ class Truck(BaseModel):
     truck_company = TextField(null=True)
     truck_name = CharField(null=False)
     display_name = CharField(null=False)
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
+    created_at = DateTimeField(default=datetime.datetime.now)
     mileage = FloatField(null=True)
     mileage_unit = CharField(null=True,index = True)
     capacity = FloatField(null=True, index=True)
