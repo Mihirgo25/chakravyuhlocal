@@ -470,7 +470,7 @@ class FclFreightRate(BaseModel):
       self.validities = main_validities
 
 
-    def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term,tag = None,schedule_id= None, other_params={}):
+    def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term, other_params={}, tag = None, schedule_id= None):
         new_validities = []
         new_tags = {}
         
