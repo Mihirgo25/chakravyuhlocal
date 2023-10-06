@@ -1012,11 +1012,13 @@ class CreateFclFreightRateJob(BaseModel):
     container_size: str = None
     container_type: str = None
     commodity: str = None
+    is_visible: bool = True
     rate_type: str = None
 
 
 class CreateFclFreightRateLocalJob(BaseModel):
     source: str = None
+    source_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     port_id: str = None
@@ -1037,3 +1039,16 @@ class DeleteFclFreightRateLocalJob(BaseModel):
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+    
+class UpdateFclFreightRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
+    
+class UpdateFclFreightRateLocalJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
+    

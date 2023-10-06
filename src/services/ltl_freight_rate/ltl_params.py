@@ -24,3 +24,9 @@ class DeleteLtlFreightRateJob(BaseModel):
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+    
+class UpdateLtlFreightRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None

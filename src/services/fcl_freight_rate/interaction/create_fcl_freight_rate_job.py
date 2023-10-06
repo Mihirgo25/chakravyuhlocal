@@ -36,6 +36,7 @@ def execute_transaction_code(request, source):
         'sources' : [source],
         'rate_type' : request.get('rate_type'),
         'search_source': request.get('source'),
+        'is_visible': request.get('is_visible'),
     }
     init_key = f'{str(params.get("origin_port_id") or "")}:{str(params.get("origin_main_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("destination_main_port_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}'
     fcl_freight_rate_job = FclFreightRateJob.select().where(FclFreightRateJob.init_key == init_key, FclFreightRateJob.status << ['backlog', 'pending']).first()

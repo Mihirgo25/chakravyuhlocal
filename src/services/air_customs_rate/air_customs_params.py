@@ -145,4 +145,9 @@ class CreateAirCustomsRateJob(BaseModel):
     commodity: str = None
     rate_type: str = None
     trade_type: str = None
-    
+
+class UpdateAirCustomsRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None

@@ -564,6 +564,7 @@ class CreateAirFreightRateJob(BaseModel):
     operation_type: str = None
     shipment_type: str = None
     stacking_type: str = None
+    is_visible: bool = True
     price_type: str = None
 
 
@@ -578,6 +579,7 @@ class DeleteAirFreightRateLocalJob(BaseModel):
 
 class CreateAirFreightRateLocalJob(BaseModel):
     source: str = None
+    source_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     airport_id: str = None
@@ -590,3 +592,15 @@ class CreateAirFreightRateLocalJob(BaseModel):
     shipment_type: str = None
     stacking_type: str = None
     price_type: str = None
+    
+class UpdateAirFreightRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
+    
+class UpdateAirFreightRateLocalJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None

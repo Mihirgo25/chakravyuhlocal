@@ -72,6 +72,8 @@ from services.haulage_freight_rate.interactions.get_haulage_freight_rate_job_sta
 from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_job import delete_haulage_freight_rate_job
 from services.haulage_freight_rate.interactions.list_haulage_freight_rate_jobs import list_haulage_freight_rate_jobs
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate_job import create_haulage_freight_rate_job
+from services.haulage_freight_rate.haulage_params import UpdateHaulageFreightRateJob
+from services.haulage_freight_rate.interactions.update_haulage_freight_rate_job import update_haulage_freight_rate_job
 
 haulage_freight_router = APIRouter()
 
@@ -1090,3 +1092,18 @@ def create_trailer_freight_rate_job_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
+
+@haulage_freight_router.post("/update_haulage_freight_rate_job")    
+def update_haulage_freight_rate_job_api(
+    request: UpdateHaulageFreightRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        data = update_haulage_freight_rate_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

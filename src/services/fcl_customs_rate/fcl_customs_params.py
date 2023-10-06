@@ -166,3 +166,9 @@ class DeleteFclCustomsRateJob(BaseModel):
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+    
+class UpdateFclCustomsRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
