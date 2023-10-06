@@ -112,10 +112,10 @@ def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request
         df['shipping_line_rank'] = [1]
     df['Distance'] = [ports_distance]
     df['Country_Distance'] = [countries_distance]
-    df['ds'] = validity_start
+    df['day'] = datetime.now().strftime('%A')
 
-    model_request = FCL_PREDICTION_MODEL.predict(df)['yhat']
-    price =  round(np.exp(model_request[0]))
+    model_request = FCL_PREDICTION_MODEL.predict(df)
+    price = round(model_request[0])
 
     creation_param = {
         'origin_port_id': request['origin_port_id'],

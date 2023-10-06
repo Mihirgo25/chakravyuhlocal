@@ -1,7 +1,6 @@
 from configs.definitions import ROOT_DIR
 import os, pandas as pd
 import pickle
-from micro_services.client import maps
 from datetime import datetime
 from configs.definitions import AIR_PREDICTION_MODEL
 

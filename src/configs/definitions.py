@@ -71,8 +71,8 @@ class LoadPredictionModels():
     HAULAGE_PREDICTION_MODEL = None
 
     def __init__(self):
-        self.FCL_PREDICTION_MODEL = self.load_prediction_model(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "fcl_freight_forecasting_model.pkl"))
-        self.AIR_PREDICTION_MODEL = self.load_prediction_model(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "air_freight_forecasting_model.pkl"))
+        self.FCL_PREDICTION_MODEL = self.load_prediction_model(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "fcl_freight_prediction_model.pkl"))
+        self.AIR_PREDICTION_MODEL = self.load_prediction_model(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "air_freight_prediction_model.pkl"))
         self.FTL_PREDICTION_MODEL = self.load_prediction_model(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "ftl_freight_prediction_model.pkl"))
         self.HAULAGE_PREDICTION_MODEL = self.load_prediction_model(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models","haulage_freight_prediction_model.pkl"))
 
