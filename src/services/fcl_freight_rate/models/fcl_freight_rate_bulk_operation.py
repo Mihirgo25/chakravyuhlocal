@@ -1597,44 +1597,13 @@ class FclFreightRateBulkOperation(BaseModel):
         self.data = data
         self.save()
 
-    def perform_add_sailing_schedules_action(self, sourced_by_id=None, procured_by_id=None, cogo_entity_id=None):
-        total_affected_rates = 0
+    def perform_batch_add_sailing_schedules_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
-
-        filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
-        
-        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
-            del filters['service_provider_id']
-        
-        if not filters['partner_id'] or filters['partner_id'] == 'None':
-            del filters['partner_id']
-        
-        includes = { 
-                    'id': True,
-                    'validities': True,
-                    'origin_port_id': True,
-                    'origin_main_port_id': True,
-                    'destination_port_id': True,
-                    'destination_main_port_id': True,
-                    'container_size': True,
-                    'container_type': True,
-                    'commodity': True,
-                    'shipping_line_id': True,
-                    'importer_exporter_id': True,
-                    'service_provider_id': True,
-                    'cogo_entity_id': True,
-                    'rate_type': True,
-                    'mode': True,
-                }
-
-        fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= None,includes=includes)['list']
-        fcl_freight_rates = list(fcl_freight_rates.dicts())
-
         validity_start = datetime.strptime(data['validity_start'], '%Y-%m-%d')
         validity_end = datetime.strptime(data['validity_end'], '%Y-%m-%d') 
-
-        total_count = len(fcl_freight_rates)
-        count = 0
+        
+        fcl_freight_rates = list(batch_query.dicts())
+        
         for freight in fcl_freight_rates:
             count += 1
 
@@ -1654,7 +1623,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 if data['schedule_type'] != validity_object['schedule_type'] or validity_object['validity_start'] > validity_end or validity_object['validity_end'] < validity_start:
                     continue
 
-                validity_object['schedule_id'] = data.get('schedule_id')
+                validity_object['schedule_id'] = data['schedule_id']
                 new_validities.append(validity_object)
 
             for validity_object in new_validities:
@@ -1690,3 +1659,52 @@ class FclFreightRateBulkOperation(BaseModel):
             total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
+        return count, total_affected_rates
+            
+            
+
+    def perform_add_sailing_schedules_action(self, sourced_by_id=None, procured_by_id=None, cogo_entity_id=None):
+        total_affected_rates = 0
+        data = self.data
+
+        filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
+        
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+        
+        includes = { 
+                    'id': True,
+                    'validities': True,
+                    'origin_port_id': True,
+                    'origin_main_port_id': True,
+                    'destination_port_id': True,
+                    'destination_main_port_id': True,
+                    'container_size': True,
+                    'container_type': True,
+                    'commodity': True,
+                    'shipping_line_id': True,
+                    'importer_exporter_id': True,
+                    'service_provider_id': True,
+                    'cogo_entity_id': True,
+                    'rate_type': True,
+                    'mode': True,
+                }
+
+        query = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= None, includes=includes, sort_by="id")['list']
+        total_count = query.count()
+        count = 0
+        offset = 0
+
+        while(offset < total_count):
+            batch_query = query.offset(offset).limit(BATCH_SIZE)
+            offset += BATCH_SIZE
+            count, total_affected_rates = self.perform_batch_add_sailing_schedules_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
+        
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = 100 if count == total_count else  get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()   
+        
