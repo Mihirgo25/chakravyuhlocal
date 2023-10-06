@@ -1,11 +1,12 @@
 import httpx
-from configs.env import *
+from configs.env import APP_ENV, RUBY_ADDRESS_URL, ENVIRONMENT_TYPE
 import json
 import re
 from fastapi.encoders import jsonable_encoder
 from contextvars import ContextVar
 import urllib
 import logging
+from enums.global_enums import AppEnv, Environment
 
 logger = logging.getLogger("httpx")
 
@@ -42,13 +43,14 @@ def http_build_query(data):
 
 
 class GlobalClient:
-    def __init__(self, url, headers):
+    def __init__(self, url, headers, context = None):
         self.client = httpx.Client()
-        if APP_ENV != "production":
+        if APP_ENV != AppEnv.production and context is not None:
             self.url = ContextVar("client_base_url", default=RUBY_ADDRESS_URL)
         else:
             self.url = url
         self.headers = headers
+        self.context = context
 
     def request(self, method, action, data={}, params={}, timeout=15):
         if isinstance(data, dict):
@@ -73,11 +75,18 @@ class GlobalClient:
             else:
                 kwargs["params"] = params  # Python Backend
         try:
-            if method == "GET":
-                response = self.client.get(**kwargs)
-            else:
-                response = self.client.post(**kwargs)
-            if APP_ENV == "development" or ENVIRONMENT_TYPE == "shell":
+            match method:
+                case "GET":
+                   response = self.client.get(**kwargs) 
+                case "POST":
+                    response = self.client.post(**kwargs) 
+                case "DELETE":
+                    response = self.client.delete(**kwargs)
+                case "PUT":
+                    response = self.client.put(**kwargs)
+                case _:
+                    raise httpx.UnsupportedProtocol(f"Unsupported HTTP method: {method}")
+            if APP_ENV == AppEnv.development or ENVIRONMENT_TYPE == Environment.cli:
                 logger.info(
                     f"Execution Time: {response.elapsed.total_seconds()*1000}ms"
                 )
@@ -95,5 +104,5 @@ class GlobalClient:
             return e
 
     def normalize_url(self, action):
-        url = self.url.get() if APP_ENV != "production" else self.url
+        url = self.url.get() if APP_ENV != AppEnv.production and self.context is not None else self.url
         return url + "/" + action

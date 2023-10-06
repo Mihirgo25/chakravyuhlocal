@@ -7,6 +7,9 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
 from services.bramhastra.constants import UNIQUE_FCL_SPOT_SEARCH_SERVICE_KEYS
 from services.bramhastra.enums import ShipmentState, ShipmentAction
+from services.bramhastra.helpers.common_statistic_helper import (
+    get_fcl_freight_identifier,
+)
 
 
 class Shipment:
@@ -18,21 +21,20 @@ class Shipment:
         )
 
     def __get_shipment_state_bool_string(self, shipment_state) -> str:
-        if shipment_state in {ShipmentState.shipment_received.value}:
+        if shipment_state == "shipment_received":
             return shipment_state
         return f"shipment_{shipment_state}"
 
     def set(self):
         shipment = self.request.dict(include={"shipment"})["shipment"]
         actions = self.__get_actions(self.request.shipment.shipment_source_id)
+        if not actions:
+            return
         for fcl_freight_service in self.request.fcl_freight_services:
             shipment_copy = shipment.copy()
             shipment_copy.update(fcl_freight_service.dict())
             unique_fcl_spot_search_service_key = (
                 self.__get_unique_fcl_spot_search_service_key(fcl_freight_service)
-            )
-            shipment_state = self.__get_shipment_state_bool_string(
-                shipment_copy.get(FclFreightAction.shipment_state.name)
             )
             action = actions.get(unique_fcl_spot_search_service_key)
             if action is not None:
@@ -40,10 +42,9 @@ class Shipment:
                 action_update_params[
                     FclFreightAction.bas_standard_price_accuracy.name
                 ] = 100
-                action_update_params[shipment_state] = 1
                 self.__update(
                     action,
-                    {FclFreightAction.shipment.name, shipment_state},
+                    {FclFreightAction.shipment.name},
                     action_update_params,
                 )
             statistic = (
@@ -56,9 +57,7 @@ class Shipment:
             if statistic is not None:
                 self.__update(
                     statistic,
-                    {
-                        "bookings_created",
-                    },
+                    {"bookings_created"},
                 )
                 shipment_copy.update(
                     {
@@ -101,10 +100,33 @@ class Shipment:
             shipment_state = self.__get_shipment_state_bool_string(
                 params.get(FclFreightAction.shipment_state.name)
             )
-            params[shipment_state] = 1
-        FclFreightAction.update(**params).where(
-            FclFreightAction.shipment_id == self.request.shipment_id
-        ).execute()
+            params["shipment_state"] = params.get(FclFreightAction.shipment_state.name)
+        rates = (
+            FclFreightAction.update(**params)
+            .where(FclFreightAction.shipment_id == self.request.shipment_id)
+            .returning(FclFreightAction.rate_id, FclFreightAction.validity_id)
+            .execute()
+        )
+        for rate in rates:
+            fcl_freight_rate_statistic = (
+                FclFreightRateStatistic.select()
+                .where(
+                    FclFreightRateStatistic.identifier
+                    == get_fcl_freight_identifier(rate.rate_id, rate.validity_id)
+                )
+                .first()
+            )
+            if shipment_state not in {"shipment_completed", "shipment_cancelled"}:
+                continue
+            setattr(
+                fcl_freight_rate_statistic,
+                shipment_state,
+                getattr(fcl_freight_rate_statistic, shipment_state) + 1,
+            )
+            try:
+                fcl_freight_rate_statistic.save()
+            except:
+                pass
 
     def update_service(self) -> None:
         params = self.request.dict(

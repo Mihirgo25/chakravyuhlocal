@@ -7,6 +7,7 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 from micro_services.client import maps
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
 from services.bramhastra.enums import FclFilterTypes
+from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
 
 DEFAULT_PARAMS = {
     "origin_port_id",
@@ -163,15 +164,15 @@ async def use_rates_affected_filter(
 ):
     clickhouse = ClickHouse()
     query = [
-        f"""SELECT toUnixTimestamp(rate_updated_at,'Asia/Tokyo')*1000 AS day,COUNT(*) as rates_count FROM brahmastra.{FclFreightAction._meta.table_name}"""
+        f"""SELECT toUnixTimestamp(rate_updated_at,'Asia/Tokyo')*1000 AS day,COUNT(*) as rates_count FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"""
     ]
-    where = get_direct_indirect_filters(filters, date=FclFilterTypes.time_series.value)
+    where = get_direct_indirect_filters(filters, date=None)
     if where:
-        query.append(f"WHERE {where} AND day > 0 ")
+        query.append(f"WHERE {where} AND rate_updated_at >= %(start_date)s AND rate_updated_at <= %(end_date)s AND day > 0 ")
     query.append("GROUP BY day ORDER BY day ASC")
-    response = dict()
-    response["list"] = clickhouse.execute(" ".join(query), filters)
-    return response
+    return {
+        "list": clickhouse.execute(" ".join(query), filters)
+    }
 
 
 async def use_default_filter(filters, page_limit, page, is_service_object_required):

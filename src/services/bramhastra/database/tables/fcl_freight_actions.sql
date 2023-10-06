@@ -426,7 +426,7 @@ CREATE TABLE brahmastra.fcl_freight_actions
         shipment_source String,
         containers_count UInt8,
         cargo_weight_per_container Float64,
-        shipment_state Enum('empty'= 0,'received'= 1,'confirmed_by_importer_exporter'= 2,'in_progress'=3, 'cancelled'= 4,'aborted'= 5,'completed'= 6),
+        shipment_state Enum('empty'= 0,'shipment_received'= 1,'confirmed_by_importer_exporter'= 2,'in_progress'=3, 'cancelled'= 4,'aborted'= 5,'completed'= 6),
         shipment_service_id UUID,
         shipment_cancellation_reason String,
         shipment_source_id UUID,

@@ -69,12 +69,12 @@ SELECT
     JSONExtractString(data, 'before', 'commodity') AS commodity,
     JSONExtractUInt(data, 'before', 'containers_count') AS containers_count,
     JSONExtractBool(data, 'before', 'is_rate_reverted') AS is_rate_reverted,
-    parseDateTimeBestEffort(JSONExtractString(data, 'before', 'created_at')) AS created_at,
-    parseDateTimeBestEffort(JSONExtractString(data, 'before', 'updated_at')) AS updated_at,
+    parseDateTimeBestEffortOrZero(JSONExtractString(data, 'before', 'created_at')) AS created_at,
+    parseDateTimeBestEffortOrZero(JSONExtractString(data, 'before', 'updated_at')) AS updated_at,
     -1 AS sign,
     toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'before'), 'operation_updated_at'), 6)) AS version,
-    parseDateTimeBestEffort(JSONExtractString(data, 'before', 'operation_created_at')) AS operation_created_at,
-    parseDateTimeBestEffort(JSONExtractString(data, 'before', 'operation_updated_at')) AS operation_updated_at
+    parseDateTimeBestEffortOrZero(JSONExtractString(data, 'before', 'operation_created_at')) AS operation_created_at,
+    parseDateTimeBestEffortOrZero(JSONExtractString(data, 'before', 'operation_updated_at')) AS operation_updated_at
     FROM brahmastra.kafka_fcl_freight_rate_request_statistics
     WHERE JSONExtract(data,'op','String') = 'u';
 
@@ -142,12 +142,12 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_request_statistics TO
     JSONExtractString(data, 'after', 'commodity') AS commodity,
     JSONExtractUInt(data, 'after', 'containers_count') AS containers_count,
     JSONExtractBool(data, 'after', 'is_rate_reverted') AS is_rate_reverted,
-    parseDateTimeBestEffort(JSONExtractString(data, 'after', 'created_at')) AS created_at,
-    parseDateTimeBestEffort(JSONExtractString(data, 'after', 'updated_at')) AS updated_at,
+    parseDateTimeBestEffortOrZero(JSONExtractString(data, 'after', 'created_at')) AS created_at,
+    parseDateTimeBestEffortOrZero(JSONExtractString(data, 'after', 'updated_at')) AS updated_at,
     1 AS sign,
     toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'after'), 'operation_updated_at'), 6)) AS version,
-    parseDateTimeBestEffort(JSONExtractString(data, 'after', 'operation_created_at')) AS operation_created_at,
-    parseDateTimeBestEffort(JSONExtractString(data, 'after', 'operation_updated_at')) AS operation_updated_at
+    parseDateTimeBestEffortOrZero(JSONExtractString(data, 'after', 'operation_created_at')) AS operation_created_at,
+    parseDateTimeBestEffortOrZero(JSONExtractString(data, 'after', 'operation_updated_at')) AS operation_updated_at
 FROM brahmastra.kafka_fcl_freight_rate_request_statistics  
 WHERE JSONExtract(data,'op','String') in ('c','u');
 

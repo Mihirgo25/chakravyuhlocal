@@ -163,7 +163,7 @@ class SelectTypes(Bramhastra):
 
 class ShipmentState(Bramhastra):
     empty = 0
-    received = 1
+    shipment_received = 1
     confirmed_by_importer_exporter = 2
     in_progress = 3
     cancelled = 4

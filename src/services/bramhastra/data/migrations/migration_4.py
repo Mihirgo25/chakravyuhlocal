@@ -25,6 +25,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import Shipm
 from services.bramhastra.models.data_migration import DataMigration
 from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from database.create_clicks import Clicks
 
 
 def main():
@@ -54,8 +55,6 @@ def main():
         pass
 
     click.execute("create database brahmastra")
-
-    from database.create_clicks import Clicks
 
     Clicks(
         dictionaries = [CountryRateCount],models=[FeedbackFclFreightRateStatistic,FclFreightRateAuditStatistic,AirFreightRateStatistic, FclFreightRateStatistic,FclFreightRateRequestStatistic, FclFreightAction], ignore_oltp=True

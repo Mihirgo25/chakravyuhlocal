@@ -139,9 +139,9 @@ AGGREGATE_FILTER_MAPPING = {
         "value": "'in_progress'",
         "method": "COUNT(DISTINCT shipment_id)",
     },
-    "shipment_received": {
+    "shipment": {
         "state": "shipment_state",
-        "value": "'received'",
+        "value": "'shipment_received'",
         "method": "COUNT(DISTINCT shipment_id)",
     },
     "revenue_desk_visit": {

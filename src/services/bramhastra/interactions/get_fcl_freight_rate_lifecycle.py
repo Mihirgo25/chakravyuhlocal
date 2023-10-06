@@ -114,7 +114,7 @@ async def get_lifecycle_statistics(filters, where):
 
     checkout_count = [non_zero_distinct_id_query("checkout")]
 
-    shipments_received = [shipment_query(ShipmentState.received.name, "=")]
+    shipments_received = [shipment_query(ShipmentState.shipment_received.name, "=")]
     shipments_confirmed_by_importer_exporter = [
         shipment_query(ShipmentState.confirmed_by_importer_exporter.name, "=")
     ]
@@ -204,14 +204,14 @@ async def get_lifecycle_statistics(filters, where):
         "checkout_dropoff": calculate_dropoff(
             result["checkout_count"], result["spot_search_count"]
         ),
-        "shipments_received": result["shipments_received"],
+        "shipments_received": result["shipments_shipment_received"],
         "shipment_dropoff": calculate_dropoff(
-            result["shipments_received"], result["checkout_count"]
+            result["shipments_shipment_received"], result["checkout_count"]
         ),
         "confirmed_count": result["shipments_confirmed_by_importer_exporter"],
         "confirmed_dropoff": calculate_dropoff(
             result["shipments_confirmed_by_importer_exporter"],
-            result["shipments_received"],
+            result["shipments_shipment_received"],
         ),
         "completed_count": result["shipments_completed"],
         "completed_dropoff": calculate_dropoff(

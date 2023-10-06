@@ -1,10 +1,14 @@
 from configs.env import *
+from enums.micro_service_enums import ServiceName
+from enums.global_enums import Host
 
 def get_instance_url(service_name=None):
     if APP_ENV != 'production':
         url = RUBY_ADDRESS_URL
         if service_name in ["organization", "partner", "user"]:
             url = url + "/{}".format(service_name)
+        if service_name == ServiceName.debezium_connect:
+            url = "http://{}:{}".format(Host.local, DEBEZIUM_CONNECT_PORT)
         return url
     service_port = COMMON_SERVICE_PORT
     if service_name in ['organization', 'user', 'lead', 'partner']:

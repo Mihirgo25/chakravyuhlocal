@@ -26,7 +26,7 @@ class ShipmentFclFreightRateStatistic(BaseModel):
         null=True
     )  # this rate and validity id is different from what fcl_freight_rate_statistic table implies
     shipment_id = UUIDField(null=True, index=True)
-    shipment_serial_id = BigIntegerField()
+    shipment_serial_id = BigIntegerField(null = True)
     shipment_source = CharField()
     containers_count = IntegerField()
     cargo_weight_per_container = FloatField()
