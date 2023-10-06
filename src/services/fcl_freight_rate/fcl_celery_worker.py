@@ -10,6 +10,7 @@ from services.fcl_freight_rate.workers.create_jobs_for_predicted_fcl_freight_rat
 from celery.schedules import crontab
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_job import delete_fcl_freight_rate_job
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import update_live_booking_visiblity_for_fcl_freight_rate_job
 
 tasks = {
     'update_fcl_freight_jobs_status_to_backlogs': {
@@ -94,3 +95,13 @@ def delete_jobs_for_fcl_freight_rate_feedback_delay(self, requirements):
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_live_booking_visiblity_for_fcl_freight_rate_job_delay(self, job_id):
+    try:
+        return update_live_booking_visiblity_for_fcl_freight_rate_job(job_id)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
