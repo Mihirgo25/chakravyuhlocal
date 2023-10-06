@@ -25,6 +25,8 @@ DEFAULT_IMPORT_DESTINATION_DETENTION = 4
 
 MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT = 100000
 
+MAX_PAGE_LIMIT = 1000
+
 CONFIRMED_INVENTORY = {
     "service_provider_ids": ["536abfe7-eab8-4a43-a4c3-6ff318ce01b5"],  # CogoXpress
     "tag": "confirmed_inventory",

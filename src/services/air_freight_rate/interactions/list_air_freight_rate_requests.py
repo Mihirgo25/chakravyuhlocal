@@ -10,7 +10,7 @@ from libs.get_applicable_filters import get_applicable_filters
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
 from micro_services.client import spot_search
-from services.air_freight_rate.constants.air_freight_rate_constants import IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE
+from services.air_freight_rate.constants.air_freight_rate_constants import IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE, IMPORTER_EXPORTER_ID_FOR_ENTERPRISE_SALES
 
 possible_direct_filters = ['origin_airport_id', 'destination_airport_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id','source']
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'partner_id', 'freight_force_importer_exporter', 'except_freight_force_importer_exporter']
@@ -50,6 +50,8 @@ def list_air_freight_rate_requests(filters = {}, page_limit = 10, page = 1, perf
 
         if str(value['performed_by_org_id']) in IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE:
             value['service_provider'] = 'FREIGHT_FORCE'
+        elif str(object['performed_by_org_id']) in IMPORTER_EXPORTER_ID_FOR_ENTERPRISE_SALES:
+            object['service_provider'] = 'ENTERPRISE_SALES'
 
 
 
