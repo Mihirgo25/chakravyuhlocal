@@ -4,7 +4,7 @@ import os
 import joblib
 from micro_services.client import maps
 from configs.haulage_freight_rate_constants import WEIGHT_LIMIT_CONSTANTS
-
+from configs.definitions import HAULAGE_PREDICTION_MODEL
 
 def predict_haulage_freight_rate(request):
     if type(request) == dict:
@@ -36,10 +36,8 @@ def predict_haulage_freight_rate(request):
         distance = 250
     fuel_used = fuel_consumption(distance,upper_limit)
 
-    MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "haulage_freight_prediction_model.pkl")
-    model = joblib.load(open(MODEL_PATH, "rb"))
     data = [container_size, upper_limit, distance, fuel_used]
-    model_result = model.predict([data])
+    model_result = HAULAGE_PREDICTION_MODEL.predict([data])
     result["predicted_price"] = round(model_result[0])
     result["upper_limit"] = upper_limit
     transit_time = (distance//250) * 24

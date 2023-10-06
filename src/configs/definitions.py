@@ -1,5 +1,6 @@
 import os
 import yaml
+import joblib
 
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -63,3 +64,25 @@ HAULAGE_FREIGHT_CHARGES = yml_obj.HAULAGE_FREIGHT_CHARGES
     
 FTL_FREIGHT_CHARGES = yml_obj.FTL_FREIGHT_CHARGES
 AIR_CUSTOMS_CHARGES = yml_obj.AIR_CUSTOMS_CHARGES
+class LoadPredictionModels():
+    FCL_PREDICTION_MODEL = None
+    AIR_PREDICTION_MODEL = None
+    FTL_PREDICTION_MODEL = None
+    HAULAGE_PREDICTION_MODEL = None
+
+    def __init__(self):
+        self.FCL_PREDICTION_MODEL = self.load_prediction_model(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "fcl_freight_prediction_model.pkl"))
+        self.AIR_PREDICTION_MODEL = self.load_prediction_model(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "air_freight_prediction_model.pkl"))
+        self.FTL_PREDICTION_MODEL = self.load_prediction_model(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "ftl_freight_prediction_model.pkl"))
+        self.HAULAGE_PREDICTION_MODEL = self.load_prediction_model(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models","haulage_freight_prediction_model.pkl"))
+
+    def load_prediction_model(self, path):
+        model = joblib.load(open(path, 'rb'))
+        return model
+
+pred_model_obj = LoadPredictionModels()
+
+FCL_PREDICTION_MODEL = pred_model_obj.FCL_PREDICTION_MODEL
+AIR_PREDICTION_MODEL = pred_model_obj.AIR_PREDICTION_MODEL
+FTL_PREDICTION_MODEL = pred_model_obj.FTL_PREDICTION_MODEL
+HAULAGE_PREDICTION_MODEL = pred_model_obj.HAULAGE_PREDICTION_MODEL
