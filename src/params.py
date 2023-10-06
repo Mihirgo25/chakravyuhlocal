@@ -869,6 +869,7 @@ class AddSailingSchedules(BaseModel):
     validity_start: datetime
     validity_end: datetime
     schedule_id: str
+    schedule_type: str
 
 
 class ExtendFreightRateToIcds(BaseModel):

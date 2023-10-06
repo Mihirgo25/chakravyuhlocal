@@ -1651,12 +1651,9 @@ class FclFreightRateBulkOperation(BaseModel):
                 validity_object['validity_start'] = datetime.strptime(validity_object['validity_start'], '%Y-%m-%d')
                 validity_object['validity_end'] = datetime.strptime(validity_object['validity_end'], '%Y-%m-%d')
 
-                if validity_object['validity_start'] > validity_end or validity_object['validity_end'] < validity_start:
+                if data['schedule_type'] != validity_object['schedule_type'] or validity_object['validity_start'] > validity_end or validity_object['validity_end'] < validity_start:
                     continue
-                validity_object['validity_start'] = max(validity_object['validity_start'], validity_start)
-                validity_object['validity_end'] = min(validity_object['validity_end'],validity_end)
 
-                validity_object['validity_start'] = max(validity_object['validity_start'], datetime.now())
                 validity_object['schedule_id'] = data.get('schedule_id')
                 new_validities.append(validity_object)
 
