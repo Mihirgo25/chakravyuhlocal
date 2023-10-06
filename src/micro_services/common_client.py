@@ -63,7 +63,7 @@ class CommonApiClient:
         return self.client.request('GET','get_sailing_schedule_port_pair_coverages', data)
 
     def get_sailing_schedule_port_pair_serviceability(self, data={}):
-        return self.client.request('POST','get_sailing_schedule_port_pair_serviceability', data)
+        return self.client.request('GET','get_sailing_schedule_port_pair_serviceability', data)
     
     def create_sailing_schedule_port_pair_coverage(self, data={}):
         return self.client.request('POST','create_sailing_schedule_port_pair_coverage', data)
