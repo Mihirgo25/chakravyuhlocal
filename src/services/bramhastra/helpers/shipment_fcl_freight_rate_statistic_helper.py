@@ -14,11 +14,12 @@ from services.bramhastra.helpers.common_statistic_helper import (
 
 class Shipment:
     def __init__(self, request) -> None:
-        self.request = (
-            request.params
-            if request.action == ShipmentAction.create.value
-            else request.shipment_update_params
-        )
+        if request.action == ShipmentAction.create.value:
+            self.request = request.params
+        elif request.shipment_update_params:
+            self.request = request.shipment_update_params
+        elif request.shipment_service_update_params:
+            self.request = request.shipment_service_update_params
 
     def __get_shipment_state_bool_string(self, shipment_state) -> str:
         if shipment_state == "shipment_received":
@@ -136,7 +137,7 @@ class Shipment:
             exclude_none=True,
         )
         FclFreightAction.update(**params).where(
-            FclFreightAction.shipment_serial_id == self.request.shipment_service_id
+            FclFreightAction.shipment_service_id == self.request.shipment_service_id
         ).execute()
 
     def __update(self, model, increment_keys: set = None, params: dict = None):
