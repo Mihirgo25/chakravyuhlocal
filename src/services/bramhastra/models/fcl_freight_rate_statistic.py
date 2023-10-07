@@ -107,11 +107,11 @@ class FclFreightRateStatistic(BaseModel):
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()
         return super(FclFreightRateStatistic, self).save(*args, **kwargs)
-
-    def update_force(self, params):
-        for k, v in params.items():
-            setattr(self, k, v)
-        self.save()
+    
+    @classmethod
+    def update(cls, *args, **kwargs):
+        kwargs['updated_at'] = datetime.now()
+        return super().update(*args, **kwargs)
 
     def refresh(self):
         return type(self).get(self._pk_expr())

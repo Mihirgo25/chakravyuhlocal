@@ -115,6 +115,11 @@ class FclFreightAction(BaseModel):
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()
         return super(FclFreightAction, self).save(*args, **kwargs)
+    
+    @classmethod
+    def update(cls, *args, **kwargs):
+        kwargs['updated_at'] = datetime.now()
+        return super().update(*args, **kwargs)
 
     def refresh(self):
         return type(self).get(self._pk_expr())
