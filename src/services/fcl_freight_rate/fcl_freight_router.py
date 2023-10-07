@@ -350,7 +350,6 @@ def get_fcl_freight_rate_data(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-
 @fcl_freight_router.get("/get_fcl_freight_rate_for_lcl")
 def get_fcl_freight_rate_for_lcl_func(
     origin_port_id: str = None,
@@ -406,6 +405,7 @@ def get_fcl_freight_local_data(
     rate_type: str = 'market_place',
     shipping_line_id: str = None,
     service_provider_id: str = None,
+    get_parsed_values: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -420,7 +420,8 @@ def get_fcl_freight_local_data(
         'commodity' : commodity,
         'rate_type': rate_type,
         'shipping_line_id' : shipping_line_id,
-        'service_provider_id': service_provider_id
+        'service_provider_id': service_provider_id,
+        'get_parsed_values': get_parsed_values
     }
 
     try:
@@ -442,6 +443,7 @@ def get_fcl_freight_local_rate_cards_data(
     container_type: str,
     containers_count: int,
     bls_count: int,
+    terminal_id: str = None,
     commodity: str = None,
     shipping_line_id: str = None,
     service_provider_id: str = None,
@@ -463,6 +465,7 @@ def get_fcl_freight_local_rate_cards_data(
     request = {
         'trade_type':trade_type,
         'port_id':port_id,
+        'terminal_id': terminal_id,
         'country_id':country_id,
         'container_size' : container_size,
         'container_type' : container_type,
@@ -507,6 +510,7 @@ def get_fcl_freight_rate_cards_data(
     commodity: str = None,
     shipping_line_id: str = None,
     service_provider_id: str = None,
+    terminal_id: str = None,
     include_confirmed_inventory_rates: bool =False,
     additional_services: str = None,
     ignore_omp_dmp_sl_sps: str = None,
@@ -550,6 +554,7 @@ def get_fcl_freight_rate_cards_data(
         'trade_type' : trade_type,
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id,
+        'terminal_id': terminal_id,
         'validity_start' : validity_start,
         'validity_end' : validity_end,
         'include_origin_local' : include_origin_local,
@@ -758,12 +763,13 @@ def list_fcl_freight_rate_locals_data(
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
     return_query: bool = False,
+    get_count: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
+        data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query, get_count)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise

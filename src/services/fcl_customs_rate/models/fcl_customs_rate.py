@@ -144,12 +144,9 @@ class FclCustomsRate(BaseModel):
       raise HTTPException(status_code=400, detail="Invalid commodity")
     
     def validate_service_provider_id(self):
-        if not self.service_provider_id:
-            return
-
-        service_provider_data = get_organization(id=self.service_provider_id)
-        if len(service_provider_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid service provider ID")
+        service_provider_data = get_eligible_orgs(service='fcl_customs')
+        if str(self.service_provider_id) not in service_provider_data:
+            raise HTTPException(status_code=400, detail="Service provider is not Valid for this service")
         
     def validate_location_ids(self):
         location_data = maps.list_locations({'filters':{'id': str(self.location_id)}})['list']
@@ -452,3 +449,4 @@ class FclCustomsRate(BaseModel):
         self.validate_container_size()
         self.validate_container_type()
         self.validate_commodity()
+        self.validate_service_provider_id()

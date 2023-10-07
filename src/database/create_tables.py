@@ -1,9 +1,11 @@
 from database.db_session import db
-from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJob
-from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobMapping
-from services.fcl_freight_rate.models.fcl_freight_rate_job_mappings import FclFreightRateJobMapping
-from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJob
-from services.fcl_freight_rate.models.critical_port_trend_indexes import CriticalPortTrendIndex
+
+from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
+from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
+from services.ftl_freight_rate.models.ftl_freight_rate_bulk_operation import FtlFreightRateBulkOperation
+from services.ftl_freight_rate.models.ftl_freight_rate_request import FtlFreightRateRequest
+from services.ftl_freight_rate.models.ftl_freight_rate_feedback import FtlFreightRateFeedback
+
 
 class Table:
     def __init__(self) -> None:
@@ -11,6 +13,8 @@ class Table:
 
     def create_tables(self,models):
         try:
+            db.execute_sql('CREATE SEQUENCE ftl_freight_rate_request_serial_id_seq START WITH 2776 INCREMENT BY 1 MINVALUE 0;')
+            db.execute_sql('CREATE SEQUENCE ftl_freight_rate_feedback_serial_id_seq START WITH 2430 INCREMENT BY 1 MINVALUE 0;')
             db.create_tables(models)
             db.close()
             print("created table")
@@ -20,6 +24,6 @@ class Table:
 
 
 if __name__ == "__main__":
-    models = [AirFreightRateJob, AirFreightRateJobMapping, FclFreightRateJobMapping, FclFreightRateJob, CriticalPortTrendIndex]
+    models = [FtlFreightRate, FtlFreightRateAudit,FtlFreightRateBulkOperation, FtlFreightRateRequest, FtlFreightRateFeedback]
 
     Table().create_tables(models)

@@ -17,7 +17,7 @@ from fastapi.encoders import jsonable_encoder
 from peewee import SQL
 from fastapi import HTTPException
 
-def create_audit(request, min_allowed_percentage_change,max_allowed_percentage_change, min_allowed_markup, max_allowed_markup, start_time, overall_gri_avg, index_id):
+def create_audit(request, min_allowed_percentage_change,max_allowed_percentage_change, min_allowed_markup, max_allowed_markup, last_updated_at, overall_gri_avg, index_id):
     audit_data = {
         "origin_port_id": request["origin_port_id"],
         "destination_port_id": request["destination_port_id"],
@@ -26,7 +26,7 @@ def create_audit(request, min_allowed_percentage_change,max_allowed_percentage_c
         "min_allowed_markup": min_allowed_markup,
         "max_allowed_markup": max_allowed_markup,
         "overall_gri": overall_gri_avg,
-        "last_updated_at":  start_time,
+        "last_updated_at":  last_updated_at,
         }
     
     try:
@@ -42,9 +42,9 @@ def create_audit(request, min_allowed_percentage_change,max_allowed_percentage_c
       raise HTTPException(status_code=500, detail='fcl freight audit did not save')
 
 
-def get_filters(start_time, query_type, rate_ids):
+def get_filters(last_updated_at, query_type, rate_ids):
     return {
-        "updated_at_less_than": start_time,
+        "updated_at_less_than": last_updated_at,
         "query_type": query_type,
         "rate_id": rate_ids,
         "validity_end_greater_than": datetime.now().date() + timedelta(days=1),
@@ -118,7 +118,7 @@ def get_overall_gri_avg(shipping_line_avg_mapping):
     return overall_gri_avg; 
 
 async def extend_cluster_rates_by_latest_trends(request):
-    start_time = request.get("start_time")
+    last_updated_at = request.get("last_updated_at")
     origin_port_id = request["origin_port_id"]
     destination_port_id = request["destination_port_id"]
 
@@ -139,6 +139,7 @@ async def extend_cluster_rates_by_latest_trends(request):
         overall_gri_avg = manual_gri
     else:
         freight_rates = get_freight_rates(request)
+        
         shipping_line_gri_mapping = {}
         for container_size in ["20", "40", "40HC"]:
             rates = [
@@ -146,8 +147,9 @@ async def extend_cluster_rates_by_latest_trends(request):
                 for rate in freight_rates
                 if rate["container_size"] == container_size
             ]
-            if not rates:
+            if len(rates) < 3:
                 continue
+            
             prices = []
             rate_ids = []
             shipping_line_ids = []
@@ -161,7 +163,7 @@ async def extend_cluster_rates_by_latest_trends(request):
                     prices.append(price / count)
 
             response = await list_fcl_freight_rate_statistics(
-                get_filters(start_time, "average_price", rate_ids),
+                get_filters(last_updated_at, "average_price", rate_ids),
                 1000,
                 1,
                 False,
@@ -192,7 +194,7 @@ async def extend_cluster_rates_by_latest_trends(request):
         overall_gri_avg = get_overall_gri_avg(shipping_line_avg_mapping)
         
         if record_id:
-            create_audit(request, min_allowed_percentage_change,max_allowed_percentage_change, min_allowed_markup, max_allowed_markup, start_time, overall_gri_avg, record_id)
+            create_audit(request, min_allowed_percentage_change,max_allowed_percentage_change, min_allowed_markup, max_allowed_markup, last_updated_at, overall_gri_avg, record_id)
             
         overall_gri_avg = max(min_allowed_percentage_change, min(overall_gri_avg, max_allowed_percentage_change))
 
@@ -201,21 +203,20 @@ async def extend_cluster_rates_by_latest_trends(request):
         request["source"] = "latest_rate_trend"
         request["markup"] = overall_gri_avg
 
+        updated_at_less_than_time = last_updated_at - timedelta(days=4)
         request["min_allowed_markup"] = min_allowed_markup
         request["max_allowed_markup"] = max_allowed_markup
         request["filters"] = {
             "origin_port_id": request.get("origin_port_id"),
             "destination_port_id": request.get("destination_port_id"),
             "rate_type": "market_place",
-            "updated_at_less_than_time": start_time.isoformat(),
+            "updated_at_less_than_time": updated_at_less_than_time.isoformat(),
+            "exclude_service_provider_types": ['nvocc']
         }
         rate_extension_via_bulk_operation(request)
-        request["filters"] = {
-            "origin_port_id": request.get("origin_secondary_ports"),
-            "destination_port_id": request.get("destination_secondary_ports"),
-            "rate_type": "market_place",
-            "updated_at_less_than_time": start_time.isoformat(),
-        }
+        request["filters"]["origin_port_id"] = request.get("origin_secondary_ports")
+        request["filters"]["destination_port_id"] = request.get("destination_secondary_ports")
+
         rate_extension_via_bulk_operation(request)
 
 
@@ -268,7 +269,7 @@ def get_freight_rates(request):
         FclFreightRate.shipping_line_id,
         FclFreightRate.validities,
     ).where(
-        FclFreightRate.updated_at > request["start_time"],
+        FclFreightRate.updated_at > request["last_updated_at"],
         FclFreightRate.origin_port_id == request["origin_port_id"],
         FclFreightRate.commodity == request["commodity"],
         FclFreightRate.container_type == request["container_type"],
@@ -278,6 +279,7 @@ def get_freight_rates(request):
         FclFreightRate.mode.not_in(["predicted", "rate_extension"]),
         FclFreightRate.service_provider_id != DEFAULT_SERVICE_PROVIDER_ID,
         FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
+        ~FclFreightRate.service_provider["category_types"].contains("nvocc"),
         SQL(
             """
             NOT EXISTS (

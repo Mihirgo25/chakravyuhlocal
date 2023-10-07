@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.critical_port_trend_indexes import CriticalPortTrendIndex
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from database.db_session import db
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from fastapi import HTTPException
