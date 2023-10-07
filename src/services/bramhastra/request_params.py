@@ -52,7 +52,6 @@ class FclFreight(BaseModel):
     service_provider_id: str
     shipping_line_id: str
     mode: str
-    accuracy: float
     source: str = None
     source_id: str = None
     cogo_entity_id: str = None

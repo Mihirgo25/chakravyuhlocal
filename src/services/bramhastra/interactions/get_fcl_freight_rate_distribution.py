@@ -4,6 +4,7 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 )
 import math
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
 from services.bramhastra.enums import ShipmentState
 from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
 
@@ -31,18 +32,32 @@ async def get_fcl_freight_rate_distribution(filters):
     total_rate_count = await get_total_rate_count(filters, where)
 
     queries.append(
-        """), mode_count as (SELECT mode,count(mode) as value,
-        sum(bookings_created) as bookings_created,
-        sum(shipment_cancelled_count + shipment_aborted_count) as shipment_cancelled_count,
-        floor((shipment_cancelled_count/bookings_created)*100,2) as shipment_cancelled_percentage,
-        sum(shipment_completed_count) as shipment_completed_count,
-        floor((shipment_completed_count/bookings_created)*100,2) as shipment_completed_percentage,
-        sum(shipment_in_progress_count)  as shipment_in_progress_count,
-        floor((shipment_in_progress_count/bookings_created)*100,2) as shipment_in_progress_percentage,
-        sum(shipment_confirmed_by_importer_exporter_count)  as shipment_confirmed_by_importer_exporter_count, 
-        floor((shipment_confirmed_by_importer_exporter_count/bookings_created)*100,2) as shipment_confirmed_by_importer_exporter_percentage
-        from rate_distribution group by mode)
-           SELECT * from mode_count"""
+        f"""
+        ), mode_count as (
+            SELECT 
+                mode, 
+                sum(bookings_created) as bookings_created,
+                sum(shipment_cancelled_count + shipment_aborted_count) as shipment_cancelled_count,
+                floor((shipment_cancelled_count/bookings_created)*100,2) as shipment_cancelled_percentage,
+                sum(shipment_completed_count) as shipment_completed_count,
+                floor((shipment_completed_count/bookings_created)*100,2) as shipment_completed_percentage,
+                sum(shipment_in_progress_count)  as shipment_in_progress_count,
+                floor((shipment_in_progress_count/bookings_created)*100,2) as shipment_in_progress_percentage,
+                sum(shipment_confirmed_by_importer_exporter_count)  as shipment_confirmed_by_importer_exporter_count, 
+                floor((shipment_confirmed_by_importer_exporter_count/bookings_created)*100,2) as shipment_confirmed_by_importer_exporter_percentage
+            from rate_distribution group by mode
+        ), stats_mode_count as (
+            Select
+                parent_mode,
+                count(sign) as value
+            from brahmastra.{FclFreightRateStatistic._meta.table_name} group by parent_mode
+        )
+            SELECT 
+                mode_count.*, 
+                stats_mode_count.value 
+            from mode_count, stats_mode_count
+            where mode_count.mode = stats_mode_count.parent_mode 
+        """
     )
 
     response = clickhouse.execute(" ".join(queries), filters)
