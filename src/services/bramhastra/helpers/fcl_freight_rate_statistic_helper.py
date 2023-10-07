@@ -113,28 +113,25 @@ class Rate:
                 self.update(row)
 
     def get_feedback_details(self):
-        feedback_subquery = FclFreightRateFeedback.select(
-            FclFreightRateFeedback.fcl_freight_rate_id.alias("parent_rate_id"),
-            FclFreightRateFeedback.validity_id.alias("parent_validity_id"),
+        if feedback := FclFreightRateFeedback.select(
+            FclFreightRateFeedback.fcl_freight_rate_id,
+            FclFreightRateFeedback.validity_id,
         ).where(
             FclFreightRateFeedback.id == self.freight.source_id,
-        )
-        if row := (
-            feedback_subquery.join(
-                FclFreightRateStatistic,
-                on=(
-                    FclFreightRateStatistic.c.a
-                    == get_fcl_freight_identifier(
-                        feedback_subquery.rate_id, feedback_subquery.validity_id
-                    )
-                ),
-            ).select(
-                feedback_subquery.parent_rate_id,
-                feedback_subquery.parent_validity_id,
-                FclFreightRateStatistic.mode,
-            )
-        ):
-            return jsonable_encoder(row.get())
+        ).first():
+            if fcl_freight_rate_statistic := FclFreightRateStatistic.select(
+                FclFreightRateStatistic.mode
+            ).where(
+                FclFreightRateStatistic.identifier
+                == get_fcl_freight_identifier(
+                    str(feedback.fcl_freight_rate_id), str(feedback.validity_id)
+                )
+            ).first():
+                return {
+                    'parent_rate_id': feedback.fcl_freight_rate_id,
+                    'parent_validity_id': feedback.validity_id,
+                    'parent_rate_mode': fcl_freight_rate_statistic.mode
+                }
 
     def set_formatted_data(self) -> None:
         freight = self.freight.dict(exclude={"validities", "accuracy"})
