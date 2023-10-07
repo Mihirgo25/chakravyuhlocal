@@ -3,7 +3,7 @@ CREATE TABLE brahmastra.kafka_fcl_freight_rate_statistics
 (
     `data` String
 )
-ENGINE = Kafka('127.0.0.1:29092', 'arc.public.fcl_freight_rate_statistics', '001','JSONAsString')
+ENGINE = Kafka('127.0.0.1:29092', 'arc.public.fcl_freight_rate_statistics', '001','JSONAsString');
 
 CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_rate_statistics TO brahmastra.fcl_freight_rate_statistics
 (
