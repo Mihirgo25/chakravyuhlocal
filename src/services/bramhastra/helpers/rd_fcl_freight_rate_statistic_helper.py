@@ -37,6 +37,7 @@ class RevenueDesk:
         common_update_params = {
             "updated_at": request.created_at,
         }
+        action_updated = False
         for validity_id in request.validities:
             fcl_freight_rate_statistic = (
                 FclFreightRateStatistic.select()
@@ -63,11 +64,12 @@ class RevenueDesk:
                 )
                 .first()
             )
-            if fcl_freight_action is not None:
+            if (fcl_freight_action is not None) and not action_updated:
                 self.set_revenue_desk_visit_state(fcl_freight_action, "visited")
                 self.update_foreign_reference(
                     fcl_freight_action, None, common_update_params
                 )
+                action_updated = True
 
     def update_foreign_reference(
         self, model: Model, increment_keys: set = None, params: dict = None
