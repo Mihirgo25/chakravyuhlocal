@@ -83,8 +83,6 @@ def send_request_stats(action, obj):
         from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
 
         if action == "create":
-            obj = obj.refresh()
-
             obj = model_to_dict(
                 obj,
                 only=[
@@ -134,8 +132,6 @@ def send_feedback_statistics(action, feedback, request=None):
             FclFreightRateFeedback,
         )
 
-        feedback = feedback.refresh()
-
         object = jsonable_encoder(
             model_to_dict(
                 feedback,
@@ -181,8 +177,6 @@ def send_feedback_delete_stats(obj):
         from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
         from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import apply_feedback_fcl_freight_rate_statistic
 
-        obj = obj.refresh()
-
         action = "delete"
         params = jsonable_encoder(
             model_to_dict(
@@ -212,8 +206,6 @@ def send_request_delete_stats(obj):
             FclFreightRateRequest,
         )
         from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
-
-        obj = obj.refresh()
 
         action = "delete"
 

@@ -57,8 +57,6 @@ class Configs:
                 "value.converter": "org.apache.kafka.connect.json.JsonConverter",
                 "key.converter.schemas.enable": "false",
                 "value.converter.schemas.enable": "false",
-                "exactlyOnce": True,
-                "retryCount": 0,
                 "snapshot.mode": "always",
                 "topic.prefix": "arc",
                 "table.include.list": "public.fcl_freight_rate_statistics,public.fcl_freight_actions,public.feedback_fcl_freight_rate_statistics,public.fcl_freight_rate_request_statistics"

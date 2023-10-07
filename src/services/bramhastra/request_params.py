@@ -319,8 +319,10 @@ class FclFreightRateRequest(BaseModel):
 
     @validator("is_rate_reverted", always=True)
     def add_is_rate_reverted(cls, value, values):
-        closing_remarks = values.get("closing_remarks", [])
-        return value or "rate_added" in closing_remarks
+        if values.get("closing_remarks"):
+            closing_remarks = values.get("closing_remarks", [])
+            return value or "rate_added" in closing_remarks
+        return False
 
 
 class ApplyFclFreightRateRequestStatistic(BaseModel):
