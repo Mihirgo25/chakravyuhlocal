@@ -63,7 +63,7 @@ class RevenueDesk:
                 )
                 .first()
             )
-            if fcl_freight_action:
+            if fcl_freight_action is not None:
                 self.set_revenue_desk_visit_state(fcl_freight_action, "visited")
                 self.update_foreign_reference(
                     fcl_freight_action, None, common_update_params

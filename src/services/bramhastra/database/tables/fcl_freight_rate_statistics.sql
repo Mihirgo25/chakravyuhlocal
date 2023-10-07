@@ -3,7 +3,7 @@ CREATE TABLE brahmastra.kafka_fcl_freight_rate_statistics
 (
     `data` String
 )
-ENGINE = Kafka('127.0.0.1:29092', 'arc.public.fcl_freight_rate_statistics', '001','JSONAsString');
+ENGINE = Kafka('127.0.0.1:29092', 'arc.public.fcl_freight_rate_statistics', '001','JSONAsString')
 
 CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_rate_statistics TO brahmastra.fcl_freight_rate_statistics
 (
@@ -95,8 +95,8 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_rate_statistics TO brahma
 SELECT
     JSONExtractInt(data, 'before', 'id') AS id,
     JSONExtractString(data, 'before', 'identifier') AS identifier,
-    JSONExtractString(data, 'before', 'validity_id') AS validity_id,
-    JSONExtractString(data, 'before', 'rate_id') AS rate_id,
+    toUUIDOrZero(JSONExtractString(data, 'before', 'validity_id')) AS validity_id,
+    toUUIDOrZero(JSONExtractString(data, 'before', 'rate_id')) AS rate_id,
     JSONExtractString(data, 'before', 'payment_term') AS payment_term,
     JSONExtractString(data, 'before', 'schedule_type') AS schedule_type,
     JSONExtractString(data, 'before', 'origin_port_id') AS origin_port_id,
@@ -151,7 +151,7 @@ SELECT
     JSONExtractInt(data, 'before', 'so1_visit_count') AS so1_visit_count,
     parseDateTimeBestEffortOrZero(JSONExtractString(data, 'before', 'created_at')) AS created_at,
     parseDateTimeBestEffortOrZero(JSONExtractString(data, 'before', 'updated_at')) AS updated_at,
-    toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'before'), 'updated_at'), 6)) AS version,
+    toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'before'), 'operation_updated_at'), 6)) AS version,
     -1 AS sign,
     JSONExtractString(data, 'before', 'status') AS status,
     JSONExtractString(data, 'before', 'last_action') AS last_action,
@@ -326,7 +326,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_statistics TO brahmas
     JSONExtractInt(data, 'after', 'so1_visit_count') AS so1_visit_count,
     parseDateTimeBestEffortOrZero(JSONExtractString(data, 'after', 'created_at')) AS created_at,
     parseDateTimeBestEffortOrZero(JSONExtractString(data, 'after', 'updated_at')) AS updated_at,
-    toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'after'), 'updated_at'), 6)) AS version,
+    toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'after'), 'operation_updated_at'), 6)) AS version,
     1 AS sign,
     JSONExtractString(data, 'after', 'status') AS status,
     JSONExtractString(data, 'after', 'last_action') AS last_action,
@@ -415,7 +415,7 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
         so1_visit_count UInt16,
         created_at DateTime DEFAULT now(),
         updated_at DateTime DEFAULT now(),
-        version UInt32 DEFAULT 1,
+        version UInt64 DEFAULT 1,
         sign Int8 DEFAULT 1,
         status FixedString(10) DEFAULT 'active',
         last_action FixedString(10) DEFAULT 'create',

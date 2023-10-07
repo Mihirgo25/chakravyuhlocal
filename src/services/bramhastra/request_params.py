@@ -452,3 +452,9 @@ class ApplyRevenueDeskFclFreightStatistics(BaseModel):
     selected_for_preference: FclSelectedForPreference = None
     action: str = None
     created_at: datetime = datetime.utcnow()
+
+    @validator("created_at", pre=True)
+    def convert_created_at(cls, v):
+        if not v:
+            v = datetime.utcnow()
+        return v
