@@ -58,8 +58,8 @@ def get_create_params(request):
     return {
         'feedbacks': request.get('feedbacks'),
         'remarks': request.get('remarks'),
-        'preferred_cfs_rate': request.get('preferred_cfs_rate'),
-        'preferred_cfs_rate_currency': request.get('preferred_cfs_rate_currency'),
+        'preferred_rate': request.get('preferred_rate'),
+        'preferred_rate_currency': request.get('preferred_rate_currency'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'status': 'active',

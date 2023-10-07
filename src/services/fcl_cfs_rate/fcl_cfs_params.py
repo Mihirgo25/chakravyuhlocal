@@ -137,8 +137,8 @@ class CreateFclCfsRateFeedback(BaseModel):
   dislikes_count: int
   feedbacks: list[str] = []
   remarks: list[str] = []
-  preferred_cfs_rate: float = None
-  preferred_cfs_rate_currency: str = None
+  preferred_rate: float = None
+  preferred_rate_currency: str = None
   feedback_type: str
   booking_params: dict ={}
   port_id: str = None
