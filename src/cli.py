@@ -34,7 +34,7 @@ def configure_logger(loggers: list, level=logging.DEBUG):
 
 class ColoredFormatter(logging.Formatter):
     COLORS = {
-        "DEBUG": "\033[34m",  # Blue
+        "DEBUG": "\033[1;33m",  # Yellow
         "INFO": "\033[92m",  # Green
         "WARNING": "\033[31m",  # Orange
         "ERROR": "\033[91m",  # Red
