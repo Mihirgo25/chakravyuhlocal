@@ -46,8 +46,7 @@ def get_air_freight_rate_prediction(request):
         except Exception as e:
             pass
     change_factor = SLAB_WISE_CHANGE_FACTOR
-    for result in results:
-        air_freight_rate_prediction_feedback_delay.apply_async(kwargs={'result':results}, queue = 'low')
+    air_freight_rate_prediction_feedback_delay.apply_async(kwargs={'result':results}, queue = 'low')
 
     current_datetime = datetime.combine(request.get('cargo_clearance_date'), datetime.min.time())
     validity_start = current_datetime
