@@ -17,9 +17,9 @@ from celery.schedules import crontab
 
 tasks = {
     'update_air_customs_jobs_status_to_backlogs': {
-        'task': 'services.air_customs_rate.air_celery_worker.update_air_customs_rate_jobs_to_backlog_delay',
-        'schedule': crontab(hour=22, minute=30),
-        'options': {'queue': 'fcl_customs_rate'}
+        'task': 'services.air_customs_rate.air_customs_celery_worker.update_air_customs_rate_jobs_to_backlog_delay',
+        'schedule': crontab(hour=22, minute=25),
+        'options': {'queue': 'fcl_freight_rate'}
     },
 }
 
@@ -87,7 +87,7 @@ def update_air_customs_rate_jobs_to_backlog_delay(self):
         else:
             raise self.retry(exc=exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def create_jobs_for_air_customs_rate_feedback_delay(self, requirements):
     try:
         return create_air_customs_rate_job(requirements, "rate_feedback")
@@ -97,7 +97,7 @@ def create_jobs_for_air_customs_rate_feedback_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def delete_jobs_for_air_customs_rate_request_delay(self, requirements):
     try:
         return delete_air_customs_rate_job(requirements)
@@ -107,7 +107,7 @@ def delete_jobs_for_air_customs_rate_request_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def create_jobs_for_air_customs_rate_request_delay(self, requirements):
     try:
         return create_air_customs_rate_job(requirements, "rate_request")
@@ -117,7 +117,7 @@ def create_jobs_for_air_customs_rate_request_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def delete_jobs_for_air_customs_rate_feedback_delay(self, requirements):
     try:
         return delete_air_customs_rate_job(requirements)

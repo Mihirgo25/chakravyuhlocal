@@ -21,8 +21,8 @@ from celery.schedules import crontab
 tasks = {
     'update_haulage_freight_jobs_status_to_backlogs': {
         'task': 'services.haulage_freight_rate.haulage_celery_worker.update_haulage_freight_rate_jobs_to_backlog_delay',
-        'schedule': crontab(hour=23, minute=0),
-        'options': {'queue': 'haulage_freight_rate'}
+        'schedule': crontab(hour=22, minute=15),
+        'options': {'queue': 'fcl_freight_rate'}
     },
 }
 
@@ -83,7 +83,7 @@ def update_haulage_rate_platform_prices_delay(self, request):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def create_jobs_for_predicted_haulage_freight_rate_delay(self, is_predicted, requirements):
     try:
         return create_jobs_for_predicted_haulage_freight_rate(is_predicted, requirements)
@@ -104,7 +104,7 @@ def update_haulage_freight_rate_job_on_rate_addition_delay(self, request, id):
             raise self.retry(exc=exc)
 
 
-@celery.task(bind=True, max_retries=3, retry_backoff=True)
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
 def update_haulage_freight_rate_jobs_to_backlog_delay(self):
     try:
         return update_haulage_freight_rate_jobs_to_backlog()
@@ -114,7 +114,7 @@ def update_haulage_freight_rate_jobs_to_backlog_delay(self):
         else:
             raise self.retry(exc=exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def create_jobs_for_haulage_freight_rate_feedback_delay(self, requirements):
     try:
         return create_haulage_freight_rate_job(requirements, "rate_feedback")
@@ -124,7 +124,7 @@ def create_jobs_for_haulage_freight_rate_feedback_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def delete_jobs_for_haulage_freight_rate_request_delay(self, requirements):
     try:
         return delete_haulage_freight_rate_job(requirements)
@@ -134,7 +134,7 @@ def delete_jobs_for_haulage_freight_rate_request_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def create_jobs_for_haulage_freight_rate_request_delay(self, requirements):
     try:
         return create_haulage_freight_rate_job(requirements, "rate_request")
@@ -144,7 +144,7 @@ def create_jobs_for_haulage_freight_rate_request_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def delete_jobs_for_haulage_freight_rate_feedback_delay(self, requirements):
     try:
         return delete_haulage_freight_rate_job(requirements)

@@ -1,6 +1,21 @@
 from celery_worker import celery
 from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import adding_multiple_service_object
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate import create_ftl_freight_rate
+from services.ftl_freight_rate.workers.update_ftl_freight_rate_jobs_to_backlog import update_ftl_freight_rate_jobs_to_backlog
+
+from celery.schedules import crontab
+
+tasks = {
+    'update_ftl_freight_jobs_status_to_backlogs': {
+        'task': 'services.ftl_freight_rate.ftl_celery_worker.update_ftl_freight_rate_jobs_to_backlog_delay',
+        'schedule': crontab(hour=22, minute=30),
+        'options': {'queue': 'fcl_freight_rate'}
+    },
+}
+
+for name, task_info in tasks.items():
+    celery.conf.beat_schedule[name] = task_info
+
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_id,procured_by_id):
@@ -63,3 +78,13 @@ def create_ftl_freight_rate_delay(self, request):
             pass
         else:
             raise self.retry(exc= e)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_ftl_freight_rate_jobs_to_backlog_delay(self):
+    try:
+        return update_ftl_freight_rate_jobs_to_backlog()
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)

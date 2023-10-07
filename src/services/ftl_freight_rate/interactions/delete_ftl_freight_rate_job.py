@@ -48,7 +48,7 @@ def create_audit(jobs_ids, data):
     for job_id in jobs_ids:
         FtlServiceAudit.create(
             action_name = 'delete',
-            object_id = 1,
+            object_id = job_id,
             object_type = 'FtlFreightRateJob',
             data = data.get('data'),
             performed_by_id = data.get("performed_by_id")
