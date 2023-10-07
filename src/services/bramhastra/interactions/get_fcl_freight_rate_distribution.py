@@ -5,6 +5,7 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 import math
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
 from services.bramhastra.enums import ShipmentState
+from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
 
 async def get_fcl_freight_rate_distribution(filters):
     clickhouse = ClickHouse()
@@ -67,7 +68,7 @@ def format_distribution(response, distribution):
 
 async def get_total_rate_count(filters, where):
     queries = [
-        f"SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.{FclFreightAction._meta.table_name}"
+        f"SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"
     ]
     if where:
         queries.append("WHERE")
