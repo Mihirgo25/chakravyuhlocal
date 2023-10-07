@@ -177,6 +177,8 @@ def get_port_id(port_code):
     return port_id
 
 def get_terminal_id(site_code):
+    if not site_code:
+        return None
     try:
         site_code = site_code.strip()
     except:
@@ -251,3 +253,22 @@ def get_location_id(q, country_code=None, service_provider_id=None):
         locations = maps.list_locations({"filters": display_name_filters})["list"]
 
     return locations[0]["id"] if locations else None
+
+
+def get_airport_id(port_code, country_code):
+    input = {"filters": {"type": "airport", "port_code": port_code, "status": "active"}}
+    try:
+        locations_data = maps.list_locations(input)
+        airport_ids = locations_data["list"][0]["id"]
+    except:
+        airport_ids = None
+    return airport_ids
+
+
+def get_airline_id(airline_name):
+    try:
+        airline_name = airline_name.strip()
+        airline_id = get_operators(short_name=airline_name, operator_type = 'airline')[0]['id']
+    except:
+        airline_id = None
+    return airline_id

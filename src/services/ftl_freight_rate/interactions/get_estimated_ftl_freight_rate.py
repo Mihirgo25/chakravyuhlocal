@@ -4,16 +4,16 @@ from services.ftl_freight_rate.interactions.list_trucks import list_trucks_data
 from configs.ftl_freight_rate_constants import TRUCK_TYPES_MAPPING,PREDICTION_TRUCK_TYPES, EU_ZONE, TON_TO_POUND
 from fastapi import HTTPException
 
-def get_ftl_freight_rate(
+def get_estimated_ftl_freight_rate(
     origin_location_id,
     destination_location_id,
-    commodity: None,
-    weight: None,
-    truck_type: None,
-    truck_body_type: None,
-    trip_type
-):
+    trip_type,
+    commodity: str = None,
+    weight: str = None,
+    truck_type: str = None,
+    truck_body_type: str = None,
 
+):
     ids = [origin_location_id, destination_location_id]
     location_data_mapping = get_location_data_mapping(ids)
     country_info = get_country_info(location_data_mapping,origin_location_id,destination_location_id)

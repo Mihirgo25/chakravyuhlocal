@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_bulk_operation import FclFreightRateBulkOperation
 from celery_worker import bulk_operation_perform_action_functions
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from datetime import datetime
 
 def create_fcl_freight_rate_bulk_operation(request):

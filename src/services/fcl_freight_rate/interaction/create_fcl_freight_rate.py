@@ -11,7 +11,7 @@ from services.fcl_freight_rate.helpers.get_normalized_line_items import get_norm
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE, EXTENSION_ENABLED_MODES, DEFAULT_VALUE_PROPS
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 import sentry_sdk
 
 def add_rate_properties(request,freight_id):

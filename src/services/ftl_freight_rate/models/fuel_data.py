@@ -15,7 +15,7 @@ class FuelData(BaseModel):
     fuel_type = CharField(null=False, index=True)
     fuel_price = DecimalField(null=False,max_digits = 20, decimal_places= 10)
     created_at = DateTimeField(null=False, default=datetime.datetime.now())
-    updated_at = DateTimeField(null=False, default=datetime.datetime.now())
+    updated_at = DateTimeField(null=False, default=datetime.datetime.now(), index=True)
 
     class Meta:
         table_name = "fuel_data"
