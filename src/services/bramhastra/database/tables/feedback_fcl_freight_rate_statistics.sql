@@ -105,7 +105,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_feedback_rate_statistics T
     toUUIDOrZero(JSONExtractString(data, 'after', 'performed_by_org_id')) AS performed_by_org_id,
     parseDateTimeBestEffort(JSONExtractString(data, 'after', 'created_at')) AS created_at,
     parseDateTimeBestEffort(JSONExtractString(data, 'after', 'updated_at')) AS updated_at,
-    JSONExtractString(data, 'after', 'importer_exporter_id') AS importer_exporter_id,
+    toUUIDOrZero(JSONExtractString(data, 'after', 'importer_exporter_id')) AS importer_exporter_id,
     JSONExtractFloat(data, 'after', 'preferred_freight_rate') AS preferred_freight_rate,
     JSONExtractString(data, 'after', 'currency') AS currency,
     JSONExtractArrayRaw(data, 'after', 'feedbacks') AS feedbacks,
