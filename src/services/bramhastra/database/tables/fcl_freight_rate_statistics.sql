@@ -178,7 +178,7 @@ SELECT
     JSONExtractFloat(data, 'before', 'bas_standard_price_diff_from_selected_rate') AS bas_standard_price_diff_from_selected_rate,
     JSONExtractString(data, 'before', 'parent_rate_mode') AS parent_rate_mode
     FROM brahmastra.kafka_fcl_freight_rate_statistics
-    WHERE JSONExtractString(data,'op') = 'u';
+    WHERE JSONExtractString(data, 'before') IS NOT NULL AND JSONExtractString(data,'op') = 'u';
 
 CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_statistics TO brahmastra.fcl_freight_rate_statistics
 (
@@ -353,7 +353,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_statistics TO brahmas
     JSONExtractFloat(data, 'after', 'bas_standard_price_diff_from_selected_rate') AS bas_standard_price_diff_from_selected_rate,
     JSONExtractString(data, 'after', 'parent_rate_mode') AS parent_rate_mode
 FROM brahmastra.kafka_fcl_freight_rate_statistics  
-WHERE JSONExtractString(data,'op') in ('c','u');
+WHERE JSONExtractString(data, 'after') IS NOT NULL AND JSONExtractString(data,'op') in ('c','u');
 
 CREATE TABLE brahmastra.fcl_freight_rate_statistics
 (

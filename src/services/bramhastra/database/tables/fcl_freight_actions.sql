@@ -185,7 +185,7 @@ parseDateTimeBestEffort(JSONExtractString(data, 'before', 'operation_updated_at'
 toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'before'), 'operation_updated_at'), 6)) AS version,
 -1 AS sign
 FROM brahmastra.kafka_fcl_freight_actions
-WHERE JSONExtract(data,'op','String') = 'u';
+WHERE JSONExtractString(data, 'before') IS NOT NULL AND JSONExtract(data,'op','String') = 'u';
 
 CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_actions TO brahmastra.fcl_freight_actions
 (
@@ -369,7 +369,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_actions TO brahmastra.fcl_
     toUnixTimestamp64Milli(parseDateTime64BestEffort(visitParamExtractString(visitParamExtractRaw(data, 'after'), 'operation_updated_at'), 6)) AS version,
     1 AS sign
 FROM brahmastra.kafka_fcl_freight_actions  
-WHERE JSONExtract(data,'op','String') in ('c','u');
+WHERE JSONExtractString(data, 'after') IS NOT NULL AND JSONExtract(data,'op','String') in ('c','u');
 
 CREATE TABLE brahmastra.fcl_freight_actions
 (
