@@ -1,7 +1,6 @@
 import datetime
 from services.envision.models.air_rate_prediction_feedback import AirFreightRatePredictionFeedback
 from database.db_session import db
-from currency_converter import CurrencyConverter
 import datetime
 
 
@@ -28,13 +27,6 @@ def create_air_freight_rate_feedback(result):
 
                 new_rate = AirFreightRatePredictionFeedback.create(**row)
                 feedback['id'] = new_rate.id
-
-            c = CurrencyConverter(fallback_on_missing_rate=True, fallback_on_wrong_date=True)
-
-            for val in result:
-                if "predicted_price" in val:
-                    val["predicted_price"] = round(c.convert(val["predicted_price"], "USD", val["currency"], date=datetime.datetime.now()))
-            return result
 
         except:
             transaction.rollback()
