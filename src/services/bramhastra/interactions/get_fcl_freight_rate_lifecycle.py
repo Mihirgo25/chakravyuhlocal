@@ -129,7 +129,7 @@ async def get_lifecycle_statistics(filters, where):
 
     # Feedback
     feedbacks_created = [feedback_query(FeedbackState.created.name, "=")]
-    feedbacks_closed = [feedback_query(FeedbackState.closed.name, "=")]
+    feedbacks_closed = [feedback_query(FeedbackState.closed.name, ">=")]
     feedbacks_rate_added = [feedback_query(FeedbackState.rate_added.name, "=")]
 
     disliked = [count_boolean_query(FeedbackType.disliked.name)]
@@ -141,7 +141,7 @@ async def get_lifecycle_statistics(filters, where):
         """
     ]
     rate_requests_created = [rate_request_query(RateRequestState.created.name, "=")]
-    rate_requests_closed = [rate_request_query(RateRequestState.closed.name, "=")]
+    rate_requests_closed = [rate_request_query(RateRequestState.closed.name, ">=")]
     rate_requests_rate_added = [
         rate_request_query(RateRequestState.rate_added.name, "=")
     ]
