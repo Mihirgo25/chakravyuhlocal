@@ -140,22 +140,22 @@ def get_params_for_model(request, locations):
     params = []
     serviceable_airline_ids = get_saas_schedules_airport_pair_coverages(request.get('origin_airport_id'),request.get('destination_airport_id'))
     top_three_airline_ids = DEFAULT_AIRLINE_IDS
+    no_of_airlines = 3
     if serviceable_airline_ids:
-        top_three_airline_ids = serviceable_airline_ids[:3]
-    
-        for loc in locations:
-            if loc["id"] == request.get('origin_airport_id'):
-                origin_location = (loc["latitude"], loc["longitude"])
-            if loc["id"] == request.get('destination_airport_id'):
-                destination_location = (loc["latitude"], loc["longitude"])
-        try:
-            air_route_distance = maps.get_air_route({'origin_airport_id':request['origin_airport_id'], 'destination_airport_id':request['destination_airport_id'], 'includes':['length']})
-            if air_route_distance and isinstance(air_route_distance, dict):
-                Distance = air_route_distance['length']
-            else:
-                Distance = get_air_distance(origin_location[0],origin_location[1], destination_location[0], destination_location[1])
-        except:
-            Distance = 2500
+        top_three_airline_ids = serviceable_airline_ids[:no_of_airlines]
+    for loc in locations:
+        if loc["id"] == request.get('origin_airport_id'):
+            origin_location = (loc["latitude"], loc["longitude"])
+        if loc["id"] == request.get('destination_airport_id'):
+            destination_location = (loc["latitude"], loc["longitude"])
+    try:
+        air_route_distance = maps.get_air_route({'origin_airport_id':request['origin_airport_id'], 'destination_airport_id':request['destination_airport_id'], 'includes':['length']})
+        if air_route_distance and isinstance(air_route_distance, dict):
+            Distance = air_route_distance['length']
+        else:
+            Distance = get_air_distance(origin_location[0],origin_location[1], destination_location[0], destination_location[1])
+    except:
+        Distance = 2500
     for id in top_three_airline_ids:
         same_parameter = {
             "origin_airport_id": request["origin_airport_id"],
