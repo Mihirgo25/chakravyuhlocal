@@ -13,7 +13,7 @@ import sys
 """
 Example:
         # Initialize a Debezium connector with the Brahmastra configuration
-        brahmastra_connector = Connector(configs.brahmastra_fcl)
+        brahmastra_connector = Connector(configs.brahmastra_fcl_v1)
 
         # Create the connector
         brahmastra_connector.create()
