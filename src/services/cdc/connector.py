@@ -13,7 +13,7 @@ import sys
 """
 Example:
         # Initialize a Debezium connector with the Brahmastra configuration
-        brahmastra_connector = Connector(configs.brahmastra)
+        brahmastra_connector = Connector(configs.brahmastra_fcl)
 
         # Create the connector
         brahmastra_connector.create()
@@ -39,8 +39,8 @@ class Connector:
 
 class Configs:
     def __init__(self) -> None:
-        self.brahmastra = {
-            "name": "brahmastra",
+        self.brahmastra_fcl_v1 = {
+            "name": "brahmastra_fcl_v1",
             "config": {
                 "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
                 "tasks.max": "1",
