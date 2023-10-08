@@ -100,7 +100,7 @@ class FclFreightRateStatistic(BaseModel):
     tag = CharField(max_length=256, index=True, null = True)
     shipment_completed = IntegerField(default = 0)
     shipment_cancelled = IntegerField(default = 0)
-    bas_standard_price_accuracy = FloatField(default = -1)
+    bas_standard_price_accuracy = FloatField(default = 0)
     bas_standard_price_diff_from_selected_rate = FloatField(default=0)
     parent_rate_mode = CharField(index = True, null = True)
 
