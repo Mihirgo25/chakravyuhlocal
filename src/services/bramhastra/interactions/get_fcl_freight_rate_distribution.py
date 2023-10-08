@@ -35,7 +35,7 @@ async def get_fcl_freight_rate_distribution(filters):
         f"""
         ), mode_count as (
             SELECT 
-                mode, 
+                mode as action_mode, 
                 sum(bookings_created) as bookings_created,
                 sum(shipment_cancelled_count + shipment_aborted_count) as shipment_cancelled_count,
                 floor((shipment_cancelled_count/bookings_created)*100,2) as shipment_cancelled_percentage,
@@ -53,11 +53,12 @@ async def get_fcl_freight_rate_distribution(filters):
             FROM brahmastra.{FclFreightRateStatistic._meta.table_name} GROUP BY parent_mode
         )
             SELECT 
-                stats_mode_count.value 
-                mode_count.*, 
+                stats_mode_count.parent_mode as mode,
+                stats_mode_count.value ,
+                mode_count.*
             FROM stats_mode_count
             LEFT JOIN mode_count
-            ON stats_mode_count.parent_mode = mode_count.mode  
+            ON stats_mode_count.parent_mode = mode_count.action_mode  
         """
     )
 
