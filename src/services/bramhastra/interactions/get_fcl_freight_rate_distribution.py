@@ -46,17 +46,18 @@ async def get_fcl_freight_rate_distribution(filters):
                 sum(shipment_confirmed_by_importer_exporter_count)  as shipment_confirmed_by_importer_exporter_count, 
                 floor((shipment_confirmed_by_importer_exporter_count/bookings_created)*100,2) as shipment_confirmed_by_importer_exporter_percentage
             from rate_distribution group by mode
-        ), stats_mode_count as (
-            Select
+        ), stats_mode_count AS (
+            SELECT
                 parent_mode,
-                count(sign) as value
-            from brahmastra.{FclFreightRateStatistic._meta.table_name} group by parent_mode
+                count(sign) AS value
+            FROM brahmastra.{FclFreightRateStatistic._meta.table_name} GROUP BY parent_mode
         )
             SELECT 
-                mode_count.*, 
                 stats_mode_count.value 
-            from mode_count, stats_mode_count
-            where mode_count.mode = stats_mode_count.parent_mode 
+                mode_count.*, 
+            FROM stats_mode_count
+            LEFT JOIN mode_count
+            ON stats_mode_count.parent_mode = mode_count.mode  
         """
     )
 
