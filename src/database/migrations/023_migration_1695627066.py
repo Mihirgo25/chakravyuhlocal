@@ -122,6 +122,7 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.sql(f'ALTER TABLE brahmastra.{CheckoutFclFreightRateStatistic._meta.table_name} DROP COLUMN buy_quotation_id CASCADE;')
 
     # shipment_fcl_freight_rate_statistics
+    migrator.sql(f'Create index shipment_fcl_freight_rate_statistics_shipment_id on brahmastra.{ShipmentFclFreightRateStatistic._meta.table_name} (shipment_id);')
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_serial_id = BigIntegerField(null = True))
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_source = CharField())
     migrator.add_fields(ShipmentFclFreightRateStatistic, containers_count = IntegerField())
@@ -129,7 +130,7 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_state = TextField(null=True))
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_service_id = UUIDField(null=True))
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_cancelled = IntegerField(default=0))
-    migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_cancellation_reason = TextField(default="None", index=True))
+    migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_cancellation_reason = TextField(default="None"))
     migrator.sql(f'Create index shipment_fcl_freight_rate_statistics_shipment_cancellation_reason on brahmastra.{ShipmentFclFreightRateStatistic._meta.table_name} (shipment_cancellation_reason);')
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_completed = IntegerField(default=0))
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_aborted = IntegerField(default=0))
@@ -137,10 +138,8 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_confirmed_by_importer_exporter = IntegerField(default=0))
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_recieved = IntegerField(default=0))
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_source_id = UUIDField(null=True))
-    migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_state = TextField(null=True))
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_created_at = DateTimeTZField(null=True))
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_updated_at = DateTimeTZField(null=True))
-    migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_cancellation_reason = TextField(null=True))
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_service_state = CharField(null=True))
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_service_is_active = CharField(null=True))
     migrator.add_fields(ShipmentFclFreightRateStatistic, shipment_service_created_at = DateTimeTZField(null=True))
