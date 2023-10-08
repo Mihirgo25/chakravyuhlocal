@@ -100,18 +100,18 @@ class FclFreightRateStatistic(BaseModel):
     tag = CharField(max_length=256, index=True, null = True)
     shipment_completed = IntegerField(default = 0)
     shipment_cancelled = IntegerField(default = 0)
-    bas_standard_price_accuracy = FloatField(default = -1)
+    bas_standard_price_accuracy = FloatField(default = 0)
     bas_standard_price_diff_from_selected_rate = FloatField(default=0)
     parent_rate_mode = CharField(index = True, null = True)
 
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()
         return super(FclFreightRateStatistic, self).save(*args, **kwargs)
-
-    def update_force(self, params):
-        for k, v in params.items():
-            setattr(self, k, v)
-        self.save()
+    
+    @classmethod
+    def update(cls, *args, **kwargs):
+        kwargs['updated_at'] = datetime.now()
+        return super().update(*args, **kwargs)
 
     def refresh(self):
         return type(self).get(self._pk_expr())

@@ -15,7 +15,7 @@ from playhouse.postgres_ext import (
     ArrayField,
 )
 from datetime import datetime
-from services.bramhastra.constants import DEFAULT_UUID, DEFAULT_ENUM, GLOBAL_MIN
+from services.bramhastra.constants import DEFAULT_UUID, DEFAULT_ENUM
 from services.bramhastra.enums import FclModes, ImportTypes
 
 
@@ -95,7 +95,7 @@ class FclFreightAction(BaseModel):
     rate_request_state = CharField(null=True, default=DEFAULT_ENUM)
     rate_requested_ids = ArrayField(UUIDField, null=True)
     selected_bas_standard_price = FloatField(default=0, null=True)
-    bas_standard_price_accuracy = FloatField(default=GLOBAL_MIN, null=True) 
+    bas_standard_price_accuracy = FloatField(default=0, null=True) 
     bas_standard_price_diff_from_selected_rate = FloatField(default=0, null=True)
     selected_fcl_freight_rate_statistic_id = BigIntegerField(default=0, null=True)
     selected_rate_id = UUIDField(index=True, null=True, default=DEFAULT_UUID)
@@ -115,6 +115,11 @@ class FclFreightAction(BaseModel):
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()
         return super(FclFreightAction, self).save(*args, **kwargs)
+    
+    @classmethod
+    def update(cls, *args, **kwargs):
+        kwargs['updated_at'] = datetime.now()
+        return super().update(*args, **kwargs)
 
     def refresh(self):
         return type(self).get(self._pk_expr())

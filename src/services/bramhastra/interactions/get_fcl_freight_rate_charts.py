@@ -64,7 +64,7 @@ def get_accuracy(filters, where):
     if where:
         queries.append(" WHERE ")
         queries.append(where)
-        queries.append(f"AND bas_standard_price_accuracy != {sys.float_info.max}")
+        queries.append(f"AND bas_standard_price_accuracy != 0")
 
     queries.append("""GROUP BY parent_mode,day ORDER BY day,mode;""")
 
