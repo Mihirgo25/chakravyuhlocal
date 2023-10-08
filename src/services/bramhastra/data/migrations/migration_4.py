@@ -6,8 +6,6 @@ from services.bramhastra.models.air_freight_rate_statistic import (
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
-from services.chakravyuh.models.worker_log import WorkerLog
-from database.db_migration import run_migration
 from services.bramhastra.constants import INDIAN_LOCATION_ID
 from datetime import datetime
 from services.bramhastra.enums import BrahmastraTrackModuleTypes, BrahmastraTrackStatus
@@ -87,8 +85,6 @@ def main():
         ignore_oltp=True,
     ).create()
 
-    WorkerLog.delete().execute()
-
     print("started inserting fcl")
 
     execute_fcl(click)
@@ -135,8 +131,6 @@ def execute_fcl(click):
         "ended_at": datetime.utcnow(),
     }
 
-    WorkerLog.create(**params)
-
 
 def execute_air(click):
     started_at = datetime.utcnow()
@@ -158,8 +152,6 @@ def execute_air(click):
         "status": BrahmastraTrackStatus.completed.value,
         "ended_at": datetime.utcnow(),
     }
-
-    WorkerLog.create(**params)
 
 
 if __name__ == "__main__":
