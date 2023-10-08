@@ -185,7 +185,7 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     closed_by_id: str = None
     likes_count: int = None
     dislikes_count: int = None
-    closing_remarks: list[str]
+    closing_remarks: list[str] = None
     is_rate_reverted: bool = None
     status: str = "active"
 
