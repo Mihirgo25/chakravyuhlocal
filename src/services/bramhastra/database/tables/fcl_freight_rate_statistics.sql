@@ -443,5 +443,5 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
         parent_rate_mode String
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (is_deleted ,origin_continent_id,origin_country_id,origin_port_id,shipping_line_id,rate_id,validity_id, id, version)
-ORDER BY (is_deleted, origin_continent_id,origin_country_id,origin_port_id,shipping_line_id,rate_id,validity_id, id, version);
+PRIMARY KEY (is_deleted ,origin_continent_id,origin_country_id,origin_port_id,shipping_line_id,rate_id,validity_id, id, tag, price, bas_standard_price, version)
+ORDER BY (is_deleted ,origin_continent_id,origin_country_id,origin_port_id,shipping_line_id,rate_id,validity_id, id, tag, price, bas_standard_price, version);

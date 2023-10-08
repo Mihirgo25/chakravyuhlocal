@@ -57,7 +57,6 @@ def main():
                 ShipmentFclFreightRateStatistic,
                 DataMigration,
                 FclFreightAction,
-                WorkerLog,
             ]
         )
     except Exception:
