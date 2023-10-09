@@ -15,6 +15,7 @@ class AirCustomsRateJobMapping(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     source =  TextField(index=True)
     source_id = UUIDField(index=True, null=True)
+    shipment_id = UUIDField(index=True, null=True)
     status = TextField(index=True, null=True)
     job_id = ForeignKeyField(AirCustomsRateJob,to_field="id")
     created_at = DateField(default=datetime.datetime.now)
