@@ -9,6 +9,14 @@ POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_
 
 
 def delete_haulage_freight_rate_job(request):
+    
+    if request.get("source_id"):
+        job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.source_id == request['source_id'])]
+        update_mapping('completed', job_ids) 
+        request['data'] = {"reverted_flash_booking_ids": request.get('source_id')}
+        create_audit(job_ids, request)
+        return {"id": job_ids}
+    
     if request.get('closing_remarks') and request.get('closing_remarks') in POSSIBLE_CLOSING_REMARKS:
         update_params = {'status':'aborted', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now(), "closing_remarks": request.get('closing_remarks')}
     else:
@@ -25,8 +33,8 @@ def delete_haulage_freight_rate_job(request):
         job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.source_id << request['trailer_freight_rate_request_ids'])]
     elif request.get("id"):
         job_ids = request.get("id")
-    elif request.get("source_id"):
-        job_ids = request.get('source_id')
+    elif request.get("shipment_id"):
+        job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.shipment_id == request['shipment_id'])]
 
  
 

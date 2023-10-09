@@ -8,6 +8,13 @@ from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
 POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_in_rate']
 
 def delete_ftl_freight_rate_job(request):
+    
+    if request.get("source_id"):
+        job_ids = [ str(job.job_id) for job in FtlFreightRateJobMapping.select(FtlFreightRateJobMapping.job_id).where(FtlFreightRateJobMapping.source_id == request['source_id'])]
+        update_mapping('completed', job_ids) 
+        request['data'] = {"reverted_flash_booking_ids": request.get('source_id')}
+        create_audit(job_ids, request)
+        return {"id": job_ids}
 
     if isinstance(request.get("closing_remarks"), list):
         request["closing_remarks"] = request.get("closing_remarks")[0]
@@ -24,8 +31,8 @@ def delete_ftl_freight_rate_job(request):
         job_ids = [ str(job.job_id) for job in FtlFreightRateJobMapping.select(FtlFreightRateJobMapping.job_id).where(FtlFreightRateJobMapping.source_id << request['ftl_freight_rate_request_ids'])]
     elif request.get("id"):
         job_ids = request.get("id")
-    elif request.get("source_id"):
-        job_ids = request.get('source_id')
+    elif request.get("shipment_id"):
+        job_ids = [ str(job.job_id) for job in FtlFreightRateJobMapping.select(FtlFreightRateJobMapping.job_id).where(FtlFreightRateJobMapping.shipment_id == request['shipment_id'])]
     
     if not isinstance(job_ids, list):
         job_ids = [job_ids]
