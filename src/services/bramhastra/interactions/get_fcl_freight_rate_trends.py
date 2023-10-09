@@ -14,7 +14,7 @@ from services.bramhastra.enums import MapsFilter
 ALLOWED_TIME_PERIOD = 6
 
 DEFAULT_AGGREGATE_SELECT = {
-    "average_price": "AVG(abs(standard_price))",
+    "average_price": "(SUM(standard_price*sign)/COUNT(DISTINCT id))",
     "min_price": "MIN(standard_price)",
     "max_price": "MAX(standard_price)",
 }
@@ -53,7 +53,7 @@ def get_rate(filters: dict) -> list:
     interval = ALLOWED_FREQUENCY_TYPES[filters.get("frequency", "day")]
 
     queries = [
-        f"""SELECT parent_mode as mode,{interval} AS day,{aggregate_select} FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,standard_price,parent_mode,sign FROM brahmastra.fcl_freight_rate_statistics"""
+        f"""SELECT parent_mode as mode,{interval} AS day,{aggregate_select} FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,standard_price,parent_mode,sign,id FROM brahmastra.fcl_freight_rate_statistics"""
     ]
 
     location_object = dict()
@@ -62,8 +62,8 @@ def get_rate(filters: dict) -> list:
         MapsFilter.destination_port_code.value
     ):
         set_port_code_filters_and_service_object(filters, location_object)
-        
-    where = get_direct_indirect_filters(filters)
+
+    where = get_direct_indirect_filters(filters, date=None)
 
     if where:
         queries.append(" WHERE ")
@@ -82,7 +82,11 @@ def get_rate(filters: dict) -> list:
 
 
 def format_charts(charts: list, filters: dict) -> list:
-    NEEDED_MODES = {filters.get("mode")} if filters.get("mode") else {i.value for i in FclParentMode}
+    NEEDED_MODES = (
+        {filters.get("mode")}
+        if filters.get("mode")
+        else {i.value for i in FclParentMode}
+    )
 
     return format_response(charts, filters, NEEDED_MODES)
 
@@ -107,10 +111,13 @@ def format_response(response: list, filters: dict, needed_modes: list) -> list:
         response_dict[day].update(
             {entry["mode"]: {k: entry[k] for k in DEFAULT_AGGREGATE_SELECT}}
         )
-        
+
     exchange_rate = 1
-    
-    if filters.get("currency") and filters.get("currency") != Fcl.default_currency.value:
+
+    if (
+        filters.get("currency")
+        and filters.get("currency") != Fcl.default_currency.value
+    ):
         exchange_rate = common.get_exchange_rate(
             {
                 "from_currency": Fcl.default_currency.value,

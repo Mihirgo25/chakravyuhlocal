@@ -7,25 +7,34 @@ from fastapi.encoders import jsonable_encoder
 from services.bramhastra.models.fcl_freight_rate_request_statistics import (
     FclFreightRateRequestStatistic,
 )
+from services.bramhastra.enums import RequestAction, Status
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.bramhastra.enums import RateRequestState
+
+import uuid
+
+EXCLUDE_UPDATE_KEYS = {
+    FclFreightRateRequestStatistic.rate_request_id.name,
+    FclFreightRateRequestStatistic.origin_continent_id.name,
+    FclFreightRateRequestStatistic.destination_continent_id.name,
+    FclFreightRateRequestStatistic.origin_country_id.name,
+    FclFreightRateRequestStatistic.destination_country_id.name,
+    FclFreightRateRequestStatistic.origin_trade_id.name,
+    FclFreightRateRequestStatistic.destination_trade_id.name,
+    FclFreightRateRequestStatistic.origin_port_id.name,
+    FclFreightRateRequestStatistic.destination_port_id.name,
+    FclFreightRateRequestStatistic.origin_pricing_zone_map_id.name,
+    FclFreightRateRequestStatistic.destination_pricing_zone_map_id.name,
+    FclFreightRateRequestStatistic.container_size.name,
+    FclFreightRateRequestStatistic.containers_count.name,
+    FclFreightRateRequestStatistic.commodity.name,
+}
+
 
 class Request:
     def __init__(self, params) -> None:
         self.params = params if isinstance(params, dict) else dict(params)
 
-        self.exclude_keys = {
-            "rate_request_id",
-            "origin_country_id",
-            "origin_trade_id",
-            "origin_continent_id",
-            "destination_country_id",
-            "destination_trade_id",
-            "destination_continent_id",
-            "origin_region_id",
-            "destination_region_id",
-            "container_size",
-            "container_type",
-            "commodity",
-        }
         self.missing_locations = dict()
 
         self.set_missing_locations()
@@ -105,20 +114,76 @@ class Request:
             "destination_pricing_zone_map_id"
         ] = map_zone_location_mapping.get(self.params.get("destination_port_id"))
 
-    def set_new_stats(self) -> int:
+    def create(self) -> int:
         return FclFreightRateRequestStatistic(**self.params).save()
 
-    def set_existing_stats(self) -> None:
+    def update_fcl_freight_action(self, action) -> None:
+        fcl_freight_action = self.get_fcl_freight_action()
+        if fcl_freight_action is None:
+            return
+        if action == RequestAction.create.name:
+            setattr(
+                fcl_freight_action,
+                FclFreightAction.rate_request_state.name,
+                RateRequestState.created.name,
+            )
+            rate_requested_ids = getattr(
+                fcl_freight_action, FclFreightAction.rate_requested_ids.name
+            )
+            if not rate_requested_ids:
+                rate_requested_ids = [
+                    self.params.get(FclFreightRateRequestStatistic.rate_request_id.name)
+                ]
+            else:
+                rate_requested_ids.append(
+                    self.params.get(FclFreightRateRequestStatistic.rate_request_id.name)
+                )
+            rate_requested_ids = [
+                uuid.UUID(uuid_str) if isinstance(uuid_str, str) else uuid_str
+                for uuid_str in rate_requested_ids
+            ]
+            setattr(
+                fcl_freight_action,
+                FclFreightAction.rate_requested_ids.name,
+                rate_requested_ids,
+            )
+        else:
+            if self.params.get("status") == Status.inactive.value:
+                setattr(
+                    fcl_freight_action,
+                    FclFreightAction.rate_request_state.name,
+                    RateRequestState.closed.name,
+                )
+            if self.params.get(FclFreightRateRequestStatistic.is_rate_reverted.name):
+                setattr(
+                    fcl_freight_action,
+                    FclFreightAction.rate_request_state.name,
+                    RateRequestState.rate_added.name,
+                )
+        setattr(
+            fcl_freight_action,
+            FclFreightAction.updated_at.name,
+            self.params.get(FclFreightRateRequestStatistic.updated_at.name),
+        )
+        fcl_freight_action.save()
+
+    def get_fcl_freight_action(self):
+        return (
+            FclFreightAction.select()
+            .where(FclFreightAction.spot_search_id == self.params.get("source_id"))
+            .first()
+        )
+
+    def update_statistics(self) -> None:
         if (
             request := FclFreightRateRequestStatistic.select()
             .where(
                 FclFreightRateRequestStatistic.rate_request_id
-                == self.params.get("rate_request_id")
+                == self.params.get(FclFreightRateRequestStatistic.rate_request_id.name)
             )
             .first()
         ):
             for k, v in self.params.items():
-                if k not in self.exclude_keys:
+                if k not in EXCLUDE_UPDATE_KEYS:
                     setattr(request, k, v)
             request.save()
-            return

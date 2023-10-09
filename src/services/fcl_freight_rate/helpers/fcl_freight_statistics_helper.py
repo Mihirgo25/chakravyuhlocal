@@ -28,7 +28,6 @@ def send_rate_stats(action, request, freight):
                     FclFreightRate.destination_trade_id,
                     FclFreightRate.shipping_line_id,
                     FclFreightRate.service_provider_id,
-                    FclFreightRate.accuracy,
                     FclFreightRate.validities,
                     FclFreightRate.mode,
                     FclFreightRate.commodity,
@@ -67,7 +66,7 @@ def send_rate_stats(action, request, freight):
             pass
 
         for k, v in request.items():
-            if k in {"source_id", "source","performed_by_id","performed_by_type"}:
+            if k in {"source_id", "source","performed_by_id","performed_by_type","tag"}:
                 object[k] = v
                 
         apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(action = action,params = {'freight': object}))
@@ -84,8 +83,6 @@ def send_request_stats(action, obj):
         from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
 
         if action == "create":
-            obj = obj.refresh()
-
             obj = model_to_dict(
                 obj,
                 only=[
@@ -135,8 +132,6 @@ def send_feedback_statistics(action, feedback, request=None):
             FclFreightRateFeedback,
         )
 
-        feedback = feedback.refresh()
-
         object = jsonable_encoder(
             model_to_dict(
                 feedback,
@@ -182,8 +177,6 @@ def send_feedback_delete_stats(obj):
         from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
         from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import apply_feedback_fcl_freight_rate_statistic
 
-        obj = obj.refresh()
-
         action = "delete"
         params = jsonable_encoder(
             model_to_dict(
@@ -194,7 +187,9 @@ def send_feedback_delete_stats(obj):
                     FclFreightRateFeedback.closed_by_id,
                     FclFreightRateFeedback.closing_remarks,
                     FclFreightRateFeedback.fcl_freight_rate_id,
-                    FclFreightRateFeedback.validity_id
+                    FclFreightRateFeedback.validity_id,
+                    FclFreightRateFeedback.source,
+                    FclFreightRateFeedback.source_id,
                 ],
             )
         )
@@ -211,8 +206,6 @@ def send_request_delete_stats(obj):
             FclFreightRateRequest,
         )
         from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
-
-        obj = obj.refresh()
 
         action = "delete"
 
