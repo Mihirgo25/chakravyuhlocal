@@ -303,8 +303,11 @@ class CreateFtlFreightRateJob(BaseModel):
 class DeleteFtlFreightRateJob(BaseModel):
     id: str = None
     closing_remarks: list[str] = None
+    data: dict = {}
     ftl_freight_rate_feedback_ids: list[str] = None
     ftl_freight_rate_request_ids: list[str] = None
+    reverted_flash_booking_ids: list[str] = None
+    flash_booking_ids: list[str] = None
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None

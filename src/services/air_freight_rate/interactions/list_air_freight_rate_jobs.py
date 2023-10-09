@@ -97,6 +97,7 @@ def get_data(query):
         if mappings_data:
             d['source_id'] = mappings_data.source_id
             d['shipment_id'] = mappings_data.shipment_id
+            d['reverted_status'] = mappings_data.status
     return data
 
 

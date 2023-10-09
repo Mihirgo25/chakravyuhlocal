@@ -59,6 +59,7 @@ def execute_transaction_code(request, source):
 def set_jobs_mapping(jobs_id, request, source):
     mapping_id = LtlFreightRateJobMapping.create(
         source_id=request.get("source_id"),
+        shipment_id=request.get("shipment_id"),
         job_id= jobs_id,
         source = source,
         status = 'pending'

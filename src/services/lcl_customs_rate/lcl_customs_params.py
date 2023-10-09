@@ -16,6 +16,9 @@ class CreateLclCustomsRateJob(BaseModel):
 class DeleteLclCustomsRateJob(BaseModel):
     id: str = None
     closing_remarks: list[str] = None
+    data: dict = {}
+    reverted_flash_booking_ids: list[str] = None
+    flash_booking_ids: list[str] = None
     lcl_customs_rate_feedback_ids: list[str] = None
     lcl_customs_rate_request_ids: list[str] = None
     rate_id: str = None

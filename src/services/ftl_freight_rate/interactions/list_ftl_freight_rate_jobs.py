@@ -1,4 +1,5 @@
 from services.ftl_freight_rate.models.ftl_freight_rate_jobs import FtlFreightRateJob
+from services.ftl_freight_rate.models.ftl_freight_rate_job_mappings import FtlFreightRateJobMapping
 from services.ftl_freight_rate.helpers.generate_csv_file_url_for_ftl import (
     generate_csv_file_url_for_ftl,
 )
@@ -84,7 +85,14 @@ def list_ftl_freight_rate_jobs(
 
 
 def get_data(query):
-    return list(query.dicts())
+    data = list(query.dicts())
+    for d in data:
+        mappings_data = FtlFreightRateJobMapping.select(FtlFreightRateJobMapping.source_id, FtlFreightRateJobMapping.shipment_id).where(FtlFreightRateJobMapping.job_id == d['id']).first()
+        if mappings_data:
+            d['source_id'] = mappings_data.source_id
+            d['shipment_id'] = mappings_data.shipment_id
+            d['reverted_status'] = mappings_data.status
+    return data
 
 
 def includes_filter(includes):

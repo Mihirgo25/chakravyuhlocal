@@ -80,12 +80,11 @@ def list_lcl_freight_rate_jobs(
 def get_data(query):
     data = list(query.dicts())
     for d in data:
-        source_id = (
-            LclFreightRateJobMapping.select(LclFreightRateJobMapping.source_id)
-            .where(LclFreightRateJobMapping.job_id == d["id"])
-            .first()
-        )
-        d["source_id"] = source_id.source_id
+        mappings_data = LclFreightRateJobMapping.select(LclFreightRateJobMapping.source_id, LclFreightRateJobMapping.shipment_id).where(LclFreightRateJobMapping.job_id == d['id']).first()
+        if mappings_data:
+            d['source_id'] = mappings_data.source_id
+            d['shipment_id'] = mappings_data.shipment_id
+            d['reverted_status'] = mappings_data.status
     return data
 
 

@@ -1,6 +1,9 @@
 from services.air_freight_rate.models.air_freight_rate_local_jobs import (
     AirFreightRateLocalJob,
 )
+from services.air_freight_rate.models.air_freight_rate_local_jobs_mapping import (
+    AirFreightRateLocalJobMapping,
+)
 from services.air_freight_rate.helpers.generate_csv_file_url_for_air_locals import (
     generate_csv_file_url_for_air_locals,
 )
@@ -86,7 +89,14 @@ def list_air_freight_rate_local_jobs(
 
 
 def get_data(query):
-    return list(query.dicts())
+    data = list(query.dicts())
+    for d in data:
+        mappings_data = AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.source_id, AirFreightRateLocalJobMapping.shipment_id).where(AirFreightRateLocalJobMapping.job_id == d['id']).first()
+        if mappings_data:
+            d['source_id'] = mappings_data.source_id
+            d['shipment_id'] = mappings_data.shipment_id
+            d['reverted_status'] = mappings_data.status
+    return data
 
 
 def includes_filters(includes):

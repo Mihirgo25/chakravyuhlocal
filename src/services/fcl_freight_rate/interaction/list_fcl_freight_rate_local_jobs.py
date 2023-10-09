@@ -1,6 +1,9 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local_jobs import (
     FclFreightRateLocalJob,
 )
+from services.fcl_freight_rate.models.fcl_freight_rate_local_job_mappings import (
+    FclFreightRateLocalJobMapping,
+)
 from services.fcl_freight_rate.helpers.generate_csv_file_url_for_fcl_locals import (
     generate_csv_file_url_for_fcl_local,
 )
@@ -82,7 +85,14 @@ def list_fcl_freight_rate_local_jobs(
 
 
 def get_data(query):
-    return list(query.dicts())
+    data = list(query.dicts())
+    for d in data:
+        mappings_data = FclFreightRateLocalJobMapping.select(FclFreightRateLocalJobMapping.source_id, FclFreightRateLocalJobMapping.shipment_id).where(FclFreightRateLocalJobMapping.job_id == d['id']).first()
+        if mappings_data:
+            d['source_id'] = mappings_data.source_id
+            d['shipment_id'] = mappings_data.shipment_id
+            d['reverted_status'] = mappings_data.status
+    return data
 
 
 def includes_filter(includes):

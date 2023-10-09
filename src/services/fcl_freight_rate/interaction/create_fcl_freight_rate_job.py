@@ -73,7 +73,7 @@ def set_jobs_mapping(jobs_id, request, source):
         shipment_id=request.get("shipment_id"),
         job_id= jobs_id,
         source = source,
-        status = 'pending'
+        status = 'pending',
     )
     return mapping_id
 
