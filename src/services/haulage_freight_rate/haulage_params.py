@@ -211,8 +211,8 @@ class DeleteHaulageFreightRateJob(BaseModel):
     id: str = None
     closing_remarks: str = None
     data: dict = {}
-    reverted_flash_booking_ids: list[str] = None
-    flash_booking_ids: list[str] = None
+    source_id: str = None
+    shipment_id: str = None
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
