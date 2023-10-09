@@ -33,54 +33,34 @@ def relevant_shipping_lines(request):
     return SHIPPING_LINES_FOR_PREDICTION
 
 
-def get_fcl_freight_predicted_rate(request):
+def get_fcl_freight_predicted_rate(request, servicable_shipping_lines):
     from celery_worker import create_fcl_freight_rate_feedback_for_prediction
-    if type(request) == dict:
-        request = request
-    else:
+    if type(request) != dict:
         request = request.__dict__
-    
-    location_data = maps.list_locations_mapping({'location_id':[request['origin_port_id'],request['destination_port_id']],'type':['main_ports']})
-    if location_data and isinstance(location_data, dict):
-        location_data = location_data['list']
-    else:
-        location_data = []
-
-    origin_main_port_ids = []
-    destination_main_port_ids = []
-
-    for loc in location_data:
-        if loc['icd_port_id'] == request['origin_port_id']:
-            origin_main_port_ids.append(loc['id'])
-        elif loc['icd_port_id'] == request['destination_port_id']:
-            destination_main_port_ids.append(loc['id'])
-
-    if len(origin_main_port_ids) == 0:
-        origin_main_port_ids.append(request['origin_port_id'])
-    elif len(origin_main_port_ids) > 2:
-        origin_main_port_ids = origin_main_port_ids[:2]
-        
-    if len(destination_main_port_ids) == 0:
-        destination_main_port_ids.append(request['destination_port_id'])
-    elif len(destination_main_port_ids) > 2:
-        destination_main_port_ids = destination_main_port_ids[:2]
-
-    all_shipping_lines = relevant_shipping_lines(request)
-    if request.get('shipping_line_id'):
-        all_shipping_lines = [request.get('shipping_line_id')]
 
     data_for_feedback = []
-    for origin_port_id in origin_main_port_ids:
-        for destination_port_id in destination_main_port_ids:
-            ports_distance = maps.get_sea_route({'origin_port_id':origin_port_id, 'destination_port_id':destination_port_id, 'includes':['length']})
-            if ports_distance and isinstance(ports_distance, dict):
-                ports_distance = ports_distance['length']['length']
-            else:
-                port_dict = joblib.load(open(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "seaports_dict.pkl") , "rb"))
-                ports_distance = get_distance(port_dict.get(request['origin_port_id']), port_dict.get(request['destination_port_id']))
-            with concurrent.futures.ThreadPoolExecutor(max_workers = len(all_shipping_lines)) as executor:
-                futures = [executor.submit(predict_rates, origin_port_id, destination_port_id, shipping_line_id, request, ports_distance) for shipping_line_id in all_shipping_lines]
-            data_for_feedback.extend(futures)
+
+    for hash in servicable_shipping_lines:
+        if not hash.get('shipping_lines'):
+            continue
+        
+        origin_port_id = hash.get('origin_main_port_id') or hash.get('origin_port_id')
+        destination_port_id = hash.get('destination_main_port_id') or hash.get('destination_port_id')
+        
+        if request.get('shipping_line_id') and request['shipping_line_id'] in hash['shipping_lines']:
+            all_shipping_lines = [request['shipping_line_id']]
+        else:
+            all_shipping_lines = hash.get('shipping_lines')
+        
+        ports_distance = maps.get_sea_route({'origin_port_id': origin_port_id, 'destination_port_id': destination_port_id, 'includes':['length']})
+        if ports_distance and isinstance(ports_distance, dict):
+            ports_distance = ports_distance['length']['length']
+        else:
+            port_dict = joblib.load(open(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "seaports_dict.pkl") , "rb"))
+            ports_distance = get_distance(port_dict.get(request['origin_port_id']), port_dict.get(request['destination_port_id']))
+        with concurrent.futures.ThreadPoolExecutor(max_workers = len(all_shipping_lines)) as executor:
+            futures = [executor.submit(predict_rates, origin_port_id, destination_port_id, shipping_line_id, request, ports_distance) for shipping_line_id in all_shipping_lines]
+        data_for_feedback.extend(futures)
 
     for i in range(len(data_for_feedback)):
         data_for_feedback[i] = data_for_feedback[i].result()
