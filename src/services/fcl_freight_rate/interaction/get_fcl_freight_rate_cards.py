@@ -17,6 +17,7 @@ import traceback
 from libs.get_conditional_line_items import get_filtered_line_items
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
 from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_predicted_fcl_freight_rate_delay
+from services.chakravyuh.interaction.get_shipping_lines_for_prediction import get_serviceable_shipping_lines
 
 def initialize_freight_query(requirements, prediction_required = False, get_cogo_assured=False):
     freight_query = FclFreightRate.select(
@@ -711,9 +712,9 @@ def post_discard_noneligible_rates(freight_rates, requirements):
     # freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
     return freight_rates
 
-def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted):
+def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, servicable_shipping_lines = []):
     try:
-        get_fcl_freight_rates_from_clusters(requirements)
+        get_fcl_freight_rates_from_clusters(requirements, servicable_shipping_lines)
     except:
         pass
     initial_query = initialize_freight_query(requirements)
@@ -724,7 +725,7 @@ def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted):
         freight_rates = cluster_freight_rates
     
     if len(freight_rates) == 0:
-        get_fcl_freight_predicted_rate(requirements)
+        get_fcl_freight_predicted_rate(requirements, servicable_shipping_lines)
         initial_query = initialize_freight_query(requirements, True)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
         freight_rates = discard_noneligible_shipping_lines(freight_rates, {})
@@ -886,12 +887,16 @@ def get_fcl_freight_rate_cards(requirements):
         }]
     """
     try:
-        initial_query = initialize_freight_query(requirements, get_cogo_assured=True)
-        freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future_freight_rates = executor.submit(get_all_rates, requirements)
+            future_serviceable_shipping_lines = executor.submit(get_serviceable_shipping_lines, requirements)
+
+        freight_rates = future_freight_rates.result()
+        servicable_shipping_lines = future_serviceable_shipping_lines.result()
         
         cogo_assured_rates, supply_rates = break_rates(freight_rates)
         
-        supply_rates, is_predicted = get_freight_rates(supply_rates, requirements)
+        supply_rates, is_predicted = get_freight_rates(supply_rates, requirements, servicable_shipping_lines)
         
         freight_rates = supply_rates + cogo_assured_rates
         
@@ -928,8 +933,15 @@ def get_fcl_freight_rate_cards(requirements):
         return {
             "list": []
         }
-        
-def get_freight_rates(supply_rates, requirements):
+
+def get_all_rates(requirements):
+    initial_query = initialize_freight_query(requirements, get_cogo_assured=True)
+    freight_rates = jsonable_encoder(list(initial_query.dicts()))  
+    
+    return freight_rates
+
+      
+def get_freight_rates(supply_rates, requirements, servicable_shipping_lines):
     freight_rates = pre_discard_noneligible_rates(supply_rates, requirements)
     is_predicted = False
     
@@ -939,7 +951,7 @@ def get_freight_rates(supply_rates, requirements):
 
     are_all_rates_predicted = all_rates_predicted(freight_rates)
     if len(freight_rates) == 0 or are_all_rates_predicted:
-        freight_rates, is_predicted = get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted)
+        freight_rates, is_predicted = get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, servicable_shipping_lines)
         
     freight_rates, is_predicted = filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted)
     
