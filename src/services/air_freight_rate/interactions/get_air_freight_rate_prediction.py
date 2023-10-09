@@ -38,6 +38,8 @@ def get_air_freight_rate_prediction(request):
 
     density_category = get_density_category(request.get('weight'), request.get('volume'), request.get('trade_type'))
     params = get_params_for_model(request,locations)
+    if not params:
+        return
     results = []
     for param in params:
         try:
@@ -139,10 +141,11 @@ def get_chargeable_weight(weight,volume):
 def get_params_for_model(request, locations):
     params = []
     serviceable_airline_ids = get_saas_schedules_airport_pair_coverages(request.get('origin_airport_id'),request.get('destination_airport_id'))
-    top_three_airline_ids = DEFAULT_AIRLINE_IDS
     no_of_airlines = 3
     if serviceable_airline_ids:
         top_three_airline_ids = serviceable_airline_ids[:no_of_airlines]
+    else:
+        return params
     for loc in locations:
         if loc["id"] == request.get('origin_airport_id'):
             origin_location = (loc["latitude"], loc["longitude"])
