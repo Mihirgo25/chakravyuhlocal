@@ -59,7 +59,7 @@ class Configs:
                 "value.converter.schemas.enable": "false",
                 "snapshot.mode": "always",
                 "topic.prefix": "arc",
-                "table.include.list": "public.fcl_freight_rate_statistics,public.fcl_freight_actions,public.feedback_fcl_freight_rate_statistics,public.fcl_freight_rate_request_statistics"
+                "table.include.list": "public.fcl_freight_rate_statistics_temp,public.fcl_freight_actions,public.feedback_fcl_freight_rate_statistics,public.fcl_freight_rate_request_statistics"
             },
         }
 
