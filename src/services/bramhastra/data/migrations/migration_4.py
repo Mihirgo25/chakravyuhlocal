@@ -42,6 +42,9 @@ from database.create_clicks import Clicks
 
 def main():
     print("running migration")
+    
+    
+    db.execute_sql(f'TRUNCATE TABLE {FclFreightAction._meta.table_name} RESTART IDENTITY;')
 
     try:
         db.create_tables(
