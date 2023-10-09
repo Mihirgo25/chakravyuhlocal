@@ -86,6 +86,10 @@ def get_spot_search_to_checkout_count(filters, where):
 
     statistics = clickhouse.execute(" ".join(queries), filters)[0]
 
+    statistics["spot_search_to_checkout_count"] = round(
+        statistics["spot_search_to_checkout_count"], 2
+    )
+
     if math.isnan(statistics["spot_search_to_checkout_count"]):
         statistics["spot_search_to_checkout_count"] = 0
 
