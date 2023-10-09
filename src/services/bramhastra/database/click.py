@@ -7,7 +7,7 @@ import peewee
 FILES_WITH_KAFKA = [
     "fcl_freight_actions.sql",
     "fcl_freight_rate_request_statistics.sql",
-    "fcl_freight_rate_statistics.sql",
+    "fcl_freight_rate_statistics_temp.sql",
     "feedback_fcl_freight_rate_statistics.sql",
 ]
 
