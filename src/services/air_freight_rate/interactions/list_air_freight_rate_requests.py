@@ -50,8 +50,8 @@ def list_air_freight_rate_requests(filters = {}, page_limit = 10, page = 1, perf
 
         if str(value['performed_by_org_id']) in IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE:
             value['service_provider'] = 'FREIGHT_FORCE'
-        elif str(object['performed_by_org_id']) in IMPORTER_EXPORTER_ID_FOR_ENTERPRISE_SALES:
-            object['service_provider'] = 'ENTERPRISE_SALES'
+        elif str(value['performed_by_org_id']) in IMPORTER_EXPORTER_ID_FOR_ENTERPRISE_SALES:
+            value['service_provider'] = 'ENTERPRISE_SALES'
 
 
 
