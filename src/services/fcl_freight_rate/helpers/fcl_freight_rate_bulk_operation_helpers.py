@@ -71,7 +71,7 @@ def get_total_affected_rates(id, total_affected_rates = 0):
     else: 
         return total_affected_rates
     
-def get_common_create_params(data,bulk_operation_id, performed_by_id, sourced_by_id, procured_by_id,freight,validity_start,validity_end,is_system_operation):
+def get_common_create_params(data,bulk_operation_id, performed_by_id, sourced_by_id, procured_by_id,freight,is_system_operation):
     freight_rate_object = {
             'origin_port_id': str(freight["origin_port_id"]),
             'origin_main_port_id': str(freight["origin_main_port_id"]) if freight['origin_main_port_id'] else None,
@@ -88,8 +88,6 @@ def get_common_create_params(data,bulk_operation_id, performed_by_id, sourced_by
             'performed_by_id': performed_by_id,
             'sourced_by_id': str(freight['sourced_by_id']) if  is_system_operation else sourced_by_id,
             'procured_by_id': str(freight['procured_by_id']) if  is_system_operation else procured_by_id,
-            'validity_start': validity_start,
-            'validity_end': validity_end,
             'source': 'bulk_operation',
             'mode':freight['mode'],
             'rate_type': freight['rate_type'],

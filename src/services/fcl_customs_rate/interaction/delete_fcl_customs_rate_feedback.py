@@ -2,7 +2,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate_feedback import FclCustom
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from database.db_session import db
 from fastapi import HTTPException
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def delete_fcl_customs_rate_feedback(request):
   with db.atomic():

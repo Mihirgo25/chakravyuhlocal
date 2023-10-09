@@ -4,7 +4,7 @@ from database.db_session import db
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import maps
 from celery_worker import create_communication_background
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
 
 def create_air_customs_rate_request(request):

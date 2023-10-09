@@ -494,9 +494,7 @@ def valid_weight_slabs(freight_rates, requirements):
 
 
 def get_air_freight_rate_cards(requirements):
-
     try:
-
         if requirements['commodity'] =='general':
             if requirements.get('commodity_subtype'):
                 requirements['commodity_subtype'] = requirements['commodity_subtype']
@@ -537,18 +535,3 @@ def get_air_freight_rate_cards(requirements):
         return {
             "list": []
         }
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    
-
