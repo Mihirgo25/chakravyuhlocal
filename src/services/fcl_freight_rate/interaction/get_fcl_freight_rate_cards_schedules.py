@@ -283,9 +283,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
                 "request_source":"spot_search"
             }
 
-            breakpoint()
             schedules = maps.get_sailing_schedules(data)
-            breakpoint()
             
             return [
                 {
