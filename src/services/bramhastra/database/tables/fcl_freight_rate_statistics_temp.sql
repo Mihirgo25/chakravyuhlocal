@@ -3,9 +3,9 @@ CREATE TABLE brahmastra.kafka_fcl_freight_rate_statistics
 (
     `data` String
 )
-ENGINE = Kafka('127.0.0.1:29092', 'arc.public.fcl_freight_rate_statistics', '001','JSONAsString');
+ENGINE = Kafka('127.0.0.1:29092', 'arc.public.fcl_freight_rate_statistics_temp', '001','JSONAsString');
 
-CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_rate_statistics TO brahmastra.fcl_freight_rate_statistics
+CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_rate_statistics TO brahmastra.fcl_freight_rate_statistics_temp
 (
     `id` UInt256,
     `identifier` FixedString(256),
@@ -180,7 +180,7 @@ SELECT
     FROM brahmastra.kafka_fcl_freight_rate_statistics
     WHERE JSONExtractString(data, 'before') IS NOT NULL AND JSONExtractString(data,'op') = 'u';
 
-CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_statistics TO brahmastra.fcl_freight_rate_statistics
+CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_statistics TO brahmastra.fcl_freight_rate_statistics_temp
 (
     `id` UInt256,
     `identifier` FixedString(256),
@@ -355,7 +355,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_statistics TO brahmas
 FROM brahmastra.kafka_fcl_freight_rate_statistics  
 WHERE JSONExtractString(data, 'after') IS NOT NULL AND JSONExtractString(data,'op') in ('c','u');
 
-CREATE TABLE brahmastra.fcl_freight_rate_statistics
+CREATE TABLE brahmastra.fcl_freight_rate_statistics_temp
 (
         id UInt256,
         identifier FixedString(256),

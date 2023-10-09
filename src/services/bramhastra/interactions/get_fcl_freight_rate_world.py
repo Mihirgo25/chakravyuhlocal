@@ -18,7 +18,7 @@ async def get_fcl_freight_rate_world(filters):
 
 
 async def get_total_count():
-    query = "SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.fcl_freight_rate_statistics WHERE validity_end >= toDate(now())"
+    query = f"SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE validity_end >= toDate(now())"
     clickhouse = ClickHouse()
     if result := clickhouse.execute(query):
         return result[0]["count"]

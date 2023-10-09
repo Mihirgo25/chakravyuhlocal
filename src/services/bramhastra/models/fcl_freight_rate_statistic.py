@@ -129,4 +129,4 @@ class FclFreightRateStatistic(BaseModel):
     IMPORT_TYPE = ImportTypes.csv.value
 
     class Meta:
-        table_name = "fcl_freight_rate_statistics"
+        table_name = "fcl_freight_rate_statistics_temp"
