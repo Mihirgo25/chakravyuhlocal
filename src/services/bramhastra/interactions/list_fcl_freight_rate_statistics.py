@@ -173,6 +173,10 @@ async def use_rates_affected_filter(
         query.append(
             f"WHERE {where} AND rate_updated_at >= %(start_date)s AND rate_updated_at <= %(end_date)s AND day > 0 "
         )
+    else:
+        query.append(
+            f"WHERE rate_updated_at >= %(start_date)s AND rate_updated_at <= %(end_date)s AND day > 0 "
+        )
     query.append("GROUP BY DATE(rate_updated_at) ORDER BY day ASC")
     return {"list": clickhouse.execute(" ".join(query), filters)}
 
