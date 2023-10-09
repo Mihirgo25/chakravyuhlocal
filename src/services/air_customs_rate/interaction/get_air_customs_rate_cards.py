@@ -5,7 +5,6 @@ from database.rails_db import  get_eligible_orgs
 from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
 from configs.definitions import AIR_CUSTOMS_CHARGES
 from micro_services.client import common
-from services.air_customs_rate.air_customs_celery_worker import create_jobs_for_predicted_air_customs_rate_delay
 
 def get_air_customs_rate_cards(request):
     try:
@@ -17,7 +16,6 @@ def get_air_customs_rate_cards(request):
             customs_rates = set_shipper_specific_rates(air_customs_rates)
             rate_cards, is_predicted = build_response_list(customs_rates,request)
 
-            create_jobs_for_predicted_air_customs_rate_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': request}, queue='critical')
             return {'list':rate_cards}
         return {'list':[]} 
 

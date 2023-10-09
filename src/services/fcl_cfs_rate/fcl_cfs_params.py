@@ -147,3 +147,9 @@ class CreateFclCfsRateJob(BaseModel):
     commodity: str = None
     trade_type: str = None
     rate_type: str = None
+    
+class UpdateFclCfsRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None

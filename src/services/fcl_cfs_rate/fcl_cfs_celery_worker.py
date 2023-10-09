@@ -9,16 +9,16 @@ from services.fcl_cfs_rate.interaction.delete_fcl_cfs_rate_job import delete_fcl
 
 tasks = {
     'update_fcl_cfs_jobs_status_to_backlogs': {
-        'task': 'services.fcl_cfs_rate.fcl_celery_worker.update_fcl_cfs_rate_jobs_to_backlog_delay',
+        'task': 'services.fcl_cfs_rate.fcl_cfs_celery_worker.update_fcl_cfs_rate_jobs_to_backlog_delay',
         'schedule': crontab(hour=23, minute=0),
-        'options': {'queue': 'fcl_cfs_rate'}
+        'options': {'queue': 'fcl_freight_rate'}
     },
 }
 
 for name, task_info in tasks.items():
     celery.conf.beat_schedule[name] = task_info
         
-@celery.task(bind=True, max_retries=3, retry_backoff=True)
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
 def update_fcl_cfs_rate_jobs_to_backlog_delay(self):
     try:
         return update_fcl_cfs_rate_jobs_to_backlog()
@@ -28,7 +28,7 @@ def update_fcl_cfs_rate_jobs_to_backlog_delay(self):
         else:
             raise self.retry(exc=exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def create_jobs_for_fcl_cfs_rate_request_delay(self, requirements):
     try:
         return create_fcl_cfs_rate_job(requirements, "rate_request")
@@ -39,7 +39,7 @@ def create_jobs_for_fcl_cfs_rate_request_delay(self, requirements):
             raise self.retry(exc= exc)
                 
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def delete_jobs_for_fcl_cfs_rate_request_delay(self, requirements):
     try:
         return delete_fcl_cfs_rate_job(requirements)

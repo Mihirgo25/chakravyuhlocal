@@ -34,6 +34,7 @@ from services.air_customs_rate.interaction.get_air_customs_rate_job_stats import
 from services.air_customs_rate.interaction.delete_air_customs_rate_job import delete_air_customs_rate_job
 from services.air_customs_rate.interaction.list_air_customs_rate_jobs import list_air_customs_rate_jobs
 from services.air_customs_rate.interaction.create_air_customs_rate_job import create_air_customs_rate_job
+from services.air_customs_rate.interaction.update_air_customs_rate_job import update_air_customs_rate_job
 
 air_customs_router = APIRouter()
 
@@ -552,3 +553,18 @@ def create_air_customs_rate_job_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
+
+@air_customs_router.post("/update_air_customs_rate_job")    
+def update_air_customs_rate_job_api(
+    request: UpdateAirCustomsRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        data = update_air_customs_rate_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

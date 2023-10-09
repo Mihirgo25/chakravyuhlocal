@@ -77,6 +77,9 @@ from services.air_freight_rate.interactions.list_air_freight_rate_local_jobs imp
 from services.air_freight_rate.interactions.create_air_freight_rate_local_job import (
     create_air_freight_rate_local_job,
 )
+from services.air_freight_rate.interactions.update_air_freight_rate_local_job import update_air_freight_rate_local_job
+from services.air_freight_rate.interactions.update_air_freight_rate_job import update_air_freight_rate_job
+
 air_freight_router = APIRouter()
 
 
@@ -1508,3 +1511,33 @@ def create_air_freight_rate_local_job_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
+
+@air_freight_router.post("/update_air_freight_rate_job")    
+def update_air_freight_rate_job_api(
+    request: UpdateAirFreightRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        data = update_air_freight_rate_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@air_freight_router.post("/update_air_freight_rate_local_job")    
+def update_air_freight_rate_local_job_api(
+    request: UpdateAirFreightRateLocalJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        data = update_air_freight_rate_local_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

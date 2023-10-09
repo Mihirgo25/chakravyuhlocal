@@ -11,13 +11,19 @@ from services.air_freight_rate.workers.update_air_freight_rate_job_on_rate_addit
 from services.air_freight_rate.interactions.create_air_freight_rate_job import create_air_freight_rate_job
 from services.air_freight_rate.interactions.delete_air_freight_rate_job import delete_air_freight_rate_job
 from celery.schedules import crontab
+from services.air_freight_rate.workers.update_air_freight_rate_local_jobs_to_backlog import update_air_freight_rate_local_jobs_to_backlog
 from services.air_freight_rate.interactions.create_air_freight_rate_job import update_live_booking_visiblity_for_air_freight_rate_job
 
 
 tasks = {
     'update_air_freight_jobs_status_to_backlogs': {
         'task': 'services.air_freight_rate.air_celery_worker.update_air_freight_rate_jobs_to_backlog_delay',
-        'schedule': crontab(hour=22, minute=30),
+        'schedule': crontab(hour=22, minute=10),
+        'options': {'queue': 'fcl_freight_rate'}
+    },
+    'update_air_freight_local_jobs_status_to_backlogs': {
+        'task': 'services.air_freight_rate.air_celery_worker.update_air_freight_rate_local_jobs_to_backlog_delay',
+        'schedule': crontab(hour=22, minute=55),
         'options': {'queue': 'fcl_freight_rate'}
     },
 }
@@ -94,7 +100,7 @@ def delete_jobs_for_air_freight_rate_request_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def delete_jobs_for_air_freight_rate_feedback_delay(self, requirements):
     try:
         return delete_air_freight_rate_job(requirements)
@@ -114,3 +120,12 @@ def update_live_booking_visiblity_for_air_freight_rate_job_delay(self, job_id):
         else:
             raise self.retry(exc=exc)
         
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_air_freight_rate_local_jobs_to_backlog_delay(self):
+    try:
+        return update_air_freight_rate_local_jobs_to_backlog()
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)

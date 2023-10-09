@@ -10,12 +10,18 @@ from services.fcl_freight_rate.workers.create_jobs_for_predicted_fcl_freight_rat
 from celery.schedules import crontab
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_job import delete_fcl_freight_rate_job
+from services.fcl_freight_rate.workers.update_fcl_freight_rate_local_jobs_to_backlog import update_fcl_freight_rate_local_jobs_to_backlog
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import update_live_booking_visiblity_for_fcl_freight_rate_job
 
 tasks = {
     'update_fcl_freight_jobs_status_to_backlogs': {
         'task': 'services.fcl_freight_rate.fcl_celery_worker.update_fcl_freight_rate_jobs_to_backlog_delay',
-        'schedule': crontab(hour=23, minute=0),
+        'schedule': crontab(hour=22, minute=5),
+        'options': {'queue': 'fcl_freight_rate'}
+    },
+    'update_fcl_freight_local_jobs_status_to_backlogs': {
+        'task': 'services.fcl_freight_rate.fcl_celery_worker.update_fcl_freight_rate_local_jobs_to_backlog_delay',
+        'schedule': crontab(hour=22, minute=50),
         'options': {'queue': 'fcl_freight_rate'}
     },
 }
@@ -54,7 +60,7 @@ def update_fcl_freight_rate_jobs_to_backlog_delay(self):
         else:
             raise self.retry(exc=exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def create_jobs_for_fcl_freight_rate_request_delay(self, requirements):
     try:
         return create_fcl_freight_rate_job(requirements, "rate_request")
@@ -65,7 +71,7 @@ def create_jobs_for_fcl_freight_rate_request_delay(self, requirements):
             raise self.retry(exc= exc)
         
 
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def create_jobs_for_fcl_freight_rate_feedback_delay(self, requirements):
     try:
         return create_fcl_freight_rate_job(requirements, "rate_feedback")
@@ -76,7 +82,7 @@ def create_jobs_for_fcl_freight_rate_feedback_delay(self, requirements):
             raise self.retry(exc= exc)
         
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def delete_jobs_for_fcl_freight_rate_request_delay(self, requirements):
     try:
         return delete_fcl_freight_rate_job(requirements)
@@ -86,7 +92,7 @@ def delete_jobs_for_fcl_freight_rate_request_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def delete_jobs_for_fcl_freight_rate_feedback_delay(self, requirements):
     try:
         return delete_fcl_freight_rate_job(requirements)
@@ -100,6 +106,16 @@ def delete_jobs_for_fcl_freight_rate_feedback_delay(self, requirements):
 def update_live_booking_visiblity_for_fcl_freight_rate_job_delay(self, job_id):
     try:
         return update_live_booking_visiblity_for_fcl_freight_rate_job(job_id)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_fcl_freight_rate_local_jobs_to_backlog_delay(self):
+    try:
+        return update_fcl_freight_rate_local_jobs_to_backlog()
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass

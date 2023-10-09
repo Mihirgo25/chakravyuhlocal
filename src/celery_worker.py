@@ -84,12 +84,6 @@ from services.air_freight_rate.workers.air_freight_expiring_rates_scheduler impo
 from services.haulage_freight_rate.workers.haulage_freight_expiring_rates_scheduler import (
     haulage_freight_expiring_rates_scheduler,
 )
-from services.fcl_customs_rate.workers.fcl_customs_expiring_rates_scheduler import (
-    fcl_customs_expiring_rates_scheduler,
-)
-from services.air_customs_rate.workers.air_customs_expiring_rates_scheduler import (
-    air_customs_expiring_rates_scheduler,
-)
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -224,6 +218,10 @@ celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
 celery.autodiscover_tasks(['services.air_freight_rate.air_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.fcl_freight_rate.fcl_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.fcl_customs_rate.fcl_customs_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.ltl_freight_rate.ltl_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.lcl_freight_rate.lcl_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.lcl_customs_rate.lcl_customs_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.fcl_cfs_rate.fcl_cfs_celery_worker'], force=True)
 
 
 
@@ -954,8 +952,6 @@ def create_job_for_expiring_rates_delay(self):
         fcl_freight_expiring_rates_scheduler()
         air_freight_expiring_rates_scheduler()
         haulage_freight_expiring_rates_scheduler()
-        fcl_customs_expiring_rates_scheduler()
-        air_customs_expiring_rates_scheduler()
         
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":

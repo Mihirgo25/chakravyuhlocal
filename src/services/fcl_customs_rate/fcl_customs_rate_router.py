@@ -33,6 +33,7 @@ from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_job import de
 from services.fcl_customs_rate.interaction.list_fcl_customs_rate_jobs import list_fcl_customs_rate_jobs
 from services.fcl_customs_rate.interaction.get_fcl_customs_rate_job_stats import get_fcl_customs_rate_job_stats
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate_job import create_fcl_customs_rate_job
+from services.fcl_customs_rate.interaction.update_fcl_customs_rate_job import update_fcl_customs_rate_job
 
 fcl_customs_router = APIRouter()
 
@@ -570,3 +571,18 @@ def create_fcl_customs_rate_job_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
+        
+@fcl_customs_router.post("/update_fcl_customs_rate_job")    
+def update_fcl_customs_rate_job_api(
+    request: UpdateFclCustomsRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        data = update_fcl_customs_rate_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

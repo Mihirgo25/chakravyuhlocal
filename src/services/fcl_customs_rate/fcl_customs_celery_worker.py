@@ -22,8 +22,8 @@ from celery.schedules import crontab
 tasks = {
     'update_fcl_customs_jobs_status_to_backlogs': {
         'task': 'services.fcl_customs_rate.fcl_customs_celery_worker.update_fcl_customs_rate_jobs_to_backlog_delay',
-        'schedule': crontab(hour=23, minute=0),
-        'options': {'queue': 'fcl_customs_freight_rate'}
+        'schedule': crontab(hour=22, minute=20),
+        'options': {'queue': 'fcl_freight_rate'}
     },
 }
 
@@ -31,7 +31,7 @@ for name, task_info in tasks.items():
     celery.conf.beat_schedule[name] = task_info
 
 
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def create_jobs_for_predicted_fcl_customs_rate_delay(self, is_predicted, requirements):
     try:
         return create_jobs_for_predicted_fcl_customs_rate(is_predicted, requirements)
@@ -53,7 +53,7 @@ def update_fcl_customs_rate_job_on_rate_addition_delay(self, request, id):
             raise self.retry(exc=exc)
 
 
-@celery.task(bind=True, max_retries=3, retry_backoff=True)
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
 def update_fcl_customs_rate_jobs_to_backlog_delay(self):
     try:
         return update_fcl_customs_rate_jobs_to_backlog()
@@ -63,7 +63,7 @@ def update_fcl_customs_rate_jobs_to_backlog_delay(self):
         else:
             raise self.retry(exc=exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def create_jobs_for_fcl_customs_rate_feedback_delay(self, requirements):
     try:
         return create_fcl_customs_rate_job(requirements, "rate_feedback")
@@ -73,7 +73,7 @@ def create_jobs_for_fcl_customs_rate_feedback_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def delete_jobs_for_fcl_customs_rate_request_delay(self, requirements):
     try:
         return delete_fcl_customs_rate_job(requirements)
@@ -83,7 +83,7 @@ def delete_jobs_for_fcl_customs_rate_request_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def create_jobs_for_fcl_customs_rate_request_delay(self, requirements):
     try:
         return create_fcl_customs_rate_job(requirements, "rate_request")
@@ -93,7 +93,7 @@ def create_jobs_for_fcl_customs_rate_request_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
 def delete_jobs_for_fcl_customs_rate_feedback_delay(self, requirements):
     try:
         return delete_fcl_customs_rate_job(requirements)
