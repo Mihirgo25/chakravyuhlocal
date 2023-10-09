@@ -9,7 +9,6 @@ class CommonApiClient:
         self.client=GlobalClient(url = str(get_instance_url('common')),headers={
             "Authorization": "Bearer: " + RUBY_AUTHTOKEN,
             "AuthorizationScope": RUBY_AUTHSCOPE,
-            "AuthorizationParameters": ":allowed",
             "AuthorizationScopeId": RUBY_AUTHSCOPEID,
             "Content-Type": "application/json",
             "Accept": "application/json",
@@ -60,6 +59,3 @@ class CommonApiClient:
     
     def get_all_exchange_rates(self, data = {}):
         return self.client.request('GET','get_all_exchange_rates',data)
-
-
-    
