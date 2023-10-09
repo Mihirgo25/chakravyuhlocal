@@ -7,9 +7,9 @@ def get_instance_url(service_name=None):
         url = RUBY_ADDRESS_URL
         if service_name in ["organization", "partner", "user"]:
             url = url + "/{}".format(service_name)
-        if service_name == ServiceName.debezium_connect:
-            url = "http://{}:{}".format(Host.local, DEBEZIUM_CONNECT_PORT)
         return url
+    if service_name == ServiceName.debezium_connect:
+        url = "http://{}:{}".format(Host.local, DEBEZIUM_CONNECT_PORT)
     service_port = COMMON_SERVICE_PORT
     if service_name in ['organization', 'user', 'lead', 'partner']:
         service_port = AUTH_SERVICE_PORT
@@ -21,8 +21,6 @@ def get_instance_url(service_name=None):
         service_port = CHECKOUT_PORT
     if service_name == 'shipment':
         service_port = SHIPMENT_PORT
-    if service_name == 'debezium_connect':
-        service_port = DEBEZIUM_CONNECT_PORT
 
 
     if service_name == 'common':
