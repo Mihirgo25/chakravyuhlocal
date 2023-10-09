@@ -10,6 +10,9 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
     set_port_code_filters_and_service_object,
 )
 from services.bramhastra.enums import MapsFilter
+from services.bramhastra.models.fcl_freight_rate_statistic import (
+    FclFreightRateStatistic,
+)
 
 ALLOWED_TIME_PERIOD = 6
 
@@ -53,7 +56,7 @@ def get_rate(filters: dict) -> list:
     interval = ALLOWED_FREQUENCY_TYPES[filters.get("frequency", "day")]
 
     queries = [
-        f"""SELECT parent_mode as mode,{interval} AS day,{aggregate_select} FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,standard_price,parent_mode,sign,id FROM brahmastra.fcl_freight_rate_statistics"""
+        f"""SELECT parent_mode as mode,{interval} AS day,{aggregate_select} FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,standard_price,parent_mode,sign,id FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"""
     ]
 
     location_object = dict()
