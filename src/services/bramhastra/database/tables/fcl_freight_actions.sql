@@ -462,6 +462,5 @@ CREATE TABLE brahmastra.fcl_freight_actions
         sign Int8 DEFAULT 1,
         version UInt64 DEFAULT 1
 )
-ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (origin_continent_id, parent_mode, parent_rate_mode, origin_country_id, container_size, origin_port_id, rate_id, validity_id, spot_search_id, shipment_state, shipment_service_state, feedback_type, feedback_state, rate_request_state, revenue_desk_state, shipment_id, id, version)
-ORDER BY (origin_continent_id, parent_mode, parent_rate_mode, origin_country_id, container_size, origin_port_id, rate_id, validity_id, spot_search_id, shipment_state, shipment_service_state, feedback_type, feedback_state, rate_request_state, revenue_desk_state, shipment_id, id, version);
+ENGINE = MergeTree()
+ORDER BY (origin_continent_id, origin_country_id, container_size, origin_port_id, rate_id, validity_id);

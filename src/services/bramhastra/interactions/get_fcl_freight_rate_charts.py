@@ -77,7 +77,7 @@ def get_spot_search_to_checkout_count(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        f"""SELECT FLOOR((1 - SUM(checkout)/COUNT(DISTINCT spot_search_id)),2)*100 as spot_search_to_checkout_count from brahmastra.{FclFreightAction._meta.table_name}"""
+        f"""SELECT FLOOR((1 - SUM(checkout*sign)/COUNT(DISTINCT spot_search_id)),2)*100 as spot_search_to_checkout_count from brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     if where:
