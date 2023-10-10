@@ -4,6 +4,13 @@ from services.bramhastra.client import ClickHouse
 from configs.definitions import ROOT_DIR
 import peewee
 
+FILES_WITH_KAFKA = [
+    "fcl_freight_actions.sql",
+    "fcl_freight_rate_request_statistics.sql",
+    "fcl_freight_rate_statistics_temp.sql",
+    "feedback_fcl_freight_rate_statistics.sql",
+]
+
 
 class Click:
     def __init__(self) -> None:
@@ -12,10 +19,8 @@ class Click:
 
     def create(self, model: peewee.Model):
         sql_file_path = f"{self.root_path}/{model._meta.table_name}.sql"
-        if os.path.exists(sql_file_path):
-            print(f"The file {sql_file_path} exists.")
-        else:
-            print(f"The file {sql_file_path} does not exist.")
+        if not os.path.exists(sql_file_path):
+            raise ValueError(f"The file {sql_file_path} does not exist.")
 
         self.validate(sql_file_path, model)
 
@@ -30,49 +35,82 @@ class Click:
                 continue
 
             try:
-                response = self.client.execute(statement)
-                print(response)
+                self.client.execute(statement)
             except Exception as e:
                 print(e)
 
     def validate(self, sql_file_path, model):
-        model_cols = list(model._meta.fields.keys())
+        model_column_names = list(model._meta.fields.keys())
 
         with open(sql_file_path, "r") as sql_file:
             sql_script = sql_file.read()
-            column_names_with_duplicates = re.findall(r"(?<=\n\s{4})(\w+)\s", sql_script)
-            column_names_set = set()
-            column_names = []
-            for name in column_names_with_duplicates:
-                if name not in column_names_set:
-                    column_names_set.add(name)
-                    column_names.append(name)
-    
-        if(len(model_cols)!=len(column_names)):
-            raise Exception("\nColumn length mismatched !!")
-        
-        missing_columns = []
-        for idx, name in enumerate(model_cols):
-            if(column_names[idx] != name):
-                missing_columns.append(name)
-        
-        if len(missing_columns) > 0:
-            print('!! Columns missing:')
-            for column in missing_columns:
-                print(column)
+            regex = r"(?<=\n\s{4})(\w+)\s"
+            if sql_file_path.split('/')[-1] in "".join(FILES_WITH_KAFKA):
+                regex = r"(?<=\n\s{8})(\w+)\s"
+            click_column_names_with_duplicates = re.findall(regex, sql_script)
+            click_column_names_set = set()
+            click_column_names = []
+            for name in click_column_names_with_duplicates:
+                if name not in click_column_names_set:
+                    click_column_names_set.add(name)
+                    click_column_names.append(name)
 
-            raise Exception("\nColumn names order mismatched !!")
+        self.compare_arrays(model_column_names, click_column_names)
 
-        return True        
-        
-    def create_tables(self,models):
+        return True
+
+    def compare_arrays(self, model_columns, click_columns):
+        if len(set(model_columns)) != len(model_columns) or len(
+            set(click_columns)
+        ) != len(click_columns):
+            duplicates_in_array1 = [
+                item for item in model_columns if model_columns.count(item) > 1
+            ]
+            duplicates_in_array2 = [
+                item for item in click_columns if click_columns.count(item) > 1
+            ]
+
+            message = "Arrays should have unique elements"
+            if duplicates_in_array1:
+                message += (
+                    f"\nDuplicate values in Model: {', '.join(duplicates_in_array1)}"
+                )
+            if duplicates_in_array2:
+                message += (
+                    f"\nDuplicate values in Click: {', '.join(duplicates_in_array2)}"
+                )
+
+            raise ValueError(message)
+
+        if model_columns != click_columns:
+            missing_in_array1 = [
+                item for item in click_columns if item not in model_columns
+            ]
+            missing_in_array2 = [
+                item for item in model_columns if item not in click_columns
+            ]
+            
+            if 'sign' in missing_in_array1 and 'version' in missing_in_array1 and len(missing_in_array1):
+                return
+
+            message = "Arrays do not match exactly"
+            if missing_in_array1:
+                message += f"\nMissing in Model: {', '.join(missing_in_array1)}"
+            if missing_in_array2:
+                message += f"\nMissing in Click: {', '.join(missing_in_array2)}"
+
+            raise ValueError(message)
+
+        return
+
+    def create_tables(self, models):
         for model in models:
             self.create(model)
 
     def create_dictionaries(self, dictionaries):
         for dictionary in dictionaries:
             dictionary().create()
-            
-    def drop_dictionaries(self,dictionaries):
+
+    def drop_dictionaries(self, dictionaries):
         for dictionary in dictionaries:
             dictionary().drop()

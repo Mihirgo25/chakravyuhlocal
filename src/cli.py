@@ -21,7 +21,11 @@ EXCLUDE_FILES = ["setup.py", "env.py"]
 
 def configure_logger(loggers: list, level=logging.DEBUG):
     handler = logging.StreamHandler()
-    handler.setFormatter(ColoredFormatter("%(levelname)s:%(name)s: %(message)s"))
+    handler.setFormatter(
+        ColoredFormatter(
+            "%(levelname)s:%(message)s:%(pathname)s:%(funcName)s:%(lineno)d"
+        )
+    )
     for logger in loggers:
         logger = logging.getLogger(logger)
         logger.addHandler(handler)
@@ -30,7 +34,7 @@ def configure_logger(loggers: list, level=logging.DEBUG):
 
 class ColoredFormatter(logging.Formatter):
     COLORS = {
-        "DEBUG": "\033[1;33m",  # Yellow
+        "DEBUG": '\x1b[38;5;39m',  # Blue
         "INFO": "\033[92m",  # Green
         "WARNING": "\033[31m",  # Orange
         "ERROR": "\033[91m",  # Red
@@ -78,7 +82,7 @@ class ColoredFormatter(logging.Formatter):
                 if isinstance(exc, TypeError):
                     message = sql
         elif isinstance(record.msg, str):
-            message = record.msg
+            message = record.msg % record.args
         color = self.COLORS.get(record.levelname, self.COLORS["RESET"])
         return f'{color}{message}{self.COLORS["RESET"]}'
 
@@ -162,10 +166,10 @@ def shell(ipython_args):
     )
     config.TerminalInteractiveShell.autoindent = True
     config.InteractiveShellApp.exec_lines = ["%load_ext autoreload", "%autoreload 2"]
-    config.TerminalInteractiveShell.autoformatter = "black"
     VerboseTB._tb_highlight = "bg:#4C5656"
     config.InteractiveShell.ast_node_interactivity = "all"
     config.InteractiveShell.debug = True
+    config.InteractiveShell.xmode = 'Verbose'
     user_ns = {"database": db}
     with db.connection_context():
         IPython.start_ipython(argv=ipython_args, user_ns=user_ns, config=config)
