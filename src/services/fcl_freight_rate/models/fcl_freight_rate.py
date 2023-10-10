@@ -513,8 +513,8 @@ class FclFreightRate(BaseModel):
 
             line_item = [t for t in validity_object['line_items'] if t['code'] == other_params.get('comparison_charge_code')]
             price_to_compare,currency=(line_item[0]['price'],line_item[0]['currency'])if line_item else (None,None)
-            
-            if not deleted and validity_object['validity_start'] == validity_start.strftime('%Y-%m-%d') and validity_object['validity_end'] == validity_end.strftime('%Y-%m-%d') and validity_object['schedule_type'] == schedule_type and validity_object['payment_term'] == payment_term:
+
+            if not deleted and validity_object['validity_start'] == validity_start.strftime('%Y-%m-%d') and validity_object['validity_end'] == validity_end.strftime('%Y-%m-%d') and validity_object['schedule_type'] == schedule_type and validity_object['payment_term'] == payment_term and not schedule_id:
                 old_validity_id = validity_object['id']
             
             if not is_price_in_range(other_params.get('rates_greater_than_price'), other_params.get('rates_less_than_price'),price_to_compare,other_params.get('comparision_currency'),currency):
