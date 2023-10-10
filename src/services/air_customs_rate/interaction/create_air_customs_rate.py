@@ -47,7 +47,7 @@ def execute_transaction_code(request):
   air_customs_functions_delay.apply_async(kwargs={'air_customs_object':air_customs_rate, 'request':request},queue = 'low')
   get_multiple_service_objects(air_customs_rate)
 
-  if params["mode"]  not in ["predicted", "cluster_extension"] and params['rate_type'] == "market_place":
+  if params['rate_type'] == "market_place":
         update_air_customs_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": air_customs_rate.id},queue='air_customs_rate')
 
   return {'id': air_customs_rate.id}

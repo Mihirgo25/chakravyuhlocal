@@ -18,7 +18,7 @@ def create_fcl_cfs_rate_job(request, source):
 def execute_transaction_code(request, source):
     request = jsonable_encoder(request)
     params = {
-        'location_id' : request.get('location_id'),
+        'location_id' : request.get('port_id'),
         'service_provider_id' : request.get('service_provider_id'),
         'container_size' : request.get('container_size'),
         'container_type' : request.get('container_type'),

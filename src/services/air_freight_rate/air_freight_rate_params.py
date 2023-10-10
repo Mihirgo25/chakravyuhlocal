@@ -543,8 +543,8 @@ class DeleteAirFreightRateJob(BaseModel):
     id: str = None
     closing_remarks: str = None
     data: dict = {}
-    reverted_flash_booking_ids: list[str] = None
-    flash_booking_ids: list[str] = None
+    source_id: str = None
+    shipment_id: str = None
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
@@ -553,6 +553,7 @@ class DeleteAirFreightRateJob(BaseModel):
 class CreateAirFreightRateJob(BaseModel):
     source: str = None
     source_id: str = None
+    shipment_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     origin_airport_id: str = None
@@ -574,8 +575,8 @@ class DeleteAirFreightRateLocalJob(BaseModel):
     id: str = None
     closing_remarks: str = None
     data: dict = {}
-    reverted_flash_booking_ids: list[str] = None
-    flash_booking_ids: list[str] = None
+    source_id: str = None
+    shipment_id: str = None
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
@@ -584,6 +585,7 @@ class DeleteAirFreightRateLocalJob(BaseModel):
 class CreateAirFreightRateLocalJob(BaseModel):
     source: str = None
     source_id: str = None
+    shipment_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     airport_id: str = None

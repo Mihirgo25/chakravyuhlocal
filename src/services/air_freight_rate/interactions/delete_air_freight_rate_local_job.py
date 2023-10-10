@@ -18,6 +18,14 @@ POSSIBLE_CLOSING_REMARKS = [
 
 
 def delete_air_freight_rate_local_job(request):
+    
+    if request.get("source_id"):
+        job_ids = [ str(job.job_id) for job in AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.job_id).where(AirFreightRateLocalJobMapping.source_id == request['source_id'])]
+        update_mapping('completed', job_ids) 
+        request['data'] = {"reverted_flash_booking_ids": request.get('source_id')}
+        create_audit(job_ids, request)
+        return {"id": job_ids}
+    
     if (
         request.get("closing_remarks")
         and request.get("closing_remarks") in POSSIBLE_CLOSING_REMARKS
@@ -44,8 +52,8 @@ def delete_air_freight_rate_local_job(request):
         job_ids = [ str(job.job_id) for job in AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.job_id).where(AirFreightRateLocalJobMapping.source_id << request['air_freight_rate_local_request_ids'])]
     elif request.get("id"):
         job_ids = request.get("id")
-    elif request.get("source_id"):
-        job_ids = request.get('source_id')
+    elif request.get("shipment_id"):
+        job_ids = [ str(job.job_id) for job in AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.job_id).where(AirFreightRateLocalJobMapping.shipment_id == request['shipment_id'])]
     
     if not isinstance(job_ids, list):
         job_ids = [job_ids]
