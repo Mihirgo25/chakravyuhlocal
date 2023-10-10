@@ -72,12 +72,101 @@ SHIPMENT_RATE_STATS_KEYS = [
     "accuracy",
 ]
 
-RATE_DETAIL_KEYS = [
-    "id",
-    "rate_id",
-    "validity_id",
-    "booking_rate_count",
-    "standard_price",
-]
-
 DEFAULT_UUID = "00000000-0000-0000-0000-000000000000"
+
+DEFAULT_ENUM = "empty"
+
+UNIQUE_FCL_SPOT_SEARCH_SERVICE_KEYS = {"commodity", "container_size", "container_type"}
+
+GLOBAL_MIN = -1000000000000000  # 10e-15
+
+DIFFERENCE_CHOICE_TYPE = ["rate_request", "feedback"]
+
+AGGREGATE_FILTER_MAPPING = {
+    "average_standard_price": {
+        "state": "",
+        "value": "",
+        "method": "(SUM(standard_price*sign)/COUNT(DISTINCT checkout_id))",
+    },
+    "liked": {
+        "state": "feedback_type",
+        "value": "'liked'",
+        "method": "COUNT(DISTINCT id)",
+    },
+    "disliked": {
+        "state": "feedback_type",
+        "value": "'disliked'",
+        "method": "COUNT(DISTINCT id)",
+    },
+    "bas_standard_price_accuracy": {
+        "state": "",
+        "value": "",
+        "method": "(SUM(bas_standard_price_accuracy*sign)/COUNT(DISTINCT checkout_id))",
+    },
+    "spot_search": {
+        "state": "",
+        "value": "",
+        "method": "COUNT(DISTINCT spot_search_id)",
+    },
+    "checkout": {
+        "state": "checkout",
+        "value": "0",
+        "comparator": ">",
+        "method": "COUNT(DISTINCT checkout_id)",
+    },
+    "shipment_completed": {
+        "state": "shipment_state",
+        "value": "'completed'",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "shipment_cancelled": {
+        "state": "shipment_state",
+        "value": "'cancelled'",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "shipment_aborted": {
+        "state": "shipment_state",
+        "value": "'aborted'",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "shipment_confirmed_by_importer_exporter": {
+        "state": "shipment_state",
+        "value": "'confirmed_by_importer_exporter'",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "shipment_in_progress": {
+        "state": "shipment_state",
+        "value": "'in_progress'",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "shipment": {
+        "state": "shipment_state",
+        "value": "'shipment_received'",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "revenue_desk_visit": {
+        "state": "revenue_desk_state",
+        "value": "'visited'",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "so1_visit": {
+        "state": "revenue_desk_state",
+        "value": "'selected_for_preference'",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "so1_select": {
+        "state": "revenue_desk_state",
+        "value": "'selected_for_booking'",
+        "method": "COUNT(DISTINCT shipment_id)",
+    },
+    "rate_requests_created": {
+        "state": "rate_request_state",
+        "value": "'created'",
+        "method": "COUNT(DISTINCT id)",
+    },
+    "rate_requests_reverted": {
+        "state": "rate_request_state",
+        "value": "'rate_added'",
+        "method": "COUNT(DISTINCT id)",
+    },
+}

@@ -13,6 +13,14 @@ from joblib import delayed, Parallel, cpu_count
 from datetime import datetime, timedelta
 from database.db_support import get_db
 
+ORIGIN = ["eb187b38-51b2-4a5e-9f3c-978033ca1ddf",
+          "33470eb3-0a63-4427-bf7e-b68d043364dc",
+          "18dd756e-cf27-4c8e-915e-9637cafd059f",
+          "8cd8d514-1f23-4d70-a08b-31f70a2f8560",
+          "f60d030a-c41f-4f10-b611-6165cd378e30"]
+
+DESTINATION = ["eb187b38-51b2-4a5e-9f3c-978033ca1ddf"]
+
 
 def generate_batch_intervals():
     start_date_str = "2023-07-01"
@@ -72,9 +80,11 @@ def main():
     
     p = ParallelJobs()
 
-    batches = generate_batch_intervals()
+    # batches = generate_batch_intervals()
     
-    p.parallel_function(batches,execute)
+    # p.parallel_function(batches,execute)
+    
+    execute()
 
     print(
         "------------------------- SENDING TO CLICKHOUSE -------------------------------"
@@ -83,9 +93,10 @@ def main():
     send_to_clickhouse()
 
 
-def execute(date):
-    fro = date.get("fro")
-    to = date.get("to")
+def execute(date = None):
+    if date:
+        fro = date.get("fro")
+        to = date.get("to")
 
     query = (
         FclFreightRateAudit.select(
@@ -110,10 +121,10 @@ def execute(date):
             FclFreightRateAudit.object_id.alias("rate_id"),
         )
         .where(
-            FclFreightRateAudit.created_at >= fro,
-            FclFreightRateAudit.created_at <= to,
             FclFreightRateAudit.object_type == "FclFreightRate",
             FclFreightRateAudit.action_name.in_(["create", "update"]),
+            FclFreightRate.origin_port_id.in_(ORIGIN),
+            FclFreightRate.destination_port_id.in_(DESTINATION)
         )
         .join(FclFreightRate, on=(FclFreightRateAudit.object_id == FclFreightRate.id))
     )
@@ -124,14 +135,14 @@ def execute(date):
         audits = []
 
         data = audit.get("data", {})
+        
+        if not data:
+            continue
 
         audit["validity_start"] = data.get("validity_start")
         audit["validity_end"] = data.get("validity_end")
         audit["sourced_by_id"] = data.get("sourced_by_id")
         audit["procured_by_id"] = data.get("procured_by_id")
-
-        if not data:
-            continue
 
         del audit["data"]
 
@@ -144,6 +155,8 @@ def execute(date):
             for key in KEYS_TO_KEEP:
                 if key not in line_item:
                     del line_item[key]
+            line_item["market_price"] = line_item.get("market_price") or 0
+            line_item["original_price"] = line_item.get("original_price") or 0
             if line_item["currency"] == Fcl.default_currency.value:
                 line_item["standard_price"] = line_item["price"]
             else:

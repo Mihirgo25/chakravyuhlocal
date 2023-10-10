@@ -26,8 +26,6 @@ class CheckoutFclFreightRateStatistic(BaseModel):
     checkout_fcl_freight_service_id = UUIDField(null=True)
     validity_id = UUIDField(index = True)
     rate_id = UUIDField(index = True)
-    sell_quotation_id = UUIDField(null=True)
-    buy_quotation_id = UUIDField(null=True)
     shipment_id = UUIDField(null=True, index = True)
     created_at = DateTimeTZField(default=datetime.utcnow())
     updated_at = DateTimeTZField(default=datetime.utcnow(), index = True)
