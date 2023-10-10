@@ -42,6 +42,9 @@ from database.create_clicks import Clicks
 
 def main():
     print("running migration")
+    
+    
+    db.execute_sql(f'TRUNCATE TABLE {FclFreightAction._meta.table_name} RESTART IDENTITY;')
 
     try:
         db.create_tables(
@@ -93,10 +96,10 @@ def main():
     execute_air(click)
     
     
-    db.execute_sql(f'ALTER TABLE fcl_freight_actions REPLICA IDENTITY FULL;')
-    db.execute_sql(f'ALTER TABLE fcl_freight_rate_request_statistics REPLICA IDENTITY FULL;')
-    db.execute_sql(f'ALTER TABLE fcl_freight_rate_statistics_temp REPLICA IDENTITY FULL;')
-    db.execute_sql(f'ALTER TABLE feedback_fcl_freight_rate_statistics REPLICA IDENTITY FULL;')
+    # db.execute_sql(f'ALTER TABLE fcl_freight_actions REPLICA IDENTITY FULL;')
+    # db.execute_sql(f'ALTER TABLE fcl_freight_rate_request_statistics REPLICA IDENTITY FULL;')
+    # db.execute_sql(f'ALTER TABLE fcl_freight_rate_statistics_temp REPLICA IDENTITY FULL;')
+    # db.execute_sql(f'ALTER TABLE feedback_fcl_freight_rate_statistics REPLICA IDENTITY FULL;')
 
 
 def execute_fcl(click):

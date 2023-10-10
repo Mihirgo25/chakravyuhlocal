@@ -13,8 +13,11 @@ from services.bramhastra.enums import MapsFilter
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
+from database.db_session import rd
+import json
 
 ALLOWED_TIME_PERIOD = 6
+EXPIRATION_TIME = 3600
 
 DEFAULT_AGGREGATE_SELECT = {
     "average_price": "(SUM(standard_price*sign)/COUNT(DISTINCT id))",
@@ -31,6 +34,13 @@ ALLOWED_FREQUENCY_TYPES = {
 
 
 def get_fcl_freight_rate_trends(filters: dict) -> dict:
+    redis_key = f"{__name__}{json.dumps(filters)}"
+    try:
+        response = rd.get(redis_key)
+        if response is not None:
+            return json.loads(response)
+    except Exception:
+        pass
     response, locations = get_rate(filters)
     response = {
         "rate_trend": response,
@@ -38,6 +48,8 @@ def get_fcl_freight_rate_trends(filters: dict) -> dict:
     }
     if locations:
         response.update(locations)
+    rd.set(redis_key, json.dumps(response))
+    rd.expire(redis_key, EXPIRATION_TIME)
     return response
 
 
