@@ -20,27 +20,23 @@ def get_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_has
                 sailing_schedule["shipping_line_id"],
             ]
         )
-
         schedule_data = {
             k: sailing_schedule.get(k, None)
             for k in [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type",
                 "reliability_score","terminal_cutoff", "source" ,"id"]
             }
-
-        sailing_schedules_hash.setdefault(key, []).append(schedule_data)
+        
+        if key in hash:
+            sailing_schedules_hash[key].append(schedule_data)
+        else:
+            sailing_schedules_hash[key] = [schedule_data]
         
     return sailing_schedules_hash  
 
 def get_data_schedules(data,origin_port,destination_port,origin_port_id,destination_port_id,sailing_schedules_hash):
     key = []
-    key.append(
-        data["origin_main_port_id"] if origin_port["is_icd"] else origin_port_id
-    )
-    key.append(
-        data["destination_main_port_id"]
-        if destination_port["is_icd"]
-        else destination_port_id
-    )
+    key.append(data["origin_main_port_id"] if origin_port["is_icd"] else origin_port_id)
+    key.append(data["destination_main_port_id"] if destination_port["is_icd"] else destination_port_id)
     key.append(data["shipping_line_id"])
     key = ":".join(key)
 
@@ -61,7 +57,7 @@ def get_grouping(data,currency,locals_price,sailing_schedules_required,detention
                 'organization_id':spot_search_object["importer_exporter_id"]
 
                 }
-            ).get("price", 0)
+            ).get("price")
             for line_item in freight["line_items"]
         )
 
