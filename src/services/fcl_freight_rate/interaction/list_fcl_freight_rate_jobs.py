@@ -18,7 +18,8 @@ possible_direct_filters = [
     "commodity",
     "user_id",
     "serial_id",
-    "cogo_entity_id"
+    "cogo_entity_id",
+    "status"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
 
@@ -77,17 +78,20 @@ def list_fcl_freight_rate_jobs(
         query = query.paginate(page, page_limit)
 
     query = sort_query(sort_by, sort_type, query)
-    data = get_data(query)
+    data = get_data(query, filters)
 
     return {
         "list": data,
     }
 
 
-def get_data(query):
+def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_data = FclFreightRateJobMapping.select(FclFreightRateJobMapping.source_id, FclFreightRateJobMapping.shipment_id).where(FclFreightRateJobMapping.job_id == d['id']).first()
+        mappings_query = FclFreightRateJobMapping.select(FclFreightRateJobMapping.source_id, FclFreightRateJobMapping.shipment_id).where(FclFreightRateJobMapping.job_id == d['id'])
+        if filters and filters.get('source'):
+            mappings_query = mappings_query.where(FclFreightRateJobMapping.source == filters.get('source'))
+        mappings_data = mappings_query.first()
         if mappings_data:
             d['source_id'] = mappings_data.source_id
             d['shipment_id'] = mappings_data.shipment_id
@@ -161,7 +165,6 @@ def apply_filters(query, filters):
     )
     # applying direct filters
     query = get_filters(direct_filters, query, FclFreightRateJob)
-
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
 
