@@ -7,8 +7,6 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
 from services.bramhastra.constants import INDIAN_LOCATION_ID
-from datetime import datetime
-from services.bramhastra.enums import BrahmastraTrackModuleTypes, BrahmastraTrackStatus
 from services.bramhastra.database.dictionaries.country_rate_count import (
     CountryRateCount,
 )
@@ -40,17 +38,30 @@ from services.bramhastra.models.fcl_freight_action import FclFreightAction
 from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )
+from services.bramhastra.models.fcl_freight_rate_request_statistics import (
+    FclFreightRateRequestStatistic,
+)
+from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
+    FeedbackFclFreightRateStatistic,
+)
 from database.create_clicks import Clicks
 from database.db_session import db
 
 
 def main():
     print("running migration")
-
     db.execute_sql(f"DROP TABLE {FclFreightAction._meta.table_name}")
     db.execute_sql(f"DROP TABLE {ShipmentFclFreightRateStatistic._meta.table_name}")
-    db.create_tables([FclFreightAction, ShipmentFclFreightRateStatistic])
-
+    db.execute_sql(f"DROP TABLE {FclFreightRateRequestStatistic._meta.table_name}")
+    db.execute_sql(f"DROP TABLE {FclFreightRateRequestStatistic._meta.table_name}")
+    db.create_tables(
+        [
+            FclFreightAction,
+            ShipmentFclFreightRateStatistic,
+            FeedbackFclFreightRateStatistic,
+            FclFreightRateRequestStatistic,
+        ]
+    )
     try:
         db.create_tables(
             [
