@@ -25,7 +25,7 @@ class BaseModel(Model):
 
 
 class FclFreightAction(BaseModel):
-    id = BigAutoField()
+    id = BigAutoField(primary_key = True)
     fcl_freight_rate_statistic_id = BigIntegerField(index=True, null=True)
     origin_port_id = UUIDField(index=True, default=DEFAULT_UUID)
     destination_port_id = UUIDField(index=True, default=DEFAULT_UUID)
