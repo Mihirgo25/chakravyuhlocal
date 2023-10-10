@@ -37,8 +37,8 @@ services:
     environment:
       DYNAMIC_CONFIG_ENABLED: 'true'
       AUTH_TYPE: "LOGIN_FORM"
-      SPRING_SECURITY_USER_NAME:  cogoport
-      SPRING_SECURITY_USER_PASSWORD: kafka
+      SPRING_SECURITY_USER_NAME:  ${KAFKA_UI_USER_NAME}
+      SPRING_SECURITY_USER_PASSWORD: ${KAFKA_UI_PASSWORD}
 
   connect:
     image: debezium/connect
