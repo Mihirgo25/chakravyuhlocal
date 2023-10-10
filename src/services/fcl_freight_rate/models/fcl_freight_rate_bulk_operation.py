@@ -1653,8 +1653,6 @@ class FclFreightRateBulkOperation(BaseModel):
                     'cogo_entity_id': freight["cogo_entity_id"],
                     'bulk_operation_id': self.id,
                     'performed_by_id': self.performed_by_id,
-                    'sourced_by_id': sourced_by_id,
-                    'procured_by_id': procured_by_id,
                     'validity_start': validity_object['validity_start'],
                     'validity_end': validity_object['validity_end'],
                     'line_items': validity_object['line_items'],
