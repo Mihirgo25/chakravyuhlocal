@@ -7,6 +7,8 @@ from configs.fcl_freight_rate_constants import (
 )
 import json
 
+REQUIRED_SCHEDULE_KEYS = [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type","reliability_score","terminal_cutoff", "source" ,"id"]
+
 def get_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_hash):
     for executor in executors:
         results = executor.result()
@@ -20,11 +22,7 @@ def get_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_has
                 sailing_schedule["shipping_line_id"],
             ]
         )
-        schedule_data = {
-            k: sailing_schedule.get(k, None)
-            for k in [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type",
-                "reliability_score","terminal_cutoff", "source" ,"id"]
-            }
+        schedule_data = { k: sailing_schedule.get(k, None) for k in REQUIRED_SCHEDULE_KEYS }
         
         if key in sailing_schedules_hash:
             sailing_schedules_hash[key].append(schedule_data)
@@ -32,6 +30,7 @@ def get_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_has
             sailing_schedules_hash[key] = [schedule_data]
         
     return sailing_schedules_hash  
+
 
 def get_data_schedules(data,origin_port,destination_port,origin_port_id,destination_port_id,sailing_schedules_hash):
     key = []
@@ -144,7 +143,6 @@ def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,d
                         else None
                     )
 
-
                     if avg_transit_time is None:
                         data = {
                                     "origin_port_id": origin_port_id,
@@ -225,7 +223,6 @@ def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,d
                 freight_line_items = list(freight_object["line_items"])
                 for item in freight_line_items:
                     item['price'] = float(item['price'])
-
                 freights.append(
                     {
                         "line_items": json.loads(json.dumps(freight_line_items)),
@@ -245,7 +242,8 @@ def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,d
                 
         return freights        
 
-def get_sailing_schedules_new(port_pair, shipping_line,validity_start):
+
+def get_sailing_schedules_data(port_pair, shipping_line,validity_start):
     origin_port_id = port_pair.split("_")[0]
     destination_port_id = port_pair.split("_")[1]
     
@@ -272,7 +270,8 @@ def get_sailing_schedules_new(port_pair, shipping_line,validity_start):
         }
         for t in schedules.get('list', [])
     ]
-               
+  
+             
 def get_fcl_freight_rate_cards_schedules(filters):
     origin_port_id=filters.get('origin_port_id')
     origin_trade_id=filters.get('origin_trade_id')
@@ -295,7 +294,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
         sailing_schedules = []
         with ThreadPoolExecutor(max_workers=4) as executor:
             executors = [
-                executor.submit(get_sailing_schedules_new, port_pair, shipping_line,validity_start)
+                executor.submit(get_sailing_schedules_data, port_pair, shipping_line,validity_start)
                 for port_pair, shipping_line in port_pairs.items()
             ]
           
