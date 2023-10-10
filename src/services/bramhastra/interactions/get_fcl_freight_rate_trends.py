@@ -29,7 +29,6 @@ ALLOWED_FREQUENCY_TYPES = {
     "year": "toStartOfMonth(toDate(day))",
     "month": "toStartOfMonth(toDate(day))",
     "week": "toStartOfWeek(toDate(day))",
-    "day": "toDate(day)",
 }
 
 
@@ -65,7 +64,7 @@ def get_rate(filters: dict) -> list:
         ]
     )
 
-    interval = ALLOWED_FREQUENCY_TYPES[filters.get("frequency", "day")]
+    interval = ALLOWED_FREQUENCY_TYPES[filters.get("frequency", "month")]
 
     queries = [
         f"""SELECT parent_mode as mode,{interval} AS day,{aggregate_select} FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,standard_price,parent_mode,sign,id FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"""
