@@ -395,8 +395,9 @@ def delete_fcl_cfs_rate_feedback_api(request: DeleteFclCfsRateFeedback, resp: di
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @fcl_cfs_router.get("/list_fcl_cfs_rate_feedbacks")
-def list_fcl_cfs_rate_feedback_api(
+def list_fcl_cfs_rate_feedbacks_api(
     filters: str = None,
+    spot_search_details_required: bool = False,
     page_limit: int = 10,
     page: int = 1,
     performed_by_id: str = None,
@@ -405,8 +406,9 @@ def list_fcl_cfs_rate_feedback_api(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
+
     try:
-        data = list_fcl_cfs_rate_feedbacks(filters, page_limit, page, performed_by_id, is_stats_required)
+        data = list_fcl_cfs_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
