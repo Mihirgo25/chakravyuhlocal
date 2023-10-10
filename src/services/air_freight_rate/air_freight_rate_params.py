@@ -553,6 +553,7 @@ class DeleteAirFreightRateJob(BaseModel):
 class CreateAirFreightRateJob(BaseModel):
     source: str = None
     source_id: str = None
+    shipment_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     origin_airport_id: str = None
@@ -584,6 +585,7 @@ class DeleteAirFreightRateLocalJob(BaseModel):
 class CreateAirFreightRateLocalJob(BaseModel):
     source: str = None
     source_id: str = None
+    shipment_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     airport_id: str = None

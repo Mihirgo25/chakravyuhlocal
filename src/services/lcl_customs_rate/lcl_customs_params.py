@@ -4,6 +4,7 @@ from peewee import *
 class CreateLclCustomsRateJob(BaseModel):
     source: str = None
     source_id: str = None
+    shipment_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     location_id: str = None
