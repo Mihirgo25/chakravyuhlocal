@@ -75,6 +75,7 @@ class SpotSearch:
             self.common_params["spot_search"] = 1
         if not params.rates:
             self.__create_action(self.common_params)
+            return
         for rate in params.rates:
             identifier = get_fcl_freight_identifier(rate.rate_id, rate.validity_id)
             if identifier in covered_rates:
