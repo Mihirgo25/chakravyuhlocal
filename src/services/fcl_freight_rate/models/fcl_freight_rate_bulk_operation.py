@@ -348,9 +348,6 @@ class FclFreightRateBulkOperation(BaseModel):
         if data['validity_end'].date() < data['validity_start'].date():
             raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start') 
         
-        if not isinstance(data['schedule_id'], str):
-            raise HTTPException(status_code=400, detail='schedule_id must be a string')
-        
         data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')        
 
