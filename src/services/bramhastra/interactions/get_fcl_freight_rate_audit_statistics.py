@@ -20,7 +20,7 @@ def get_rate(filters, where):
     ]
 
     if where:
-        queries.append(" WHERE ")
+        queries.append(f""" WHERE code = '{filters.get("code","BAS")}' AND """)
         queries.append(where)
         
     queries.append(

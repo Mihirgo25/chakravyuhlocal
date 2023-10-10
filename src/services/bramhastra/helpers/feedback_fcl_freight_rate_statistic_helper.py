@@ -1,7 +1,9 @@
 from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
     FeedbackFclFreightRateStatistic,
 )
-from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.helpers.common_statistic_helper import (
+    get_fcl_freight_identifier,
+)
 from micro_services.client import common
 from services.bramhastra.enums import (
     FeedbackAction,
@@ -11,13 +13,16 @@ from services.bramhastra.enums import (
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.bramhastra.enums import FeedbackState, FeedbackType
+import uuid
 
 
 class Feedback:
     def __init__(self, action, params) -> None:
         self.increment_keys = set()
         self.decrement_keys = set()
-
+        self.action = action
         self.params = params.dict(exclude={"likes_count", "dislikes_count"})
 
         self.rate_stats_update_params = dict()
@@ -56,7 +61,11 @@ class Feedback:
             self.params.get("preferred_freight_rate") or 0
         )
 
-    def set_format_and_existing_rate_stats(self):
+    def update_foreign_references(self):
+        self.__update_fcl_freight_statistic()
+        self.__update_fcl_freight_action()
+
+    def __update_fcl_freight_statistic(self):
         if (
             not self.increment_keys
             and not self.decrement_keys
@@ -68,7 +77,7 @@ class Feedback:
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
-                == get_identifier(self.rate_id, self.validity_id)
+                == get_fcl_freight_identifier(self.rate_id, self.validity_id)
             )
             .first()
         )
@@ -76,19 +85,6 @@ class Feedback:
         if fcl_freight_rate_statistic:
             self.params["fcl_freight_rate_statistic_id"] = fcl_freight_rate_statistic.id
 
-            if self.params.get("status") == FclFeedbackStatus.inactive.value:
-                self.increment_keys.add(
-                    FclFreightRateStatistic.feedback_recieved_count.name
-                )
-                if self.params.get(
-                    FeedbackFclFreightRateStatistic.closing_remarks.name
-                ) and FclFeedbackClosingRemarks.rate_added.value in self.params.get(
-                    FeedbackFclFreightRateStatistic.closing_remarks.name
-                ):
-                    self.increment_keys.add(
-                        FclFreightRateStatistic.dislikes_rate_reverted_count.name
-                    )
-                    
             for key in self.increment_keys:
                 setattr(
                     fcl_freight_rate_statistic,
@@ -107,10 +103,86 @@ class Feedback:
 
             fcl_freight_rate_statistic.save()
 
-    def set_new_stats(self) -> int:
+    def __update_fcl_freight_action(self):
+        fcl_freight_action = self.__get_fcl_freight_action()
+        if fcl_freight_action is None:
+            return
+        if self.action == FeedbackAction.create.value:
+            setattr(
+                fcl_freight_action,
+                FclFreightAction.feedback_state.name,
+                FeedbackState.created.name,
+            )
+            feedback_ids = getattr(
+                fcl_freight_action, FclFreightAction.feedback_ids.name
+            )
+            if not feedback_ids:
+                feedback_ids = [
+                    self.params.get(FeedbackFclFreightRateStatistic.feedback_id.name)
+                ]
+            else:
+                feedback_ids.append(
+                    self.params.get(FeedbackFclFreightRateStatistic.feedback_id.name)
+                )
+            feedback_ids = [
+                uuid.UUID(uuid_str) if isinstance(uuid_str, str) else uuid_str
+                for uuid_str in feedback_ids
+            ]
+            setattr(
+                fcl_freight_action,
+                FclFreightAction.feedback_ids.name,
+                feedback_ids,
+            )
+            setattr(
+                fcl_freight_action,
+                FclFreightAction.feedback_type.name,
+                (
+                    FeedbackType.liked.name
+                    if "likes_count" in self.increment_keys
+                    else FeedbackType.disliked.name
+                ),
+            )
+        else:
+            if (
+                self.params.get(FeedbackFclFreightRateStatistic.status.name)
+                == FclFeedbackStatus.inactive.name
+            ):
+                setattr(
+                    fcl_freight_action,
+                    FclFreightAction.feedback_state.name,
+                    FeedbackState.closed.name,
+                )
+            if (
+                self.params.get(FeedbackFclFreightRateStatistic.is_rate_reverted.name)
+                is True
+            ):
+                setattr(
+                    fcl_freight_action,
+                    FclFreightAction.feedback_state.name,
+                    FeedbackState.rate_added.name,
+                )
+
+        setattr(
+            fcl_freight_action,
+            FclFreightAction.updated_at.name,
+            self.params.get(FeedbackFclFreightRateStatistic.updated_at.name),
+        )
+        fcl_freight_action.save()
+
+    def __get_fcl_freight_action(self):
+        return (
+            FclFreightAction.select()
+            .where(
+                FclFreightAction.spot_search_id == self.params.get("source_id"),
+                FclFreightAction.rate_id == self.params.get("rate_id"),
+            )
+            .first()
+        )
+
+    def create(self) -> int:
         return FeedbackFclFreightRateStatistic.insert_many(self.params).execute()
 
-    def set_existing_stats(self) -> None:
+    def update(self) -> None:
         feedback = (
             FeedbackFclFreightRateStatistic.select()
             .where(
