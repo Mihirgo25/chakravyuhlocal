@@ -316,7 +316,14 @@ def get_fcl_freight_rate_cards_schedules(filters):
     grouping = {}
 
     for data in list_data:
-        data_schedules=get_data_schedules(data,origin_port,destination_port,origin_port_id,destination_port_id,sailing_schedules_hash)
+        data_schedules = get_data_schedules(
+            data,
+            origin_port,
+            destination_port,
+            origin_port_id,
+            destination_port_id,
+            sailing_schedules_hash
+        )
         if not data_schedules:
             data_schedules = fake_schedules
 
@@ -342,7 +349,15 @@ def get_fcl_freight_rate_cards_schedules(filters):
         )
 
         detention_free_limit = int(data["destination_detention"].get("free_limit", 0))
-        grouping = get_grouping(data,currency,locals_price,sailing_schedules_required,detention_free_limit,grouping,spot_search_object)
+        grouping = get_grouping(
+            data,
+            currency,
+            locals_price,
+            sailing_schedules_required,
+            detention_free_limit,
+            grouping,
+            spot_search_object
+        )
 
     rates = [v["data"] for v in grouping.values()]
 
