@@ -74,13 +74,9 @@ def get_rate(filters: dict) -> list:
         set_port_code_filters_and_service_object(filters, location_object)
 
     where = get_direct_indirect_filters(filters, date=None)
+    queries.append("WHERE is_deleted = false AND (day <= %(end_date)s) AND (day >= %(start_date)s)")
     if where is not None:
-        queries.append(" WHERE ")
         queries.append(where)
-        queries.append(
-            "AND is_deleted = false (day <= %(end_date)s) AND (day >= %(start_date)s)"
-            ""
-        )
     queries.append("GROUP BY parent_mode,day ORDER BY day,mode;")
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
     formatted_charts = format_charts(charts, filters)

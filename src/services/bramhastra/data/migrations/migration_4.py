@@ -50,10 +50,22 @@ from database.db_session import db
 
 def main():
     print("running migration")
-    db.execute_sql(f"DROP TABLE {FclFreightAction._meta.table_name}")
-    db.execute_sql(f"DROP TABLE {ShipmentFclFreightRateStatistic._meta.table_name}")
-    db.execute_sql(f"DROP TABLE {FclFreightRateRequestStatistic._meta.table_name}")
-    db.execute_sql(f"DROP TABLE {FclFreightRateRequestStatistic._meta.table_name}")
+    try:
+        db.execute_sql(f"DROP TABLE {FclFreightAction._meta.table_name}")
+    except:
+        pass
+    try:
+        db.execute_sql(f"DROP TABLE {ShipmentFclFreightRateStatistic._meta.table_name}")
+    except:
+        pass
+    try:
+        db.execute_sql(f"DROP TABLE {FclFreightRateRequestStatistic._meta.table_name}")
+    except:
+        pass
+    try:
+        db.execute_sql(f"DROP TABLE {FclFreightRateRequestStatistic._meta.table_name}")
+    except:
+        pass
     db.create_tables(
         [
             FclFreightAction,
