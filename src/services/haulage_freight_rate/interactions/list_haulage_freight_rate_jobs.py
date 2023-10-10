@@ -78,17 +78,20 @@ def list_haulage_freight_rate_jobs(
 
     query = sort_query(sort_by, sort_type, query)
 
-    data = get_data(query)
+    data = get_data(query, filters)
 
     return {
         "list": data,
     }
 
 
-def get_data(query):
+def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_data = HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.source_id, HaulageFreightRateJobMapping.shipment_id).where(HaulageFreightRateJobMapping.job_id == d['id']).first()
+        mappings_query = HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.source_id, HaulageFreightRateJobMapping.shipment_id).where(HaulageFreightRateJobMapping.job_id == d['id'])
+        if filters and filters.get('source'):
+            mappings_query = mappings_query.where(HaulageFreightRateJobMapping.source == filters.get('source'))
+        mappings_data = mappings_query.first()
         if mappings_data:
             d['source_id'] = mappings_data.source_id
             d['shipment_id'] = mappings_data.shipment_id

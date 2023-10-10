@@ -77,17 +77,20 @@ def list_fcl_freight_rate_local_jobs(
 
     query = sort_query(sort_by, sort_type, query)
 
-    data = get_data(query)
+    data = get_data(query, filters)
 
     return {
         "list": data,
     }
 
 
-def get_data(query):
+def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_data = FclFreightRateLocalJobMapping.select(FclFreightRateLocalJobMapping.source_id, FclFreightRateLocalJobMapping.shipment_id).where(FclFreightRateLocalJobMapping.job_id == d['id']).first()
+        mappings_query = FclFreightRateLocalJobMapping.select(FclFreightRateLocalJobMapping.source_id, FclFreightRateLocalJobMapping.shipment_id).where(FclFreightRateLocalJobMapping.job_id == d['id'])
+        if filters and filters.get('source'):
+            mappings_query = mappings_query.where(FclFreightRateLocalJobMapping.source == filters.get('source'))
+        mappings_data = mappings_query.first()
         if mappings_data:
             d['source_id'] = mappings_data.source_id
             d['shipment_id'] = mappings_data.shipment_id
