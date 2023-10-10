@@ -5,10 +5,7 @@ from database.rails_db import get_user
 from datetime import datetime
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from fastapi.encoders import jsonable_encoder
-
-
-
-POSSIBLE_CLOSING_REMARKS = ['not_serviceable', 'rate_not_available', 'no_change_in_rate']
+from configs.global_constants import POSSIBLE_CLOSING_REMARKS_FOR_JOBS
 
 
 def delete_air_freight_rate_job(request):
@@ -20,7 +17,7 @@ def delete_air_freight_rate_job(request):
         create_audit(job_ids, request)
         return {"id": job_ids}
     
-    if request.get('closing_remarks') and request.get('closing_remarks') in POSSIBLE_CLOSING_REMARKS:
+    if request.get('closing_remarks') and request.get('closing_remarks') in POSSIBLE_CLOSING_REMARKS_FOR_JOBS:
         update_params = {'status':'aborted', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now(),  "closing_remarks": request.get('closing_remarks')}
     else:
         update_params = {'status':'completed', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now()}

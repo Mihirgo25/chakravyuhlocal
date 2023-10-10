@@ -8,7 +8,7 @@ import datetime
 from fastapi import HTTPException
 from configs.definitions import AIR_CUSTOMS_CHARGES
 from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
-from services.air_customs_rate.air_customs_rate_constants import COMMODITIES
+from configs.air_customs_rate_constants import COMMODITIES
 from services.air_freight_rate.constants.air_freight_rate_constants import RATE_TYPES
 
 class BaseModel(Model):

@@ -8,12 +8,7 @@ from services.lcl_freight_rate.models.lcl_freight_rate_job_mappings import (
 from database.rails_db import get_user
 from datetime import datetime
 from services.lcl_freight_rate.models.lcl_freight_rate_audit import LclFreightRateAudit
-
-POSSIBLE_CLOSING_REMARKS = [
-    "not_serviceable",
-    "rate_not_available",
-    "no_change_in_rate",
-]
+from configs.global_constants import POSSIBLE_CLOSING_REMARKS_FOR_JOBS
 
 
 def delete_lcl_freight_rate_job(request):
@@ -30,7 +25,7 @@ def delete_lcl_freight_rate_job(request):
     
     if (
         request.get("closing_remarks")
-        and request.get("closing_remarks") in POSSIBLE_CLOSING_REMARKS
+        and request.get("closing_remarks") in POSSIBLE_CLOSING_REMARKS_FOR_JOBS
     ):
         update_params = {
             "status": "aborted",
