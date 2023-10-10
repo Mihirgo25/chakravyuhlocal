@@ -102,3 +102,5 @@ beautifulsoup4==4.12.2
 gunicorn==20.1.0
 nltk==3.8.1 
 clickhouse-driver==0.2.6
+kafka-python==2.0.2
+aiokafka==0.8.1
