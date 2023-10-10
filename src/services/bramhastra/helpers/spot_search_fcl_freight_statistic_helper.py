@@ -105,13 +105,13 @@ class SpotSearch:
         fcl_freight_action = (
             FclFreightAction.select(FclFreightAction.id)
             .where(
-                FclFreightAction.spot_search_id == params["spot_search_id"],
-                FclFreightAction.rate_id == params["rate_id"],
-                FclFreightAction.validity_id == params["validity_id"],
+                FclFreightAction.spot_search_id == params.get("spot_search_id"),
+                FclFreightAction.rate_id == params.get("rate_id"),
+                FclFreightAction.validity_id == params.get("validity_id"),
             )
             .first()
         )
-        if fcl_freight_action:
+        if fcl_freight_action is not None:
             return
         fcl_freight_action = FclFreightAction(**params)
         fcl_freight_action.save()
