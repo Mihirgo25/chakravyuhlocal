@@ -274,7 +274,6 @@ def get_sailing_schedules_new(port_pair, shipping_line,validity_start):
     ]
                
 def get_fcl_freight_rate_cards_schedules(filters):
-    
     origin_port_id=filters.get('origin_port_id')
     origin_trade_id=filters.get('origin_trade_id')
     origin_country_id=filters.get('origin_country_id')
@@ -289,13 +288,10 @@ def get_fcl_freight_rate_cards_schedules(filters):
     origin_port=filters.get('origin_port')
     destination_port=filters.get('destination_port')
     
-    
     fake_schedules = []
     sailing_schedules_hash = {}
-    
 
     if sailing_schedules_required:
-
         sailing_schedules = []
         with ThreadPoolExecutor(max_workers=4) as executor:
             executors = [
@@ -316,21 +312,17 @@ def get_fcl_freight_rate_cards_schedules(filters):
             }
         
         response = maps.get_fake_sailing_schedules(data)
-
         fake_schedules = response['list']
 
     grouping = {}
 
     for data in list_data:
-        
         data_schedules=get_data_schedules(data,origin_port,destination_port,origin_port_id,destination_port_id,sailing_schedules_hash)
-
         if not data_schedules:
             data_schedules = fake_schedules
 
         data_schedules = list(data_schedules)
-
-        freights=get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,destination_port_id)
+        freights = get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,destination_port_id)
 
         if not freights:
             continue
@@ -347,16 +339,12 @@ def get_fcl_freight_rate_cards_schedules(filters):
                     'organization_id':spot_search_object["importer_exporter_id"]
                 }
             ).get("price", 0)
-            for line_item in (
-                data.get("origin_local", {}).get("line_items", [])
-                + data.get("destination_local", {}).get("line_items", [])
-            )
+            for line_item in (data.get("origin_local", {}).get("line_items", []) + data.get("destination_local", {}).get("line_items", []))
         )
 
         detention_free_limit = int(data["destination_detention"].get("free_limit", 0))
- 
-        grouping=get_grouping(data,currency,locals_price,sailing_schedules_required,detention_free_limit,grouping,spot_search_object)
-    
+        grouping = get_grouping(data,currency,locals_price,sailing_schedules_required,detention_free_limit,grouping,spot_search_object)
+
     rates = [v["data"] for v in grouping.values()]
 
     return rates
