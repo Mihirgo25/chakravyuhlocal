@@ -290,8 +290,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
             }
 
             schedules = maps.get_sailing_schedules(data)
-          
-        
+            
             return [
                 {
                     "origin_port_id": origin_port_id,
