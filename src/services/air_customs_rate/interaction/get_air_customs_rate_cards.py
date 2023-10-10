@@ -14,7 +14,7 @@ def get_air_customs_rate_cards(request):
         if len(air_customs_rates) > 0:
             customs_rates = discard_noneligible_lsps(air_customs_rates)
             customs_rates = set_shipper_specific_rates(air_customs_rates)
-            rate_cards, is_predicted = build_response_list(customs_rates,request)
+            rate_cards = build_response_list(customs_rates,request)
 
             return {'list':rate_cards}
         return {'list':[]} 
@@ -58,17 +58,15 @@ def build_response_list(query_results,request):
             result = result[0]
         else:
             result = rates[0]
-        response_object, is_predicted = build_response_object(result, request)
+        response_object = build_response_object(result, request)
         if response_object:
             response_list.append(response_object)
-    return response_list, is_predicted
+    return response_list
 
 def build_response_object(result,request):
-    is_predicted = False
     source = 'spot_rates'
     if result.get('mode') == 'predicted':
         source = 'predicted'
-        is_predicted = True
     elif result.get('rate_type') != 'market_place':
         source = result.get('rate_type')
 
@@ -83,7 +81,7 @@ def build_response_object(result,request):
     if not add_customs_clearance(result, response_object,request):
         return None
 
-    return response_object, is_predicted
+    return response_object
 
 def add_customs_clearance(result,response_object,request):
     if not result.get('line_items'):
