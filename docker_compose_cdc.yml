@@ -36,6 +36,9 @@ services:
       - 8080:8080
     environment:
       DYNAMIC_CONFIG_ENABLED: 'true'
+      AUTH_TYPE: "LOGIN_FORM"
+      SPRING_SECURITY_USER_NAME:  cogoport
+      SPRING_SECURITY_USER_PASSWORD: kafka
 
   connect:
     image: debezium/connect
