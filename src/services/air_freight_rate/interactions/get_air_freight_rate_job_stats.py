@@ -225,6 +225,8 @@ def apply_filters(query, filters):
 
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
+    
+    query = apply_is_visible_filter(query)
 
     return query
 
@@ -247,3 +249,7 @@ def get_all_backlogs(filters):
     backlog_count = query.where(AirFreightRateJob.status == 'backlog').count()
 
     return backlog_count
+
+def apply_is_visible_filter(query):
+    query = query.where(AirFreightRateJob.is_visible == True)
+    return query

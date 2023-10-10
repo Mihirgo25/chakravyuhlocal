@@ -86,6 +86,8 @@ def apply_filters(query, filters):
 
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
+    
+    query = apply_is_visible_filter(query)
 
     return query
 
@@ -231,4 +233,8 @@ def apply_extra_filters(query, filters):
             applicable_filters[key] = filters[key]
 
     query = get_filters(applicable_filters, query, HaulageFreightRateJob)
+    return query
+
+def apply_is_visible_filter(query):
+    query = query.where(HaulageFreightRateJob.is_visible == True)
     return query
