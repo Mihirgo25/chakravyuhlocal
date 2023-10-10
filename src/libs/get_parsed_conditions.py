@@ -40,9 +40,9 @@ def map_ids_to_names(ids, mappings):
     if not mappings:
         return [] 
     if isinstance(ids, str):
-        return [mappings[ids]]
+        return [mappings.get(ids)]
     elif isinstance(ids, list):
-        return [mappings[id] for id in ids]
+        return [mappings.get(id) for id in ids]
 
 def get_parsed_conditions_data(line_items):
     parsed_line_items = []
