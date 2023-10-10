@@ -26,7 +26,7 @@ def get_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_has
                 "reliability_score","terminal_cutoff", "source" ,"id"]
             }
         
-        if key in hash:
+        if key in sailing_schedules_hash:
             sailing_schedules_hash[key].append(schedule_data)
         else:
             sailing_schedules_hash[key] = [schedule_data]
@@ -66,12 +66,12 @@ def get_grouping(data,currency,locals_price,sailing_schedules_required,detention
         if sailing_schedules_required and data["source"] != "cogo_assured_rate":
             key_elements = [
                 data["shipping_line_id"],
-                str(freight["departure"]) if freight["departure"] is not None else "",
-                str(freight["arrival"]) if freight["arrival"] is not None else "",
-                str(freight["number_of_stops"]) if freight["number_of_stops"] is not None else "",
-                data["origin_main_port_id"] if data["origin_main_port_id"] is not None else "",
-                data["destination_main_port_id"] if data["destination_main_port_id"] is not None else "",
-                str(detention_free_limit) if detention_free_limit is not None else "",
+                str(freight["departure"] or ""),
+                str(freight["arrival"] or "") ,
+                str(freight["number_of_stops"] or "") ,
+                data["origin_main_port_id"] or "",
+                data["destination_main_port_id"] or "",
+                str(detention_free_limit) or "",
                 data["source"],
             ]
 
@@ -80,12 +80,12 @@ def get_grouping(data,currency,locals_price,sailing_schedules_required,detention
         else:
             key_elements = [
                 data["shipping_line_id"],
-                str(freight["validity_start"]) if freight["validity_start"] is not None else "",
-                str(freight["validity_end"]) if freight["validity_end"] is not None else "",
-                str(freight["number_of_stops"]) if freight["number_of_stops"] is not None  else "",
-                data["origin_main_port_id"] if data["origin_main_port_id"] is not None else "",
-                data["destination_main_port_id"] if data["destination_main_port_id"] is not None else "",
-                str(detention_free_limit) if detention_free_limit is not None else "",
+                str(freight["validity_start"] or "") ,
+                str(freight["validity_end"] or "") ,
+                str(freight["number_of_stops"] or "") ,
+                data["origin_main_port_id"] or "",
+                data["destination_main_port_id"] or "",
+                str(detention_free_limit) or "",
                 data["source"],
             ]
 
@@ -244,7 +244,35 @@ def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,d
                 )
                 
         return freights        
-   
+
+def get_sailing_schedules_new(port_pair, shipping_line,validity_start):
+    origin_port_id = port_pair.split("_")[0]
+    destination_port_id = port_pair.split("_")[1]
+    
+    data = {
+        "origin_port_id": origin_port_id,
+        "destination_port_id": destination_port_id,
+        "filters": {
+            'shipping_line_id': list(set(shipping_line)),
+            "departure_start": validity_start
+        },
+        "page_limit": 1000,
+        "sort_by": "departure",
+        "sort_type": "asc",
+        "request_source":"spot_search"
+    }
+
+    schedules = maps.get_sailing_schedules(data)
+    
+    return [
+        {
+            "origin_port_id": origin_port_id,
+            "destination_port_id": destination_port_id,
+            **t,
+        }
+        for t in schedules.get('list', [])
+    ]
+               
 def get_fcl_freight_rate_cards_schedules(filters):
     
     origin_port_id=filters.get('origin_port_id')
@@ -268,38 +296,10 @@ def get_fcl_freight_rate_cards_schedules(filters):
 
     if sailing_schedules_required:
 
-        def get_sailing_schedules_new(port_pair, shipping_line):
-            origin_port_id = port_pair.split("_")[0]
-            destination_port_id = port_pair.split("_")[1]
-            
-            data = {
-                "origin_port_id": origin_port_id,
-                "destination_port_id": destination_port_id,
-                "filters": {
-                    'shipping_line_id': list(set(shipping_line)),
-                    "departure_start": validity_start
-                },
-                "page_limit": 1000,
-                "sort_by": "departure",
-                "sort_type": "asc",
-                "request_source":"spot_search"
-            }
-
-            schedules = maps.get_sailing_schedules(data)
-            
-            return [
-                {
-                    "origin_port_id": origin_port_id,
-                    "destination_port_id": destination_port_id,
-                    **t,
-                }
-                for t in schedules.get('list', [])
-            ]
-
         sailing_schedules = []
         with ThreadPoolExecutor(max_workers=4) as executor:
             executors = [
-                executor.submit(get_sailing_schedules_new, port_pair, shipping_line)
+                executor.submit(get_sailing_schedules_new, port_pair, shipping_line,validity_start)
                 for port_pair, shipping_line in port_pairs.items()
             ]
           
@@ -319,9 +319,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
 
         fake_schedules = response['list']
 
-
     grouping = {}
-
 
     for data in list_data:
         
