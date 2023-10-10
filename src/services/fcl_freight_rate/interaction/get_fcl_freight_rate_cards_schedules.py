@@ -24,7 +24,7 @@ def get_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_has
         schedule_data = {
             k: sailing_schedule.get(k, None)
             for k in [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type",
-                "reliability_score","terminal_cutoff", "source" ]
+                "reliability_score","terminal_cutoff", "source" ,"id"]
             }
 
         sailing_schedules_hash.setdefault(key, []).append(schedule_data)
@@ -119,10 +119,14 @@ def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,d
                     freight["schedule_type"] = "transshipment"
                     
                 schedules = None
-        
+                schedule_found = False
+                
                 if freight.get('schedule_id'):
-                    schedules = [schedule for schedule in data_schedules if freight['schedule_id'] == schedule['id']]
+                    
+                    schedules = [schedule for schedule in data_schedules if freight.get('schedule_id') == schedule.get('id')]
+    
                     if schedules:
+                        schedule_found = True
                         selected_schedule_ids.add(schedules[0]['id'])    
                 
                 if not schedules: 
@@ -132,7 +136,6 @@ def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,d
                         if freight["validity_start"] <= schedule["departure"]
                         and freight["validity_end"] >= schedule["departure"]
                         and freight["schedule_type"] == schedule.get("schedule_type")
-                        and schedule['id'] not in selected_schedule_ids
                     ]
           
                 if not schedules:
@@ -194,6 +197,9 @@ def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,d
                     freight_line_items = list(freight["line_items"])
                     for item in freight_line_items:
                         item['price'] = float(item['price'])
+                    if not schedule_found and schedule.get('id') in selected_schedule_ids:
+                        continue
+                    
                     freights.append(
                         {
                             "line_items": json.loads(json.dumps(freight_line_items)),
@@ -283,10 +289,9 @@ def get_fcl_freight_rate_cards_schedules(filters):
                 "request_source":"spot_search"
             }
 
-            breakpoint()
             schedules = maps.get_sailing_schedules(data)
-            breakpoint()
-            
+          
+        
             return [
                 {
                     "origin_port_id": origin_port_id,
