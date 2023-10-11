@@ -9,7 +9,7 @@ import json
 
 REQUIRED_SCHEDULE_KEYS = [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type","reliability_score","terminal_cutoff", "source" ,"id"]
 
-def get_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_hash):
+def create_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_hash):
     for executor in executors:
         results = executor.result()
         sailing_schedules.extend(results)
@@ -32,7 +32,7 @@ def get_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_has
     return sailing_schedules_hash  
 
 
-def get_data_schedules(data,origin_port,destination_port,origin_port_id,destination_port_id,sailing_schedules_hash):
+def get_relavant_schedules(data,origin_port,destination_port,origin_port_id,destination_port_id,sailing_schedules_hash):
     key = []
     key.append(data["origin_main_port_id"] if origin_port["is_icd"] else origin_port_id)
     key.append(data["destination_main_port_id"] if destination_port["is_icd"] else destination_port_id)
@@ -44,7 +44,7 @@ def get_data_schedules(data,origin_port,destination_port,origin_port_id,destinat
     return data_schedules
 
 
-def get_grouping(data,currency,locals_price,sailing_schedules_required,detention_free_limit,grouping,spot_search_object):
+def create_grouping(data,currency,locals_price,sailing_schedules_required,detention_free_limit,grouping,spot_search_object):
     
     for freight in data["freights"]:
         freight_price = sum(
@@ -128,8 +128,8 @@ def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,d
                     schedules = [
                         schedule
                         for schedule in data_schedules
-                        if freight["validity_start"] <= schedule["departure"]
-                        and freight["validity_end"] >= schedule["departure"]
+                        if datetime.strptime(freight["validity_start"], "%Y-%m-%d").date() <= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
+                        and datetime.strptime(freight["validity_end"], "%Y-%m-%d").date() >= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
                         and freight["schedule_type"] == schedule.get("schedule_type")
                     ]
           
@@ -260,16 +260,14 @@ def get_sailing_schedules_data(port_pair, shipping_line,validity_start):
         "request_source":"spot_search"
     }
 
-    schedules = maps.get_sailing_schedules(data)
+    response = maps.get_sailing_schedules(data)
+    schedules = response.get('list',[])
     
-    return [
-        {
-            "origin_port_id": origin_port_id,
-            "destination_port_id": destination_port_id,
-            **t,
-        }
-        for t in schedules.get('list', [])
-    ]
+    for schedule in schedules:
+        schedule["origin_port_id"] = origin_port_id
+        schedule["destination_port_id"] = destination_port_id
+    
+    return schedules
   
              
 def get_fcl_freight_rate_cards_schedules(filters):
@@ -298,7 +296,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
                 for port_pair, shipping_line in port_pairs.items()
             ]
           
-        sailing_schedules_hash=get_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_hash)  
+        sailing_schedules_hash=create_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_hash)  
 
         rates = []
         data = {
@@ -316,7 +314,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
     grouping = {}
 
     for data in list_data:
-        data_schedules = get_data_schedules(
+        data_schedules = get_relavant_schedules(
             data,
             origin_port,
             destination_port,
@@ -349,7 +347,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
         )
 
         detention_free_limit = int(data["destination_detention"].get("free_limit", 0))
-        grouping = get_grouping(
+        grouping = create_grouping(
             data,
             currency,
             locals_price,
