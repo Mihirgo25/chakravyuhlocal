@@ -28,8 +28,7 @@ def execute_transaction_code(request):
             raise HTTPException(status_code=500, detail="Cfs rate feedback deletion failed")
         create_audit(request, obj.id)
         get_multiple_service_objects(obj)
-
-    send_notifications_to_sales_agent_fcl_cfs_feedback_delay.apply_async(kwargs={'object':obj},queue='low')
+        send_notifications_to_sales_agent_fcl_cfs_feedback_delay.apply_async(kwargs={'object':obj},queue='low')
 
     return {'fcl_cfs_rate_feedback_ids' : request['fcl_cfs_rate_feedback_ids']}
 

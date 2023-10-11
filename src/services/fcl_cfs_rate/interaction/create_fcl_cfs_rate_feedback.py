@@ -50,7 +50,7 @@ def execute_transaction_code(request):
 
     create_audit(request, cfs_feedback)
     get_multiple_service_objects(cfs_feedback)
-    send_notifications_to_supply_agents_cfs_feedback_delay.apply_async(kwargs = {'object':cfs_feedback}, queue = 'low')
+    send_notifications_to_supply_agents_cfs_feedback_delay.apply_async(kwargs = {'object':cfs_feedback, 'request':request}, queue = 'low')
 
     return {
       'id': request.get('rate_id')

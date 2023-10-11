@@ -45,9 +45,9 @@ def create_fcl_cfs_rate_delay(self, request):
             raise self.retry(exc= e)
         
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def send_notifications_to_supply_agents_cfs_feedback_delay(self, object):
+def send_notifications_to_supply_agents_cfs_feedback_delay(self, object, request):
     try:
-        object.send_notifications_to_supply_agents()
+        object.send_notifications_to_supply_agents(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
