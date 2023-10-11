@@ -30,7 +30,7 @@ def delete_fcl_freight_rate_job(request):
         update_params = {
             "status": "aborted",
             "closed_by_id": request.get("performed_by_id"),
-            "closed_by": get_user(request.get("performed_by_id"))[0],
+            "closed_by": get_user(request.get("performed_by_id"))[0] if request.get("performed_by_id") else None,
             "updated_at": datetime.now(),
             "closing_remarks": request.get("closing_remarks"),
         }
@@ -38,7 +38,7 @@ def delete_fcl_freight_rate_job(request):
         update_params = {
             "status": "completed",
             "closed_by_id": request.get("performed_by_id"),
-            "closed_by": get_user(request.get("performed_by_id"))[0],
+            "closed_by": get_user(request.get("performed_by_id"))[0] if request.get("performed_by_id") else None,
             "updated_at": datetime.now(),
         }
     
