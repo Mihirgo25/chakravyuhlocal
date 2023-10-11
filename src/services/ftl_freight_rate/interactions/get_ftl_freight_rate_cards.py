@@ -12,6 +12,7 @@ from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import FTL_FREIGHT_CHARGES
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
 from fastapi import HTTPException
+from configs.ftl_freight_rate_constants import PREDICTED_PRICE_SERVICE_PROVIDER
 
 def get_ftl_freight_rate_cards(request):
     """
@@ -382,6 +383,10 @@ def ignore_non_eligible_service_providers(request, query_result):
     for data in ftl_rates:
         if str(data.get("service_provider_id")) in ids:
             final_list.append(data)
+
+    unique_service_providers_count = len(set(rate['service_provider_id'] for rate in final_list if rate.get('service_provider_id')))
+    if unique_service_providers_count > 1:
+        final_list = [rate for rate in final_list if rate.get('service_provider_id') != PREDICTED_PRICE_SERVICE_PROVIDER]
 
     return final_list
 
