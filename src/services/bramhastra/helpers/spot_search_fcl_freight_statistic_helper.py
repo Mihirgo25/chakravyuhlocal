@@ -113,6 +113,7 @@ class SpotSearch:
         )
         if fcl_freight_action is not None:
             return
+        print(params, 'paramsa')
         fcl_freight_action = FclFreightAction(**params)
         fcl_freight_action.save()
 

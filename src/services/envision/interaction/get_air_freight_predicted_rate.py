@@ -2,7 +2,7 @@ from configs.definitions import ROOT_DIR
 import os, pandas as pd
 import pickle
 from datetime import datetime
-from configs.definitions import AIR_PREDICTION_MODEL
+from configs.yml_definitions import AIR_PREDICTION_MODEL
 
 def predict_air_freight_rate(request):
     if type(request) == dict:
