@@ -296,7 +296,7 @@ def build_response_object(result, request):
                 line_item["total_price"] = total_price
                 line_item["price"] = line_item["total_price"]
                 line_item["quantity"] = 1
-                code_config = FTL_FREIGHT_CHARGES[line_item["code"]]
+                code_config = FTL_FREIGHT_CHARGES.get()[line_item["code"]]
                 line_item["name"] = code_config["name"]
         else:
             line_item = build_line_item_object(
@@ -325,7 +325,7 @@ def build_response_object(result, request):
 def build_line_item_object(
     request, line_item, trucks_count=0, minimum_chargeable_weight=0
 ):
-    code_config = FTL_FREIGHT_CHARGES[line_item["code"]]
+    code_config = FTL_FREIGHT_CHARGES.get()[line_item["code"]]
 
     is_additional_service = False
 

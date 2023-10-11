@@ -80,7 +80,7 @@ class FtlFreightRateBulkOperation(BaseModel):
         if data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='is invalid')
 
-        ftl_freight_charges_dict = FTL_FREIGHT_CHARGES
+        ftl_freight_charges_dict = FTL_FREIGHT_CHARGES.get()
 
         charges_code = ftl_freight_charges_dict.keys()
         
