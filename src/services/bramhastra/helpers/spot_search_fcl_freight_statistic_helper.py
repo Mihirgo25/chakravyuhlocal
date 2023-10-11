@@ -102,6 +102,17 @@ class SpotSearch:
         return action_params
 
     def __create_action(self, params) -> None:
+        fcl_freight_action = (
+            FclFreightAction.select(FclFreightAction.id)
+            .where(
+                FclFreightAction.spot_search_id == params.get("spot_search_id"),
+                FclFreightAction.rate_id == params.get("rate_id"),
+                FclFreightAction.validity_id == params.get("validity_id"),
+            )
+            .first()
+        )
+        if fcl_freight_action is not None:
+            return
         fcl_freight_action = FclFreightAction(**params)
         fcl_freight_action.save()
 

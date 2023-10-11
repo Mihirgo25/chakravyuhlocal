@@ -110,7 +110,7 @@ class FclFreightRateStatistic(BaseModel):
     
     @classmethod
     def update(cls, *args, **kwargs):
-        kwargs['updated_at'] = datetime.now()
+        kwargs['operation_updated_at'] = datetime.now()
         return super().update(*args, **kwargs)
 
     def refresh(self):
