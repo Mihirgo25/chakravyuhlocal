@@ -11,7 +11,7 @@ from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from celery_worker import (
     create_communication_background,
 )
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 
 def create_air_freight_rate_request(request):

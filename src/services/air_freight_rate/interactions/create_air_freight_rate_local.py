@@ -2,7 +2,7 @@ from services.air_freight_rate.models.air_freight_rate_local import AirFreightRa
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from database.db_session import db
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def create_air_freight_rate_local(request):
     object_type='Air_Freight_Rate_Local'

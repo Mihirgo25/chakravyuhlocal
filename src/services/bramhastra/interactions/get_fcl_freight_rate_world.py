@@ -5,52 +5,51 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
 
+TRADE_MAPPINGS = {"import": "origin", "export": "destination"}
 
-async def get_fcl_freight_rate_world():
-    statistics = await get_count_distribution()
 
+async def get_fcl_freight_rate_world(filters):
+    statistics = await get_count_distribution(filters)
     count = await get_total_count()
-
     return {
-        "total_rates": count,
+        "total_count": count,
         "statistics": statistics,
     }
 
 
 async def get_total_count():
-    query = "SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.fcl_freight_rate_statistics WHERE validity_end >= toDate(now())"
+    query = f"SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE validity_end >= toDate(now())"
     clickhouse = ClickHouse()
     if result := clickhouse.execute(query):
         return result[0]["count"]
 
 
-async def get_count_distribution():
+async def get_count_distribution(filters):
+    trade = "origin"
+    location = "country"
+    if "trade_type" in filters:
+        trade = TRADE_MAPPINGS[filters["trade_type"]]
+    if "location_type" in filters:
+        location = filters["location_type"]
     clickhouse = ClickHouse()
-
     query = f"""
             WITH clean_rates AS
             (
                 SELECT
-                    origin_country_id,
-                    destination_country_id,
+                    {trade}_{location}_id,
                     rate_id
                 FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE validity_end >= toDate(now())
                 GROUP BY
-                    rate_id,
-                    origin_country_id,
-                    destination_country_id
+                    {trade}_{location}_id,
+                    rate_id
             )
         SELECT
-            country_id,
-            COUNT(*) AS rate_count
+            {location}_id,
+            COUNT(*) AS count
         FROM
         (
-            SELECT origin_country_id AS country_id
-            FROM clean_rates
-            UNION ALL
-            SELECT destination_country_id AS country_id
+            SELECT {trade}_{location}_id AS {location}_id
             FROM clean_rates
         ) AS combined_countries
-        GROUP BY country_id"""
-
+        GROUP BY {location}_id"""
     return jsonable_encoder(clickhouse.execute(query))

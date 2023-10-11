@@ -16,7 +16,9 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import (
 )
 from services.bramhastra.constants import FCL_MODE_MAPPINGS
 from services.bramhastra.enums import FclModes, Fcl, FclChargeCodes
-from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.helpers.common_statistic_helper import (
+    get_fcl_freight_identifier,
+)
 
 UPDATE_EXCLUDE_ITEMS = {
     "origin_port_id",
@@ -60,11 +62,13 @@ class Rate:
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
-                == get_identifier(row.get("rate_id"), row.get("validity_id"))
+                == get_fcl_freight_identifier(
+                    row.get("rate_id"), row.get("validity_id")
+                )
             )
             .first()
         )
-        
+
         if not fcl_freight_rate_statistic:
             try:
                 self.create(row)
@@ -109,15 +113,25 @@ class Rate:
                 self.update(row)
 
     def get_feedback_details(self):
-        if row := (
-            FclFreightRateFeedback.select(
-                FclFreightRateFeedback.fcl_freight_rate_id.alias("parent_rate_id"),
-                FclFreightRateFeedback.validity_id.alias("parent_validity_id"),
-            )
-            .where(FclFreightRateFeedback.id == self.freight.source_id)
-            .dicts()
-        ):
-            return jsonable_encoder(row.get())
+        if feedback := FclFreightRateFeedback.select(
+            FclFreightRateFeedback.fcl_freight_rate_id,
+            FclFreightRateFeedback.validity_id,
+        ).where(
+            FclFreightRateFeedback.id == self.freight.source_id,
+        ).first():
+            if fcl_freight_rate_statistic := FclFreightRateStatistic.select(
+                FclFreightRateStatistic.mode
+            ).where(
+                FclFreightRateStatistic.identifier
+                == get_fcl_freight_identifier(
+                    str(feedback.fcl_freight_rate_id), str(feedback.validity_id)
+                )
+            ).first():
+                return {
+                    'parent_rate_id': feedback.fcl_freight_rate_id,
+                    'parent_validity_id': feedback.validity_id,
+                    'parent_rate_mode': fcl_freight_rate_statistic.mode
+                }
 
     def set_formatted_data(self) -> None:
         freight = self.freight.dict(exclude={"validities", "accuracy"})
@@ -152,7 +166,9 @@ class Rate:
                         ).get("price", param["bas_price"])
 
             param.update(validity.dict(exclude={"line_items"}))
-            param["identifier"] = get_identifier(param["rate_id"], param["validity_id"])
+            param["identifier"] = get_fcl_freight_identifier(
+                param["rate_id"], param["validity_id"]
+            )
             param["origin_pricing_zone_map_id"] = self.origin_pricing_zone_map_id
             param[
                 "destination_pricing_zone_map_id"

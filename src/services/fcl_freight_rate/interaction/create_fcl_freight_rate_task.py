@@ -4,6 +4,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRat
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
 from database.db_session import db
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_SERVICE_PROVIDER_ID
 
 def create_audit(request, task_id):
     performed_by_id = request['performed_by_id']
@@ -41,6 +43,10 @@ def execute_transaction_code(request):
         'status': 'pending',
         'spot_negotiation_rate_id': request.get('spot_negotiation_rate_id')
     }
+    
+    existing_local = get_fcl_freight_rate_local(object_unique_params | {"rate_type": DEFAULT_RATE_TYPE, "service_provider_id": DEFAULT_SERVICE_PROVIDER_ID})
+    if existing_local.get('line_items'):
+        return True
 
     commodity = None
     if 'commodity' in request and request["commodity"] in HAZ_CLASSES:
