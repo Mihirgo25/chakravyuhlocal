@@ -1,5 +1,5 @@
 import os
-from micro_services.client import common 
+from micro_services.client import loki 
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..")) 
 
 class Charges:
@@ -7,7 +7,7 @@ class Charges:
         self.key = key
     
     def get(self):
-        return common.get_charge(self.key)
+        return loki.get_charge(self.key)
    
         
 FCL_FREIGHT_CHARGES = Charges('fcl_freight_charges')
