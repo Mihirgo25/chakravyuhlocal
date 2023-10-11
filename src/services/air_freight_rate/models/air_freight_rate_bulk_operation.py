@@ -16,7 +16,8 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.interactions.list_air_freight_rate_locals import list_air_freight_rate_locals
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from services.air_freight_rate.interactions.update_air_freight_storage_rate import update_air_freight_storage_rate
-from configs.definitions import AIR_FREIGHT_CURRENCIES,AIR_FREIGHT_LOCAL_CHARGES
+from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
+from configs.yml_definitions import AIR_FREIGHT_CURRENCIES
 from services.air_freight_rate.interactions.list_air_freight_storage_rates import list_air_freight_storage_rates
 from services.air_freight_rate.interactions.delete_air_freight_rate_surcharge import delete_air_freight_rate_surcharge
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
@@ -139,7 +140,7 @@ class AirFreightRateBulkOperation(BaseModel):
                 status_code=400, detail="Min Price Markup Type Is Invalid"
             )
 
-        charge_codes = AIR_FREIGHT_LOCAL_CHARGES
+        charge_codes = AIR_FREIGHT_LOCAL_CHARGES.get()
 
         if data["line_item_code"] not in charge_codes:
             raise HTTPException(status_code=400, detail="Line Item Code Is Invalid")

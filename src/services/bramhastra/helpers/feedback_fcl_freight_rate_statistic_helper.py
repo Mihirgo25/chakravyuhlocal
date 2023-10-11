@@ -175,6 +175,7 @@ class Feedback:
             .where(
                 FclFreightAction.spot_search_id == self.params.get("source_id"),
                 FclFreightAction.rate_id == self.params.get("rate_id"),
+                FclFreightAction.validity_id == self.params.get("validity_id"),
             )
             .first()
         )
