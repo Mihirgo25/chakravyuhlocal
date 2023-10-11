@@ -74,24 +74,6 @@ def main():
             FclFreightRateRequestStatistic,
         ]
     )
-    try:
-        db.create_tables(
-            [
-                FclFreightAction,
-                FclFreightRateAuditStatistic,
-                AirFreightRateStatistic,
-                FclFreightRateRequestStatistic,
-                FclFreightRateStatistic,
-                FeedbackFclFreightRateStatistic,
-                SpotSearchFclFreightRateStatistic,
-                CheckoutFclFreightRateStatistic,
-                ShipmentFclFreightRateStatistic,
-                DataMigration,
-                FclFreightAction,
-            ]
-        )
-    except Exception:
-        pass
 
     click = ClickHouse()
 
