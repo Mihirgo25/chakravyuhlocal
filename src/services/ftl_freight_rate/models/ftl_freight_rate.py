@@ -197,7 +197,7 @@ class FtlFreightRate(BaseModel):
 
     def validate_service_provider_id(self):
       eligible_service_providers = get_eligible_orgs(service='ftl_freight')
-      if self.service_provider_id not in eligible_service_providers:
+      if str(self.service_provider_id) not in eligible_service_providers:
         raise HTTPException(status_code=400, detail="Invalid service provider ID")
 
     def validate_before_save(self):
