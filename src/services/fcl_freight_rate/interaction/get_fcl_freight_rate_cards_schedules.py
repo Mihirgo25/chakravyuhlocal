@@ -100,6 +100,67 @@ def create_grouping(data,currency,locals_price,sailing_schedules_required,detent
                 "data": {**data,'freights' : [freight]}  
             }
     return grouping            
+
+def get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_port_id, destination_port_id):
+    schedules = None
+    schedule_found = False
+    
+    if freight.get('schedule_id'):
+        schedules = [schedule for schedule in data_schedules if freight.get('schedule_id') == schedule.get('id')]
+        if schedules:
+            schedule_found = True
+            selected_schedule_ids.add(schedules[0]['id'])    
+    
+    if not schedules: 
+        schedules = [
+            schedule
+            for schedule in data_schedules
+            if datetime.strptime(freight["validity_start"], "%Y-%m-%d").date() <= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
+            and datetime.strptime(freight["validity_end"], "%Y-%m-%d").date() >= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
+            and freight["schedule_type"] == schedule.get("schedule_type")
+        ]
+
+    if not schedules:
+        transit_times = [schedule["transit_time"] for schedule in data_schedules]
+        avg_transit_time = sum(transit_times) / len(transit_times) if transit_times else None
+
+        if avg_transit_time is None:
+            data = {
+                        "origin_port_id": origin_port_id,
+                        "destination_port_id": destination_port_id,
+                    }
+            predicted_transit_time = maps.get_predicted_transit_time(data)
+        
+        fallback_schedules = FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES
+        
+        for fake_schedule in fallback_schedules:
+            fake_schedule["transit_time"] = (
+                avg_transit_time
+                or predicted_transit_time
+                or fake_schedule["transit_time"]
+            )
+
+        for fake_schedule in fallback_schedules:
+            departure = (datetime.now() + timedelta(days=fake_schedule["departure_offset_days"])).date()
+            cur_validity_end = datetime.strptime(freight["validity_end"], "%Y-%m-%d").date()
+            cur_validity_start = datetime.strptime(freight["validity_start"], "%Y-%m-%d").date()
+
+            if departure > cur_validity_end:
+                departure = cur_validity_end
+            if departure < cur_validity_start:
+                departure = cur_validity_start
+
+            schedule = {
+                "departure": departure,
+                "transit_time": fake_schedule["transit_time"],
+                "number_of_stops": fake_schedule["number_of_stops"],
+                "schedule_type": fake_schedule["schedule_type"],
+                "source": "fake",
+            }
+            schedule["arrival"] = schedule["departure"] + timedelta(days=schedule["transit_time"])
+            schedules.append(schedule)   
+              
+    return schedules, schedule_found       
             
             
 def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,destination_port_id):
@@ -113,85 +174,14 @@ def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,d
                 if freight["schedule_type"] in ["transhipment", "transshipment"]:
                     freight["schedule_type"] = "transshipment"
                     
-                schedules = None
-                schedule_found = False
-                
-                if freight.get('schedule_id'):
-                    
-                    schedules = [schedule for schedule in data_schedules if freight.get('schedule_id') == schedule.get('id')]
-    
-                    if schedules:
-                        schedule_found = True
-                        selected_schedule_ids.add(schedules[0]['id'])    
-                
-                if not schedules: 
-                    schedules = [
-                        schedule
-                        for schedule in data_schedules
-                        if datetime.strptime(freight["validity_start"], "%Y-%m-%d").date() <= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
-                        and datetime.strptime(freight["validity_end"], "%Y-%m-%d").date() >= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
-                        and freight["schedule_type"] == schedule.get("schedule_type")
-                    ]
-          
-                if not schedules:
-                    transit_times = [
-                        schedule["transit_time"] for schedule in data_schedules
-                    ]
-                    avg_transit_time = (
-                        sum(transit_times) / len(transit_times)
-                        if transit_times
-                        else None
-                    )
-
-                    if avg_transit_time is None:
-                        data = {
-                                    "origin_port_id": origin_port_id,
-                                    "destination_port_id": destination_port_id,
-                                }
-                        predicted_transit_time = maps.get_predicted_transit_time(data)
-                    
-                    fallback_schedules = FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES
-                   
-                    for fake_schedule in fallback_schedules:
-                        fake_schedule["transit_time"] = (
-                            avg_transit_time
-                            or predicted_transit_time
-                            or fake_schedule["transit_time"]
-                        )
-
-                    for fake_schedule in fallback_schedules:
-                        departure = (
-                            datetime.now()
-                            + timedelta(days=fake_schedule["departure_offset_days"])
-                        ).date()
-                        cur_validity_end = datetime.strptime(
-                            freight["validity_end"], "%Y-%m-%d"
-                        ).date()
-                        cur_validity_start = datetime.strptime(
-                            freight["validity_start"], "%Y-%m-%d"
-                        ).date()
-
-                        if departure > cur_validity_end:
-                            departure = cur_validity_end
-                        if departure < cur_validity_start:
-                            departure = cur_validity_start
-
-                        schedule = {
-                            "departure": departure,
-                            "transit_time": fake_schedule["transit_time"],
-                            "number_of_stops": fake_schedule["number_of_stops"],
-                            "schedule_type": fake_schedule["schedule_type"],
-                            "source": "fake",
-                        }
-                        schedule["arrival"] = schedule["departure"] + timedelta(days=schedule["transit_time"])
-                       
-                        schedules.append(schedule)
+                schedules, schedule_found = get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_port_id, destination_port_id)
             
                 for sailing_schedule in schedules:
                     freight_line_items = list(freight["line_items"])
+                    
                     for item in freight_line_items:
                         item['price'] = float(item['price'])
-                    if not schedule_found and schedule.get('id') in selected_schedule_ids:
+                    if not schedule_found and sailing_schedule.get('id') in selected_schedule_ids:
                         continue
                     
                     freights.append(
