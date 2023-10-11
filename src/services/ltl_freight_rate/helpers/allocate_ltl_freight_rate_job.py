@@ -1,5 +1,5 @@
 from services.ltl_freight_rate.models.ltl_freight_rate_jobs import LtlFreightRateJob
-from configs.ltl_freight_rate_constants import FCL_COVERAGE_USERS
+from configs.ltl_freight_rate_constants import LTL_FREIGHT_COVERAGE_USERS
 from database.db_session import rd
 from micro_services.client import common
 from peewee import fn
@@ -20,10 +20,10 @@ def allocate_ltl_freight_rate_job(source, service_provider_id):
         last_assigned_user = 0
     else:
         last_assigned_user = int(last_assigned_user)
-    next_user = (last_assigned_user + 1) % len(FCL_COVERAGE_USERS)
+    next_user = (last_assigned_user + 1) % len(LTL_FREIGHT_COVERAGE_USERS)
     
     agent_filters = {}
-    filters = {"agent_id": FCL_COVERAGE_USERS}
+    filters = {"agent_id": LTL_FREIGHT_COVERAGE_USERS}
     agent_filters['filters'] = filters
     online_users = common.list_chat_agents(agent_filters)
 
@@ -37,7 +37,7 @@ def allocate_ltl_freight_rate_job(source, service_provider_id):
             
     if not active_ltl_users:
         rd.set(redis_key, next_user)
-        return FCL_COVERAGE_USERS[next_user]
+        return LTL_FREIGHT_COVERAGE_USERS[next_user]
 
     query = (LtlFreightRateJob.select(LtlFreightRateJob.user_id, fn.Count(LtlFreightRateJob.user_id).alias('user_id_count'))
             .where((LtlFreightRateJob.user_id << active_ltl_users) &
