@@ -28,6 +28,7 @@ def execute_transaction_code(request, source):
         'sources' : [source],
         'rate_type' : request.get('rate_type'),
         'search_source': request.get('source'),
+        'is_visible': request.get('is_visible') or True,
     }
     init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or  "")}:{str(params.get("trip_type") or "")}:{str(params.get("importer_exporter_id") or "")}:{str(params.get("transit_time") or "")}:{str(params.get("density_factor") or "")}:{str(params.get("rate_type") or "")}'
     ltl_freight_rate_job = LtlFreightRateJob.select().where(LtlFreightRateJob.init_key == init_key, LtlFreightRateJob.status << ['backlog', 'pending']).first()

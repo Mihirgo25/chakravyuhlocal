@@ -30,6 +30,7 @@ def execute_transaction_code(request, source):
         "sources": [source],
         "rate_type": request.get("rate_type"),
         'search_source': request.get('source'),
+        'is_visible': request.get('is_visible') or True,
     }
     init_key = f'{str(params.get("location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("importer_exporter_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}'
     lcl_customs_rate_job = (

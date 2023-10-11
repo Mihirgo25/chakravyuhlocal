@@ -79,5 +79,6 @@ class LclCustomsRateJob(BaseModel):
             "trade_id": location["trade_id"],
             "country_code": location["country_code"],
             "type": location["type"],
+            "display_name": location["display_name"]
         }
         return loc_data

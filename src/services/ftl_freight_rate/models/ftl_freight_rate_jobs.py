@@ -81,6 +81,7 @@ class FtlFreightRateJob(BaseModel):
           "country_id": location["country_id"],
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
-          "country_code": location["country_code"]
+          "country_code": location["country_code"],
+          "display_name": location["display_name"]
         }
         return loc_data

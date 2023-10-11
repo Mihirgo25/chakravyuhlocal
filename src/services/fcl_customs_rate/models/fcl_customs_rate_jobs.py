@@ -73,6 +73,7 @@ class FclCustomsRateJob(BaseModel):
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
           "country_code": location["country_code"],
-          "type": location["type"]
+          "type": location["type"],
+          "display_name": location["display_name"]
         }
         return loc_data
