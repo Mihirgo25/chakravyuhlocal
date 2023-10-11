@@ -13,7 +13,7 @@ from configs.definitions import FTL_FREIGHT_CHARGES
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.ftl_freight_rate_constants import DEFAULT_RATE_TYPE
 from libs.parse_numeric import parse_numeric
-from configs.definitions import FTL_FREIGHT_CURRENCIES
+from configs.yml_definitions import FTL_FREIGHT_CURRENCIES
 import json
 from micro_services.client import *
 from database.rails_db import *
