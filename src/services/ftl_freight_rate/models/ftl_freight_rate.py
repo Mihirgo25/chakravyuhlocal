@@ -197,9 +197,8 @@ class FtlFreightRate(BaseModel):
 
     def validate_service_provider_id(self):
       eligible_service_providers = get_eligible_orgs(service='ftl_freight')
-      if str(self.service_provider_id) in eligible_service_providers:
-        return True
-      return False
+      if self.service_provider_id not in eligible_service_providers:
+        raise HTTPException(status_code=400, detail="Invalid service provider ID")
 
     def validate_before_save(self):
         self.validate_duplicate_line_items()
@@ -211,8 +210,7 @@ class FtlFreightRate(BaseModel):
         self.validate_transit_time()
         self.validate_detention_free_time()
         self.validate_commodity()
-        if not self.validate_service_provider_id():
-            raise HTTPException(status_code = 400, detail = 'Service provider is not Valid for this service')
+        self.validate_service_provider_id()
 
     def mandatory_charge_codes(self,possible_charge_codes):
         charge_codes = {}
