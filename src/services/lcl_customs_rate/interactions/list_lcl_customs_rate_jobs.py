@@ -29,8 +29,6 @@ DEFAULT_REQUIRED_FIELDS = [
     "status",
     "service_provider",
     "service_provider_id",
-    "importer_exporter",
-    "importer_exporter_id",
     "location",
     "location_id",
     "serial_id",

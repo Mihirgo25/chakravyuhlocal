@@ -22,8 +22,6 @@ class LtlFreightRateJob(BaseModel):
     service_provider = BinaryJSONField(null=True)
     service_provider_id = UUIDField(null=True, index=True)
     trip_type = CharField(index=True, null=True)
-    importer_exporter_id = UUIDField(null=True)
-    importer_exporter = BinaryJSONField(null=True)
     commodity= CharField(null=True)
     transit_time = TextField(null=True)
     density_factor = FloatField(null = True)

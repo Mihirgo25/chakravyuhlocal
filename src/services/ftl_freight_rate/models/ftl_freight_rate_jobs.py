@@ -22,8 +22,6 @@ class FtlFreightRateJob(BaseModel):
     destination_location = BinaryJSONField(null=True)
     service_provider_id = UUIDField(null = True, index=True)
     service_provider = BinaryJSONField(null=True)
-    importer_exporter_id = UUIDField(null=True)
-    importer_exporter = BinaryJSONField(null=True)
     truck_type = CharField(null=True,index = True)
     truck_body_type = CharField(null = True)
     trip_type = CharField(null = True)

@@ -18,18 +18,19 @@ def create_fcl_cfs_rate_job(request, source):
 def execute_transaction_code(request, source):
     request = jsonable_encoder(request)
     params = {
-        'location_id' : request.get('port_id'),
+        'location_id' : request.get('location_id'),
         'service_provider_id' : request.get('service_provider_id'),
         'container_size' : request.get('container_size'),
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
+        'cargo_handling_type': request.get('cargo_handling_type'),
         'sources' : [source],
         'trade_type': request.get('trade_type'),
         'rate_type' : request.get('rate_type'),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible') or True,
     }
-    init_key = f'{str(params.get("location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}'
+    init_key = f'{str(params.get("location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("cargo_handling_type") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("rate_type") or "")}'
     fcl_cfs_rate_job = FclCfsRateJob.select().where(FclCfsRateJob.init_key == init_key, FclCfsRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 

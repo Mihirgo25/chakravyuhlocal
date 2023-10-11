@@ -23,7 +23,7 @@ class FclCfsRateJob(BaseModel):
     continent_id = UUIDField(null=True)
     service_provider_id = UUIDField(null=True, index=True)
     service_provider = BinaryJSONField(null=True)
-    importer_exporter_id = UUIDField(null=True)
+    cargo_handling_type = CharField(index=True,null=True)
     trade_type = CharField(index=True, null= True)
     container_size = CharField(null=True, index=True)
     container_type = CharField(null=True, index=True)

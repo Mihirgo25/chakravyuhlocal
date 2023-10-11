@@ -202,6 +202,9 @@ class CreateHaulageFreightRateJob(BaseModel):
     destination_location: dict = {}
     shipping_line_id: str = None
     service_provider_id: str = None
+    haulage_type: str = None
+    trailer_type: str = None
+    trip_type: str = None
     container_size: str = None
     container_type: str = None
     commodity: str = None

@@ -21,7 +21,6 @@ class LclFreightRateJob(BaseModel):
     destination_port = BinaryJSONField(null=True)
     service_provider_id = UUIDField(null=True, index=True)
     service_provider = BinaryJSONField(null=True)
-    importer_exporter_id = UUIDField(null=True, index=True)
     commodity = CharField(null=True, index=True)
     sources = ArrayField(
         constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True

@@ -42,12 +42,17 @@ DEFAULT_REQUIRED_FIELDS = [
     "shipping_line_id",
     "service_provider",
     "service_provider_id",
+    "haulage_type",
+    "trailer_type",
+    "trip_type",
+    "rate_type",
     "origin_location",
     "origin_location_id",
     "destination_location",
     "destination_location_id",
     "serial_id",
     "container_type",
+    "transport_modes_keyword",
     "sources",
 ]
 

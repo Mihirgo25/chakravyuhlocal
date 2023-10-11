@@ -28,6 +28,11 @@ def haulage_freight_expiring_rates_scheduler():
         "commodity",
         "rate_type",
         "validity_end",
+        "haulage_type",
+        "trailer_type",
+        "trip_type",
+        "transport_modes_keyword",
+        "sources",
     ]
 
     haulage_query = HaulageFreightRate.select(

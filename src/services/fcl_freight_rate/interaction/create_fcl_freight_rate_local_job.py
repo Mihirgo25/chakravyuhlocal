@@ -29,6 +29,7 @@ def execute_transaction_code(request, source):
     request = jsonable_encoder(request)
     params = {
         "port_id": request.get("port_id"),
+        "terminal_id": request.get("terminal_id"),
         "main_port_id": request.get("main_port_id"),
         "shipping_line_id": request.get("shipping_line_id"),
         "service_provider_id": request.get("service_provider_id"),
@@ -39,7 +40,7 @@ def execute_transaction_code(request, source):
         "rate_type": request.get("rate_type"),
         'search_source': request.get('source'),
     }
-    init_key = f'{str(params.get("port_id") or "")}:{str(params.get("main_port_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("rate_type") or "")}'
+    init_key = f'{str(params.get("port_id") or "")}:{str(params.get("terminal_id") or "")}:{str(params.get("main_port_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("rate_type") or "")}'
     fcl_freight_rate_local_job = (
         FclFreightRateLocalJob.select()
         .where(
