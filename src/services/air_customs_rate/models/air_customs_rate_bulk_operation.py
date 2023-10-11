@@ -63,7 +63,7 @@ class AirCustomsRateBulkOperation(BaseModel):
         if data.get('markup_type') not in markup_types:
             raise HTTPException(status_code=400, detail='Markup is invalid')
 
-        charge_codes = AIR_CUSTOMS_CHARGES.keys()
+        charge_codes = AIR_CUSTOMS_CHARGES.get().keys()
 
         if data.get('line_item_code') not in charge_codes:
             raise HTTPException(status_code=400, detail='Line Item Code is invalid')
