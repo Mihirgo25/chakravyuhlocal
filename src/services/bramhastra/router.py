@@ -62,6 +62,9 @@ from services.bramhastra.interactions.list_fcl_freight_recommended_trends import
 from services.bramhastra.interactions.list_fcl_freight_rate_trends import (
     list_fcl_freight_rate_trends,
 )
+from services.bramhastra.interactions.get_fcl_freight_rate_differences import (
+    get_fcl_freight_rate_differences,
+)
 
 from services.bramhastra.request_params import (
     ApplySpotSearchFclFreightRateStatistic,
@@ -274,8 +277,8 @@ def get_fcl_freight_map_view_statistics_api(
     filters: Annotated[Json, Query()] = {
         "origin": {"type": "country", "id": INDIAN_LOCATION_ID}
     },
-    sort_by: str = "accuracy",
-    sort_type: str = "desc",
+    sort_by: str = None,
+    sort_type: str = None,
     page_limit: int = 30,
     page: int = 1,
     auth_response: dict = Depends(authorize_token),
@@ -303,6 +306,7 @@ def get_fcl_freight_map_view_statistics_api(
     "/get_fcl_freight_rate_world", response_model=FclFreightRateWorldResponse
 )
 async def get_fcl_freight_rate_world_api(
+    filters: Annotated[Json, Query()] = {},
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
@@ -311,7 +315,7 @@ async def get_fcl_freight_rate_world_api(
         )
 
     try:
-        response = await get_fcl_freight_rate_world()
+        response = await get_fcl_freight_rate_world(filters)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
@@ -613,6 +617,28 @@ def list_fcl_freight_rate_trends_api(
 ):
     try:
         response = list_fcl_freight_rate_trends(filters)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@bramhastra.get("/get_fcl_freight_rate_differences")
+def get_fcl_freight_rate_differences_api(
+    filters: Annotated[Json, Query()] = {},
+    auth_response: dict = Depends(authorize_token),
+):
+    if auth_response.get("status_code") != 200:
+        return JSONResponse(
+            status_code=auth_response.get("status_code"), content=auth_response
+        )
+
+    try:
+        response = get_fcl_freight_rate_differences(filters)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise

@@ -2,6 +2,9 @@ from datetime import date, timedelta, datetime
 from math import ceil
 from services.bramhastra.enums import FclFilterTypes, MapsFilter, Status
 from micro_services.client import maps
+from services.bramhastra.constants import (
+    AGGREGATE_FILTER_MAPPING,
+)
 
 POSSIBLE_DIRECT_FILTERS = {
     "origin_country_id",
@@ -24,7 +27,9 @@ POSSIBLE_DIRECT_FILTERS = {
     "destination_main_port_id",
     "procured_by_id",
     "rate_type",
+    "mode",
     "parent_mode",
+    "parent_rate_mode",
     "sourced_by_id",
     "procured_by_id",
     "rate_id",
@@ -35,6 +40,7 @@ POSSIBLE_INDIRECT_FILTERS = {
     "rate_updated_at_less_than",
     "validity_end_greater_than",
     "validity_end_less_than",
+    "select_aggregate",
 }
 
 COUNT_FILTERS = {"dislikes_count", "checkout_count"}
@@ -45,7 +51,7 @@ REQUIRED_FILTERS = {
 }
 
 
-def get_direct_indirect_filters(filters, date="validity_range"):
+def get_direct_indirect_filters(filters, date=FclFilterTypes.time_series.value):
     if filters is None:
         return
     for k, v in REQUIRED_FILTERS.items():
@@ -68,7 +74,7 @@ def get_direct_indirect_filters(filters, date="validity_range"):
                 elif value:
                     where.append(f"{key} = %({key})s")
             if key in POSSIBLE_INDIRECT_FILTERS and value:
-                eval(f"get_{key}_filter(where)")
+                eval(f"get_{key}_filter(where, value)")
             if key in COUNT_FILTERS:
                 where.append(f"{key} != 0")
 
@@ -86,20 +92,36 @@ def get_date_range_filter(where):
     )
 
 
-def get_rate_updated_at_less_than_filter(where):
+def get_rate_updated_at_less_than_filter(where, value=None):
     where.append("rate_updated_at < %(rate_updated_at_less_than)s")
 
 
-def get_validity_end_greater_than_filter(where):
+def get_validity_end_greater_than_filter(where, value=None):
     where.append("validity_end > %(validity_end_greater_than)s")
 
 
-def get_validity_end_less_than_filter(where):
+def get_validity_end_less_than_filter(where, value=None):
     where.append("validity_end < %(validity_end_less_than)s")
 
 
-def get_stale_rate_filter(where):
+def get_stale_rate_filter(where, value=None):
     where.append("checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0")
+
+
+def get_select_aggregate_filter(where, obj):
+    is_multiple = False
+    for agg_key in obj.values():
+        if agg_key not in AGGREGATE_FILTER_MAPPING:
+            continue
+        column = AGGREGATE_FILTER_MAPPING[agg_key]["state"]
+        value = AGGREGATE_FILTER_MAPPING[agg_key]["value"]
+        comparator = AGGREGATE_FILTER_MAPPING[agg_key].get("comparator", "=")
+        if not (column and value):
+            continue
+        if is_multiple:
+            where.append(" AND ")
+        where.append(f" {column} {comparator} {value} ")
+        is_multiple = True
 
 
 def add_pagination_data(clickhouse, queries, filters, page, page_limit):

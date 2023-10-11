@@ -20,7 +20,7 @@ def execute_transaction_code(request):
         {"ids": deleted_haulage_freight_rate_ids}
     """
 
-    from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+    from libs.get_multiple_service_objects import get_multiple_service_objects
 
 
     objects = find_objects(request)

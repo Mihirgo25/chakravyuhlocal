@@ -34,10 +34,10 @@ class AirFreightData(BaseModel):
     origin_airport_id: str
     destination_airport_id: str
     airline_id: str
-    packages_count: int = 1
+    commodity: str
+    shipment_type: str
+    stacking_type: str
     volume: float = 1
-    weight: float
-    date: str = None
     currency: str = "USD"
 
 

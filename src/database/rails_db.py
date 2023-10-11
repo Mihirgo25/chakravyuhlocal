@@ -18,7 +18,7 @@ def get_connection():
 def get_operators(id=None, short_name=None,iata_code = None, operator_type='shipping_line'):
     all_result = []
     try:
-        newconnection = get_connection()  
+        newconnection = get_connection()
         with newconnection:
             with newconnection.cursor() as cur:
                 if short_name:
@@ -52,7 +52,7 @@ def get_operators(id=None, short_name=None,iata_code = None, operator_type='ship
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
-    
+
 
 def get_organization(id=None, short_name=None,account_type = 'importer_exporter'):
     all_result = []
@@ -346,7 +346,7 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
                         destination_location_id = tuple(destination_location_id)
 
                     sql_query = """
-                        SELECT 
+                        SELECT
                             shipment_air_freight_services.origin_airport_id AS origin_airport_id,
                             shipment_air_freight_services.volume AS volume,
                             shipment_air_freight_services.is_stackable AS is_stackable,
@@ -371,17 +371,17 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
                             AND shipment_collection_parties.status IN ('locked', 'coe_approved', 'finance_rejected')
                             AND shipment_air_freight_services.operation_type ='passenger'
                             AND invoice_type IN ('purchase_invoice', 'proforma_invoice')
-                        OFFSET %s LIMIT %s;   
+                        OFFSET %s LIMIT %s;
                         """.format(location_type,location_type)
                     cur.execute(sql_query,(interval, origin_location_id,destination_location_id, offset, limit))
                     result = cur.fetchall()
                     cur.close()
                 for res in result:
                     new_obj = {
-                        "origin_airport_id": str(res[0]),   
-                        "volume": res[1],   
-                        "is_stackable": str(res[2]),   
-                        "packages": res[3],   
+                        "origin_airport_id": str(res[0]),
+                        "volume": res[1],
+                        "is_stackable": str(res[2]),
+                        "packages": res[3],
                         "origin_country_id": str(res[4]),
                         "destination_airport_id": str(res[5]),
                         "destination_country_id": str(res[6]),
@@ -401,16 +401,16 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
         except Exception as e:
             # sentry_sdk.capture_exception(e)
             return all_results
-        
+
 def get_invoices(days=1, offset=0, limit=5000):
         all_result =[]
         try:
             conn = get_connection()
             with conn:
                 with conn.cursor() as cur:
-                     
+
                     sql_query = """
-                        SELECT 
+                        SELECT
                             shipment_air_freight_services.origin_airport_id AS origin_airport_id,
                             shipment_air_freight_services.volume AS volume,
                             shipment_air_freight_services.is_stackable AS is_stackable,
@@ -429,11 +429,11 @@ def get_invoices(days=1, offset=0, limit=5000):
                         FROM
                             shipment_collection_parties
                             INNER JOIN shipment_air_freight_services ON shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
-                        WHERE 
-                            shipment_collection_parties.status in ('locked', 'coe_approved','finance_rejected') 
+                        WHERE
+                            shipment_collection_parties.status in ('locked', 'coe_approved','finance_rejected')
                         AND
-                            invoice_type in ('purchase_invoice', 'proforma_invoice') 
-                        AND 
+                            invoice_type in ('purchase_invoice', 'proforma_invoice')
+                        AND
                             shipment_collection_parties.invoice_date >= now()::date - %s
                         OFFSET %s LIMIT %s;
                         """
@@ -442,10 +442,10 @@ def get_invoices(days=1, offset=0, limit=5000):
 
                 for res in result:
                     new_obj = {
-                        "origin_airport_id": str(res[0]),   
-                        "volume": res[1],   
-                        "is_stackable": str(res[2]),   
-                        "packages": res[3],   
+                        "origin_airport_id": str(res[0]),
+                        "volume": res[1],
+                        "is_stackable": str(res[2]),
+                        "packages": res[3],
                         "origin_country_id": str(res[4]),
                         "destination_airport_id": str(res[5]),
                         "destination_country_id": str(res[6]),
@@ -530,13 +530,13 @@ def get_past_cost_booking_data(limit, offset):
                 cur.close()
 
         conn.close()
-        return all_result 
+        return all_result
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
-    
- 
+
+
 def get_supply_agents():
     all_result = []
     try:
@@ -545,9 +545,9 @@ def get_supply_agents():
             with conn.cursor() as cur:
                 sql ='''
                 select user_id from partner_users
-                INNER JOIN auth_roles 
-                ON (auth_roles.id = ANY(partner_users.role_ids) 
-                and auth_roles.name = 'Supply Agent' and 'air_freight' = ANY(partner_users.services) 
+                INNER JOIN auth_roles
+                ON (auth_roles.id = ANY(partner_users.role_ids)
+                and auth_roles.name = 'Supply Agent' and 'air_freight' = ANY(partner_users.services)
                 and partner_users.status = 'active')
                 '''
                 cur.execute(sql)
@@ -563,7 +563,7 @@ def get_supply_agents():
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
-    
+
 
 def list_organization_users(id):
     all_result = []
@@ -571,7 +571,7 @@ def list_organization_users(id):
         conn = get_connection()
         with conn:
             with conn.cursor() as cur:
-               
+
                 if not isinstance(id, list):
                     id = (id,)
                 else:
@@ -605,9 +605,9 @@ def get_spot_search_count(origin_airport_id,destination_airport_id):
         with conn:
             with conn.cursor() as cur:
                 sql_query = '''
-                        SELECT 
+                        SELECT
                             count(id) from spot_search_air_freight_services
-                        WHERE 
+                        WHERE
                             spot_search_air_freight_services.origin_airport_id = %s
                             AND
                             spot_search_air_freight_services.destination_airport_id = %s
@@ -620,7 +620,6 @@ def get_spot_search_count(origin_airport_id,destination_airport_id):
         return count
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return count
     
 
 def get_organization_partner(id):
@@ -651,3 +650,4 @@ def get_organization_partner(id):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
+

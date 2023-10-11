@@ -3,7 +3,7 @@ from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRat
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import maps
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 # from celery_worker import delete_fcl_freight_rates_delay
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
 from configs.definitions import ROOT_DIR

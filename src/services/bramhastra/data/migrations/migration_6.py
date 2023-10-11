@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from playhouse.postgres_ext import ServerSide
-from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.helpers.common_statistic_helper import get_fcl_freight_identifier
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
@@ -27,7 +27,7 @@ def main():
                 FclFreightRateStatistic.select()
                 .where(
                     FclFreightRateStatistic.identifier
-                    == get_identifier(fcl_freight_rate.id, validity.get("id"))
+                    == get_fcl_freight_identifier(fcl_freight_rate.id, validity.get("id"))
                 )
                 .first()
             )

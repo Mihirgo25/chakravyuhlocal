@@ -1,7 +1,7 @@
 from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from services.air_customs_rate.models.air_customs_rate_feedback import AirCustomsRateFeedback
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
 from database.db_migration import db
 from database.rails_db import get_partner_users_by_expertise, get_partner_users

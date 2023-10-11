@@ -22,6 +22,9 @@ class AirFreightRatePredictionFeedback(BaseModel):
     actual_price = FloatField(null = True)
     predicted_price_currency = TextField(null = True)
     actual_price_currency = TextField(null = True)
+    shipment_type = CharField(null = True)
+    stacking_type = CharField(null = True)
+    commodity = CharField(null = True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
 
