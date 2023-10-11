@@ -47,6 +47,8 @@ DEFAULT_REQUIRED_FIELDS = [
     "service_provider",
     "service_provider_id",
     "port_id",
+    "main_port_id",
+    "terminal_id",
     "serial_id",
     "sources",
 ]

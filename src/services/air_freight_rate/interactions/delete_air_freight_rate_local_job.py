@@ -8,13 +8,7 @@ from services.air_freight_rate.models.air_freight_rate_local_jobs_mapping import
 from database.rails_db import get_user
 from datetime import datetime
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-
-
-POSSIBLE_CLOSING_REMARKS = [
-    "not_serviceable",
-    "rate_not_available",
-    "no_change_in_rate",
-]
+from configs.global_constants import POSSIBLE_CLOSING_REMARKS_FOR_JOBS
 
 
 def delete_air_freight_rate_local_job(request):
@@ -28,7 +22,7 @@ def delete_air_freight_rate_local_job(request):
     
     if (
         request.get("closing_remarks")
-        and request.get("closing_remarks") in POSSIBLE_CLOSING_REMARKS
+        and request.get("closing_remarks") in POSSIBLE_CLOSING_REMARKS_FOR_JOBS
     ):
         update_params = {
             "status": "aborted",

@@ -12,7 +12,6 @@ class CreateLtlFreightRateJob(BaseModel):
     service_provider_id: str = None
     commodity: str = None
     trip_type: str = None
-    importer_exporter_id: str = None
     transit_time: str = None
     density_factor: float = None
     rate_type: str = None

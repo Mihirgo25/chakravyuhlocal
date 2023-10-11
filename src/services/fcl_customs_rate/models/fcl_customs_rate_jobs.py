@@ -20,8 +20,6 @@ class FclCustomsRateJob(BaseModel):
     trade_type = CharField(null=True)
     service_provider_id = UUIDField(null=True, index=True)
     service_provider = BinaryJSONField(null=True)
-    importer_exporter_id = UUIDField(null=True)
-    importer_exporter = BinaryJSONField(null=True)
     container_size = CharField(null=True, index=True)
     container_type = CharField(null=True, index=True)
     commodity = CharField(null=True, index=True)
@@ -73,6 +71,7 @@ class FclCustomsRateJob(BaseModel):
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
           "country_code": location["country_code"],
-          "type": location["type"]
+          "type": location["type"],
+          "display_name": location["display_name"]
         }
         return loc_data

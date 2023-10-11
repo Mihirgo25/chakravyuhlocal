@@ -19,6 +19,8 @@ class FclFreightRateLocalJob(BaseModel):
     port = BinaryJSONField(index=True, null=True)
     main_port_id = UUIDField(index=True, null=True)
     main_port = BinaryJSONField(index=True, null=True)
+    terminal_id = UUIDField(index=True, null=True)
+    terminal = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(null=True, index=True)
     shipping_line = BinaryJSONField(null=True)
     service_provider_id = UUIDField(null=True, index=True)

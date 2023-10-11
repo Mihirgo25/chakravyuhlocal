@@ -31,7 +31,9 @@ STATISTICS = {
 }
 DYNAMIC_STATISTICS = {
     "expiring_rates": 0,
-    "spot_search": 0,
+    "live_booking": 0,
+    "rate_request": 0,
+    "rate_feedback":0,
 }
 
 
