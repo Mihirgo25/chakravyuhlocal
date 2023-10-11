@@ -70,7 +70,7 @@ class FclFreightRateLocalJob(BaseModel):
         terminals = maps.list_locations({"filters": {"id": location_ids}})["list"]
         for terminal in terminals:
             if str(terminal.get("id")) == str(self.terminal_id):
-                self.terminal = terminal
+                self.terminal = self.get_required_location_data(terminal)
 
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
@@ -96,4 +96,25 @@ class FclFreightRateLocalJob(BaseModel):
             location_ids.append(str(self.main_port_id))
         ports = maps.list_locations({"filters": {"id": location_ids}})["list"]
         for port in ports:
-            self.main_port = port
+            if str(port.get('id')) == str(self.port_id):
+                self.country_id = port.get('country_id', None)
+                self.trade_id = port.get('trade_id', None)
+                self.continent_id = port.get('continent_id', None)
+                self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
+                self.port = self.get_required_location_data(port)
+            elif self.main_port_id and str(port.get('id')) == str(self.main_port_id):
+                self.main_port = self.get_required_location_data(port)
+
+    def get_required_location_data(self, location):
+        loc_data = {
+            "id": location["id"],
+            "name": location["name"],
+            "display_name": location["display_name"],
+            "port_code": location["port_code"],
+            "country_id": location["country_id"],
+            "continent_id": location["continent_id"],
+            "trade_id": location["trade_id"],
+            "country_code": location["country_code"],
+            "display_name": location["display_name"],
+        }
+        return loc_data

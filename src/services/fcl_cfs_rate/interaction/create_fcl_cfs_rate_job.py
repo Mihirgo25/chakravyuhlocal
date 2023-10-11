@@ -8,6 +8,7 @@ from database.db_session import db
 from  configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from configs.env import DEFAULT_USER_ID
+from services.fcl_cfs_rate.helpers.allocate_fcl_cfs_rate_job import allocate_fcl_cfs_rate_job
 
 
 
@@ -36,7 +37,7 @@ def execute_transaction_code(request, source):
 
     if not fcl_cfs_rate_job:
         fcl_cfs_rate_job = create_job_object(params)
-        user_id = allocate_jobs('FCL_CFS')
+        user_id = allocate_fcl_cfs_rate_job(source, params['service_provider_id'])
         fcl_cfs_rate_job.user_id = user_id
         fcl_cfs_rate_job.assigned_to = get_user(user_id)[0]
         fcl_cfs_rate_job.status = 'pending'

@@ -18,8 +18,6 @@ from configs.fcl_cfs_rate_constants import FCL_CFS_COVERAGE_USERS
 from configs.lcl_customs_rate_constants import LCL_CUSTOMS_COVERAGE_USERS
 from configs.lcl_freight_rate_constants import LCL_FREIGHT_COVERAGE_USERS
 from micro_services.client import common
-from services.fcl_freight_rate.helpers.get_user_for_fcl_freight_rate_job import get_user_for_fcl_freight_rate_job
-from services.air_freight_rate.helpers.get_user_for_air_freight_rate_job import get_user_for_air_freight_rate_job
 
 
 
@@ -70,17 +68,6 @@ def allocate_jobs(service_type: str) -> str:
         if user['status'] == 'active':
             user_activity.append(user['agent_id'])
     # Check if the next user is online and active
-    active_users = [x for x in users if x in user_activity]
-    
-    next_usr = None
-    if service_type == 'FCL':
-        next_usr = get_user_for_fcl_freight_rate_job(active_users)
-    elif service_type == 'AIR':
-        next_usr = get_user_for_air_freight_rate_job(active_users)
-    
-    
-    if next_usr:
-        return next_usr
     
     if next_user_id in user_activity:
         # Set the allocated user in Redis

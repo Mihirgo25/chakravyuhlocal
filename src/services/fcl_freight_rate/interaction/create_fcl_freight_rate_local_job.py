@@ -13,6 +13,7 @@ from database.db_session import db
 from configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from configs.env import DEFAULT_USER_ID
+from services.fcl_freight_rate.helpers.allocate_fcl_freight_rate_local_job import allocate_fcl_freight_rate_local_job
 
 
 def create_fcl_freight_rate_local_job(request, source):
@@ -39,6 +40,7 @@ def execute_transaction_code(request, source):
         "trade_type": request.get("trade_type"),
         "rate_type": request.get("rate_type"),
         'search_source': request.get('source'),
+        'is_visible': request.get('is_visible') or True,
     }
     init_key = f'{str(params.get("port_id") or "")}:{str(params.get("terminal_id") or "")}:{str(params.get("main_port_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("rate_type") or "")}'
     fcl_freight_rate_local_job = (
@@ -53,10 +55,12 @@ def execute_transaction_code(request, source):
 
     if not fcl_freight_rate_local_job:
         fcl_freight_rate_local_job = create_job_object(params)
-        user_id = allocate_jobs("FCL_LOCALS")
+        user_id = allocate_fcl_freight_rate_local_job(source, params['service_provider_id'])
         fcl_freight_rate_local_job.user_id = user_id
         fcl_freight_rate_local_job.assigned_to = get_user(user_id)[0]
         fcl_freight_rate_local_job.status = "pending"
+        fcl_freight_rate_local_job.set_terminal()
+        fcl_freight_rate_local_job.set_port()
         fcl_freight_rate_local_job.save()
         set_jobs_mapping(fcl_freight_rate_local_job.id, request, source)
         create_audit(fcl_freight_rate_local_job.id, request)

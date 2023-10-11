@@ -8,6 +8,7 @@ from database.db_session import db
 from configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from configs.env import DEFAULT_USER_ID
+from services.air_customs_rate.helpers.allocate_air_customs_rate_job import allocate_air_customs_rate_job
 
 
 def create_air_customs_rate_job(request, source):
@@ -36,7 +37,7 @@ def execute_transaction_code(request, source):
 
     if not air_customs_rate_job:
         air_customs_rate_job = create_job_object(params)
-        user_id = allocate_jobs('AIR_CUSTOMS')
+        user_id = allocate_air_customs_rate_job(source, params['service_provider_id'])
         air_customs_rate_job.user_id = user_id
         air_customs_rate_job.assigned_to = get_user(user_id)[0]
         air_customs_rate_job.status = 'pending'

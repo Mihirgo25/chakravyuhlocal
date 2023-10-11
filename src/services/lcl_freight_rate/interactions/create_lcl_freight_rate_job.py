@@ -11,6 +11,7 @@ from database.db_session import db
 from configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.lcl_freight_rate.models.lcl_freight_rate_audit import LclFreightRateAudit
 from configs.env import DEFAULT_USER_ID
+from services.lcl_freight_rate.helpers.allocate_lcl_freight_rate_job import allocate_lcl_freight_rate_job
 
 
 def create_lcl_freight_rate_job(request, source):
@@ -43,7 +44,7 @@ def execute_transaction_code(request, source):
 
     if not lcl_freight_rate_job:
         lcl_freight_rate_job = create_job_object(params)
-        user_id = allocate_jobs("LCL_FREIGHT")
+        user_id = allocate_lcl_freight_rate_job(source, params['service_provider_id'])
         lcl_freight_rate_job.user_id = user_id
         lcl_freight_rate_job.assigned_to = get_user(user_id)[0]
         lcl_freight_rate_job.status = "pending"

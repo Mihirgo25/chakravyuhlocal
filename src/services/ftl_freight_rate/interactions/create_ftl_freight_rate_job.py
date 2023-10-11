@@ -8,6 +8,7 @@ from database.db_session import db
 from  configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
 from configs.env import DEFAULT_USER_ID
+from services.ftl_freight_rate.helpers.allocate_ftl_freight_rate_job import allocate_ftl_freight_rate_job
 
 def create_ftl_freight_rate_job(request, source):
     with db.atomic():
@@ -36,7 +37,7 @@ def execute_transaction_code(request, source):
     params['init_key'] = init_key
     if not ftl_freight_rate_job:
         ftl_freight_rate_job = create_job_object(params)
-        user_id = allocate_jobs('FTL_FREIGHT')
+        user_id = allocate_ftl_freight_rate_job(source, params['service_provider_id'])
         ftl_freight_rate_job.user_id = user_id
         ftl_freight_rate_job.assigned_to = get_user(user_id)[0]
         ftl_freight_rate_job.status = 'pending'
