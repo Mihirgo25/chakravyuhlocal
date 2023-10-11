@@ -9,7 +9,7 @@ def delete_fcl_cfs_rate_feedback(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    from celery_worker import send_closed_notifications_to_sales_agent_function
+    from services.fcl_cfs_rate.fcl_cfs_celery_worker import send_notifications_to_sales_agent_fcl_cfs_feedback_delay
     objects = find_objects(request)
 
     if not objects:
@@ -20,7 +20,7 @@ def execute_transaction_code(request):
         obj.closed_by_id = request.get('performed_by_id')
 
         if request.get('closing_remarks'):
-                obj.closing_remarks = request.get('closing_remarks')
+            obj.closing_remarks = request.get('closing_remarks')
 
         try:
             obj.save()
@@ -29,15 +29,13 @@ def execute_transaction_code(request):
         create_audit(request, obj.id)
         get_multiple_service_objects(obj)
 
-    send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='low')
+    send_notifications_to_sales_agent_fcl_cfs_feedback_delay.apply_async(kwargs={'object':obj},queue='low')
 
     return {'fcl_cfs_rate_feedback_ids' : request['fcl_cfs_rate_feedback_ids']}
 
 def find_objects(request):
-    try:
-        return FclCfsRateFeedback.select().where(FclCfsRateFeedback.id << request['fcl_cfs_rate_feedback_ids'] & (FclCfsRateFeedback.status == 'active')).execute()
-    except:
-        return None
+    query = FclCfsRateFeedback.select().where(FclCfsRateFeedback.id << request['fcl_cfs_rate_feedback_ids'] & (FclCfsRateFeedback.status == 'active')).execute()
+    return query
     
 def create_audit(request, cfs_rate_feedback_id):
     data = {'closing_remarks' : request.get('closing_remarks'), 'performed_by_id' : request.get('performed_by_id')}

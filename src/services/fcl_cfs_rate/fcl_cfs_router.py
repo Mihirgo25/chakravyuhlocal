@@ -378,7 +378,7 @@ def create_fcl_cfs_rate_feedback_api(request: CreateFclCfsRateFeedback, resp: di
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
-@fcl_cfs_router.post("/delete_fcl_cfs_rate_request")
+@fcl_cfs_router.post("/delete_fcl_cfs_rate_feedback")
 def delete_fcl_cfs_rate_feedback_api(request: DeleteFclCfsRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)

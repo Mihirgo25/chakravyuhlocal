@@ -4,6 +4,7 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate_feedback import FclCfsRateFeedbac
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
 from database.db_migration import db
+from services.fcl_cfs_rate.fcl_cfs_celery_worker import send_notifications_to_supply_agents_cfs_feedback_delay
 
 def create_fcl_cfs_rate_feedback(request):
     with db.atomic():
@@ -13,7 +14,7 @@ def execute_transaction_code(request):
     rate = FclCfsRate.select(FclCfsRate.id).where(FclCfsRate.id == request.get('rate_id')).first()
 
     if not rate:
-        raise HTTPException(status_code=400, detail='Rate not found')
+        raise HTTPException(status_code=404, detail='Rate not found')
 
     params = {
         'fcl_cfs_rate_id': request.get('rate_id'),
@@ -49,6 +50,7 @@ def execute_transaction_code(request):
 
     create_audit(request, cfs_feedback)
     get_multiple_service_objects(cfs_feedback)
+    send_notifications_to_supply_agents_cfs_feedback_delay.apply_async(kwargs = {'object':cfs_feedback}, queue = 'low')
 
     return {
       'id': request.get('rate_id')
