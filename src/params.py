@@ -1026,6 +1026,7 @@ class CreateFclFreightRateLocalJob(BaseModel):
     performed_by_id: str = None
     performed_by_type: str = None
     port_id: str = None
+    terminal_id: str = None
     main_port_id: str = None
     shipping_line_id: str = None
     service_provider_id: str = None

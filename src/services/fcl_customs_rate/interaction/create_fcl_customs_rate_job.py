@@ -20,7 +20,6 @@ def execute_transaction_code(request, source):
     params = {
         'location_id' : request.get('location_id'),
         'service_provider_id' : request.get('service_provider_id'),
-        'importer_exporter_id' : request.get('importer_exporter_id'),
         'container_size' : request.get('container_size'),
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
@@ -29,7 +28,7 @@ def execute_transaction_code(request, source):
         'rate_type' : request.get('rate_type'),
         'search_source': request.get('source'),
     }
-    init_key = f'{str(params.get("location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("importer_exporter_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}'
+    init_key = f'{str(params.get("location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("rate_type") or "")}'
     fcl_customs_rate_job = FclCustomsRateJob.select().where(FclCustomsRateJob.init_key == init_key, FclCustomsRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 

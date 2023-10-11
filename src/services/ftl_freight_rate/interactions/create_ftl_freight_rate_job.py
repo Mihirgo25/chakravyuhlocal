@@ -18,7 +18,6 @@ def execute_transaction_code(request, source):
     params = {
         'origin_location_id' : request.get('origin_location_id'),
         'destination_location_id' : request.get('destination_location_id'),
-        'importer_exporter_id' : request.get('importer_exporter_id'),
         'service_provider_id' : request.get('service_provider_id'),
         'truck_type' : request.get('truck_type'),
         'truck_body_type' : request.get('truck_body_type'),
@@ -31,7 +30,7 @@ def execute_transaction_code(request, source):
         'rate_type' : request.get('rate_type'),
         'search_source': request.get('source'),
     }
-    init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("importer_exporter_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("truck_type") or "")}:{str(params.get("truck_body_type") or "")}:{str(params.get("trip_type") or  "")}:{str(params.get("commodity") or "")}:{str(params.get("transit_time") or "")}:{str(params.get("detention_free_time") or "")}:{str(params.get("unit") or "")}:{str(params.get("rate_type") or "")}'
+    init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("truck_type") or "")}:{str(params.get("truck_body_type") or "")}:{str(params.get("trip_type") or  "")}:{str(params.get("commodity") or "")}:{str(params.get("transit_time") or "")}:{str(params.get("detention_free_time") or "")}:{str(params.get("unit") or "")}:{str(params.get("rate_type") or "")}'
     ftl_freight_rate_job = FtlFreightRateJob.select().where(FtlFreightRateJob.init_key == init_key, FtlFreightRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
     if not ftl_freight_rate_job:

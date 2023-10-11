@@ -290,7 +290,6 @@ class CreateFtlFreightRateJob(BaseModel):
     performed_by_type: str = None
     origin_location_id: str = None
     destination_location_id: str = None
-    importer_exporter_id: str = None
     service_provider_id: str = None
     truck_type: str = None
     truck_body_type: str = None

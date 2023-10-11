@@ -13,7 +13,6 @@ from datetime import datetime, timedelta
 
 possible_direct_filters = [
     "location_id",
-    "importer_exporter_id",
     "service_provider_id",
     "commodity",
     "user_id",
@@ -37,11 +36,14 @@ DEFAULT_REQUIRED_FIELDS = [
     "created_at",
     "updated_at",
     "status",
+    "trade_type",
     "service_provider",
     "service_provider_id",
+    "cargo_handling_type",
     "location_id",
     "serial_id",
     "container_type",
+    "rate_type",
     "sources",
 ]
 
