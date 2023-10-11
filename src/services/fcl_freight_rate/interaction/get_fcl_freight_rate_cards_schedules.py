@@ -345,4 +345,4 @@ def get_fcl_freight_rate_cards_schedules(filters):
 
     rates = [v["data"] for v in grouping.values()]
 
-    return rates
+    return {'list' : rates}
