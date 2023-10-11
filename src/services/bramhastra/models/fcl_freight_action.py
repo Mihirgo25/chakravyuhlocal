@@ -107,13 +107,13 @@ class FclFreightAction(BaseModel):
     rate_updated_at = DateTimeTZField(index=True, null=True)
     validity_created_at = DateTimeTZField(index=True, null=True)
     validity_updated_at = DateTimeTZField(index=True, null=True)
-    created_at = DateTimeTZField(index=True, default=datetime.utcnow())
-    updated_at = DateTimeTZField(index=True, default=datetime.utcnow())
-    operation_created_at = DateTimeTZField(default=datetime.utcnow())
-    operation_updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
+    created_at = DateTimeTZField(index=True, default=datetime.now())
+    updated_at = DateTimeTZField(index=True, default=datetime.now())
+    operation_created_at = DateTimeTZField(default=datetime.now())
+    operation_updated_at = DateTimeTZField(default=datetime.now(), index=True)
 
     def save(self, *args, **kwargs):
-        self.operation_updated_at = datetime.utcnow()
+        self.operation_updated_at = datetime.now()
         return super(FclFreightAction, self).save(*args, **kwargs)
     
     @classmethod
