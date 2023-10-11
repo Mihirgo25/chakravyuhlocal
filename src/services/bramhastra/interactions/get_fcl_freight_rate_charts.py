@@ -7,31 +7,48 @@ import math
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from database.db_session import rd
-from services.bramhastra.enums import RedisKeys, FclParentMode
+from services.bramhastra.enums import RedisKeys, FclParentMode, FclFilterTypes
 import concurrent.futures
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
+import sys
 
-ALLOWED_TIME_PERIOD = 6
+ALLOWED_TIME_PERIOD = 10000
+
+MAX_ALLOWABLE_DEFAULT_BAS_DIFF = 100
+
+from services.bramhastra.interactions.get_fcl_freight_rate_differences import (
+    get_fcl_freight_rate_differences,
+)
 
 
 def get_fcl_freight_rate_charts(filters):
-    where = get_direct_indirect_filters(filters)
+    where = get_direct_indirect_filters(filters, date=FclFilterTypes.time_series.value)
+    chart_type = filters.get("chart_type", None)
+    if chart_type:
+        filters.pop("chart_type")
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         accuracy_future = executor.submit(get_accuracy, filters, where)
-        deviation_future = executor.submit(get_deviation, filters, where)
         spot_search_future = executor.submit(
             get_spot_search_to_checkout_count, filters, where
         )
         rate_count_future = executor.submit(
-            get_rate_count_with_deviation_more_than_30, filters, where
+            get_rate_count_with_deviation_more_than_x_price, filters, where
         )
 
-    return dict(
-        accuracy=accuracy_future.result(),
-        deviation=deviation_future.result(),
+    resp = dict(
         **rate_count_future.result(),
         **spot_search_future.result(),
     )
+
+    match chart_type:
+        case "deviation":
+            resp["deviation"] = get_fcl_freight_rate_differences(filters)
+
+        case "accuracy":
+            resp["accuracy"] = accuracy_future.result()
+
+    return jsonable_encoder(resp)
 
 
 def get_accuracy(filters, where):
@@ -41,63 +58,26 @@ def get_accuracy(filters, where):
 
     clickhouse = ClickHouse()
     queries = [
-        """SELECT parent_mode as mode,toDate(day) AS day,AVG(abs(accuracy)*sign) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,parent_mode,sign FROM brahmastra.fcl_freight_rate_statistics"""
+        f"""SELECT parent_mode as mode,toDate(updated_at) AS day,(SUM(bas_standard_price_accuracy*sign)/COUNT(DISTINCT id)) AS average_accuracy FROM brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     if where:
         queries.append(" WHERE ")
         queries.append(where)
-        queries.append("AND accuracy != -1")
+        queries.append(f"AND bas_standard_price_accuracy != 0")
 
-    queries.append(
-        """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day ORDER BY day,mode;"""
-    )
+    queries.append("""GROUP BY parent_mode,day ORDER BY day,mode;""")
 
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     return format_charts(charts, filters.get("mode"))
 
 
-def get_deviation(filters, where):
-    clickhouse = ClickHouse()
-    queries = [
-        """WITH deviation AS (SELECT AVG(rate_deviation_from_booking_rate) AS rate_deviation_from_booking_rate FROM brahmastra.fcl_freight_rate_statistics"""
-    ]
-    if where:
-        queries.append(" WHERE ")
-        queries.append(where)
-
-    queries.append("GROUP BY rate_id")
-
-    queries.append(
-        """) SELECT CASE
-                WHEN rate_deviation_from_booking_rate BETWEEN -100 AND -80 THEN -80
-                WHEN rate_deviation_from_booking_rate BETWEEN -79 AND -60 THEN -60
-                WHEN rate_deviation_from_booking_rate BETWEEN -59 AND -40 THEN -40
-                WHEN rate_deviation_from_booking_rate BETWEEN -39 AND -20 THEN -20
-                WHEN rate_deviation_from_booking_rate BETWEEN -20 AND 0 THEN 0
-                WHEN rate_deviation_from_booking_rate BETWEEN 1 AND 20 THEN 20
-                WHEN rate_deviation_from_booking_rate BETWEEN 21 AND 40 THEN 40
-                WHEN rate_deviation_from_booking_rate BETWEEN 41 AND 60 THEN 60
-                WHEN rate_deviation_from_booking_rate BETWEEN 61 AND 80 THEN 80
-                WHEN rate_deviation_from_booking_rate BETWEEN 81 AND 100 THEN 100
-            END AS range,
-            COUNT(1) AS count
-            FROM deviation"""
-    )
-
-    queries.append("GROUP BY range ORDER BY range WITH FILL FROM -80 TO 100 STEP 20;")
-
-    response = clickhouse.execute(" ".join(queries), filters)
-
-    return [i for i in response if i["range"] or i["range"] == 0]
-
-
 def get_spot_search_to_checkout_count(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT FLOOR((1 - SUM(checkout_count)/SUM(spot_search_count)),2)*100 as spot_search_to_checkout_count from brahmastra.fcl_freight_rate_statistics"""
+        f"""SELECT FLOOR((1 - SUM(checkout*sign)/COUNT(DISTINCT spot_search_id)),2)*100 as spot_search_to_checkout_count from brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     if where:
@@ -106,17 +86,21 @@ def get_spot_search_to_checkout_count(filters, where):
 
     statistics = clickhouse.execute(" ".join(queries), filters)[0]
 
+    statistics["spot_search_to_checkout_count"] = round(
+        statistics["spot_search_to_checkout_count"], 2
+    )
+
     if math.isnan(statistics["spot_search_to_checkout_count"]):
         statistics["spot_search_to_checkout_count"] = 0
 
     return statistics
 
 
-def get_rate_count_with_deviation_more_than_30(filters, where):
+def get_rate_count_with_deviation_more_than_x_price(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT count(DISTINCT rate_id) as rate_count_with_deviation_more_than_30 from brahmastra.fcl_freight_rate_statistics WHERE ABS(rate_deviation_from_booking_rate) > 30"""
+        f"""SELECT count(DISTINCT rate_id) as rate_count_with_deviation_more_than_x_price from brahmastra.{FclFreightAction._meta.table_name} WHERE ABS(bas_standard_price_diff_from_selected_rate) >= {MAX_ALLOWABLE_DEFAULT_BAS_DIFF}"""
     ]
 
     if where:
@@ -188,7 +172,9 @@ def is_json_needed(filters):
         else filters.get("end_date")
     )
     duration = relativedelta(end_date, start_date)
-    return duration.months > 6
+    return (duration.years * 12) + (duration.months) + (
+        duration.days / 30.44
+    ) > ALLOWED_TIME_PERIOD
 
 
 def get_link():

@@ -1,6 +1,5 @@
 from datetime import datetime, date
-from pydantic import BaseModel, validator, Field, root_validator
-from typing import Optional
+from pydantic import BaseModel, validator, Field
 
 
 class LineItems(BaseModel):
@@ -53,7 +52,6 @@ class FclFreight(BaseModel):
     service_provider_id: str
     shipping_line_id: str
     mode: str
-    accuracy: float
     source: str = None
     source_id: str = None
     cogo_entity_id: str = None
@@ -63,6 +61,8 @@ class FclFreight(BaseModel):
     validities: list[FclValidities]
     rate_created_at: datetime = Field(alias="created_at")
     rate_updated_at: datetime = Field(alias="updated_at")
+    updated_at: datetime
+    created_at: datetime
     performed_by_id: str = None
     performed_by_type: str = None
 
@@ -86,7 +86,7 @@ class ApplyFclFreightRateStatistic(BaseModel):
 # Apply Spot Search Fcl Freight Statistics
 
 
-class Rates(BaseModel):
+class Rate(BaseModel):
     rate_id: str
     validity_id: str
     payment_term: str
@@ -107,10 +107,25 @@ class Rates(BaseModel):
 
 class SpotSearchFclFreightRateStatistic(BaseModel):
     spot_search_id: str = None
-    spot_search_fcl_freight_services_id: str = None
-    rates: list[Rates] = []
-    created_at: datetime
+    spot_search_fcl_freight_service_id: str = None
+    rates: list[Rate] = []
     updated_at: datetime
+    created_at: datetime
+    origin_port_id: str
+    origin_main_port_id: str = None
+    origin_country_id: str = None
+    origin_trade_id: str = None
+    origin_continent_id: str = None
+    destination_port_id: str
+    destination_main_port_id: str = None
+    destination_country_id: str = None
+    destination_trade_id: str = None
+    destination_continent_id: str = None
+    container_size: str
+    container_type: str
+    commodity: str
+    containers_count: int
+    importer_exporter_id: str
 
 
 class ApplySpotSearchFclFreightRateStatistic(BaseModel):
@@ -121,7 +136,7 @@ class ApplySpotSearchFclFreightRateStatistic(BaseModel):
 # Apply Checkout Fcl Freight Statistics
 
 
-class CheckoutRates(BaseModel):
+class CheckoutRate(BaseModel):
     rate_id: str
     source: str
     validity_id: str
@@ -131,12 +146,12 @@ class CheckoutRates(BaseModel):
 class CheckoutFclFreightService(BaseModel):
     checkout_id: str
     checkout_fcl_freight_service_id: str = Field(alias="id")
-    rate: CheckoutRates
+    rate: CheckoutRate
 
 
 class FclFreightCheckoutParams(BaseModel):
-    source: str
-    source_id: str
+    checkout_source: str = Field(alias="source")
+    checkout_source_id: str = Field(alias="source_id")
     importer_exporter_id: str
     created_at: datetime
     updated_at: datetime
@@ -158,9 +173,9 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     feedback_type: str = None
     source: str = None
     source_id: str = None
-    serial_id: int = None
+    serial_id: int = 0
     preferred_freight_rate: float = None
-    currency: str = Field(alias="preferred_freight_rate_currency", default = 'USD')
+    currency: str = Field(alias="preferred_freight_rate_currency", default="USD")
     importer_exporter_id: str = None
     service_provider_id: str = None
     created_at: datetime = datetime.utcnow()
@@ -170,38 +185,38 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     closed_by_id: str = None
     likes_count: int = None
     dislikes_count: int = None
-    closing_remarks: list[str]
+    closing_remarks: list[str] = None
+    is_rate_reverted: bool = None
     status: str = "active"
-        
+
     @validator("preferred_freight_rate", pre=True)
     def convert_preferred_freight_rate(cls, v):
         if not v:
             v = 0
         return v
     
+    @validator("serial_id", pre=True)
+    def convert_serial_id(cls, v):
+        if not v:
+            v = 0
+        return v
+
     @validator("currency", pre=True)
     def convert_currency(cls, v):
         if not v:
-            v = 'USD'
+            v = "USD"
         return v
 
-
+    @validator("is_rate_reverted", always=True)
+    def add_is_rate_reverted(cls, value, values):
+        if values.get("closing_remarks"):
+            closing_remarks = values.get("closing_remarks", [])
+            return value or "rate_added" in closing_remarks
+        return False
 
 class ApplyFeedbackFclFreightRateStatistics(BaseModel):
     action: str
     params: FeedbackFclFreightRateStatistic
-
-
-class FclFreightServices(BaseModel):
-    shipment_fcl_freight_service_id: str = Field(alias="id")
-    shipment_id: str = None
-    service_state: str = Field(alias="state", default=None)
-    service_is_active: bool = Field(alias="is_active")
-    service_cancellation_reason: str = Field(alias="cancellation_reason", default=None)
-    service_created_at: datetime = Field(alias="created_at", default=datetime.utcnow())
-    service_updated_at: datetime = Field(alias="updated_at", default=datetime.utcnow())
-    shipping_line_id: str = None
-    service_provider_id: str = None
 
 
 class BuyQuotation(BaseModel):
@@ -224,34 +239,52 @@ class BuyQuotation(BaseModel):
     )
 
 
+class ShipmentFclFreightService(BaseModel):
+    shipment_service_id: str = Field(alias="id")
+    shipment_service_state: str = Field(alias="state", default=None)
+    shipment_service_is_active: bool = Field(alias="is_active", default=None)
+    shipment_service_cancellation_reason: str = Field(
+        alias="cancellation_reason", default=None
+    )
+    shipment_service_created_at: datetime = Field(alias="created_at", default=None)
+    shipment_service_updated_at: datetime = Field(
+        alias="updated_at", default=datetime.utcnow()
+    )
+    shipping_line_id: str = None
+    service_provider_id: str = None
+    containers_count: int = None
+    cargo_weight_per_container: float = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+
+
 class Shipment(BaseModel):
     shipment_id: str = Field(alias="id")
-    serial_id: int = None
+    shipment_state: str = Field(alias="state", default=None)
     importer_exporter_id: str = None
     shipment_type: str = None
-    services: list[str] = []
-    source: str = None
-    source_id: str = None
-    state: str = None
-    created_at: datetime = None
-    updated_at: datetime = None
-    cancellation_reason: str = None
+    services: list[str] = None
+    shipment_source: str = Field(alias="source", default=None)
+    shipment_source_id: str = Field(alias="source_id", default=None)
+    shipment_created_at: datetime = Field(alias="created_at", default=None)
+    shipment_updated_at: datetime = Field(alias="updated_at")
 
 
 class ShipmentParams(BaseModel):
-    fcl_freight_services: list[FclFreightServices]
-    buy_quotations: list[BuyQuotation]
+    fcl_freight_services: list[ShipmentFclFreightService] = []
     shipment: Shipment
 
 
 class ApplyShipmentFclFreightRateStatistics(BaseModel):
     action: str
     params: ShipmentParams = None
-    force_update_params: Shipment = None
+    shipment_update_params: Shipment = None
+    shipment_service_update_params: ShipmentFclFreightService = None
 
 
 class QuotationParams(BaseModel):
-    fcl_freight_service: FclFreightServices = None
+    fcl_freight_service: ShipmentFclFreightService = None
     buy_quotation: BuyQuotation = None
     shipment: Shipment = None
 
@@ -293,8 +326,10 @@ class FclFreightRateRequest(BaseModel):
 
     @validator("is_rate_reverted", always=True)
     def add_is_rate_reverted(cls, value, values):
-        closing_remarks = values.get("closing_remarks", [])
-        return value or "rate_added" in closing_remarks
+        if values.get("closing_remarks"):
+            closing_remarks = values.get("closing_remarks", [])
+            return value or "rate_added" in closing_remarks
+        return False
 
 
 class ApplyFclFreightRateRequestStatistic(BaseModel):
@@ -364,7 +399,7 @@ class AirFreight(BaseModel):
     currency: str
     discount_type: str = None
     importer_exporter_id: str = None
-    rate_not_available_entry: str = None  
+    rate_not_available_entry: str = None
     rate_created_at: datetime = Field(alias="created_at")
     rate_updated_at: datetime = Field(alias="updated_at")
 
@@ -425,3 +460,9 @@ class ApplyRevenueDeskFclFreightStatistics(BaseModel):
     selected_for_preference: FclSelectedForPreference = None
     action: str = None
     created_at: datetime = datetime.utcnow()
+
+    @validator("created_at", pre=True)
+    def convert_created_at(cls, v):
+        if not v:
+            v = datetime.utcnow()
+        return v

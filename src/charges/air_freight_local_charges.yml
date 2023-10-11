@@ -527,3 +527,24 @@ EXWV:
   tags: ['additional_service']
   inco_terms: ['exw']
   sac_code: '996763'
+ACAR:
+  name: 'Airline Cartage'
+  units: [ 'per_shipment', 'per_document' ]
+  trade_types: [ 'export', 'import' ]
+  tags: ['additional_service']
+  condition: true
+  sac_code: ''
+BAL:
+  name: 'Barcode Label'
+  units: [ 'per_shipment', 'per_document','per_package']
+  trade_types: [ 'export', 'import' ]
+  tags: ['additional_service']
+  condition: true
+  sac_code: ''
+MCC:
+  name: 'MCC fees'
+  units: [ 'per_shipment', 'per_kg' ]
+  trade_types: [ 'export', 'import' ]
+  tags: ['additional_service']
+  condition: true
+  sac_code: ''

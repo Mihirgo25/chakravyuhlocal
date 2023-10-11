@@ -15,8 +15,10 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import (
     FclFreightRateFeedback,
 )
 from services.bramhastra.constants import FCL_MODE_MAPPINGS
-from services.bramhastra.enums import FclModes, Fcl
-from services.bramhastra.helpers.common_statistic_helper import get_identifier
+from services.bramhastra.enums import FclModes, Fcl, FclChargeCodes
+from services.bramhastra.helpers.common_statistic_helper import (
+    get_fcl_freight_identifier,
+)
 
 UPDATE_EXCLUDE_ITEMS = {
     "origin_port_id",
@@ -50,7 +52,7 @@ class Rate:
         self.params = []
         self.origin_pricing_zone_map_id = None
         self.destination_pricing_zone_map_id = None
-        self.increment_keys = {}
+        self.increment_keys = set()
 
     def create(self, row) -> None:
         FclFreightRateStatistic.create(**row)
@@ -60,10 +62,19 @@ class Rate:
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
-                == get_identifier(row.get("rate_id"), row.get("validity_id"))
+                == get_fcl_freight_identifier(
+                    row.get("rate_id"), row.get("validity_id")
+                )
             )
             .first()
         )
+
+        if not fcl_freight_rate_statistic:
+            try:
+                self.create(row)
+            except:
+                pass
+            return
 
         for k, v in row.items():
             if k not in UPDATE_EXCLUDE_ITEMS and v:
@@ -73,19 +84,26 @@ class Rate:
 
     def set_new_stats(self) -> int:
         return FclFreightRateStatistic.insert_many(self.params).execute()
-    
+
     def delete_latest_stat(self) -> None:
-        params = dict(is_deleted = True)
+        params = dict(is_deleted=True)
         exc_params = UPDATE_EXCLUDE_ITEMS.copy()
         exc_params.add("validities")
-        
-        params.update({key: value for key, value in dict(self.freight).items() if key not in exc_params})
-            
+
+        params.update(
+            {
+                key: value
+                for key, value in dict(self.freight).items()
+                if key not in exc_params
+            }
+        )
+
         try:
-            FclFreightRateStatistic.update(**params).where(FclFreightRateStatistic.rate_id == str(self.freight.rate_id)).execute()        
+            FclFreightRateStatistic.update(**params).where(
+                FclFreightRateStatistic.rate_id == str(self.freight.rate_id)
+            ).execute()
         except Exception as e:
             raise e
-            
 
     def set_existing_stats(self) -> None:
         for row in self.params:
@@ -93,17 +111,27 @@ class Rate:
                 self.create(row)
             else:
                 self.update(row)
-                
+
     def get_feedback_details(self):
-        if row := (
-            FclFreightRateFeedback.select(
-                FclFreightRateFeedback.fcl_freight_rate_id.alias("parent_rate_id"),
-                FclFreightRateFeedback.validity_id.alias("parent_validity_id"),
-            )
-            .where(FclFreightRateFeedback.id == self.freight.source_id)
-            .dicts()
-        ):
-            return jsonable_encoder(row.get())
+        if feedback := FclFreightRateFeedback.select(
+            FclFreightRateFeedback.fcl_freight_rate_id,
+            FclFreightRateFeedback.validity_id,
+        ).where(
+            FclFreightRateFeedback.id == self.freight.source_id,
+        ).first():
+            if fcl_freight_rate_statistic := FclFreightRateStatistic.select(
+                FclFreightRateStatistic.mode
+            ).where(
+                FclFreightRateStatistic.identifier
+                == get_fcl_freight_identifier(
+                    str(feedback.fcl_freight_rate_id), str(feedback.validity_id)
+                )
+            ).first():
+                return {
+                    'parent_rate_id': feedback.fcl_freight_rate_id,
+                    'parent_validity_id': feedback.validity_id,
+                    'parent_rate_mode': fcl_freight_rate_statistic.mode
+                }
 
     def set_formatted_data(self) -> None:
         freight = self.freight.dict(exclude={"validities", "accuracy"})
@@ -122,8 +150,25 @@ class Rate:
 
         for validity in self.freight.validities:
             param = freight.copy()
+            for line_item in validity.line_items:
+                if line_item.code == FclChargeCodes.BAS.value:
+                    param["bas_price"] = line_item.price
+                    param["bas_currency"] = line_item.currency
+                    if line_item.currency == Fcl.default_currency.value:
+                        param["bas_standard_price"] = line_item.price
+                    else:
+                        param["bas_standard_price"] = common.get_money_exchange_for_fcl(
+                            {
+                                "from_currency": line_item.currency,
+                                "to_currency": Fcl.default_currency.value,
+                                "price": param["bas_price"],
+                            }
+                        ).get("price", param["bas_price"])
+
             param.update(validity.dict(exclude={"line_items"}))
-            param["identifier"] = get_identifier(param["rate_id"], param["validity_id"])
+            param["identifier"] = get_fcl_freight_identifier(
+                param["rate_id"], param["validity_id"]
+            )
             param["origin_pricing_zone_map_id"] = self.origin_pricing_zone_map_id
             param[
                 "destination_pricing_zone_map_id"

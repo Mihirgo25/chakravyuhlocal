@@ -5,45 +5,62 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 from fastapi.encoders import jsonable_encoder
 from math import ceil
 from micro_services.client import maps
+from services.bramhastra.enums import FclFilterTypes
+from services.bramhastra.constants import AGGREGATE_FILTER_MAPPING
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
 
-HEIRARCHY = ["continent", "country", "region", "port"]
+HEIRARCHY = ["continent", "country", "port"]
 
 LOCATION_KEYS = {
     "destination_port_id",
     "destination_country_id",
     "destination_continent_id",
-    "destination_region_id",
 }
 
+DEFAULT_AGGREGATE_SELECT = {"count": "average_standard_price"}
 
-def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, page):
+
+def get_fcl_freight_map_view_statistics(filters, sort_by, sort_type, page_limit, page):
     clickhouse = ClickHouse()
-    
-    sort_by = filter_sort(sort_by)
+
+    select_aggregate = []
+    for alias, agg_key in filters.get(
+        "select_aggregate", DEFAULT_AGGREGATE_SELECT
+    ).items():
+        if agg_key not in AGGREGATE_FILTER_MAPPING:
+            continue
+        select_aggregate.append(
+            f"{AGGREGATE_FILTER_MAPPING[agg_key]['method']} AS {alias}"
+        )
+    select_aggregate = ",".join(select_aggregate)
 
     grouping = set()
 
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},FLOOR(ABS(AVG(accuracy)),2) as total_accuracy,count(DISTINCT rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
+        f'SELECT {",".join(grouping)}, {select_aggregate} FROM brahmastra.{FclFreightAction._meta.table_name}'
     ]
 
-    if where := get_direct_indirect_filters(filters):
+    if where := get_direct_indirect_filters(
+        filters, date=FclFilterTypes.time_series.value
+    ):
         queries.append(" WHERE ")
         queries.append(where)
-        queries.append("AND accuracy != -1 and accuracy != 0")
 
-    add_group_by_and_order_by(queries, grouping,sort_by,sort_type)
-    
+    filters.pop("select_aggregate", None)
+
+    add_group_by_and_order_by(queries, grouping, sort_by, sort_type)
+
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
-    )    
+    )
+
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     if statistics:
         add_location_objects(statistics)
-    
+
     return dict(
         list=statistics,
         page=page,
@@ -53,12 +70,11 @@ def get_fcl_freight_map_view_statistics(filters,sort_by,sort_type, page_limit, p
     )
 
 
-def add_group_by_and_order_by(queries, grouping,sort_by,sort_type):
+def add_group_by_and_order_by(queries, grouping, sort_by, sort_type):
     queries.append("GROUP BY")
     queries.append(",".join(grouping))
-    queries.append(
-        f"ORDER BY {sort_by} {sort_type}"
-    )
+    if sort_by and sort_type:
+        queries.append(f"ORDER BY {sort_by} {sort_type}")
 
 
 def alter_filters_for_map_view(filters, grouping):
@@ -118,10 +134,10 @@ def add_location_objects(statistics):
             )
         )["list"]
     }
-    
+
     indices_to_remove = set()
 
-    for index,statistic in enumerate(statistics):
+    for index, statistic in enumerate(statistics):
         update_statistic = dict()
         remove = None
         if not statistic:
@@ -131,17 +147,13 @@ def add_location_objects(statistics):
                 remove = k
                 location = locations.get(v)
                 if location is None:
-                    indices_to_remove.add(index)
+                    if k == "destination_region_id":
+                        indices_to_remove.add(index)
                     continue
                 for key, value in location.items():
                     update_statistic[f"{k[:12]}{key}"] = value
         statistic.pop(remove)
         statistic.update(update_statistic)
-    
+
     for index in indices_to_remove:
         del statistics[index]
-        
-    
-def filter_sort(sort_by):
-    return 'total_accuracy' if sort_by == 'accuracy' else sort_by
-    

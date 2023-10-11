@@ -14,7 +14,9 @@ from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
 import traceback
+from libs.get_conditional_line_items import get_filtered_line_items
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
+from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_predicted_fcl_freight_rate_delay
 
 def initialize_freight_query(requirements, prediction_required = False, get_cogo_assured=False):
     freight_query = FclFreightRate.select(
@@ -54,9 +56,7 @@ def initialize_freight_query(requirements, prediction_required = False, get_cogo
     ((FclFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (FclFreightRate.importer_exporter_id == None))
     )
 
-    if get_cogo_assured:
-        freight_query = freight_query.where(FclFreightRate.rate_type == 'cogo_assured')
-    else:
+    if not get_cogo_assured:
         freight_query = freight_query.where(FclFreightRate.rate_type != 'cogo_assured')
         
     rate_constant_mapping_key = requirements['cogo_entity_id']
@@ -144,7 +144,8 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         FclFreightRateLocal.shipping_line_id << shipping_line_ids,
         FclFreightRateLocal.service_provider_id << list(service_provider_ids.keys()),
         (FclFreightRateLocal.rate_not_available_entry.is_null(True) | (~FclFreightRateLocal.rate_not_available_entry)),
-        (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present))
+        (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present)),
+        ((FclFreightRateLocal.terminal_id == requirements['terminal_id']) | (FclFreightRateLocal.terminal_id == None))
     )
 
     if len(main_port_ids) == 2:
@@ -179,6 +180,11 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
 
     for local_rate in local_rates:
         is_local_cogo_assured = local_rate.get('rate_type') == 'cogo_assured'
+        if local_rate.get('data').get('line_items') and not is_local_cogo_assured:
+            old_line_items = local_rate.get('data').get('line_items')
+            new_line_items = get_filtered_line_items(rate,old_line_items)
+            local_rate['data']['line_items'] = new_line_items
+            local_rate['line_items'] = new_line_items
         if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and (is_rate_cogo_assured == is_local_cogo_assured):
             if shipping_line_id == local_rate['shipping_line_id']:
                 matching_locals[local_rate["service_provider_id"]] = local_rate
@@ -356,10 +362,6 @@ def build_local_line_item_object(line_item, request):
 
     code_config = fcl_freight_local_charges[line_item['code']]
 
-    is_additional_service = True if 'additional_service' in code_config.get('tags') else None
-    if is_additional_service and line_item['code'] not in request['additional_services']:
-        return None
-
     is_dpd = True if 'dpd' in code_config.get('tags') else False
     if is_dpd and ('import' in code_config.get('trade_types')) and (not request['include_destination_dpd']):
         return None
@@ -406,7 +408,7 @@ def build_local_line_item_object(line_item, request):
 def add_local_objects(freight_query_result, response_object, request):
     response_object['origin_local'] = {
         'id': freight_query_result['origin_local'].get('id'),
-        'service_provider_id': freight_query_result['origin_local']['service_provider_id'] if freight_query_result['origin_local'].get('service_provider_id') else response_object['service_provider_id'],
+        'service_provider_id': response_object['service_provider_id'],
         'source': freight_query_result['origin_local']['source'] if freight_query_result['origin_local'].get('source') else response_object['source'],
         'line_items': []
     } if 'origin_local' in freight_query_result and freight_query_result['origin_local'] else { 'line_items': [], 'service_provider_id': response_object['service_provider_id'], 'source':  response_object['source'] }
@@ -414,11 +416,7 @@ def add_local_objects(freight_query_result, response_object, request):
     response_object['destination_local'] = {}
     if freight_query_result.get('destination_local'):
         response_object['destination_local']['id'] =  freight_query_result['destination_local'].get('id')
-        if freight_query_result['destination_local'].get('service_provider_id'):
-            response_object['destination_local']['service_provider_id'] = freight_query_result['destination_local']['service_provider_id']
-        else:
-            response_object['destination_local']['service_provider_id'] = response_object['service_provider_id']
-
+        response_object['destination_local']['service_provider_id'] = response_object['service_provider_id']
         if freight_query_result['destination_local'].get('source'):
             response_object['destination_local']['source'] = freight_query_result['destination_local']['source']
         else:
@@ -510,7 +508,8 @@ def build_freight_line_item_object(line_item, request):
         "unit": line_item["unit"],
         "price": line_item["price"],
         "currency": line_item["currency"],
-        "remarks": line_item["remarks"] if 'remarks' in line_item else []
+        "remarks": line_item.get("remarks") or [],
+        "slabs": line_item.get("slabs") or []
     }
 
     fcl_freight_charges = FCL_FREIGHT_CHARGES
@@ -539,7 +538,7 @@ def build_freight_line_item_object(line_item, request):
     line_item['total_price'] = line_item['quantity'] * line_item['price']
     line_item['name'] = code_config.get('name')
     line_item['source'] = 'system'
-
+    del line_item["slabs"]
     return line_item
 
 def build_freight_object(freight_validity, additional_weight_rate, additional_weight_rate_currency, request):
@@ -887,14 +886,15 @@ def get_fcl_freight_rate_cards(requirements):
         }]
     """
     try:
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future_freight_rates = executor.submit(get_freight_rates, requirements)
-            future_cogo_assured_rates = executor.submit(get_cogo_assured_rates, requirements) 
-        freight_rates, is_predicted = future_freight_rates.result() 
-        cogo_assured_rates = future_cogo_assured_rates.result()
-
-        freight_rates+= cogo_assured_rates    
-
+        initial_query = initialize_freight_query(requirements, get_cogo_assured=True)
+        freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        
+        cogo_assured_rates, supply_rates = break_rates(freight_rates)
+        
+        supply_rates, is_predicted = get_freight_rates(supply_rates, requirements)
+        
+        freight_rates = supply_rates + cogo_assured_rates
+        
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
         rates_need_origin_local = missing_local_rates["rates_need_origin_local"]
@@ -908,22 +908,16 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
         freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
         
-        cogo_assured_rates = []
-        other_rates = []
-        for rate in freight_rates:
-            if rate.get('rate_type') == 'cogo_assured':
-                cogo_assured_rates.append(rate)
-            else:
-                other_rates.append(rate)   
-         
-        selected_cogo_assured = get_cogo_assured_with_locals(cogo_assured_rates)
-
-        if is_predicted:
-            fcl_freight_vyuh = FclFreightVyuh(other_rates, requirements)
-            other_rates = fcl_freight_vyuh.apply_dynamic_pricing()
+        cogo_assured_rates, supply_rates = break_rates(freight_rates)
         
-        all_rates = other_rates + selected_cogo_assured 
+        selected_cogo_assured = get_cogo_assured_with_locals(cogo_assured_rates)
+        if is_predicted:
+            fcl_freight_vyuh = FclFreightVyuh(supply_rates, requirements)
+            supply_rates = fcl_freight_vyuh.apply_dynamic_pricing()
+        
+        all_rates = supply_rates + selected_cogo_assured 
         all_rates = build_response_list(all_rates, requirements)
+        create_jobs_for_predicted_fcl_freight_rate_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements}, queue='critical')
         return {
             "list" : all_rates
         }
@@ -935,12 +929,13 @@ def get_fcl_freight_rate_cards(requirements):
             "list": []
         }
         
-def get_freight_rates(requirements):
-    initial_query = initialize_freight_query(requirements)
-    freight_rates = jsonable_encoder(list(initial_query.dicts()))
-
-    freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+def get_freight_rates(supply_rates, requirements):
+    freight_rates = pre_discard_noneligible_rates(supply_rates, requirements)
     is_predicted = False
+    
+    if requirements["search_source"] == "rfq":
+        freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+        return (freight_rates, is_predicted)
 
     are_all_rates_predicted = all_rates_predicted(freight_rates)
     if len(freight_rates) == 0 or are_all_rates_predicted:
@@ -953,10 +948,17 @@ def get_freight_rates(requirements):
 
     return  (freight_rates, is_predicted)
 
-def get_cogo_assured_rates(requirements):
-    initial_query = initialize_freight_query(requirements=requirements, get_cogo_assured=True)
-    cogo_assured_rates = jsonable_encoder(list(initial_query.dicts()))
-    return cogo_assured_rates
+def break_rates(freight_rates):
+    cogo_assured_rates = []
+    supply_rates = []
+    for rate in freight_rates:
+        if rate.get('rate_type') == 'cogo_assured':
+            cogo_assured_rates.append(rate)
+        else:
+            supply_rates.append(rate)   
+            
+    return cogo_assured_rates, supply_rates
+
 
 def get_cogo_assured_with_locals(cogo_assured_rates=[]):
     selected_cogo_assured = cogo_assured_rates[:1] if cogo_assured_rates else []

@@ -1,6 +1,10 @@
 from services.bramhastra.client import ClickHouse
 from libs.json_encoder import json_encoder
 
+from services.bramhastra.models.fcl_freight_rate_statistic import (
+    FclFreightRateStatistic,
+)
+
 RATE_COUNT_FILTER_OPTIONS = [
     "origin_port_id",
     "destination_port_id",
@@ -28,10 +32,9 @@ def get_fcl_freight_port_pair_count(filters):
             where.append(" AND ".join(conditions))
     select = ", ".join(select_columns)
     full_query = (
-        f"SELECT {select} ,COUNT(DISTINCT rate_id) as rate_count "
-        "FROM brahmastra.fcl_freight_rate_statistics "
-        f"WHERE {' OR '.join(where)} "
-        f"GROUP BY {select} "
+        f'''SELECT {select} ,COUNT(DISTINCT rate_id) as rate_count 
+        FROM brahmastra.{FclFreightRateStatistic._meta.table_name}
+        WHERE ({' OR '.join(where)}) AND validity_end >= toDate(now()) GROUP BY {select}'''
     )
 
     return {"port_pair_rate_count": json_encoder(clickhouse.execute(full_query))}

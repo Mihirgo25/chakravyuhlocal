@@ -172,7 +172,7 @@ def build_line_item_object(line_item, requirements):
     line_item = {key: line_item[key] for key in keys_to_slice if key in line_item}
     line_item["quantity"] = (
         requirements["containers_count"]
-        if line_item["unit"] in ["per_container"]
+        if line_item["unit"] in ["per_container", "per_trailer"]
         else 1
     )
     line_item["total_price"] = line_item["quantity"] * line_item["price"]
