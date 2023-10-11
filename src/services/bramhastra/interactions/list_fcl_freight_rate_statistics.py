@@ -168,15 +168,12 @@ async def use_rates_affected_filter(
     query = [
         f"""SELECT toUnixTimestamp(DATE(rate_updated_at),'Asia/Tokyo')*1000 AS day,COUNT(*) as rates_count FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"""
     ]
+    query.append(
+        f"WHERE rate_updated_at >= %(start_date)s AND rate_updated_at <= %(end_date)s AND day > 0 "
+    )
     where = get_direct_indirect_filters(filters, date=None)
     if where:
-        query.append(
-            f"WHERE {where} AND rate_updated_at >= %(start_date)s AND rate_updated_at <= %(end_date)s AND day > 0 "
-        )
-    else:
-        query.append(
-            f"WHERE rate_updated_at >= %(start_date)s AND rate_updated_at <= %(end_date)s AND day > 0 "
-        )
+        query.append(f"AND {where}")
     query.append("GROUP BY DATE(rate_updated_at) ORDER BY day ASC")
     return {"list": clickhouse.execute(" ".join(query), filters)}
 
