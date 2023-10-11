@@ -59,7 +59,7 @@ def main():
     except:
         pass
     try:
-        db.execute_sql(f"DROP TABLE {FclFreightRateRequestStatistic._meta.table_name}")
+        db.execute_sql(f"DROP TABLE {FeedbackFclFreightRateStatistic._meta.table_name}")
     except:
         pass
     try:
