@@ -17,9 +17,20 @@ def delete_air_customs_rate_job(request):
         return {"id": job_ids}
     
     if request.get('closing_remarks') and request.get('closing_remarks') in POSSIBLE_CLOSING_REMARKS_FOR_JOBS:
-        update_params = {'status':'aborted', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now(),  "closing_remarks": request.get('closing_remarks')}
+        update_params = {
+            'status':'aborted',
+            "closed_by_id": request.get('performed_by_id'),
+            "closed_by": get_user(request.get('performed_by_id'))[0] if request.get("performed_by_id") else None,
+            "updated_at": datetime.now(),
+            "closing_remarks": request.get('closing_remarks')
+            }
     else:
-        update_params = {'status':'completed', "closed_by_id": request.get('performed_by_id'), "closed_by": get_user(request.get('performed_by_id'))[0], "updated_at": datetime.now()}
+        update_params = {
+            'status':'completed',
+            "closed_by_id": request.get('performed_by_id'),
+            "closed_by": get_user(request.get('performed_by_id'))[0] if request.get("performed_by_id") else None,
+            "updated_at": datetime.now()
+            }
 
     job_ids = None
     if request.get('air_customs_rate_feedback_ids'):
