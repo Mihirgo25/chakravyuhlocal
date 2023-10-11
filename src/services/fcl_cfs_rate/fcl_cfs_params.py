@@ -149,7 +149,7 @@ class CreateFclCfsRateFeedback(BaseModel):
   service_provider_id: str = None
 
 class DeleteFclCfsRateFeedback(BaseModel):
-  fcl_customs_rate_request_ids: list[str]
+  fcl_cfs_rate_feedback_ids: list[str]
   closing_remarks: list[str] = []
   performed_by_id: str = None
   performed_by_type: str  = None
