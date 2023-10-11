@@ -19,6 +19,7 @@ import time
 from functools import wraps
 import logging
 from playhouse.pool import PooledPostgresqlExtDatabase
+from enums.global_enums import AppEnv
 
 logger = logging.getLogger("peewee")
 db_state_default = {"closed": None, "conn": None, "ctx": None, "transactions": None}
@@ -69,7 +70,7 @@ class CustomDatabase(PooledPostgresqlExtDatabase):
 
 db = (
     CustomDatabase(**db_params)
-    if ENVIRONMENT_TYPE == "cli"
+    if ENVIRONMENT_TYPE == "cli" or APP_ENV != AppEnv.production
     else PooledPostgresqlExtDatabase(**db_params)
 )
 

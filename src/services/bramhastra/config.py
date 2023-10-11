@@ -137,17 +137,7 @@ class LifeCycleConfig:
                                                             "drop": self.input.get(
                                                                 "feedbacks_with_rate_added_dropoff"
                                                             ),
-                                                            "child": {
-                                                                "right": [
-                                                                    {
-                                                                        "name": "rates_reverted",
-                                                                        "rates_count": self.input.get(
-                                                                            "rates_source_disliked_count"
-                                                                        ),
-                                                                        "child": {},
-                                                                    },
-                                                                ],
-                                                            },
+                                                            "child": {},
                                                         },
                                                     ],
                                                 },
@@ -178,7 +168,6 @@ class LifeCycleConfig:
                         "name": "rates_requested",
                         "rates_count": self.input.get("rates_requested_count"),
                         "drop": self.input.get("rates_requested_dropoff"),
-                        "parent": "global_parent",
                         "child": {
                             "right": [
                                 {
@@ -187,22 +176,7 @@ class LifeCycleConfig:
                                         "requests_closed_count"
                                     ),
                                     "drop": self.input.get("requests_closed_dropoff"),
-                                    "parent": "global_parent",
-                                    "child": {
-                                        "right": [
-                                            {
-                                                "name": "rates_reverted",
-                                                "rates_count": self.input.get(
-                                                    "rates_reverted_count"
-                                                ),
-                                                "drop": self.input.get(
-                                                    "rates_reverted_dropoff"
-                                                ),
-                                                "parent": "global_parent",
-                                                "child": {},
-                                            },
-                                        ],
-                                    },
+                                    "child": {},
                                 },
                             ],
                         },
