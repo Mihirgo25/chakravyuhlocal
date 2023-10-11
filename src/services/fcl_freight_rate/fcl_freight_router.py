@@ -2023,14 +2023,16 @@ def get_fcl_freight_rate_job_csv_url_api(
 
 @fcl_freight_router.get('/get_fcl_freight_rate_cards_schedules')
 def get_fcl_freight_rate_cards_schedules_data(
-    filters: Json = Query(None),
+    spot_negotiation_rates: Json = Query(None),
+    fcl_freight_rate_cards_params: Json = Query(None),
+    sailing_schedules_required: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        resp = get_fcl_freight_rate_cards_schedules(filters)
+        resp = get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rate_cards_params, sailing_schedules_required)
         return JSONResponse(status_code=200, content=json_encoder(resp))
     except HTTPException as e:
         raise

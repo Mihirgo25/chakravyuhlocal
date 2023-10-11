@@ -6,6 +6,7 @@ from configs.fcl_freight_rate_constants import (
     DEFAULT_SCHEDULE_TYPES,
 )
 import json
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards import get_fcl_freight_rate_cards
 
 REQUIRED_SCHEDULE_KEYS = [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type","reliability_score","terminal_cutoff", "source" ,"id"]
 INDIA_COUNTRY_CURRENCY = "INR"
@@ -45,7 +46,7 @@ def get_relavant_schedules(data,origin_port,destination_port,origin_port_id,dest
     return data_schedules
 
 
-def update_grouping(data,currency,locals_price,sailing_schedules_required,detention_free_limit,grouping,spot_search_object):
+def update_grouping(data,currency,locals_price,sailing_schedules_required,detention_free_limit,grouping,importer_exporter_id):
     
     for freight in data["freights"]:
         freight_price = sum(
@@ -54,7 +55,7 @@ def update_grouping(data,currency,locals_price,sailing_schedules_required,detent
                 "from_currency": line_item["currency"],
                 "to_currency": currency,
                 "price": line_item["total_price"],
-                'organization_id':spot_search_object["importer_exporter_id"]
+                'organization_id':importer_exporter_id
 
                 }
             ).get("price")
@@ -255,21 +256,34 @@ def get_sailing_schedules_data(port_pair, shipping_line,validity_start):
     
     return schedules
   
+def get_location_data(origin_port_id, destination_port_id):
+    locations_list = maps.list_locations({ 'filters': { 'id': [origin_port_id, destination_port_id] }, 'includes': {'id': True, 'is_icd': True, 'trade_id': True}})['list']
+    origin_port = destination_port = {}
+    
+    for data in locations_list:
+        if data['id'] == origin_port_id:
+            origin_port = data
+        elif data['id'] == destination_port_id:
+            destination_port = data
+    
+    return origin_port, destination_port
+
              
-def get_fcl_freight_rate_cards_schedules(filters):
-    origin_port_id=filters.get('origin_port_id')
-    origin_trade_id=filters.get('origin_trade_id')
-    origin_country_id=filters.get('origin_country_id')
-    destination_port_id=filters.get('destination_port_id')
-    destination_trade_id=filters.get('destination_trade_id')
-    destination_country_id=filters.get('destination_country_id')
-    port_pairs=filters.get('port_pairs')
-    sailing_schedules_required=filters.get('sailing_schedules_required')
-    validity_start=filters.get('validity_start')
-    list_data=filters.get('list_data')
-    spot_search_object=filters.get('spot_search_object')
-    origin_port=filters.get('origin_port')
-    destination_port=filters.get('destination_port')
+def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rate_cards_params, sailing_schedules_required):
+    origin_port_id = fcl_freight_rate_cards_params['origin_port_id']
+    origin_country_id = fcl_freight_rate_cards_params['origin_country_id']
+    destination_port_id = fcl_freight_rate_cards_params['destination_port_id']
+    destination_country_id = fcl_freight_rate_cards_params['destination_country_id']
+    importer_exporter_id = fcl_freight_rate_cards_params['importer_exporter_id']
+    validity_start = fcl_freight_rate_cards_params['validity_start']
+    port_pairs = {}
+    
+    origin_port, destination_port = get_location_data(origin_port_id, destination_port_id)
+    origin_trade_id = origin_port.get('trade_id')
+    destination_trade_id = destination_port.get('trade_id')
+    
+    response = get_fcl_freight_rate_cards(fcl_freight_rate_cards_params)
+    all_rates = spot_negotiation_rates + response['list']
     
     fake_schedules = []
     sailing_schedules_hash = {}
@@ -299,7 +313,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
 
     grouping = {}
 
-    for data in list_data:
+    for data in all_rates:
         data_schedules = get_relavant_schedules(
             data,
             origin_port,
@@ -326,7 +340,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
                     "from_currency": line_item["currency"],
                     "to_currency": currency,
                     "price": line_item["total_price"],
-                    'organization_id':spot_search_object["importer_exporter_id"]
+                    'organization_id':importer_exporter_id
                 }
             ).get("price")
             for line_item in (data.get("origin_local", {}).get("line_items", []) + data.get("destination_local", {}).get("line_items", []))
@@ -340,7 +354,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
             sailing_schedules_required,
             detention_free_limit,
             grouping,
-            spot_search_object
+            importer_exporter_id
         )
 
     rates = [v["data"] for v in grouping.values()]
