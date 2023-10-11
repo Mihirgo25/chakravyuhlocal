@@ -10,7 +10,7 @@ from pydantic.types import Json
 from services.chakravyuh.interaction.create_fcl_freight_rate_estimation import create_fcl_freight_rate_estimation
 from services.chakravyuh.interaction.create_demand_transformation import create_demand_transformation
 from services.chakravyuh.interaction.create_revenue_target import create_revenue_target
-from services.chakravyuh.interaction.update_charges_yml import update_charges_yml
+from libs.update_charges_yml import update_charges_yml
 from services.chakravyuh.datamigrations.create_clusters import create_clusters
 
 # get apis
@@ -134,14 +134,4 @@ def create_air_clusters_api(request:MigrationOfCluster):
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
-@chakravyuh_router.post('/update_charges_yml')
-def update_charges_yml_data(serviceChargeType: str):
-    try:
-        data =  update_charges_yml(serviceChargeType)
-        return JSONResponse(status_code=200, content={"success": True, "message": data})
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })    
 
