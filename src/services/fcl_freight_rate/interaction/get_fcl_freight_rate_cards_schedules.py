@@ -8,6 +8,7 @@ from configs.fcl_freight_rate_constants import (
 import json
 
 REQUIRED_SCHEDULE_KEYS = [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type","reliability_score","terminal_cutoff", "source" ,"id"]
+INDIA_COUNTRY_CURRENCY = "INR"
 
 def create_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_hash):
     for executor in executors:
@@ -44,7 +45,7 @@ def get_relavant_schedules(data,origin_port,destination_port,origin_port_id,dest
     return data_schedules
 
 
-def create_grouping(data,currency,locals_price,sailing_schedules_required,detention_free_limit,grouping,spot_search_object):
+def update_grouping(data,currency,locals_price,sailing_schedules_required,detention_free_limit,grouping,spot_search_object):
     
     for freight in data["freights"]:
         freight_price = sum(
@@ -59,7 +60,6 @@ def create_grouping(data,currency,locals_price,sailing_schedules_required,detent
             ).get("price")
             for line_item in freight["line_items"]
         )
-
         total_price = float(freight_price) + float(locals_price)
 
         if sailing_schedules_required and data["source"] != "cogo_assured_rate":
@@ -73,9 +73,6 @@ def create_grouping(data,currency,locals_price,sailing_schedules_required,detent
                 str(detention_free_limit) or "",
                 data["source"],
             ]
-
-            key = ":".join(key_elements)
-
         else:
             key_elements = [
                 data["shipping_line_id"],
@@ -88,17 +85,16 @@ def create_grouping(data,currency,locals_price,sailing_schedules_required,detent
                 data["source"],
             ]
 
-            key = ":".join(key_elements)
+        key = ":".join(key_elements)
         
         if (key not in grouping) or (grouping[key]["total_price"] > total_price) or (grouping[key]["total_price"] == total_price and grouping[key]["freight_price"] > freight_price):
-        
             data["freights"] = [freight]
-        
             grouping[key] = {
                 "total_price": total_price,
                 "freight_price": freight_price,
                 "data": {**data,'freights' : [freight]}  
             }
+            
     return grouping            
 
 def get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_port_id, destination_port_id):
@@ -323,7 +319,7 @@ def get_fcl_freight_rate_cards_schedules(filters):
 
         data["freights"] = freights
 
-        currency = "INR"
+        currency = INDIA_COUNTRY_CURRENCY
         locals_price = sum(
             common.get_money_exchange_for_fcl(
                 data={
@@ -332,12 +328,12 @@ def get_fcl_freight_rate_cards_schedules(filters):
                     "price": line_item["total_price"],
                     'organization_id':spot_search_object["importer_exporter_id"]
                 }
-            ).get("price", 0)
+            ).get("price")
             for line_item in (data.get("origin_local", {}).get("line_items", []) + data.get("destination_local", {}).get("line_items", []))
         )
 
         detention_free_limit = int(data["destination_detention"].get("free_limit", 0))
-        grouping = create_grouping(
+        grouping = update_grouping(
             data,
             currency,
             locals_price,
