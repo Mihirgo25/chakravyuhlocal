@@ -313,7 +313,7 @@ class FtlFreightRate(BaseModel):
             grouped_charge_codes[line_item.get('code')] = item + [line_item]
 
         for code,line_items in grouped_charge_codes.items():
-            code_config = FTL_FREIGHT_CHARGES[code]
+            code_config = FTL_FREIGHT_CHARGES.get()[code]
 
             if not code_config:
                 self.line_items_error_messages[code] = ['is invalid']
@@ -368,7 +368,7 @@ class FtlFreightRate(BaseModel):
         return {'ftl_freight': ftl_freight}
 
     def possible_charge_codes(self):
-        ftl_freight_charges_dict = FTL_FREIGHT_CHARGES
+        ftl_freight_charges_dict = FTL_FREIGHT_CHARGES.get()
 
         charge_codes = {}
 

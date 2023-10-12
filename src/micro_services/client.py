@@ -7,12 +7,16 @@ from micro_services.spot_search_client import SpotSearchApiClient
 from micro_services.checkout_client import CheckoutApiClient
 from micro_services.shipment_client import ShipmentApiClient
 from micro_services.development_client import DevelopmentApiClient
+from micro_services.loki_client import LokiApiClient
+from micro_services.debezium_connect_client import DebeziumConnectApiClient
 from configs.env import APP_ENV
+from enums.global_enums import AppEnv, Context
 
-maps = organization = partner = spot_search = checkout = shipment = None
-
-if APP_ENV != 'production':
-    common = organization = partner = maps = spot_search = checkout = shipment  = DevelopmentApiClient()
+maps = organization = partner = spot_search = checkout = shipment = debezium_connect = loki = None
+if APP_ENV != AppEnv.production:
+    common = organization = partner = maps = spot_search = checkout = shipment = loki  = DevelopmentApiClient(context = Context.common)
+    debezium_connect = DebeziumConnectApiClient()
+    
 else:
     common = CommonApiClient()
     organization = AuthApiClient()
@@ -21,3 +25,5 @@ else:
     spot_search = SpotSearchApiClient()
     checkout = CheckoutApiClient()
     shipment = ShipmentApiClient()
+    loki = LokiApiClient()
+    debezium_connect = DebeziumConnectApiClient()

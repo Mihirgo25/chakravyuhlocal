@@ -363,7 +363,7 @@ class HaulageFreightRate(BaseModel):
             grouped_charge_codes[line_item.get('code')] = item + [line_item]
 
         for code,line_items in grouped_charge_codes.items():
-            code_config = HAULAGE_FREIGHT_CHARGES[code]
+            code_config = HAULAGE_FREIGHT_CHARGES.get()[code]
 
             if not code_config:
                 self.line_items_error_messages[code] = ['is invalid']
@@ -430,7 +430,7 @@ class HaulageFreightRate(BaseModel):
         return {'haulage_freight': haulage_freight}
 
     def possible_charge_codes(self):
-        haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES
+        haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES.get()
 
         charge_codes = {}
         origin_location = self.origin_location

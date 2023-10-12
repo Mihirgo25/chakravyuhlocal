@@ -31,6 +31,7 @@ from services.bramhastra.models.air_freight_rate_statistic import (
 from services.bramhastra.models.fcl_freight_rate_request_statistics import (
     FclFreightRateRequestStatistic,
 )
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
 import os
 import uuid
 
@@ -46,6 +47,62 @@ If models are not send it will run for all available models present in the click
 """
 
 GLOBAL_LIMIT = 1000
+
+FIELDS = {
+    FclFreightRateStatistic._meta.table_name: FclFreightRateStatistic._meta.fields,
+    FclFreightAction._meta.table_name: FclFreightAction._meta.fields,
+}
+
+
+class BrahmastraV2:
+    def __init__(self, events) -> None:
+        self.schema = "brahmastra"
+        self.insertions = dict()
+        self._set(events)
+
+    def _set(self, events) -> None:
+        for event in events:
+            table = event["payload"]["source"]["table"]
+            before = event["payload"]["before"]
+            after = event["payload"]["after"]
+
+        if table not in self.insertions:
+            self.insertions[table] = []
+
+        if before is not None:
+            before["sign"] = -1
+            self.insertions[table].append(before)
+
+        self.insertions[table].append(after)
+
+    def execute(self):
+        for table, data in self.insertions.items():
+            query = f"INSERT INTO brahmastra.{table} SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
+            columns = FIELDS[table]
+            values = self._get_values(columns, data)
+            if values is not None:
+                self.__clickhouse.execute(query + ",".join(values))
+
+    def _get_values(self, columns, data) -> list:
+        values = []
+        for d in data:
+            value = []
+            for k, v in d.items():
+                if v is None:
+                    value.append("DEFAULT")
+                elif (
+                    isinstance(columns[k], peewee.UUIDField)
+                    or isinstance(columns[k], peewee.TextField)
+                    or isinstance(columns[k], peewee.CharField)
+                    or isinstance(columns[k], peewee.DateTimeField)
+                ):
+                    value.append(f"'{v}'")
+                elif isinstance(columns[k], peewee.BooleanField):
+                    value.append("true" if v else "false")
+                else:
+                    value.append(f"{v}")
+            values.append(f"({','.join(value)})")
+        return values
 
 
 class Brahmastra:

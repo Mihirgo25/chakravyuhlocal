@@ -69,7 +69,7 @@ def build_freight_object(freight_validity, required_weight, request):
         "min_price": min_price,
         "remarks": [],
     }
-    code_config = AIR_FREIGHT_CHARGES[line_item["code"]]
+    code_config = AIR_FREIGHT_CHARGES.get()[line_item["code"]]
     line_item["quantity"] = required_weight
     total_price = line_item["quantity"] * line_item["price"]
     if line_item["min_price"] > total_price:

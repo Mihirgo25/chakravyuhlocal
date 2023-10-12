@@ -3,6 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import FclFreightRateSeasonalSurcharge
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
+from configs.global_constants import MAX_PAGE_LIMIT
 import concurrent.futures
 from operator import attrgetter
 from math import ceil
@@ -35,6 +36,8 @@ def list_fcl_freight_rate_audits(filters = {}, page_limit = 10, page = 1, sort_b
         query = get_filters(direct_filters, query, FclFreightRateAudit)
         query = apply_indirect_filters(query, indirect_filters)
         query = apply_hash_filters(query, filters)
+
+    page_limit = min(MAX_PAGE_LIMIT, page_limit)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required, user_data_required) for method_name in ['get_data', 'get_pagination_data']]
@@ -103,7 +106,7 @@ def apply_hash_indirect_filters(query, filter, filters):
         indirect_filters = {key:value for key,value in to_apply.items() if key in possible_hash_filters[filter]['indirect']}
         for indirect_filter in indirect_filters:
             query = eval("apply_{}_{}_filter(query,filters)".format(filter,indirect_filter))
-            return query
+        return query
     else:
         return query
 
@@ -112,7 +115,7 @@ def apply_created_at_greater_than_filter(query, filters):
     return query
 
 def apply_fcl_freight_rate_filter(query, filters):
-    query = query.select().join(FclFreightRate, JOIN.INNER, on=(FclFreightRateAudit.object_id == FclFreightRate.id)).where(FclFreightRateAudit.object_type == 'FclFreightRate')
+    query = query.select(FclFreightRate, FclFreightRateAudit).join(FclFreightRate, JOIN.INNER, on=(FclFreightRateAudit.object_id == FclFreightRate.id)).where(FclFreightRateAudit.object_type == 'FclFreightRate')
     return query
 
 def apply_fcl_freight_rate_direct_filter(query, filters):
@@ -145,16 +148,16 @@ def apply_fcl_freight_rate_validity_start_less_than_equal_to_filter(query, filte
 
 
 def apply_fcl_freight_rate_validity_end_greater_than_equal_to_filter(query, filters):
-    validity_start_greater_than_equal_to = filters["fcl_freight_rate"]["validity_start_greater_than_equal_to"]
+    validity_end_greater_than_equal_to = filters["fcl_freight_rate"]["validity_end_greater_than_equal_to"]
     query = query.where(
         Case(
             None,
             (
-                (FclFreightRateAudit.data.contains('%/%/%'), fn.to_date(FclFreightRateAudit.data['validity_start'], 'DD/MM/YY')),
-                (FclFreightRateAudit.data.contains('%-%-____'), fn.to_date(FclFreightRateAudit.data['validity_start'], 'DD-MM-YYYY')),
+                (FclFreightRateAudit.data.contains('%/%/%'), fn.to_date(FclFreightRateAudit.data['validity_end'], 'DD/MM/YY')),
+                (FclFreightRateAudit.data.contains('%-%-____'), fn.to_date(FclFreightRateAudit.data['validity_end'], 'DD-MM-YYYY')),
             ),
             fn.to_date(FclFreightRateAudit.data['validity_start'], 'YYYY-MM-DD')
-        ) >= fn.to_date(validity_start_greater_than_equal_to, 'YYYY-MM-DD')
+        ) >= fn.to_date(validity_end_greater_than_equal_to, 'YYYY-MM-DD')
     )
     return query
 

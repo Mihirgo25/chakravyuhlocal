@@ -1,10 +1,13 @@
 from configs.env import *
 
+def get_service(service):
+    return 'common' if service == 'loki' else service
+
 def get_instance_url(service_name=None):
     if APP_ENV != 'production':
         url = RUBY_ADDRESS_URL
-        if service_name in ["organization", "partner", "user"]:
-            url = url + "/{}".format(service_name)
+        if service_name in ["organization", "partner", "user", "loki"]:
+            url = url + "/{}".format(get_service(service_name))
         return url
     service_port = COMMON_SERVICE_PORT
     if service_name in ['organization', 'user', 'lead', 'partner']:
@@ -17,10 +20,11 @@ def get_instance_url(service_name=None):
         service_port = CHECKOUT_PORT
     if service_name == 'shipment':
         service_port = SHIPMENT_PORT
-
+    if service_name == 'loki':
+        service_port = LOKI_PORT
 
     if service_name == 'common':
         instance_url = "http://{}:{}".format(INTERNAL_NLB, service_port)
     else:
-        instance_url = "http://{}:{}/{}".format(INTERNAL_NLB, service_port, service_name)
+        instance_url = "http://{}:{}/{}".format(INTERNAL_NLB, service_port, get_service(service_name))
     return instance_url
