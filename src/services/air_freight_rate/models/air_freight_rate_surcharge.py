@@ -6,7 +6,7 @@ from services.air_freight_rate.air_freight_rate_params import LineItem
 from fastapi import HTTPException
 from configs.definitions import AIR_FREIGHT_SURCHARGES
 from micro_services.client import maps
-from services.air_freight_rate.constants.air_freight_rate_constants import *
+from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL,SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING,COMMODITY,COMMODITY_TYPE,AIR_OPERATION_TYPES
 from database.rails_db import get_operators,get_eligible_orgs
 
 class UnknownField(object):
