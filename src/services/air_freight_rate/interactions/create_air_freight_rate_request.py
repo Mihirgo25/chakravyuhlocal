@@ -12,7 +12,7 @@ from celery_worker import (
     create_communication_background,
 )
 from libs.get_multiple_service_objects import get_multiple_service_objects
-from services.air_freight_rate.air_celery_worker import create_jobs_for_air_freight_rate_request_delay
+from services.air_freight_rate.interactions.create_air_freight_rate_job import create_air_freight_rate_job
 
 
 
@@ -89,7 +89,7 @@ def execute_transaction_code(request):
                  request_object, airports
             )
     request["source_id"] = request_object.id
-    create_jobs_for_air_freight_rate_request_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
+    create_air_freight_rate_job(request, "rate_request")
     return {"id": str(request_object.id)}
 
 

@@ -7,8 +7,9 @@ from database.db_migration import db
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import maps
 from celery_worker import create_communication_background
-from services.air_customs_rate.air_customs_celery_worker import create_jobs_for_air_customs_rate_feedback_delay
-
+from services.air_customs_rate.interaction.create_air_customs_rate_job import (
+    create_air_customs_rate_job
+)
 def create_air_customs_rate_feedback(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -55,7 +56,7 @@ def execute_transaction_code(request):
     get_multiple_service_objects(air_customs_feedback)
     send_notifications_to_supply_agents(request)
     request['source_id'] = air_customs_feedback.id
-    create_jobs_for_air_customs_rate_feedback_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
+    create_air_customs_rate_job(request, "rate_feedback")
 
     return {
       'id': request.get('rate_id')

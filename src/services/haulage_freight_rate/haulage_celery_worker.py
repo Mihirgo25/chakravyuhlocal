@@ -10,9 +10,7 @@ from services.haulage_freight_rate.workers.update_haulage_freight_rate_job_on_ra
 from services.haulage_freight_rate.workers.update_haulage_freight_rate_jobs_to_backlog import (
     update_haulage_freight_rate_jobs_to_backlog,
 )
-from services.haulage_freight_rate.interactions.create_haulage_freight_rate_job import (
-    create_haulage_freight_rate_job,
-)
+
 
 from celery.schedules import crontab
 
@@ -111,24 +109,4 @@ def update_haulage_freight_rate_jobs_to_backlog_delay(self):
             pass
         else:
             raise self.retry(exc=exc)
-        
-@celery.task(bind = True, max_retries=1, retry_backoff = True)
-def create_jobs_for_haulage_freight_rate_feedback_delay(self, requirements):
-    try:
-        return create_haulage_freight_rate_job(requirements, "rate_feedback")
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-        
-@celery.task(bind = True, max_retries=1, retry_backoff = True)
-def create_jobs_for_haulage_freight_rate_request_delay(self, requirements):
-    try:
-        return create_haulage_freight_rate_job(requirements, "rate_request")
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
         

@@ -6,8 +6,9 @@ from database.db_session import db
 from fastapi.encoders import jsonable_encoder
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from micro_services.client import maps
-from services.haulage_freight_rate.haulage_celery_worker import create_jobs_for_haulage_freight_rate_feedback_delay
-
+from services.haulage_freight_rate.interactions.create_haulage_freight_rate_job import (
+    create_haulage_freight_rate_job,
+)
 
 
 def create_haulage_freight_rate_feedback(request):
@@ -65,7 +66,7 @@ def execute_transaction_code(request):
     get_multiple_service_objects(feedback)
 
     request['source_id'] = feedback.id    
-    create_jobs_for_haulage_freight_rate_feedback_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
+    create_haulage_freight_rate_job(request, "rate_feedback")
     return {'id': feedback.id}
 
  

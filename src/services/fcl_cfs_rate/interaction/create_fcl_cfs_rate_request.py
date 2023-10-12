@@ -5,7 +5,7 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from celery_worker import send_notifications_to_supply_agents_cfs_request_delay
 from libs.get_multiple_service_objects import get_multiple_service_objects
-from services.fcl_cfs_rate.fcl_cfs_celery_worker import create_jobs_for_fcl_cfs_rate_request_delay
+from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_job import create_fcl_cfs_rate_job
 
 
 def create_fcl_cfs_rate_request(request):
@@ -48,7 +48,7 @@ def execute_transaction_code(request):
     send_notifications_to_supply_agents_cfs_request_delay.apply_async(kwargs={'object':cfs_request}, queue = 'low')
 
     request["source_id"] = cfs_request.id
-    create_jobs_for_fcl_cfs_rate_request_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
+    create_fcl_cfs_rate_job(request, "rate_request")
 
     return {'id': cfs_request.id}
 

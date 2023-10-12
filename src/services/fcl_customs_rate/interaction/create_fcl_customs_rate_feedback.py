@@ -4,8 +4,9 @@ from services.fcl_customs_rate.models.fcl_customs_rate_feedback import FclCustom
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
 from database.db_migration import db
-from services.fcl_customs_rate.fcl_customs_celery_worker import create_jobs_for_fcl_customs_rate_feedback_delay
-
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate_job import (
+    create_fcl_customs_rate_job,
+)
 def create_fcl_customs_rate_feedback(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -52,7 +53,7 @@ def execute_transaction_code(request):
     get_multiple_service_objects(customs_feedback)
 
     request['source_id'] = customs_feedback.id
-    create_jobs_for_fcl_customs_rate_feedback_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
+    create_fcl_customs_rate_job(request, "rate_feedback")
     return {
       'id': request.get('rate_id')
     }
