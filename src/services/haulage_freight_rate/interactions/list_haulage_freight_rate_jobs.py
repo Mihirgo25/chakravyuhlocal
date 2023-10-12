@@ -20,7 +20,7 @@ possible_direct_filters = [
     "cogo_entity_id",
     "transport_modes_keyword"
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_reverted"]
 
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
@@ -180,6 +180,11 @@ def apply_filters(query, filters):
 
 def apply_is_visible_filter(query):
     query = query.where(HaulageFreightRateJob.is_visible == True)
+    return query
+
+def apply_is_reverted_filter(query, filters):
+    if filters.get('is_reverted'):
+        query = query.join(HaulageFreightRateJobMapping, on=(HaulageFreightRateJobMapping.job_id == HaulageFreightRateJob.id)).where(HaulageFreightRateJobMapping.status == 'reverted')
     return query
 
 def add_pagination_data(
