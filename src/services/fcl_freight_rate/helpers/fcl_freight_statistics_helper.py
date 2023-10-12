@@ -2,7 +2,7 @@ from fastapi.encoders import jsonable_encoder
 import sentry_sdk
 
 
-def send_rate_stats(action, freight, request=None):
+def send_rate_stats(action, request = None, freight = None):
     try:
         from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
         from services.bramhastra.request_params import ApplyFclFreightRateStatistic
