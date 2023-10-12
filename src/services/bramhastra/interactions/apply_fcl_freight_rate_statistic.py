@@ -11,16 +11,11 @@ def apply_fcl_freight_rate_statistic(request):
 
 def setting_fcl_freight_rate_statistic(action, params):
     rate = Rate(freight=params.freight)
-    try:
-        rate.set_pricing_map_zone_ids()
-    except:
-        pass
+    rate.set_pricing_map_zone_ids()
     if action == Action.delete:
         rate.delete_latest_stat()
         return
-
     rate.set_formatted_data()
-
     if action == Action.create:
         rate.set_new_stats()
     elif action == Action.update:
