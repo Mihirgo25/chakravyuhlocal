@@ -268,6 +268,45 @@ def get_location_data(origin_port_id, destination_port_id):
     
     return origin_port, destination_port
 
+def get_port_pairs_hash(origin_port,destination_port,all_rates,origin_port_id,destination_port_id):
+    updated_list = []
+
+    for data in all_rates:
+        if not data:
+            continue
+        if origin_port['is_icd'] and not data['origin_main_port_id']:
+            continue
+        if not origin_port['is_icd'] and data['origin_main_port_id']:
+            continue
+        if destination_port['is_icd'] and not data['destination_main_port_id']:
+            continue
+        if not destination_port['is_icd'] and data['destination_main_port_id']:
+            continue
+        if not data['shipping_line_id']:
+            continue
+        if not data['service_provider_id']:
+            continue
+        if not data['destination_detention']['free_limit']:
+            continue
+        for freight_object in data['freights']:
+            freight_object['validity_start'] = datetime.strptime(freight_object['validity_start'], "%Y-%m-%d").date()
+            freight_object['validity_end'] = datetime.strptime(freight_object['validity_end'], "%Y-%m-%d").date()
+            
+        updated_list.append(data)
+    all_rates = updated_list
+    port_pairs = {}
+
+    for row in all_rates:
+        row_origin_port_id = row['origin_main_port_id'] if origin_port['is_icd'] else origin_port_id
+        row_destination_port_id = row['destination_main_port_id'] if destination_port['is_icd'] else destination_port_id
+
+        key = f"{row_origin_port_id}_{row_destination_port_id}"
+        if key not in port_pairs:
+            port_pairs[key] = []
+        port_pairs[key].append(row['shipping_line_id'])
+
+    return port_pairs
+             
              
 def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rate_cards_params, sailing_schedules_required):
     origin_port_id = fcl_freight_rate_cards_params['origin_port_id']
@@ -276,15 +315,16 @@ def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rat
     destination_country_id = fcl_freight_rate_cards_params['destination_country_id']
     importer_exporter_id = fcl_freight_rate_cards_params['importer_exporter_id']
     validity_start = fcl_freight_rate_cards_params['validity_start']
-    port_pairs = {}
-    
+ 
     origin_port, destination_port = get_location_data(origin_port_id, destination_port_id)
     origin_trade_id = origin_port.get('trade_id')
     destination_trade_id = destination_port.get('trade_id')
-    
+ 
     response = get_fcl_freight_rate_cards(fcl_freight_rate_cards_params)
     all_rates = spot_negotiation_rates + response['list']
     
+    port_pairs = get_port_pairs_hash(origin_port,destination_port,all_rates,origin_port_id,destination_port_id)
+
     fake_schedules = []
     sailing_schedules_hash = {}
 
