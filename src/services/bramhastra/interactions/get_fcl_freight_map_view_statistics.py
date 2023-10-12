@@ -8,6 +8,7 @@ from micro_services.client import maps
 from services.bramhastra.enums import FclFilterTypes
 from services.bramhastra.constants import AGGREGATE_FILTER_MAPPING
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
 
 HEIRARCHY = ["continent", "country", "port"]
 
@@ -24,9 +25,12 @@ def get_fcl_freight_map_view_statistics(filters, sort_by, sort_type, page_limit,
     clickhouse = ClickHouse()
 
     select_aggregate = []
+    is_active_rate_query = False
     for alias, agg_key in filters.get(
         "select_aggregate", DEFAULT_AGGREGATE_SELECT
     ).items():
+        if agg_key == 'active_rate_count':
+            is_active_rate_query = True
         if agg_key not in AGGREGATE_FILTER_MAPPING:
             continue
         select_aggregate.append(
@@ -42,10 +46,20 @@ def get_fcl_freight_map_view_statistics(filters, sort_by, sort_type, page_limit,
         f'SELECT {",".join(grouping)}, {select_aggregate} FROM brahmastra.{FclFreightAction._meta.table_name}'
     ]
 
+    if is_active_rate_query:
+        queries = [
+            f'''
+                SELECT {",".join(grouping)}, COUNT(distinct rate_id) AS count 
+                FROM brahmastra.{FclFreightRateStatistic._meta.table_name}
+                WHERE is_deleted = false AND sign = 1 AND
+            ''' 
+        ]
+
     if where := get_direct_indirect_filters(
         filters, date=FclFilterTypes.time_series.value
     ):
-        queries.append(" WHERE ")
+        if not is_active_rate_query:
+            queries.append(" WHERE ")
         queries.append(where)
 
     filters.pop("select_aggregate", None)
