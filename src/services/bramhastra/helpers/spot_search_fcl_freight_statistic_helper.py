@@ -127,7 +127,10 @@ class SpotSearch:
             .first()
         )
         if fcl_freight_rate_statistic is None:
-            return create_fcl_freight_rate_statistic_fallback(rate_id, validity_id)
+            fcl_freight_rate_statistic = create_fcl_freight_rate_statistic_fallback(
+                rate_id, validity_id
+            )
+        return fcl_freight_rate_statistic
 
     def __update_statistics(self, params) -> None:
         for key in self.increment_keys:
