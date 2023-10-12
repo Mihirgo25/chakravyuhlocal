@@ -13,7 +13,7 @@ def delete_fcl_freight_rate_job(request):
     
     if request.get("source_id"):
         job_ids = [ str(job.job_id) for job in FclFreightRateJobMapping.select(FclFreightRateJobMapping.job_id).where(FclFreightRateJobMapping.source_id == request['source_id'])]
-        update_mapping('completed', job_ids) 
+        update_reverted_mapping('reverted', job_ids) 
         request['data'] = {"reverted_flash_booking_ids": request.get('source_id')}
         create_audit(job_ids, request)
         return {"id": job_ids}
@@ -58,9 +58,13 @@ def delete_fcl_freight_rate_job(request):
 
     return {"id": job_ids}
 
-def update_mapping(status, jobs_ids):
+def update_reverted_mapping(status, jobs_ids):
     update_params = {'status': status,  "updated_at": datetime.now()}
     FclFreightRateJobMapping.update(update_params).where(FclFreightRateJobMapping.job_id << jobs_ids, FclFreightRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
+
+def update_mapping(status, jobs_ids):
+    update_params = {'status': status,  "updated_at": datetime.now()}
+    FclFreightRateJobMapping.update(update_params).where(FclFreightRateJobMapping.job_id << jobs_ids, FclFreightRateJobMapping.status.not_in(['completed', 'aborted', 'reverted'])).execute()
 
 def create_audit(jobs_ids, data):
     for job_id in jobs_ids:
