@@ -1,14 +1,3 @@
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import (
-    list_fcl_freight_rates,
-)
-from enums.global_enums import Action
-from services.bramhastra.request_params import ApplyFclFreightRateStatistic
-from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import (
-    apply_fcl_freight_rate_statistic,
-)
-from services.bramhastra.models.fcl_freight_rate_statistic import (
-    FclFreightRateStatistic,
-)
 from peewee import Model
 
 
@@ -61,6 +50,18 @@ def get_air_freight_identifier(rate_id, validity_id, lower_limit, upper_limit) -
 
 
 def create_fcl_freight_rate_statistic_fallback(rate_id, validity_id) -> Model:
+    from services.fcl_freight_rate.interaction.list_fcl_freight_rates import (
+        list_fcl_freight_rates,
+    )
+    from enums.global_enums import Action
+    from services.bramhastra.request_params import ApplyFclFreightRateStatistic
+    from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import (
+        apply_fcl_freight_rate_statistic,
+    )
+    from services.bramhastra.models.fcl_freight_rate_statistic import (
+        FclFreightRateStatistic,
+    )
+
     fcl_freight_rates = list_fcl_freight_rates(
         {
             "filters": {"id": rate_id},

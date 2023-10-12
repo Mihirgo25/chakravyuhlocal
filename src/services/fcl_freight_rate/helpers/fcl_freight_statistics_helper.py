@@ -1,4 +1,3 @@
-from playhouse.shortcuts import model_to_dict
 from fastapi.encoders import jsonable_encoder
 import sentry_sdk
 
@@ -11,47 +10,44 @@ def send_rate_stats(action, freight, request=None):
             apply_fcl_freight_rate_statistic,
         )
 
-        object = jsonable_encoder(
-            model_to_dict(
-                freight,
-                only=[
-                    FclFreightRate.id,
-                    FclFreightRate.origin_port_id,
-                    FclFreightRate.destination_port_id,
-                    FclFreightRate.origin_main_port_id,
-                    FclFreightRate.destination_main_port_id,
-                    FclFreightRate.origin_country_id,
-                    FclFreightRate.destination_country_id,
-                    FclFreightRate.origin_country_id,
-                    FclFreightRate.destination_country_id,
-                    FclFreightRate.origin_continent_id,
-                    FclFreightRate.destination_continent_id,
-                    FclFreightRate.origin_trade_id,
-                    FclFreightRate.destination_trade_id,
-                    FclFreightRate.shipping_line_id,
-                    FclFreightRate.service_provider_id,
-                    FclFreightRate.validities,
-                    FclFreightRate.mode,
-                    FclFreightRate.commodity,
-                    FclFreightRate.container_size,
-                    FclFreightRate.container_type,
-                    FclFreightRate.containers_count,
-                    FclFreightRate.origin_local_id,
-                    FclFreightRate.destination_local_id,
-                    FclFreightRate.origin_detention_id,
-                    FclFreightRate.destination_detention_id,
-                    FclFreightRate.origin_demurrage_id,
-                    FclFreightRate.destination_demurrage_id,
-                    FclFreightRate.cogo_entity_id,
-                    FclFreightRate.rate_type,
-                    FclFreightRate.tags,
-                    FclFreightRate.sourced_by_id,
-                    FclFreightRate.procured_by_id,
-                    FclFreightRate.created_at,
-                    FclFreightRate.updated_at,
-                ],
-            )
-        )
+        keys = [
+            FclFreightRate.id.name,
+            FclFreightRate.origin_port_id.name,
+            FclFreightRate.destination_port_id.name,
+            FclFreightRate.origin_main_port_id.name,
+            FclFreightRate.destination_main_port_id.name,
+            FclFreightRate.origin_country_id.name,
+            FclFreightRate.destination_country_id.name,
+            FclFreightRate.origin_country_id.name,
+            FclFreightRate.destination_country_id.name,
+            FclFreightRate.origin_continent_id.name,
+            FclFreightRate.destination_continent_id.name,
+            FclFreightRate.origin_trade_id.name,
+            FclFreightRate.destination_trade_id.name,
+            FclFreightRate.shipping_line_id.name,
+            FclFreightRate.service_provider_id.name,
+            FclFreightRate.validities.name,
+            FclFreightRate.mode.name,
+            FclFreightRate.commodity.name,
+            FclFreightRate.container_size.name,
+            FclFreightRate.container_type.name,
+            FclFreightRate.containers_count.name,
+            FclFreightRate.origin_local_id.name,
+            FclFreightRate.destination_local_id.name,
+            FclFreightRate.origin_detention_id.name,
+            FclFreightRate.destination_detention_id.name,
+            FclFreightRate.origin_demurrage_id.name,
+            FclFreightRate.destination_demurrage_id.name,
+            FclFreightRate.cogo_entity_id.name,
+            FclFreightRate.rate_type.name,
+            FclFreightRate.tags.name,
+            FclFreightRate.sourced_by_id.name,
+            FclFreightRate.procured_by_id.name,
+            FclFreightRate.created_at.name,
+            FclFreightRate.updated_at.name,
+        ]
+
+        object = jsonable_encoder({key: getattr(freight, key) for key in keys})
 
         if request:
             try:
@@ -105,36 +101,35 @@ def send_request_stats(action, obj):
             ApplyFclFreightRateRequestStatistic,
         )
 
+        keys = [
+            FclFreightRateRequest.id.name,
+            FclFreightRateRequest.origin_port_id.name,
+            FclFreightRateRequest.destination_port_id.name,
+            FclFreightRateRequest.origin_country_id.name,
+            FclFreightRateRequest.destination_country_id.name,
+            FclFreightRateRequest.origin_continent_id.name,
+            FclFreightRateRequest.destination_continent_id.name,
+            FclFreightRateRequest.origin_trade_id.name,
+            FclFreightRateRequest.destination_trade_id.name,
+            FclFreightRateRequest.source.name,
+            FclFreightRateRequest.source_id.name,
+            FclFreightRateRequest.closing_remarks.name,
+            FclFreightRateRequest.commodity.name,
+            FclFreightRateRequest.containers_count.name,
+            FclFreightRateRequest.created_at.name,
+            FclFreightRateRequest.updated_at.name,
+            FclFreightRateRequest.performed_by_org_id.name,
+            FclFreightRateRequest.performed_by_id.name,
+            FclFreightRateRequest.serial_id.name,
+            FclFreightRateRequest.request_type.name,
+            FclFreightRateRequest.status.name,
+            FclFreightRateRequest.container_size.name,
+            FclFreightRateRequest.closed_by_id.name,
+            FclFreightRateRequest.closing_remarks.name,
+        ]
+
         if action == "create":
-            obj = model_to_dict(
-                obj,
-                only=[
-                    FclFreightRateRequest.id,
-                    FclFreightRateRequest.origin_port_id,
-                    FclFreightRateRequest.destination_port_id,
-                    FclFreightRateRequest.origin_country_id,
-                    FclFreightRateRequest.destination_country_id,
-                    FclFreightRateRequest.origin_continent_id,
-                    FclFreightRateRequest.destination_continent_id,
-                    FclFreightRateRequest.origin_trade_id,
-                    FclFreightRateRequest.destination_trade_id,
-                    FclFreightRateRequest.source,
-                    FclFreightRateRequest.source_id,
-                    FclFreightRateRequest.closing_remarks,
-                    FclFreightRateRequest.commodity,
-                    FclFreightRateRequest.containers_count,
-                    FclFreightRateRequest.created_at,
-                    FclFreightRateRequest.updated_at,
-                    FclFreightRateRequest.performed_by_org_id,
-                    FclFreightRateRequest.performed_by_id,
-                    FclFreightRateRequest.serial_id,
-                    FclFreightRateRequest.request_type,
-                    FclFreightRateRequest.status,
-                    FclFreightRateRequest.container_size,
-                    FclFreightRateRequest.closed_by_id,
-                    FclFreightRateRequest.closing_remarks,
-                ],
-            )
+            obj = jsonable_encoder({key: getattr(obj, key) for key in keys})
 
         if action == "update":
             if (not isinstance(obj, dict)) or ("ignore" in obj and obj["ignore"]):
@@ -165,32 +160,29 @@ def send_feedback_statistics(action, feedback, request=None):
             FclFreightRateFeedback,
         )
 
-        object = jsonable_encoder(
-            model_to_dict(
-                feedback,
-                only=[
-                    FclFreightRateFeedback.id,
-                    FclFreightRateFeedback.source,
-                    FclFreightRateFeedback.source_id,
-                    FclFreightRateFeedback.closed_by_id,
-                    FclFreightRateFeedback.fcl_freight_rate_id,
-                    FclFreightRateFeedback.validity_id,
-                    FclFreightRateFeedback.service_provider_id,
-                    FclFreightRateFeedback.serial_id,
-                    FclFreightRateFeedback.created_at,
-                    FclFreightRateFeedback.updated_at,
-                    FclFreightRateFeedback.performed_by_id,
-                    FclFreightRateFeedback.performed_by_org_id,
-                    FclFreightRateFeedback.feedback_type,
-                    FclFreightRateFeedback.cogo_entity_id,
-                    FclFreightRateFeedback.closing_remarks,
-                    FclFreightRateFeedback.status,
-                    FclFreightRateFeedback.feedbacks,
-                    FclFreightRateFeedback.preferred_freight_rate,
-                    FclFreightRateFeedback.preferred_freight_rate_currency,
-                ],
-            )
-        )
+        keys = [
+            FclFreightRateFeedback.id.name,
+            FclFreightRateFeedback.source.name,
+            FclFreightRateFeedback.source_id.name,
+            FclFreightRateFeedback.closed_by_id.name,
+            FclFreightRateFeedback.fcl_freight_rate_id.name,
+            FclFreightRateFeedback.validity_id.name,
+            FclFreightRateFeedback.service_provider_id.name,
+            FclFreightRateFeedback.serial_id.name,
+            FclFreightRateFeedback.created_at.name,
+            FclFreightRateFeedback.updated_at.name,
+            FclFreightRateFeedback.performed_by_id.name,
+            FclFreightRateFeedback.performed_by_org_id.name,
+            FclFreightRateFeedback.feedback_type.name,
+            FclFreightRateFeedback.cogo_entity_id.name,
+            FclFreightRateFeedback.closing_remarks.name,
+            FclFreightRateFeedback.status.name,
+            FclFreightRateFeedback.feedbacks.name,
+            FclFreightRateFeedback.preferred_freight_rate.name,
+            FclFreightRateFeedback.preferred_freight_rate_currency.name,
+        ]
+
+        object = jsonable_encoder({key: getattr(feedback, key) for key in keys})
 
         if request:
             for k, v in request.items():
@@ -217,21 +209,18 @@ def send_feedback_delete_stats(obj):
         )
 
         action = "delete"
-        params = jsonable_encoder(
-            model_to_dict(
-                obj,
-                only=[
-                    FclFreightRateFeedback.id,
-                    FclFreightRateFeedback.status,
-                    FclFreightRateFeedback.closed_by_id,
-                    FclFreightRateFeedback.closing_remarks,
-                    FclFreightRateFeedback.fcl_freight_rate_id,
-                    FclFreightRateFeedback.validity_id,
-                    FclFreightRateFeedback.source,
-                    FclFreightRateFeedback.source_id,
-                ],
-            )
-        )
+
+        keys = [
+            FclFreightRateFeedback.id.name,
+            FclFreightRateFeedback.status.name,
+            FclFreightRateFeedback.closed_by_id.name,
+            FclFreightRateFeedback.closing_remarks.name,
+            FclFreightRateFeedback.fcl_freight_rate_id.name,
+            FclFreightRateFeedback.validity_id.name,
+            FclFreightRateFeedback.source.name,
+            FclFreightRateFeedback.source_id.name,
+        ]
+        params = jsonable_encoder({key: getattr(obj, key) for key in keys})
 
         apply_feedback_fcl_freight_rate_statistic(
             ApplyFeedbackFclFreightRateStatistics(action=action, params=params)
@@ -252,39 +241,36 @@ def send_request_delete_stats(obj):
             ApplyFclFreightRateRequestStatistic,
         )
 
+        keys = [
+            FclFreightRateRequest.id.name,
+            FclFreightRateRequest.origin_port_id.name,
+            FclFreightRateRequest.destination_port_id.name,
+            FclFreightRateRequest.origin_country_id.name,
+            FclFreightRateRequest.destination_country_id.name,
+            FclFreightRateRequest.origin_continent_id.name,
+            FclFreightRateRequest.destination_continent_id.name,
+            FclFreightRateRequest.origin_trade_id.name,
+            FclFreightRateRequest.destination_trade_id.name,
+            FclFreightRateRequest.source.name,
+            FclFreightRateRequest.source_id.name,
+            FclFreightRateRequest.closing_remarks.name,
+            FclFreightRateRequest.commodity.name,
+            FclFreightRateRequest.containers_count.name,
+            FclFreightRateRequest.created_at.name,
+            FclFreightRateRequest.updated_at.name,
+            FclFreightRateRequest.performed_by_org_id.name,
+            FclFreightRateRequest.performed_by_id.name,
+            FclFreightRateRequest.serial_id.name,
+            FclFreightRateRequest.request_type.name,
+            FclFreightRateRequest.status.name,
+            FclFreightRateRequest.container_size.name,
+            FclFreightRateRequest.closed_by_id.name,
+            FclFreightRateRequest.closing_remarks.name,
+        ]
+
         action = "delete"
 
-        params = jsonable_encoder(
-            model_to_dict(
-                obj,
-                only=[
-                    FclFreightRateRequest.id,
-                    FclFreightRateRequest.origin_port_id,
-                    FclFreightRateRequest.destination_port_id,
-                    FclFreightRateRequest.origin_country_id,
-                    FclFreightRateRequest.destination_country_id,
-                    FclFreightRateRequest.origin_continent_id,
-                    FclFreightRateRequest.destination_continent_id,
-                    FclFreightRateRequest.origin_trade_id,
-                    FclFreightRateRequest.destination_trade_id,
-                    FclFreightRateRequest.source,
-                    FclFreightRateRequest.source_id,
-                    FclFreightRateRequest.closing_remarks,
-                    FclFreightRateRequest.commodity,
-                    FclFreightRateRequest.containers_count,
-                    FclFreightRateRequest.created_at,
-                    FclFreightRateRequest.updated_at,
-                    FclFreightRateRequest.performed_by_org_id,
-                    FclFreightRateRequest.performed_by_id,
-                    FclFreightRateRequest.serial_id,
-                    FclFreightRateRequest.request_type,
-                    FclFreightRateRequest.status,
-                    FclFreightRateRequest.container_size,
-                    FclFreightRateRequest.closed_by_id,
-                    FclFreightRateRequest.closing_remarks,
-                ],
-            )
-        )
+        params = jsonable_encoder({key: getattr(obj, key) for key in keys})
 
         apply_fcl_freight_rate_request_statistic(
             ApplyFclFreightRateRequestStatistic(action=action, params=params)
