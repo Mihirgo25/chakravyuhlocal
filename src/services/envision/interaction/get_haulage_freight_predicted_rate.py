@@ -4,7 +4,7 @@ import os
 import joblib
 from micro_services.client import maps
 from configs.haulage_freight_rate_constants import WEIGHT_LIMIT_CONSTANTS
-from configs.definitions import HAULAGE_PREDICTION_MODEL
+from configs.yml_definitions import HAULAGE_PREDICTION_MODEL
 
 def predict_haulage_freight_rate(request):
     if type(request) == dict:

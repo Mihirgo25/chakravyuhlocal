@@ -10,6 +10,8 @@ from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
 
+
+from libs.update_charges_yml import update_charges_yml
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_agent import create_fcl_freight_rate_local_agent
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_not_available import create_fcl_freight_rate_not_available
@@ -2014,3 +2016,16 @@ def get_fcl_freight_rate_job_csv_url_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+    
+@fcl_freight_router.post('/update_charges_yml')
+def update_charges_yml_data(serviceChargeType: str):
+    try:
+        data =  update_charges_yml(serviceChargeType)
+        return JSONResponse(status_code=200, content={"success": True, "message": data})
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })    
+    

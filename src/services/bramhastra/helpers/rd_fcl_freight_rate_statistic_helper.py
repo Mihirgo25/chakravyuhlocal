@@ -9,13 +9,19 @@ from services.bramhastra.models.fcl_freight_action import FclFreightAction
 from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )
-from services.bramhastra.enums import SelectTypes
-from services.bramhastra.enums import RevenueDeskState
+from services.bramhastra.enums import SelectTypes, RevenueDeskState
 
 RATE_KEYS = {
     FclFreightRateStatistic.rate_id.name,
     FclFreightRateStatistic.validity_id.name,
     FclFreightRateStatistic.bas_standard_price.name,
+}
+
+SELECTED_RATE_KEYS = {
+    FclFreightAction.selected_rate_id.name,
+    FclFreightAction.selected_validity_id.name,
+    FclFreightAction.selected_fcl_freight_rate_statistic_id.name,
+    FclFreightAction.selected_bas_standard_price.name,
 }
 
 STATISTICS_KEYS = {
@@ -93,6 +99,7 @@ class RevenueDesk:
     def update_selected_for_preference_count(self, request) -> None:
         common_update_params = {
             "updated_at": request.created_at,
+            "given_priority": request.selected_for_preference.given_priority,
         }
         fcl_freight_rate_statistic = (
             FclFreightRateStatistic.select()
@@ -134,11 +141,11 @@ class RevenueDesk:
 
     def set_bas_standard_price_accuracy(self, key: str) -> None:
         self.original_rate_numerics[key] = (
-            1
-            - (
+            (
                 self.original_rate[FclFreightAction.bas_standard_price.name]
                 / (self.selected_rate[FclFreightAction.bas_standard_price.name] or 1)
             )
+            - 1
         ) * 100
         self.selected_rate_numerics[key] = 100
 
@@ -197,13 +204,22 @@ class RevenueDesk:
             }
         )
         self.update_foreign_reference(
-            selected_statistic, {FclFreightRateStatistic.so1_select_count.name}, None
+            selected_statistic,
+            {FclFreightRateStatistic.so1_select_count.name},
+            self.selected_rate_numerics,
         )
         self.update_foreign_reference(
-            original_statistic, None, self.selected_rate_numerics
+            original_statistic, None, self.original_rate_numerics
         )
-        self.selected_rate_numerics["select_type"] = SelectTypes.SO1.value
         self.set_revenue_desk_visit_state(original_action, "selected_for_booking")
+
+        for key in SELECTED_RATE_KEYS:
+            self.original_rate_numerics[key] = getattr(selected_statistic, key)
+
+        self.original_rate_numerics[
+            FclFreightAction.selected_type.name
+        ] = SelectTypes.SO1.value
+
         self.update_foreign_reference(
             original_action,
             None,
