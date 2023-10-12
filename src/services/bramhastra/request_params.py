@@ -274,6 +274,7 @@ class Shipment(BaseModel):
 class ShipmentParams(BaseModel):
     fcl_freight_services: list[ShipmentFclFreightService] = []
     shipment: Shipment
+    checkout_id: str = None
 
 
 class ApplyShipmentFclFreightRateStatistics(BaseModel):
