@@ -189,7 +189,7 @@ def get_chargeable_weight(requirements):
     return chargeable_weight
 
 
-def add_freight_objects(freight_query_result, response_object, requirements,):
+def add_freight_objects(freight_query_result, response_object, requirements):
     response_object['freights'] = []
     freight_validities = freight_query_result['validities']
     required_weight = get_chargeable_weight(requirements)
@@ -240,7 +240,7 @@ def build_freight_object(freight_validity,required_weight,requirements,response_
     
     if not required_slab:
         return None
-    if required_weight <= 500 and  not (response_object.get('origin_airport_id') in BREAK_EVEN_POINT_MAPPING and response_object['airline_id'] in BREAK_EVEN_POINT_MAPPING[response_object.get('origin_airport_id')] ):
+    if required_weight <= 500 and  not (response_object['airline_id'] in (BREAK_EVEN_POINT_MAPPING.get(response_object['origin_airport_id']) or [])):
         required_next_slab = None
         for weight_slab in weight_slabs:
             if int(weight_slab['lower_limit'])<=required_slab['upper_limit']+1 and weight_slab['upper_limit'] > (required_slab['upper_limit']+1):
