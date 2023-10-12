@@ -9,7 +9,7 @@ from configs.fcl_freight_rate_constants import (
 )
 from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_COVERAGE_USERS
 from configs.fcl_customs_rate_constants import FCL_CUSTOMS_COVERAGE_USERS
-from configs.air_customs_rate_constants import (
+from services.air_customs_rate.air_customs_rate_constants import (
     AIR_CUSTOMS_COVERAGE_USERS,
 )
 from configs.ltl_freight_rate_constants import LTL_FREIGHT_COVERAGE_USERS

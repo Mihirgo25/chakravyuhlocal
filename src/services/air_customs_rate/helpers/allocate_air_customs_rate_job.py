@@ -1,5 +1,5 @@
 from services.air_customs_rate.models.air_customs_rate_jobs import AirCustomsRateJob
-from configs.air_customs_rate_constants import AIR_CUSTOMS_COVERAGE_USERS
+from services.air_customs_rate.air_customs_rate_constants import AIR_CUSTOMS_COVERAGE_USERS
 from database.db_session import rd
 from micro_services.client import common
 from peewee import fn
