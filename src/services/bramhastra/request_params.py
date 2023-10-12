@@ -12,17 +12,17 @@ class LineItems(BaseModel):
 
 class FclValidities(BaseModel):
     validity_id: str = Field(alias="id")
-    last_action: str = Field(alias="action")
+    last_action: str = Field(alias="action", default = "create")
     price: float
     currency: str
     market_price: str
     validity_start: date
     validity_end: date
-    line_items: list[LineItems]
-    schedule_type: str
-    payment_term: str
-    likes_count: int
-    dislikes_count: int
+    line_items: list[LineItems] = []
+    schedule_type: str = "direct"
+    payment_term: str = "prepaid"
+    likes_count: int = 0
+    dislikes_count: int = 0
 
 
 class FclFreight(BaseModel):
