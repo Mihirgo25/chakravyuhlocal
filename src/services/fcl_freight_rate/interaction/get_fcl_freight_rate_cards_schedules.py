@@ -7,6 +7,7 @@ from configs.fcl_freight_rate_constants import (
 )
 import json
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards import get_fcl_freight_rate_cards
+from libs.common_validations import handle_empty_ids
 
 REQUIRED_SCHEDULE_KEYS = [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type","reliability_score","terminal_cutoff", "source" ,"id"]
 INDIA_COUNTRY_CURRENCY = "INR"
@@ -112,8 +113,8 @@ def get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_
         schedules = [
             schedule
             for schedule in data_schedules
-            if datetime.strptime(freight["validity_start"], "%Y-%m-%d").date() <= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
-            and datetime.strptime(freight["validity_end"], "%Y-%m-%d").date() >= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
+            if freight["validity_start"] <= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
+            and freight["validity_end"] >= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
             and freight["schedule_type"] == schedule.get("schedule_type")
         ]
 
@@ -139,8 +140,8 @@ def get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_
 
         for fake_schedule in fallback_schedules:
             departure = (datetime.now() + timedelta(days=fake_schedule["departure_offset_days"])).date()
-            cur_validity_end = datetime.strptime(freight["validity_end"], "%Y-%m-%d").date()
-            cur_validity_start = datetime.strptime(freight["validity_start"], "%Y-%m-%d").date()
+            cur_validity_end = freight["validity_end"]
+            cur_validity_start = freight["validity_start"]
 
             if departure > cur_validity_end:
                 departure = cur_validity_end
@@ -288,9 +289,11 @@ def get_port_pairs_hash(origin_port,destination_port,all_rates,origin_port_id,de
             continue
         if not data['destination_detention']['free_limit']:
             continue
-        for freight_object in data['freights']:
-            freight_object['validity_start'] = datetime.strptime(freight_object['validity_start'], "%Y-%m-%d").date()
-            freight_object['validity_end'] = datetime.strptime(freight_object['validity_end'], "%Y-%m-%d").date()
+        
+        if data['source'] == 'spot_negotiation_rate':
+            for freight_object in data['freights']:
+                    freight_object['validity_start'] = datetime.strptime(freight_object['validity_start'], "%Y-%m-%d").date()
+                    freight_object['validity_end'] = datetime.strptime(freight_object['validity_end'], "%Y-%m-%d").date()
             
         updated_list.append(data)
     all_rates = updated_list
@@ -308,18 +311,33 @@ def get_port_pairs_hash(origin_port,destination_port,all_rates,origin_port_id,de
     return port_pairs
              
              
+def format_rate_cards_params(fcl_freight_rate_cards_params):
+    fcl_freight_rate_cards_params = handle_empty_ids(fcl_freight_rate_cards_params)
+
+    try:
+        fcl_freight_rate_cards_params['validity_start'] = datetime.fromisoformat(fcl_freight_rate_cards_params['validity_start']).date()
+        fcl_freight_rate_cards_params['validity_end'] = datetime.fromisoformat(fcl_freight_rate_cards_params['validity_end']).date()
+    except:
+        fcl_freight_rate_cards_params['validity_start'] =  (datetime.now() + timedelta(days=2)).date()
+        fcl_freight_rate_cards_params['validity_end'] = (datetime.now() + timedelta(days=30)).date()
+    
+    return fcl_freight_rate_cards_params
+ 
+     
 def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rate_cards_params, sailing_schedules_required):
+    fcl_freight_rate_cards_params = format_rate_cards_params(fcl_freight_rate_cards_params)
+    
     origin_port_id = fcl_freight_rate_cards_params['origin_port_id']
     origin_country_id = fcl_freight_rate_cards_params['origin_country_id']
     destination_port_id = fcl_freight_rate_cards_params['destination_port_id']
     destination_country_id = fcl_freight_rate_cards_params['destination_country_id']
     importer_exporter_id = fcl_freight_rate_cards_params['importer_exporter_id']
     validity_start = fcl_freight_rate_cards_params['validity_start']
- 
+
     origin_port, destination_port = get_location_data(origin_port_id, destination_port_id)
     origin_trade_id = origin_port.get('trade_id')
     destination_trade_id = destination_port.get('trade_id')
- 
+
     response = get_fcl_freight_rate_cards(fcl_freight_rate_cards_params)
     all_rates = spot_negotiation_rates + response['list']
     
