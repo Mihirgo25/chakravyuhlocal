@@ -95,7 +95,7 @@ def list_fcl_freight_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = FclFreightRateJobMapping.select(FclFreightRateJobMapping.source_id, FclFreightRateJobMapping.shipment_id).where(FclFreightRateJobMapping.job_id == d['id'])
+        mappings_query = FclFreightRateJobMapping.select(FclFreightRateJobMapping.source_id, FclFreightRateJobMapping.shipment_id, FclFreightRateJobMapping.status).where(FclFreightRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             mappings_query = mappings_query.where(FclFreightRateJobMapping.source == filters.get('source'))
         mappings_data = mappings_query.first()
@@ -179,13 +179,6 @@ def apply_filters(query, filters):
 
     return query
 
-
-def apply_status_filters(query, filters):
-    query = query.join(
-        FclFreightRateJobMapping,
-        on=(FclFreightRateJobMapping.job_id == FclFreightRateJob.id),
-    ).where(FclFreightRateJobMapping.status == filters.get("status"))
-    return query
 
 def apply_is_visible_filter(query):
     query = query.where(FclFreightRateJob.is_visible == True)

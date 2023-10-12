@@ -79,7 +79,7 @@ def list_lcl_customs_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.source_id, LclCustomsRateJobMapping.shipment_id).where(LclCustomsRateJobMapping.job_id == d['id'])
+        mappings_query = LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.source_id, LclCustomsRateJobMapping.shipment_id, LclCustomsRateJobMapping.status).where(LclCustomsRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             mappings_query = mappings_query.where(LclCustomsRateJobMapping.source == filters.get('source'))
         mappings_data = mappings_query.first()

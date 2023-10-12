@@ -100,7 +100,7 @@ def list_air_freight_rate_local_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.source_id, AirFreightRateLocalJobMapping.shipment_id).where(AirFreightRateLocalJobMapping.job_id == d['id'])
+        mappings_query = AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.source_id, AirFreightRateLocalJobMapping.shipment_id, AirFreightRateLocalJobMapping.status).where(AirFreightRateLocalJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             mappings_query = mappings_query.where(AirFreightRateLocalJobMapping.source == filters.get('source'))
         mappings_data = mappings_query.first()

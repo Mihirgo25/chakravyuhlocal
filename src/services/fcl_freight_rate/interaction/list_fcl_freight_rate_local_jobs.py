@@ -22,6 +22,7 @@ possible_direct_filters = [
     "container_size",
     "container_type",
     "user_id",
+    "status",
     "cogo_entity_id"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
@@ -96,7 +97,7 @@ def list_fcl_freight_rate_local_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = FclFreightRateLocalJobMapping.select(FclFreightRateLocalJobMapping.source_id, FclFreightRateLocalJobMapping.shipment_id).where(FclFreightRateLocalJobMapping.job_id == d['id'])
+        mappings_query = FclFreightRateLocalJobMapping.select(FclFreightRateLocalJobMapping.source_id, FclFreightRateLocalJobMapping.shipment_id, FclFreightRateLocalJobMapping.status).where(FclFreightRateLocalJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             mappings_query = mappings_query.where(FclFreightRateLocalJobMapping.source == filters.get('source'))
         mappings_data = mappings_query.first()

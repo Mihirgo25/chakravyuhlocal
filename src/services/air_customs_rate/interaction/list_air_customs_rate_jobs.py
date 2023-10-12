@@ -88,7 +88,7 @@ def list_air_customs_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = AirCustomsRateJobMapping.select(AirCustomsRateJobMapping.source_id, AirCustomsRateJobMapping.shipment_id).where(AirCustomsRateJobMapping.job_id == d['id'])
+        mappings_query = AirCustomsRateJobMapping.select(AirCustomsRateJobMapping.source_id, AirCustomsRateJobMapping.shipment_id, AirCustomsRateJobMapping.status).where(AirCustomsRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             mappings_query = mappings_query.where(AirCustomsRateJobMapping.source == filters.get('source'))
         mappings_data = mappings_query.first()

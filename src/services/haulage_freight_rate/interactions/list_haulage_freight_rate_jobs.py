@@ -18,7 +18,6 @@ possible_direct_filters = [
     "serial_id",
     "status",
     "cogo_entity_id",
-    "status",
     "transport_modes_keyword"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
@@ -100,7 +99,7 @@ def list_haulage_freight_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.source_id, HaulageFreightRateJobMapping.shipment_id).where(HaulageFreightRateJobMapping.job_id == d['id'])
+        mappings_query = HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.source_id, HaulageFreightRateJobMapping.shipment_id, HaulageFreightRateJobMapping.status).where(HaulageFreightRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             mappings_query = mappings_query.where(HaulageFreightRateJobMapping.source == filters.get('source'))
         mappings_data = mappings_query.first()

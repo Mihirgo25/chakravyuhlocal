@@ -17,6 +17,7 @@ possible_direct_filters = [
     "commodity",
     "user_id",
     "serial_id",
+    "status",
     "cogo_entity_id",
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
@@ -87,7 +88,7 @@ def list_lcl_freight_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = LclFreightRateJobMapping.select(LclFreightRateJobMapping.source_id, LclFreightRateJobMapping.shipment_id).where(LclFreightRateJobMapping.job_id == d['id'])
+        mappings_query = LclFreightRateJobMapping.select(LclFreightRateJobMapping.source_id, LclFreightRateJobMapping.shipment_id, LclFreightRateJobMapping.status).where(LclFreightRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             mappings_query = mappings_query.where(LclFreightRateJobMapping.source == filters.get('source'))
         mappings_data = mappings_query.first()
@@ -170,14 +171,6 @@ def apply_filters(query, filters):
 
     query = apply_is_visible_filter(query)
 
-    return query
-
-
-def apply_status_filters(query, filters):
-    query = query.join(
-        LclFreightRateJobMapping,
-        on=(LclFreightRateJobMapping.job_id == LclFreightRateJob.id),
-    ).where(LclFreightRateJobMapping.status == filters.get("status"))
     return query
 
 

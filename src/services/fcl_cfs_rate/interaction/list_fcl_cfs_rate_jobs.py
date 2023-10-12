@@ -17,6 +17,7 @@ possible_direct_filters = [
     "commodity",
     "user_id",
     "serial_id",
+    "status",
     "cogo_entity_id"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
@@ -89,7 +90,7 @@ def list_fcl_cfs_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = FclCfsRateJobMapping.select(FclCfsRateJobMapping.source_id, FclCfsRateJobMapping.shipment_id).where(FclCfsRateJobMapping.job_id == d['id'])
+        mappings_query = FclCfsRateJobMapping.select(FclCfsRateJobMapping.source_id, FclCfsRateJobMapping.shipment_id, FclCfsRateJobMapping.status).where(FclCfsRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             mappings_query = mappings_query.where(FclCfsRateJobMapping.source == filters.get('source'))
         mappings_data = mappings_query.first()
@@ -174,13 +175,6 @@ def apply_filters(query, filters):
 
     return query
 
-
-def apply_status_filters(query, filters):
-    query = query.join(
-        FclCfsRateJobMapping,
-        on=(FclCfsRateJobMapping.job_id == FclCfsRateJob.id),
-    ).where(FclCfsRateJobMapping.status == filters.get("status"))
-    return query
 
 def apply_is_visible_filter(query):
     query = query.where(FclCfsRateJob.is_visible == True)

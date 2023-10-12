@@ -95,7 +95,7 @@ def list_ftl_freight_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = FtlFreightRateJobMapping.select(FtlFreightRateJobMapping.source_id, FtlFreightRateJobMapping.shipment_id).where(FtlFreightRateJobMapping.job_id == d['id'])
+        mappings_query = FtlFreightRateJobMapping.select(FtlFreightRateJobMapping.source_id, FtlFreightRateJobMapping.shipment_id, FtlFreightRateJobMapping.status).where(FtlFreightRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             mappings_query = mappings_query.where(FtlFreightRateJobMapping.source == filters.get('source'))
         mappings_data = mappings_query.first()
