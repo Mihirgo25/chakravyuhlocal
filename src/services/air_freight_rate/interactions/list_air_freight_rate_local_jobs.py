@@ -7,7 +7,7 @@ from services.air_freight_rate.models.air_freight_rate_local_jobs_mapping import
 from services.air_freight_rate.helpers.generate_csv_file_url_for_air_locals import (
     generate_csv_file_url_for_air_locals,
 )
-import json
+import json, math
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from libs.json_encoder import json_encoder
@@ -65,8 +65,11 @@ def list_air_freight_rate_local_jobs(
     sort_by="updated_at",
     sort_type="desc",
     generate_csv_url=False,
+    pagination_data_required=False,
     includes={},
 ):
+    response = {"success": False, "status_code": 200}
+    
     query = includes_filters(includes)
 
     if filters:
@@ -77,6 +80,8 @@ def list_air_freight_rate_local_jobs(
 
     if generate_csv_url:
         return generate_csv_file_url_for_air_locals(query)
+    
+    total_count = query.count() if pagination_data_required else None
 
     if page_limit:
         query = query.paginate(page, page_limit)
@@ -85,9 +90,11 @@ def list_air_freight_rate_local_jobs(
 
     data = get_data(query, filters)
 
-    return {
-        "list": data,
-    }
+    response = add_pagination_data(
+        response, page, page_limit, data, pagination_data_required, total_count
+    )
+
+    return response
 
 
 def get_data(query, filters):
@@ -181,3 +188,15 @@ def apply_filters(query, filters):
 def apply_is_visible_filter(query):
     query = query.where(AirFreightRateLocalJob.is_visible == True)
     return query
+
+def add_pagination_data(
+    response, page, page_limit, final_data, pagination_data_required, total_count
+):
+    if pagination_data_required:
+        response["page"] = page
+        response["total"] = math.ceil(total_count / page_limit)
+        response["total_count"] = total_count
+        response["page_limit"] = page_limit
+    response["success"] = True
+    response["list"] = final_data
+    return response

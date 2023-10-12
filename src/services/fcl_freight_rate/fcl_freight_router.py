@@ -2133,6 +2133,7 @@ def list_fcl_freight_rate_local_jobs_api(
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
     generate_csv_url: bool = False,
+    pagination_data_required: bool = False,
     includes: str = None,
     resp: dict = Depends(authorize_token)
 ):
@@ -2140,7 +2141,7 @@ def list_fcl_freight_rate_local_jobs_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_fcl_freight_rate_local_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, includes)
+        data = list_fcl_freight_rate_local_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, pagination_data_required, includes)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
@@ -2229,6 +2230,7 @@ def list_ltl_freight_rate_jobs_api(
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
     generate_csv_url: bool = False,
+    pagination_data_required: bool = False,
     includes: str = None,
     resp: dict = Depends(authorize_token)
 ):
@@ -2236,7 +2238,7 @@ def list_ltl_freight_rate_jobs_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_ltl_freight_rate_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, includes)
+        data = list_ltl_freight_rate_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, pagination_data_required, includes)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
@@ -2324,6 +2326,7 @@ def list_lcl_freight_rate_jobs_api(
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
     generate_csv_url: bool = False,
+    pagination_data_required: bool = False,
     includes: str = None,
     resp: dict = Depends(authorize_token)
 ):
@@ -2331,7 +2334,7 @@ def list_lcl_freight_rate_jobs_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_lcl_freight_rate_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, includes)
+        data = list_lcl_freight_rate_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, pagination_data_required, includes)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
@@ -2420,6 +2423,7 @@ def list_lcl_customs_rate_jobs_api(
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
     generate_csv_url: bool = False,
+    pagination_data_required: bool = False,
     includes: str = None,
     resp: dict = Depends(authorize_token)
 ):
@@ -2427,7 +2431,7 @@ def list_lcl_customs_rate_jobs_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_lcl_customs_rate_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, includes)
+        data = list_lcl_customs_rate_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, pagination_data_required, includes)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
