@@ -42,7 +42,7 @@ def execute_transaction_code(request, source):
         "stacking_type": request.get("stacking_type"),
         "price_type": request.get("price_type"),
         'search_source': request.get('source'),
-        'is_visible': request.get('is_visible') or True,
+        'is_visible': request.get('is_visible', True),
     }
 
     init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("airline_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("commodity_type") or "")}:{str(params.get("stacking_type") or "")}:{str(params.get("operation_type") or "")}'
