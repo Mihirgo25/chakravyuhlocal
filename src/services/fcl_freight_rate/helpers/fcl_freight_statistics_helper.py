@@ -3,11 +3,13 @@ from fastapi.encoders import jsonable_encoder
 import sentry_sdk
 
 
-def send_rate_stats(action, request, freight):
+def send_rate_stats(action, freight, request=None):
     try:
         from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
         from services.bramhastra.request_params import ApplyFclFreightRateStatistic
-        from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import apply_fcl_freight_rate_statistic
+        from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import (
+            apply_fcl_freight_rate_statistic,
+        )
 
         object = jsonable_encoder(
             model_to_dict(
@@ -50,37 +52,58 @@ def send_rate_stats(action, request, freight):
                 ],
             )
         )
-        
-        try:
-            if request.get('port_to_region_id_mapping'):
-                if object.get('origin_main_port_id'):
-                    object['origin_region_id'] = request.get('port_to_region_id_mapping')[object.get('origin_main_port_id')]
-                else:
-                    object['origin_region_id']  = request.get('port_to_region_id_mapping')[object.get('origin_port_id')]
-                    
-                if object.get('destination_main_port_id'):
-                    object['destination_region_id'] = request.get('port_to_region_id_mapping')[object.get('destination_main_port_id')]
-                else:
-                    object['destination_region_id']  = request.get('port_to_region_id_mapping')[object.get('destination_port_id')]
-        except Exception:
-            pass
 
-        for k, v in request.items():
-            if k in {"source_id", "source","performed_by_id","performed_by_type","tag"}:
-                object[k] = v
-                
-        apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(action = action,params = {'freight': object}))
+        if request:
+            try:
+                if request.get("port_to_region_id_mapping"):
+                    if object.get("origin_main_port_id"):
+                        object["origin_region_id"] = request.get(
+                            "port_to_region_id_mapping"
+                        )[object.get("origin_main_port_id")]
+                    else:
+                        object["origin_region_id"] = request.get(
+                            "port_to_region_id_mapping"
+                        )[object.get("origin_port_id")]
+
+                    if object.get("destination_main_port_id"):
+                        object["destination_region_id"] = request.get(
+                            "port_to_region_id_mapping"
+                        )[object.get("destination_main_port_id")]
+                    else:
+                        object["destination_region_id"] = request.get(
+                            "port_to_region_id_mapping"
+                        )[object.get("destination_port_id")]
+            except Exception:
+                pass
+
+            for k, v in request.items():
+                if k in {
+                    "source_id",
+                    "source",
+                    "performed_by_id",
+                    "performed_by_type",
+                    "tag",
+                }:
+                    object[k] = v
+
+        apply_fcl_freight_rate_statistic(
+            ApplyFclFreightRateStatistic(action=action, params={"freight": object})
+        )
     except Exception as e:
         sentry_sdk.capture_exception(e)
 
 
 def send_request_stats(action, obj):
     try:
-        from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
+        from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import (
+            apply_fcl_freight_rate_request_statistic,
+        )
         from services.fcl_freight_rate.models.fcl_freight_rate_request import (
             FclFreightRateRequest,
         )
-        from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
+        from services.bramhastra.request_params import (
+            ApplyFclFreightRateRequestStatistic,
+        )
 
         if action == "create":
             obj = model_to_dict(
@@ -114,20 +137,30 @@ def send_request_stats(action, obj):
             )
 
         if action == "update":
-            if (not isinstance(obj,dict)) or ("ignore" in obj and obj["ignore"]):
+            if (not isinstance(obj, dict)) or ("ignore" in obj and obj["ignore"]):
                 return
             obj["id"] = obj.pop("fcl_freight_rate_request_id")
-        
-        apply_fcl_freight_rate_request_statistic(ApplyFclFreightRateRequestStatistic(action = action,params = jsonable_encoder(obj)))
+
+        apply_fcl_freight_rate_request_statistic(
+            ApplyFclFreightRateRequestStatistic(
+                action=action, params=jsonable_encoder(obj)
+            )
+        )
     except Exception as e:
         sentry_sdk.capture_exception(e)
 
 
 def send_feedback_statistics(action, feedback, request=None):
     try:
-        from configs.fcl_freight_rate_constants import REQUIRED_FEEDBACK_STATS_REQUEST_KEYS
-        from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import apply_feedback_fcl_freight_rate_statistic
-        from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
+        from configs.fcl_freight_rate_constants import (
+            REQUIRED_FEEDBACK_STATS_REQUEST_KEYS,
+        )
+        from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import (
+            apply_feedback_fcl_freight_rate_statistic,
+        )
+        from services.bramhastra.request_params import (
+            ApplyFeedbackFclFreightRateStatistics,
+        )
         from services.fcl_freight_rate.models.fcl_freight_rate_feedback import (
             FclFreightRateFeedback,
         )
@@ -164,7 +197,9 @@ def send_feedback_statistics(action, feedback, request=None):
                 if k in REQUIRED_FEEDBACK_STATS_REQUEST_KEYS:
                     object[k] = v
 
-        apply_feedback_fcl_freight_rate_statistic(ApplyFeedbackFclFreightRateStatistics(action = action,params = object))
+        apply_feedback_fcl_freight_rate_statistic(
+            ApplyFeedbackFclFreightRateStatistics(action=action, params=object)
+        )
     except Exception as e:
         sentry_sdk.capture_exception(e)
 
@@ -174,8 +209,12 @@ def send_feedback_delete_stats(obj):
         from services.fcl_freight_rate.models.fcl_freight_rate_feedback import (
             FclFreightRateFeedback,
         )
-        from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
-        from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import apply_feedback_fcl_freight_rate_statistic
+        from services.bramhastra.request_params import (
+            ApplyFeedbackFclFreightRateStatistics,
+        )
+        from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import (
+            apply_feedback_fcl_freight_rate_statistic,
+        )
 
         action = "delete"
         params = jsonable_encoder(
@@ -193,19 +232,25 @@ def send_feedback_delete_stats(obj):
                 ],
             )
         )
-        
-        apply_feedback_fcl_freight_rate_statistic(ApplyFeedbackFclFreightRateStatistics(action = action,params = params))
+
+        apply_feedback_fcl_freight_rate_statistic(
+            ApplyFeedbackFclFreightRateStatistics(action=action, params=params)
+        )
     except Exception as e:
         sentry_sdk.capture_exception(e)
 
 
 def send_request_delete_stats(obj):
     try:
-        from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
+        from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import (
+            apply_fcl_freight_rate_request_statistic,
+        )
         from services.fcl_freight_rate.models.fcl_freight_rate_request import (
             FclFreightRateRequest,
         )
-        from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
+        from services.bramhastra.request_params import (
+            ApplyFclFreightRateRequestStatistic,
+        )
 
         action = "delete"
 
@@ -240,7 +285,9 @@ def send_request_delete_stats(obj):
                 ],
             )
         )
-        
-        apply_fcl_freight_rate_request_statistic(ApplyFclFreightRateRequestStatistic(action = action,params = params))
+
+        apply_fcl_freight_rate_request_statistic(
+            ApplyFclFreightRateRequestStatistic(action=action, params=params)
+        )
     except Exception as e:
         sentry_sdk.capture_exception(e)
