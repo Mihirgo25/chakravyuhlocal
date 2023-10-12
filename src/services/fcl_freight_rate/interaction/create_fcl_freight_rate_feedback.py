@@ -9,7 +9,7 @@ from celery_worker import update_multiple_service_objects
 from fastapi import HTTPException
 from micro_services.client import *
 from services.bramhastra.celery import send_feedback_statistics_in_delay
-from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_fcl_freight_rate_feedback_delay
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
 
 
 
@@ -80,7 +80,7 @@ def execute_transaction_code(request):
     
     request['source_id'] = feedback.id
     
-    create_jobs_for_fcl_freight_rate_feedback_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
+    create_fcl_freight_rate_job(request, "rate_feedback")
 
     return {'id': request['rate_id']}
 

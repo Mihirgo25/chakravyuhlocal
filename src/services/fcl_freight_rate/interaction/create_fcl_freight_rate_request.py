@@ -3,7 +3,7 @@ from database.db_session import db
 from micro_services.client import *
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from celery_worker import create_communication_background, update_multiple_service_objects, update_fcl_freight_rate_request_in_delay
-from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_fcl_freight_rate_request_delay
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from datetime import datetime, timedelta
 from configs.fcl_freight_rate_constants import EXPECTED_TAT_RATE_FEEDBACK_REVERT, RATE_FEEDBACK_RELEVANT_ROLE_ID
@@ -61,7 +61,7 @@ def execute_transaction_code(request):
 
         request['source_id'] = request_object.id
 
-        create_jobs_for_fcl_freight_rate_request_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
+        create_fcl_freight_rate_job(request, "rate_request")
 
         return {
         'id': request_object.id
