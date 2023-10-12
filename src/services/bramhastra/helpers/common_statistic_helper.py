@@ -63,20 +63,29 @@ def create_fcl_freight_rate_statistic_fallback(rate_id, validity_id) -> Model:
     )
 
     fcl_freight_rates = list_fcl_freight_rates(
-        {
-            "filters": {"id": rate_id},
-            "includes": RATE_REQUIRED_FIELDS,
-        },
+        filters={"id": rate_id, "rate_type": "all"},
+        includes={k: 1 for k in RATE_REQUIRED_FIELDS},
         pagination_data_required=False,
     ).get("list", [])
     if fcl_freight_rates:
         fcl_freight_rate = fcl_freight_rates[0]
+        if len(fcl_freight_rate["validities"]) > 1:
+            fcl_freight_rate["validities"] = [
+                validity
+                for validity in fcl_freight_rate["validities"]
+                if validity["id"] == validity_id
+            ]
         apply_fcl_freight_rate_statistic(
             ApplyFclFreightRateStatistic(
                 action=Action.create, params={"freight": fcl_freight_rate}
             )
         )
-        if fcl_freight_rate_statistic := FclFreightRateStatistic.select(
-            get_fcl_freight_identifier(rate_id, validity_id)
-        ).first():
+        if (
+            fcl_freight_rate_statistic := FclFreightRateStatistic.select()
+            .where(
+                FclFreightRateStatistic.identifier
+                == get_fcl_freight_identifier(rate_id, validity_id)
+            )
+            .first()
+        ):
             return fcl_freight_rate_statistic
