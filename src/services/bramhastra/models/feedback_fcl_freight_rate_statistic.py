@@ -1,4 +1,4 @@
-from peewee import Model, UUIDField, CharField, IntegerField, BigIntegerField
+from peewee import Model, UUIDField, CharField, IntegerField, BigIntegerField, BooleanField, BooleanField
 from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField, ArrayField,FloatField
@@ -36,6 +36,7 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     version = IntegerField(default=1)
     operation_created_at = DateTimeTZField(default=datetime.utcnow())
     operation_updated_at = DateTimeTZField(default=datetime.utcnow(), index=True)
+    is_rate_reverted = IntegerField(default = 0)
 
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()

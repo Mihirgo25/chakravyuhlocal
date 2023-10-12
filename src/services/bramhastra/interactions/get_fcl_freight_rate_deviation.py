@@ -51,7 +51,7 @@ def get_fcl_freight_deviation(filters, page, page_limit):
         grouping = DEFAULT_SELECT_KEYS.copy()
         
     subquery = [
-        f"WITH AVERAGE AS (SELECT AVG(standard_price) AS average_price,count(validity_id) AS validity_count FROM brahmastra.fcl_freight_rate_statistics"
+        f"WITH AVERAGE AS (SELECT AVG(standard_price) AS average_price,count(validity_id) AS validity_count FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"
     ]
 
     queries = [

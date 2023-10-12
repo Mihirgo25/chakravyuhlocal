@@ -12,6 +12,7 @@ from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import FTL_FREIGHT_CHARGES
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
 from fastapi import HTTPException
+from configs.ftl_freight_rate_constants import PREDICTED_PRICE_SERVICE_PROVIDER
 
 def get_ftl_freight_rate_cards(request):
     """
@@ -296,7 +297,7 @@ def build_response_object(result, request):
                 line_item["total_price"] = total_price
                 line_item["price"] = line_item["total_price"]
                 line_item["quantity"] = 1
-                code_config = FTL_FREIGHT_CHARGES[line_item["code"]]
+                code_config = FTL_FREIGHT_CHARGES.get()[line_item["code"]]
                 line_item["name"] = code_config["name"]
         else:
             line_item = build_line_item_object(
@@ -325,7 +326,7 @@ def build_response_object(result, request):
 def build_line_item_object(
     request, line_item, trucks_count=0, minimum_chargeable_weight=0
 ):
-    code_config = FTL_FREIGHT_CHARGES[line_item["code"]]
+    code_config = FTL_FREIGHT_CHARGES.get()[line_item["code"]]
 
     is_additional_service = False
 
@@ -382,6 +383,10 @@ def ignore_non_eligible_service_providers(request, query_result):
     for data in ftl_rates:
         if str(data.get("service_provider_id")) in ids:
             final_list.append(data)
+
+    unique_service_providers_count = len(set(rate['service_provider_id'] for rate in final_list if rate.get('service_provider_id')))
+    if unique_service_providers_count > 1:
+        final_list = [rate for rate in final_list if rate.get('service_provider_id') != PREDICTED_PRICE_SERVICE_PROVIDER]
 
     return final_list
 

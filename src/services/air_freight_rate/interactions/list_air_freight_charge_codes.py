@@ -16,11 +16,11 @@ def get_charge_codes(request):
     if request.get('commodity_sub_type') or request.get('commodity_type') or request.get('commodity'):
         return get_possible_charge_codes(request)
     elif request.get('service_type') == 'air_freight_surcharges':
-        charge_codes = AIR_FREIGHT_SURCHARGES
+        charge_codes = AIR_FREIGHT_SURCHARGES.get()
     elif request.get('service_type') == 'air_freight':
-        charge_codes = AIR_FREIGHT_CHARGES
+        charge_codes = AIR_FREIGHT_CHARGES.get()
     else:
-        charge_codes = AIR_FREIGHT_LOCAL_CHARGES
+        charge_codes = AIR_FREIGHT_LOCAL_CHARGES.get()
 
     response = {"list": []}
     for code, config in charge_codes.items():
@@ -44,11 +44,11 @@ def get_charge_codes(request):
 def get_possible_charge_codes(request):
     
     if request.get('service_type') == 'air_freight_surcharges':
-        charge_codes = AIR_FREIGHT_SURCHARGES
+        charge_codes = AIR_FREIGHT_SURCHARGES.get()
     elif request.get('service_type') == 'air_freight_local':
-        charge_codes = AIR_FREIGHT_LOCAL_CHARGES
+        charge_codes = AIR_FREIGHT_LOCAL_CHARGES.get()
     else :
-        charge_codes= AIR_FREIGHT_CHARGES
+        charge_codes= AIR_FREIGHT_CHARGES.get()
  
 
     commodity= request.get('commodity')

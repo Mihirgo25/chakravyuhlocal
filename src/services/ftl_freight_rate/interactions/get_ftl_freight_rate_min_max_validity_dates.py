@@ -21,7 +21,10 @@ def get_ftl_freight_rate_min_max_validity_dates(request):
     max_validity_end_date = (max(max_validity_end_dates) if len(max_validity_end_dates)>0 else None)
 
     return {'min_validity_end_date': min_validity_end_date,
-            'max_validity_end_date': max_validity_end_date}
+            'max_validity_end_date': max_validity_end_date,
+            'ftl_freight_rates_count':len(ftl_freight_min_max_dates),
+            'shipment_flash_booking_rates_count':len(flash_booking_min_max_dates)
+            }
 
 def get_ftl_freight_validity_dates_in_batches(request):
     filters = get_ftl_freight_rate_params(request)
@@ -103,6 +106,3 @@ def get_ftl_freight_rate_params(request):
 
 
     
-
-
-

@@ -9,7 +9,8 @@ from fastapi.encoders import jsonable_encoder
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import *
 from schema import Schema, Optional
-from configs.definitions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES,FCL_FREIGHT_CURRENCIES
+from configs.definitions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES
+from configs.yml_definitions import FCL_FREIGHT_CURRENCIES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
@@ -351,7 +352,7 @@ class FclFreightRate(BaseModel):
         raise HTTPException(status_code=400, detail="line_items contains duplicates")
 
 
-      fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
+      fcl_freight_charges_dict = FCL_FREIGHT_CHARGES.get()
 
       invalid_line_items = [code for code in codes if code.strip() not in fcl_freight_charges_dict.keys()]
 
@@ -667,7 +668,7 @@ class FclFreightRate(BaseModel):
 
     def possible_origin_local_charge_codes(self):
       self.port = self.origin_port
-      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
       charge_codes = {}
       port = self.origin_port
@@ -684,7 +685,7 @@ class FclFreightRate(BaseModel):
 
     def possible_destination_local_charge_codes(self):
       self.port = self.destination_port
-      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
       port = self.destination_port
       main_port = self.destination_main_port
@@ -699,7 +700,7 @@ class FclFreightRate(BaseModel):
       return charge_codes
 
     def possible_charge_codes(self):
-      fcl_freight_charges = FCL_FREIGHT_CHARGES
+      fcl_freight_charges = FCL_FREIGHT_CHARGES.get()
 
       charge_codes = {}
       shipping_line_id = self.shipping_line_id

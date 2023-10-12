@@ -12,7 +12,7 @@ from datetime import datetime
 from micro_services.client import spot_search
 possible_direct_filters = ['origin_port_id', 'destination_port_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id', 'id']
 
-possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id', 'service_provider_id']
+possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id', 'service_provider_id', 'q']
 
 def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True):
     query = FclFreightRateRequest.select()
@@ -69,6 +69,11 @@ def apply_validity_end_less_than_filter(query, filters):
 
 def apply_relevant_supply_agent_filter(query, filters):
     query = query.where(FclFreightRateRequest.relevant_supply_agent_ids.contains(filters['relevant_supply_agent']))
+    return query
+
+def apply_q_filter(query, filters):
+    q = str(filters.get('q', ''))
+    query = query.where(FclFreightRateRequest.serial_id.cast("text") ** (q + "%"))
     return query
 
 def apply_supply_agent_id_filter(query, filters):

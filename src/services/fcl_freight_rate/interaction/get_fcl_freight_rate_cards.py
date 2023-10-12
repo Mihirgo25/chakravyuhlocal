@@ -358,7 +358,7 @@ def fill_missing_free_days_in_rates(requirements, freight_rates):
     return new_freight_rates
 
 def build_local_line_item_object(line_item, request):
-    fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
+    fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES.get()
 
     code_config = fcl_freight_local_charges[line_item['code']]
 
@@ -512,7 +512,7 @@ def build_freight_line_item_object(line_item, request):
         "slabs": line_item.get("slabs") or []
     }
 
-    fcl_freight_charges = FCL_FREIGHT_CHARGES
+    fcl_freight_charges = FCL_FREIGHT_CHARGES.get()
 
     code_config = fcl_freight_charges[line_item['code']]
 
