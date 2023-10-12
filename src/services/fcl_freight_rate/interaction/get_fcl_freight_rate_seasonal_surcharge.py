@@ -4,7 +4,7 @@ from fastapi import HTTPException
 
 
 def get_fcl_freight_rate_seasonal_surcharge(request):
-    fcl_freight_seasonal_charges = FCL_FREIGHT_SEASONAL_CHARGES
+    fcl_freight_seasonal_charges = FCL_FREIGHT_SEASONAL_CHARGES.get()
     
     if not all_fields_present(request):
         return {'seasonal_surcharge_charge_codes': fcl_freight_seasonal_charges} 

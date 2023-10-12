@@ -269,7 +269,7 @@ class FclCustomsRate(BaseModel):
 
     def possible_customs_charge_codes(self):
         self.set_location()
-        fcl_custom_charges = FCL_CUSTOMS_CHARGES
+        fcl_custom_charges = FCL_CUSTOMS_CHARGES.get()
         location = self.location
         
         charge_codes = {}
@@ -280,7 +280,7 @@ class FclCustomsRate(BaseModel):
 
     def possible_cfs_charge_codes(self):
         self.set_location()
-        fcl_cfs_charges = FCL_CUSTOMS_CHARGES
+        fcl_cfs_charges = FCL_CUSTOMS_CHARGES.get()
         location = self.location
 
         charge_codes = {}
@@ -319,7 +319,7 @@ class FclCustomsRate(BaseModel):
         for line_item in self.customs_line_items:
             grouped_charge_codes[line_item.get('code')] = line_item
         for code, line_items in grouped_charge_codes.items():
-            code_config = FCL_CUSTOMS_CHARGES.get(code)
+            code_config = FCL_CUSTOMS_CHARGES.get().get(code)
 
             code_config = {key:value for key,value in code_config.items() if 'customs_clearance' in code_config.get('tags', [])}
             location = self.location
@@ -404,7 +404,7 @@ class FclCustomsRate(BaseModel):
             grouped_charge_codes[line_item.get('code')] = line_item
 
         for code, line_items in grouped_charge_codes.items():
-            code_config = FCL_CUSTOMS_CHARGES.get(code)
+            code_config = FCL_CUSTOMS_CHARGES.get().get(code)
 
             code_config = {key:value for key,value in code_config.items() if 'cfs' in code_config.get('tags', [])}
 

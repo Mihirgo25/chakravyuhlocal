@@ -127,7 +127,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         return False
 
     def validate_code(self):
-        fcl_freight_seasonal_charges = FCL_FREIGHT_SEASONAL_CHARGES
+        fcl_freight_seasonal_charges = FCL_FREIGHT_SEASONAL_CHARGES.get()
 
         if self.code and self.code in fcl_freight_seasonal_charges:
             return True

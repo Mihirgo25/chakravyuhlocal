@@ -49,7 +49,7 @@ async def get_fcl_freight_rate_distribution(filters):
         ), stats_mode_count AS (
             SELECT
                 parent_mode,
-                count(sign) AS value
+                COUNT(DISTINCT rate_id) AS value
             FROM brahmastra.{FclFreightRateStatistic._meta.table_name} GROUP BY parent_mode
         )
             SELECT 
