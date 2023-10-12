@@ -9,8 +9,8 @@ import json
 BATCH_SIZE = 500
 
 def get_ftl_freight_rate_min_max_validity_dates(request): 
-    ftl_freight_min_max_dates = get_ftl_freight_validity_dates_in_batches(request)
-    flash_booking_min_max_dates = get_flash_booking_validity_dates_in_batches(request)
+    ftl_freight_min_max_dates, ftl_freight_rates_count = get_ftl_freight_validity_dates_in_batches(request)
+    flash_booking_min_max_dates, shipment_flash_booking_rates_count = get_flash_booking_validity_dates_in_batches(request)
     
     min_validity_end_dates = list(filter(None, [ftl_freight_min_max_dates['min_validity_end_date'],
                                                flash_booking_min_max_dates['min_validity_end_date']]))
@@ -22,8 +22,8 @@ def get_ftl_freight_rate_min_max_validity_dates(request):
 
     return {'min_validity_end_date': min_validity_end_date,
             'max_validity_end_date': max_validity_end_date,
-            'ftl_freight_rates_count':len(ftl_freight_min_max_dates),
-            'shipment_flash_booking_rates_count':len(flash_booking_min_max_dates)
+            'ftl_freight_rates_count':ftl_freight_rates_count,
+            'shipment_flash_booking_rates_count':shipment_flash_booking_rates_count
             }
 
 def get_ftl_freight_validity_dates_in_batches(request):
@@ -39,7 +39,7 @@ def get_ftl_freight_validity_dates_in_batches(request):
         result = get_result_from_batch(result, ftl_freight_batch_data)
         offset += BATCH_SIZE
 
-    return result
+    return result, ftl_freight_date_count
 
 def get_flash_booking_validity_dates_in_batches(request):
     flash_bookings_date_count = 1
@@ -52,7 +52,7 @@ def get_flash_booking_validity_dates_in_batches(request):
         flash_bookings_date_count = len(flash_booking_batch_data)
         page += 1
         
-    return result
+    return result, flash_bookings_date_count
 
 def get_result_from_batch(result, batch_data):
     for row in batch_data:
