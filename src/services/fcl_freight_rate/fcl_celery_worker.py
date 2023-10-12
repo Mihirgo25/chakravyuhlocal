@@ -9,7 +9,6 @@ from services.fcl_freight_rate.workers.update_fcl_freight_rate_job_on_rate_addit
 from services.fcl_freight_rate.workers.create_jobs_for_predicted_fcl_freight_rate import create_jobs_for_predicted_fcl_freight_rate
 from celery.schedules import crontab
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
-from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_job import delete_fcl_freight_rate_job
 from services.fcl_freight_rate.workers.update_fcl_freight_rate_local_jobs_to_backlog import update_fcl_freight_rate_local_jobs_to_backlog
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import update_live_booking_visiblity_for_fcl_freight_rate_job
 
@@ -81,26 +80,6 @@ def create_jobs_for_fcl_freight_rate_feedback_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
         
-        
-@celery.task(bind = True, max_retries=1, retry_backoff = True)
-def delete_jobs_for_fcl_freight_rate_request_delay(self, requirements):
-    try:
-        return delete_fcl_freight_rate_job(requirements)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-        
-@celery.task(bind = True, max_retries=1, retry_backoff = True)
-def delete_jobs_for_fcl_freight_rate_feedback_delay(self, requirements):
-    try:
-        return delete_fcl_freight_rate_job(requirements)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
         
 @celery.task(bind=True, max_retries=1, retry_backoff=True)
 def update_live_booking_visiblity_for_fcl_freight_rate_job_delay(self, job_id):

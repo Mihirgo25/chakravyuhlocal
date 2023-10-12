@@ -9,7 +9,6 @@ from services.air_freight_rate.workers.update_air_freight_rate_job_on_rate_addit
     update_air_freight_rate_job_on_rate_addition,
 )
 from services.air_freight_rate.interactions.create_air_freight_rate_job import create_air_freight_rate_job
-from services.air_freight_rate.interactions.delete_air_freight_rate_job import delete_air_freight_rate_job
 from celery.schedules import crontab
 from services.air_freight_rate.workers.update_air_freight_rate_local_jobs_to_backlog import update_air_freight_rate_local_jobs_to_backlog
 from services.air_freight_rate.interactions.create_air_freight_rate_job import update_live_booking_visiblity_for_air_freight_rate_job
@@ -89,26 +88,6 @@ def create_jobs_for_air_freight_rate_feedback_delay(self, requirements):
         else:
             raise self.retry(exc= exc)
         
-        
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delete_jobs_for_air_freight_rate_request_delay(self, requirements):
-    try:
-        return delete_air_freight_rate_job(requirements)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-        
-@celery.task(bind = True, max_retries=1, retry_backoff = True)
-def delete_jobs_for_air_freight_rate_feedback_delay(self, requirements):
-    try:
-        return delete_air_freight_rate_job(requirements)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
         
 @celery.task(bind=True, max_retries=1, retry_backoff=True)
 def update_live_booking_visiblity_for_air_freight_rate_job_delay(self, job_id):

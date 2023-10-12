@@ -3,8 +3,9 @@ from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRa
 from fastapi import HTTPException
 from database.db_session import db
 from libs.get_multiple_service_objects import get_multiple_service_objects
-from services.air_customs_rate.air_customs_celery_worker import delete_jobs_for_air_customs_rate_request_delay
-
+from services.air_customs_rate.interaction.delete_air_customs_rate_job import (
+    delete_air_customs_rate_job
+)
 
 def delete_air_customs_rate_request(request):
     with db.atomic():
@@ -30,7 +31,7 @@ def execute_transaction_code(request):
     create_audit_for_customs_request(request, object, data)
     object.send_closed_notifications_to_sales_agent()
 
-    delete_jobs_for_air_customs_rate_request_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
+    delete_air_customs_rate_job(request)
 
   return {'air_customs_rate_request_ids' : request.get('air_customs_rate_request_ids')}
 

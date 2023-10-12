@@ -11,7 +11,7 @@ def delete_air_customs_rate_job(request):
     
     if request.get("source_id"):
         job_ids = [ str(job.job_id) for job in AirCustomsRateJobMapping.select(AirCustomsRateJobMapping.job_id).where(AirCustomsRateJobMapping.source_id == request['source_id'])]
-        update_mapping('completed', job_ids) 
+        update_reverted_mapping('reverted', job_ids) 
         request['data'] = {"reverted_flash_booking_ids": request.get('source_id')}
         create_audit(job_ids, request)
         return {"id": job_ids}
@@ -64,7 +64,11 @@ def create_audit(jobs_ids, data):
             data = data.get('data')
         )
         
+def update_reverted_mapping(status, jobs_ids):
+    update_params = {'status': status,  "updated_at": datetime.now()}
+    AirCustomsRateJobMapping.update(update_params).where(AirCustomsRateJobMapping.job_id << jobs_ids, AirCustomsRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
+
 def update_mapping(status, job_ids):
     update_params = {'status':status, "updated_at": datetime.now()}
-    AirCustomsRateJobMapping.update(update_params).where(AirCustomsRateJobMapping.job_id << job_ids, AirCustomsRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
+    AirCustomsRateJobMapping.update(update_params).where(AirCustomsRateJobMapping.job_id << job_ids, AirCustomsRateJobMapping.status.not_in(['completed', 'aborted', 'reverted'])).execute()
     

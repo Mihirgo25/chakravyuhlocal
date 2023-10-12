@@ -5,7 +5,6 @@ from services.fcl_cfs_rate.workers.update_fcl_cfs_rate_jobs_to_backlog import (
 )
 from celery.schedules import crontab
 from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_job import create_fcl_cfs_rate_job
-from services.fcl_cfs_rate.interaction.delete_fcl_cfs_rate_job import delete_fcl_cfs_rate_job
 
 tasks = {
     'update_fcl_cfs_jobs_status_to_backlogs': {
@@ -32,17 +31,6 @@ def update_fcl_cfs_rate_jobs_to_backlog_delay(self):
 def create_jobs_for_fcl_cfs_rate_request_delay(self, requirements):
     try:
         return create_fcl_cfs_rate_job(requirements, "rate_request")
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-                
-        
-@celery.task(bind = True, max_retries=1, retry_backoff = True)
-def delete_jobs_for_fcl_cfs_rate_request_delay(self, requirements):
-    try:
-        return delete_fcl_cfs_rate_job(requirements)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

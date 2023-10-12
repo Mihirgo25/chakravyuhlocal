@@ -11,7 +11,7 @@ def delete_fcl_customs_rate_job(request):
     
     if request.get("source_id"):
         job_ids = [ str(job.job_id) for job in FclCustomsRateJobMapping.select(FclCustomsRateJobMapping.job_id).where(FclCustomsRateJobMapping.source_id == request['source_id'])]
-        update_mapping('completed', job_ids) 
+        update_reverted_mapping('reverted', job_ids) 
         request['data'] = {"reverted_flash_booking_ids": request.get('source_id')}
         create_audit(job_ids, request)
         return {"id": job_ids}
@@ -64,6 +64,10 @@ def create_audit(jobs_ids, data):
             performed_by_id = data.get("performed_by_id")
         )
         
+def update_reverted_mapping(status, jobs_ids):
+    update_params = {'status': status,  "updated_at": datetime.now()}
+    FclCustomsRateJobMapping.update(update_params).where(FclCustomsRateJobMapping.job_id << jobs_ids, FclCustomsRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
+
 def update_mapping(status, job_ids):
     update_params = {'status':status, "updated_at": datetime.now()}
-    FclCustomsRateJobMapping.update(update_params).where(FclCustomsRateJobMapping.job_id << job_ids, FclCustomsRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
+    FclCustomsRateJobMapping.update(update_params).where(FclCustomsRateJobMapping.job_id << job_ids, FclCustomsRateJobMapping.status.not_in(['completed', 'aborted', 'reverted'])).execute()

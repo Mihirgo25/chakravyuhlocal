@@ -12,7 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from database.rails_db import (
     get_organization_partner,
 )
-from services.air_freight_rate.air_celery_worker import delete_jobs_for_air_freight_rate_request_delay
+from services.air_freight_rate.interactions.delete_air_freight_rate_job import delete_air_freight_rate_job
 
 def delete_air_freight_rate_request(request):
     object_type = "Air_Freight_Rate_Request"
@@ -87,7 +87,7 @@ def execute_transaction_code(request):
             kwargs={"object": request_object}, queue="critical"
         )
         
-        delete_jobs_for_air_freight_rate_request_delay.apply_async(kwargs = {'requirements': request}, queue='fcl_freight_rate')
+        delete_air_freight_rate_job(request)
 
     if shipment_source:
         data = {
