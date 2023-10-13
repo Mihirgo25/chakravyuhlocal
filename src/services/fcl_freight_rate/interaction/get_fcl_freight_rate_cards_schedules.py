@@ -240,7 +240,7 @@ def get_sailing_schedules_data(port_pair, shipping_line,validity_start):
         "destination_port_id": destination_port_id,
         "filters": {
             'shipping_line_id': list(set(shipping_line)),
-            "departure_start": validity_start
+            "departure_start": str(validity_start)
         },
         "page_limit": 1000,
         "sort_by": "departure",
