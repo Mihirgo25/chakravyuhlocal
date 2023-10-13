@@ -9,7 +9,10 @@ from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
+from pydantic import Json
 
+
+from libs.update_charges_yml import update_charges_yml
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_agent import create_fcl_freight_rate_local_agent
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_not_available import create_fcl_freight_rate_not_available
@@ -97,6 +100,9 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_location_cluster i
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_job_stats import get_fcl_freight_rate_job_stats
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_jobs import list_fcl_freight_rate_jobs
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_job import delete_fcl_freight_rate_job
+
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards_schedules import get_fcl_freight_rate_cards_schedules
+
 from libs.rate_limiter import rate_limiter
 from configs.env import DEFAULT_USER_ID
 
@@ -2009,6 +2015,40 @@ def get_fcl_freight_rate_job_csv_url_api(
     try:
         data = list_fcl_freight_rate_jobs(filters, generate_csv_url=True)
         return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+    
+@fcl_freight_router.post('/update_charges_yml')
+def update_charges_yml_data(serviceChargeType: str):
+    try:
+        data =  update_charges_yml(serviceChargeType)
+        return JSONResponse(status_code=200, content={"success": True, "message": data})
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })    
+    
+
+
+
+@fcl_freight_router.get('/get_fcl_freight_rate_cards_schedules')
+def get_fcl_freight_rate_cards_schedules_data(
+    spot_negotiation_rates: Json = Query(None),
+    fcl_freight_rate_cards_params: Json = Query(None),
+    sailing_schedules_required: bool = False,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        resp = get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rate_cards_params, sailing_schedules_required)
+        return JSONResponse(status_code=200, content=json_encoder(resp))
     except HTTPException as e:
         raise
     except Exception as e:

@@ -15,6 +15,7 @@ class CommonApiClient:
         })
 
     def get_money_exchange_for_fcl(self, data = {}):
+
         cached_resp = get_money_exchange_from_rd(data)
         if cached_resp:
             return { "price": cached_resp }
@@ -23,10 +24,10 @@ class CommonApiClient:
         if isinstance(resp,dict) and resp.get('price') is not None:
             conversion_rate = resp.get('rate') or resp['price']/float(data['price'])
             
-            set_money_exchange_to_rd(data.get('from_currency'), data.get('to_currency'), conversion_rate)
+            set_money_exchange_to_rd(data, conversion_rate)
             return resp
         
-        resp = get_money_exchange_for_fcl_fallback(**data)
+        resp = get_money_exchange_for_fcl_fallback(data)
         return resp
 
     def create_communication(self, data = {}):
@@ -58,4 +59,3 @@ class CommonApiClient:
     
     def get_all_exchange_rates(self, data = {}):
         return self.client.request('GET','get_all_exchange_rates',data)
-    

@@ -103,7 +103,7 @@ def get_shipment_and_sell_quotations(all_shipment_serial_ids):
     return shipment_dict,shipment_sell_quotation_dict
                                     
 def get_data(query,filters):
-    air_freight_local_charges = AIR_FREIGHT_LOCAL_CHARGES
+    air_freight_local_charges = AIR_FREIGHT_LOCAL_CHARGES.get()
 
     data_list = jsonable_encoder(list(query.dicts()))
     airport_ids = []

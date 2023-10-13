@@ -359,7 +359,7 @@ def fill_missing_free_days_in_rates(requirements, freight_rates):
     return new_freight_rates
 
 def build_local_line_item_object(line_item, request):
-    fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
+    fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES.get()
 
     code_config = fcl_freight_local_charges[line_item['code']]
 
@@ -513,7 +513,7 @@ def build_freight_line_item_object(line_item, request):
         "slabs": line_item.get("slabs") or []
     }
 
-    fcl_freight_charges = FCL_FREIGHT_CHARGES
+    fcl_freight_charges = FCL_FREIGHT_CHARGES.get()
 
     code_config = fcl_freight_charges[line_item['code']]
 
@@ -550,8 +550,8 @@ def build_freight_object(freight_validity, additional_weight_rate, additional_we
         return None
 
     freight_object = {
-        'validity_start': freight_validity['validity_start'],
-        'validity_end': freight_validity['validity_end'],
+        'validity_start': freight_validity['validity_start'].date(),
+        'validity_end': freight_validity['validity_end'].date(),
         'schedule_type': freight_validity['schedule_type'],
         'payment_term': freight_validity['payment_term'] or DEFAULT_PAYMENT_TERM,
         'validity_id': freight_validity['id'],
@@ -560,10 +560,10 @@ def build_freight_object(freight_validity, additional_weight_rate, additional_we
         'line_items': []
     }
 
-    if freight_object['validity_start'].date() < request['validity_start']:
+    if freight_object['validity_start'] < request['validity_start']:
         freight_object['validity_start'] = request['validity_start']
 
-    if freight_object['validity_end'].date() > request['validity_end']:
+    if freight_object['validity_end'] > request['validity_end']:
         freight_object['validity_end'] = request['validity_end']
 
     for line_item in freight_validity['line_items']:

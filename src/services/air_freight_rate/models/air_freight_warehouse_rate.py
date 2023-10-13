@@ -120,7 +120,7 @@ class AirFreightWarehouseRates(BaseModel):
     
     def possible_charge_codes(self):
         commodity = self.commodity
-        air_freight_local_charges_dict =AIR_FREIGHT_WAREHOUSE_CHARGES
+        air_freight_local_charges_dict =AIR_FREIGHT_WAREHOUSE_CHARGES.get()
         charge_codes={}
         for code,config in air_freight_local_charges_dict.items():
             if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and 'deleted' not in config['tags']:
@@ -133,7 +133,7 @@ class AirFreightWarehouseRates(BaseModel):
         is_line_items_error_messages_present = False
         is_line_items_info_messages_present = False
          
-        air_freight_local_charges_dict = AIR_FREIGHT_WAREHOUSE_CHARGES
+        air_freight_local_charges_dict = AIR_FREIGHT_WAREHOUSE_CHARGES.get()
         grouped_charge_codes = {}
         for line_item in self.line_items:
             grouped_charge_codes[line_item.get('code')] = line_item

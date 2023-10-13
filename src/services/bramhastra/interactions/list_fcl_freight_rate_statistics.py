@@ -5,6 +5,11 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
     add_pagination_data,
 )
 from micro_services.client import maps
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.bramhastra.enums import FclFilterTypes
+from services.bramhastra.models.fcl_freight_rate_statistic import (
+    FclFreightRateStatistic,
+)
 
 DEFAULT_PARAMS = {
     "origin_port_id",
@@ -13,7 +18,6 @@ DEFAULT_PARAMS = {
     "destination_main_port_id",
     "shipping_line_id",
     "service_provider_id",
-    "cogo_entity_id",
     "container_size",
     "container_type",
     "commodity",
@@ -21,10 +25,10 @@ DEFAULT_PARAMS = {
 }
 
 DEFAULT_AGGREGATE_PARAMS = {
-    "spot_search_count": "SUM(spot_search_count)",
-    "checkout_count": "SUM(checkout_count)",
-    "bookings_created": "SUM(bookings_created)",
-    "rate_deviation_from_booking_rate": "MAX(ABS(rate_deviation_from_booking_rate))",
+    "spot_search_count": "COUNT(DISTINCT spot_search_id)",
+    "checkout_count": "SUM(checkout*sign)",
+    "bookings_created": "SUM(shipment*sign)",
+    "rate_deviation_from_booking_rate": "MAX(ABS(bas_standard_price_diff_from_selected_rate))",
 }
 
 DEFAULT_SELECT_KEYS = {
@@ -41,7 +45,7 @@ LOCATION_KEYS = {
 
 DEFAULT_QUERY_TYPE = "default"
 
-ALLOWABLE_QUERY_TYPES = {"default", "average_price"}
+ALLOWABLE_QUERY_TYPES = {"default", "average_price", "rates_affected"}
 
 
 async def add_service_objects(statistics):
@@ -157,6 +161,23 @@ async def use_average_price_filter(
     )
 
 
+async def use_rates_affected_filter(
+    filters, page_limit, page, is_service_object_required
+):
+    clickhouse = ClickHouse()
+    query = [
+        f"""SELECT toUnixTimestamp(DATE(rate_updated_at),'Asia/Tokyo')*1000 AS day,COUNT(*) as rates_count FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"""
+    ]
+    query.append(
+        f"WHERE rate_updated_at >= %(start_date)s AND rate_updated_at <= %(end_date)s AND day > 0 "
+    )
+    where = get_direct_indirect_filters(filters, date=None)
+    if where:
+        query.append(f"AND {where}")
+    query.append("GROUP BY DATE(rate_updated_at) ORDER BY day ASC")
+    return {"list": clickhouse.execute(" ".join(query), filters)}
+
+
 async def use_default_filter(filters, page_limit, page, is_service_object_required):
     clickhouse = ClickHouse()
 
@@ -167,7 +188,7 @@ async def use_default_filter(filters, page_limit, page, is_service_object_requir
     )
 
     queries = [
-        f"""SELECT {select},{aggregate_select} from brahmastra.fcl_freight_rate_statistics"""
+        f"""SELECT {select},{aggregate_select} from brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     if where := get_direct_indirect_filters(filters):
