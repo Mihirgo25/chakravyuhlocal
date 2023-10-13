@@ -5,7 +5,7 @@ from playhouse.postgres_ext import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.fcl_freight_rate_constants import *
 from fastapi import HTTPException
-from configs.definitions import FCL_FREIGHT_CURRENCIES
+from configs.yml_definitions import FCL_FREIGHT_CURRENCIES
 from services.fcl_freight_rate.models.fcl_freight_rate_mapping import FclFreightRateMappings
 from micro_services.client import *
 

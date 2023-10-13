@@ -6,7 +6,8 @@ from database.rails_db import *
 from fastapi import HTTPException
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import common
-from configs.definitions import FCL_CUSTOMS_CHARGES, FCL_FREIGHT_CURRENCIES
+from configs.definitions import FCL_CUSTOMS_CHARGES
+from configs.yml_definitions import FCL_FREIGHT_CURRENCIES
 from services.fcl_customs_rate.interaction.list_fcl_customs_rates import list_fcl_customs_rates
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from services.fcl_customs_rate.interaction.delete_fcl_customs_rate import delete_fcl_customs_rate
@@ -55,7 +56,7 @@ class FclCustomsRateBulkOperation(BaseModel):
         if data['markup_type'] not in markup_types:
             raise HTTPException(status_code=400,detail='Invalid Markup Type')
         
-        fcl_customs_charges_dict = FCL_CUSTOMS_CHARGES
+        fcl_customs_charges_dict = FCL_CUSTOMS_CHARGES.get()
 
         charge_codes = fcl_customs_charges_dict.keys()
 

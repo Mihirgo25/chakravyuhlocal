@@ -107,7 +107,7 @@ def add_customs_clearance(result,response_object,request):
     return bool(response_object['line_items'])
 
 def build_line_item_object(line_item,request):
-    custom_code_config = AIR_CUSTOMS_CHARGES.get(line_item.get('code'),'')
+    custom_code_config = AIR_CUSTOMS_CHARGES.get().get(line_item.get('code'),'')
     is_additional_service = True if 'additional_service' in custom_code_config.get('tags',[]) else False
 
     if is_additional_service and line_item.get('code') not in request.get('additional_services') and request.get('additional_services'):

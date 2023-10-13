@@ -8,7 +8,7 @@ from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
 from libs.get_distance import get_distance
 from services.chakravyuh.interaction.get_shipping_lines_for_prediction import get_shipping_lines_for_prediction
-from configs.definitions import FCL_PREDICTION_MODEL
+from configs.yml_definitions import FCL_PREDICTION_MODEL
     
 def insert_rates_to_rms(create_params):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data    

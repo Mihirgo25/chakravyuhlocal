@@ -105,7 +105,7 @@ class MigrationHelpers:
         freight = AirFreightRate.select().where(AirFreightRate.id == id).first()
         return freight
     
-    def get_identifier(self,rate_id, validity_id, lower_limit, upper_limit):
+    def get_fcl_freight_identifier(self,rate_id, validity_id, lower_limit, upper_limit):
         return get_air_freight_identifier(rate_id, validity_id, lower_limit, upper_limit)
 
     def get_validity_params(self, validity, price, currency=STANDARD_CURRENCY):
@@ -239,7 +239,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                 for weight_slab in validity.get('weight_slabs'):
                         if weight_slab['lower_limit'] and weight_slab['upper_limit']: 
 
-                            identifier = self.get_identifier(rate['id'], validity['id'], weight_slab['lower_limit'], weight_slab['upper_limit'])
+                            identifier = self.get_fcl_freight_identifier(rate['id'], validity['id'], weight_slab['lower_limit'], weight_slab['upper_limit'])
 
                             rate_params = {key: value for key, value in rate.items() if key in RATE_PARAMS} 
                             price = weight_slab.get('tariff_price')
@@ -304,7 +304,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                     continue
 
                 rate = model_to_dict(rate)
-                identifier = self.get_identifier(rate_card['rate_obj']['rate_id'],rate_card['rate_obj']['validity_id'],weight_slab[0],weight_slab[1])
+                identifier = self.get_fcl_freight_identifier(rate_card['rate_obj']['rate_id'],rate_card['rate_obj']['validity_id'],weight_slab[0],weight_slab[1])
                 rate_params = {key: rate.get(key) for key in RATE_PARAMS}
                 validity_params = self.get_validity_params(rate_card['rate_obj'], None, None)
 
