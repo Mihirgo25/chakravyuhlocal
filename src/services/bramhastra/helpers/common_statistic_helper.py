@@ -1,6 +1,42 @@
-from services.bramhastra.models.fcl_freight_rate_statistic import (
-    FclFreightRateStatistic,
-)
+from peewee import Model
+
+
+RATE_REQUIRED_FIELDS = {
+    "id",
+    "origin_port_id",
+    "destination_port_id",
+    "origin_main_port_id",
+    "destination_main_port_id",
+    "origin_country_id",
+    "destination_country_id",
+    "origin_country_id",
+    "destination_country_id",
+    "origin_continent_id",
+    "destination_continent_id",
+    "origin_trade_id",
+    "destination_trade_id",
+    "shipping_line_id",
+    "service_provider_id",
+    "validities",
+    "mode",
+    "commodity",
+    "container_size",
+    "container_type",
+    "containers_count",
+    "origin_local_id",
+    "destination_local_id",
+    "origin_detention_id",
+    "destination_detention_id",
+    "origin_demurrage_id",
+    "destination_demurrage_id",
+    "cogo_entity_id",
+    "rate_type",
+    "tags",
+    "sourced_by_id",
+    "procured_by_id",
+    "created_at",
+    "updated_at",
+}
 
 
 def get_fcl_freight_identifier(rate_id, validity_id) -> str:
@@ -13,47 +49,43 @@ def get_air_freight_identifier(rate_id, validity_id, lower_limit, upper_limit) -
     ).replace("-", "")
 
 
-REQUIRED_ACTION_FIELDS = [
-    FclFreightRateStatistic.currency.name,
-    FclFreightRateStatistic.rate_id.name,
-    FclFreightRateStatistic.validity_id.name,
-    FclFreightRateStatistic.validity_start.name,
-    FclFreightRateStatistic.validity_end.name,
-    FclFreightRateStatistic.mode.name,
-    FclFreightRateStatistic.source.name,
-    FclFreightRateStatistic.source_id.name,
-    FclFreightRateStatistic.bas_currency.name,
-    FclFreightRateStatistic.bas_price.name,
-    FclFreightRateStatistic.bas_standard_price.name,
-    FclFreightRateStatistic.price.name,
-    FclFreightRateStatistic.standard_price.name,
-    FclFreightRateStatistic.rate_type.name,
-    FclFreightRateStatistic.market_price.name,
-    FclFreightRateStatistic.shipping_line_id.name,
-    FclFreightRateStatistic.service_provider_id.name,
-    FclFreightRateStatistic.commodity.name,
-    FclFreightRateStatistic.container_size.name,
-    FclFreightRateStatistic.container_type.name,
-    FclFreightRateStatistic.origin_trade_id.name,
-    FclFreightRateStatistic.destination_trade_id.name,
-    FclFreightRateStatistic.origin_continent_id.name,
-    FclFreightRateStatistic.destination_continent_id.name,
-    FclFreightRateStatistic.origin_country_id.name,
-    FclFreightRateStatistic.destination_country_id.name,
-    FclFreightRateStatistic.origin_port_id.name,
-    FclFreightRateStatistic.destination_port_id.name,
-    FclFreightRateStatistic.origin_main_port_id.name,
-    FclFreightRateStatistic.destination_main_port_id.name,
-    FclFreightRateStatistic.origin_region_id.name,
-    FclFreightRateStatistic.destination_region_id.name,
-    FclFreightRateStatistic.performed_by_id.name,
-    FclFreightRateStatistic.procured_by_id.name,
-    FclFreightRateStatistic.sourced_by_id.name,
-    FclFreightRateStatistic.parent_mode.name,
-    FclFreightRateStatistic.source.name,
-    FclFreightRateStatistic.rate_created_at.name,
-    FclFreightRateStatistic.rate_updated_at.name,
-    FclFreightRateStatistic.validity_created_at.name,
-    FclFreightRateStatistic.validity_updated_at.name,
-    FclFreightRateStatistic.bas_currency.name
-]
+def create_fcl_freight_rate_statistic_fallback(rate_id, validity_id) -> Model:
+    from services.fcl_freight_rate.interaction.list_fcl_freight_rates import (
+        list_fcl_freight_rates,
+    )
+    from enums.global_enums import Action
+    from services.bramhastra.request_params import ApplyFclFreightRateStatistic
+    from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import (
+        apply_fcl_freight_rate_statistic,
+    )
+    from services.bramhastra.models.fcl_freight_rate_statistic import (
+        FclFreightRateStatistic,
+    )
+
+    fcl_freight_rates = list_fcl_freight_rates(
+        filters={"id": rate_id, "rate_type": "all"},
+        includes={k: 1 for k in RATE_REQUIRED_FIELDS},
+        pagination_data_required=False,
+    ).get("list", [])
+    if fcl_freight_rates:
+        fcl_freight_rate = fcl_freight_rates[0]
+        if len(fcl_freight_rate["validities"]) > 1:
+            fcl_freight_rate["validities"] = [
+                validity
+                for validity in fcl_freight_rate["validities"]
+                if validity["id"] == validity_id
+            ]
+        apply_fcl_freight_rate_statistic(
+            ApplyFclFreightRateStatistic(
+                action=Action.create, params={"freight": fcl_freight_rate}
+            )
+        )
+        if (
+            fcl_freight_rate_statistic := FclFreightRateStatistic.select()
+            .where(
+                FclFreightRateStatistic.identifier
+                == get_fcl_freight_identifier(rate_id, validity_id)
+            )
+            .first()
+        ):
+            return fcl_freight_rate_statistic
