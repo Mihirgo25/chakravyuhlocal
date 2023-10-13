@@ -4,6 +4,7 @@ from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRa
 from services.ftl_freight_rate.models.ftl_freight_rate_request import (
     FtlFreightRateRequest,
 )
+from services.ftl_freight_rate.interactions.delete_ftl_freight_rate_job import delete_ftl_freight_rate_job
 
 
 
@@ -30,6 +31,8 @@ def execute_transaction_code(request):
             raise HTTPException(status_code=500, detail="freight rate request deletion failed")
         create_audit(request, obj.id)
         send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='low')
+        
+        delete_ftl_freight_rate_job(request)
 
     return {'ftl_freight_rate_request_ids' : request['ftl_freight_rate_request_ids']}
 
