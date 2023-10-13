@@ -42,6 +42,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "service_provider_id",
     "cargo_handling_type",
     "location_id",
+    "location",
     "serial_id",
     "container_type",
     "rate_type",

@@ -69,6 +69,7 @@ class LtlFreightRateJob(BaseModel):
           "name": location["name"],
           "is_icd": location["is_icd"],
           "type": location["type"],
+          "port_code": location["port_code"],
           "cluster_id": location["cluster_id"],
           "city_id": location["city_id"],
           "country_id": location["country_id"],

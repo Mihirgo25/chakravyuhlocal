@@ -45,6 +45,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "destination_location",
     "destination_location_id",
     "serial_id",
+    "trip_type",
     "sources",
 ]
 

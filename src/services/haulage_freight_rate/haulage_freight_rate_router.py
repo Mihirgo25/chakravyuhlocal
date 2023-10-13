@@ -250,7 +250,7 @@ def list_haulage_freight_rate_feedbacks_api(
 
 
 @haulage_freight_router.post("/create_haulage_freight_rate_feedback")
-def create_haualge_freight_rate_feedback_api(
+def create_haulage_freight_rate_feedback_api(
     request: CreateHaulageFreightRateFeedback, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -347,7 +347,7 @@ def list_haulage_freight_rates_api(
 
 
 @haulage_freight_router.post("/create_haulage_freight_rate_request")
-def create_haualge_freight_rate_request_api(
+def create_haulage_freight_rate_request_api(
     request: CreateHaulageFreightRateRequest, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -966,7 +966,7 @@ def delete_haulage_freight_rate_job_api(
             status_code=500, content={"success": False, "error": str(e)}
         )
     
-@haulage_freight_router.get("/get_haualge_freight_rate_job_csv_url")
+@haulage_freight_router.get("/get_haulage_freight_rate_job_csv_url")
 def get_haulage_freight_rate_job_csv_url_api(
     filters: str = None,
     resp: dict = Depends(authorize_token)
@@ -984,7 +984,7 @@ def get_haulage_freight_rate_job_csv_url_api(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @haulage_freight_router.post("/create_haulage_freight_rate_job")
-def create_haualge_freight_rate_job_api(
+def create_haulage_freight_rate_job_api(
     request: CreateHaulageFreightRateJob, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:

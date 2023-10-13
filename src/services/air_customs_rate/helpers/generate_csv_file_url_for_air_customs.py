@@ -33,6 +33,7 @@ def get_air_customs_coverage_required_data(coverage_data):
     required_data["airport"] = coverage_data["airport"]["name"]
     required_data["airport_code"] = coverage_data["airport"]["port_code"]
     required_data["commodity"] = coverage_data["commodity"]
+    required_data["trade_type"] = coverage_data["trade_type"]
     required_data["service_provider"] = (
         coverage_data["service_provider"]["short_name"]
         if coverage_data.get("service_provider")

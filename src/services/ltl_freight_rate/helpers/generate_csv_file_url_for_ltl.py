@@ -31,13 +31,14 @@ def generate_csv_file_url_for_ltl(query):
 
 def get_ltl_freight_coverage_required_data(coverage_data):
     required_data = {}
+    breakpoint()
     required_data['origin_location'] = coverage_data['origin_location']['name']
-    required_data['distination_location'] = coverage_data['distination_location']['name']
     required_data['origin_port_code'] = coverage_data['origin_location']['port_code']
-    required_data['destination_port_code'] = coverage_data['distination_location']['port_code']
-    required_data['commodity_type'] = coverage_data['commodity_type']
-    required_data['truck_type']  = coverage_data['truck_type']
-    required_data['truck_body_type'] = coverage_data['truck_body_type']
+    required_data['destination_location'] = coverage_data['destination_location']['name']
+    required_data['destination_port_code'] = coverage_data['destination_location']['port_code']
+    required_data['commodity'] = coverage_data['commodity']
+    required_data['density_factor']  = coverage_data['density_factor']
+    required_data['transit_time'] = coverage_data['transit_time']
     required_data['trip_type'] = coverage_data['trip_type']
     required_data['service_provider'] = coverage_data['service_provider']['short_name'] if coverage_data.get('service_provider') else None
     return required_data

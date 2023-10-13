@@ -32,12 +32,14 @@ def generate_csv_file_url_for_ftl(query):
 def get_ftl_freight_coverage_required_data(coverage_data):
     required_data = {}
     required_data['origin_location'] = coverage_data['origin_location']['name']
-    required_data['destination_location'] = coverage_data['destination_port']['name']
+    required_data['destination_location'] = coverage_data['destination_location']['name']
     required_data['origin_port_code'] = coverage_data['origin_location']['port_code']
     required_data['destination_port_code'] = coverage_data['destination_location']['port_code']
-    required_data['commodity_type'] = coverage_data['commodity_type']
     required_data['truck_type']  = coverage_data['truck_type']
     required_data['truck_body_type'] = coverage_data['truck_body_type']
-    required_data['trip_type'] = coverage_data['trip_type']['short_name']
+    required_data['trip_type'] = coverage_data['trip_type']
+    required_data['transit_time'] = coverage_data['transit_time']
+    required_data['detention_free_time'] = coverage_data['detention_free_time']
+    required_data['unit'] = coverage_data['unit']
     required_data['service_provider'] = coverage_data['service_provider']['short_name'] if coverage_data.get('service_provider') else None
     return required_data

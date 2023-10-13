@@ -30,9 +30,14 @@ def generate_csv_file_url_for_fcl_local(query):
 def get_fcl_freight_local_coverage_required_data(coverage_data):
     required_data = {}
     required_data["port"] = coverage_data["port"]["name"]
-    required_data["commodity"] = coverage_data["commodity"]
+    required_data["terminal"] = (
+        coverage_data["terminal"]["name"]
+        if coverage_data.get("terminal")
+        else None
+    )
     required_data["container_type"] = coverage_data["container_type"]
     required_data["container_size"] = coverage_data["container_size"]
+    required_data["commodity"] = coverage_data["commodity"]
     required_data["shipping_line"] = (
         coverage_data["shipping_line"]["short_name"]
         if coverage_data.get("shipping_line")
@@ -43,5 +48,5 @@ def get_fcl_freight_local_coverage_required_data(coverage_data):
         if coverage_data.get("service_provider")
         else None
     )
-    required_data["terminal"] = coverage_data["terminal"]["name"]
+    
     return required_data
