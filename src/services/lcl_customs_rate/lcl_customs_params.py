@@ -8,6 +8,7 @@ class CreateLclCustomsRateJob(BaseModel):
     performed_by_id: str = None
     performed_by_type: str = None
     location_id: str = None
+    port_id: str = None
     service_provider_id: str = None
     commodity: str = None
     is_visible: bool = True

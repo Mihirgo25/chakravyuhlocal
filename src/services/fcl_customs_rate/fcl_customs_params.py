@@ -159,6 +159,7 @@ class CreateFclCustomsRateJob(BaseModel):
     trade_type: str = None
     is_visible: bool = True
     rate_type: str = None
+    port_id: str = None
 
 class DeleteFclCustomsRateJob(BaseModel):
     id: str = None
