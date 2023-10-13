@@ -1,10 +1,10 @@
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
-from micro_services.client import maps
+from micro_services.client import schedule_client
 
 
 def get_serviceable_shipping_lines(request):
     data = {'origin_port_id': request['origin_port_id'],'destination_port_id': request['destination_port_id']}
-    resp = maps.get_sailing_schedule_port_pair_serviceability(data)
+    resp = schedule_client.get_sailing_schedule_port_pair_serviceability(data)
     return resp
 
 def get_shipping_lines_for_prediction(origin_location_ids, destination_location_ids, container_size, container_type):

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
-from micro_services.client import maps, common
+from micro_services.client import maps, common, schedule_client
 from configs.fcl_freight_rate_constants import (
     FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES,
     DEFAULT_SCHEDULE_TYPES,
@@ -166,7 +166,7 @@ def get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_
                         "origin_port_id": origin_port_id,
                         "destination_port_id": destination_port_id,
                     }
-            predicted_transit_time = maps.get_predicted_transit_time(data)
+            predicted_transit_time = schedule_client.get_predicted_transit_time(data)
         
         fallback_schedules = FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES
         
@@ -314,7 +314,7 @@ def get_sailing_schedules_data(port_pair, shipping_line,validity_start):
         "request_source":"spot_search"
     }
 
-    response = maps.get_sailing_schedules(data)
+    response = schedule_client.get_sailing_schedules(data)
     schedules = response.get('list',[])
     
     for schedule in schedules:
@@ -455,7 +455,7 @@ def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rat
                 "destination_country_id": destination_country_id
             }
         
-        response = maps.get_fake_sailing_schedules(data)
+        response = schedule_client.get_fake_sailing_schedules(data)
         fake_schedules = response['list']
 
     grouping = {}
