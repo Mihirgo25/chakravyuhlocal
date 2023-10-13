@@ -14,7 +14,6 @@ from services.bramhastra.helpers.common_statistic_helper import (
 
 class Shipment:
     def __init__(self, request) -> None:
-        self.checkout_id = self.request.checkout_id 
         if request.action == ShipmentAction.create.value:
             self.request = request.params
         elif request.shipment_update_params:
@@ -29,8 +28,10 @@ class Shipment:
 
     def set(self):
         shipment = self.request.dict(include={"shipment"})["shipment"]
-        actions = self.__get_actions(self.request.shipment.shipment_source_id)
-        print(actions, shipment, 'actions')
+        actions = self.__get_actions(
+            self.request.checkout_id or self.request.shipment.shipment_source_id
+        )
+        print(actions, shipment, "actions")
         if not actions:
             return
         print(self.request.fcl_freight_services, 'gg')
@@ -84,7 +85,7 @@ class Shipment:
 
     def __get_actions(self, source_id):
         actions = FclFreightAction.select().where(
-            FclFreightAction.checkout_id == (self.checkout_id or source_id)
+            FclFreightAction.checkout_id == source_id
         )
         actions_hash = dict()
         for action in actions:
