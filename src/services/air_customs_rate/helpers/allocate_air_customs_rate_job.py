@@ -13,7 +13,6 @@ def allocate_air_customs_rate_job(source, service_provider_id):
     if source == 'live_booking':
         live_booking_user = allocate_live_booking_job(service_provider_id) 
         if live_booking_user:
-            rd.set(redis_key, last_assigned_user)
             return live_booking_user
 
     active_air_customs_users = get_active_users()
