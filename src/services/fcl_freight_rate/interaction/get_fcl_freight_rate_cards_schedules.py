@@ -13,6 +13,12 @@ REQUIRED_SCHEDULE_KEYS = [ "departure","arrival","number_of_stops","transit_time
 INDIA_COUNTRY_CURRENCY = "INR"
 
 def create_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_hash):
+    
+    """
+    Create a hash of sailing schedules and update the existing sailing schedules.
+    Returns:
+        dict: Updated sailing schedules hash.
+    """
     for executor in executors:
         results = executor.result()
         sailing_schedules.extend(results)
@@ -36,6 +42,10 @@ def create_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_
 
 
 def get_relavant_schedules(data,origin_port,destination_port,origin_port_id,destination_port_id,sailing_schedules_hash):
+    """Retrieve data_schedules based on provided data and the sailing schedules hash.
+    Returns:
+        list: List of relevant schedules for the given data.
+    """
     key = []
     key.append(data["origin_main_port_id"] if origin_port["is_icd"] else origin_port_id)
     key.append(data["destination_main_port_id"] if destination_port["is_icd"] else destination_port_id)
@@ -48,6 +58,21 @@ def get_relavant_schedules(data,origin_port,destination_port,origin_port_id,dest
 
 
 def update_grouping(data,currency,locals_price,sailing_schedules_required,detention_free_limit,grouping,importer_exporter_id):
+    """
+    Update a grouping of freight data based on criteria.
+    Returns:
+        dict: Updated grouping of data.
+
+    Process:
+    1. For each freight in the provided data:
+    2. Calculate the total price by summing up prices for line items after currency conversion.
+    3. Compute the total price for the freight.
+    4. Determine the key elements based on whether sailing schedules are required.
+    5. Create a key by joining key elements.
+    6. Check if the key is not in the existing grouping or if the new data has a lower total price.
+    7. If so, update the grouping with the new freight data.
+    8. Return the updated grouping.
+    """
     
     for freight in data["freights"]:
         freight_price = sum(
@@ -100,6 +125,20 @@ def update_grouping(data,currency,locals_price,sailing_schedules_required,detent
     return grouping            
 
 def get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_port_id, destination_port_id):
+    """
+    Retrieve freight_schedules for the given freight data.
+    Returns:
+        list: List of relevant schedules for the freight.
+        bool: Whether a matching schedule was found.
+
+    Process:
+    1. Check if the freight has a specific schedule ID and try to match it with data_schedules.
+    2. If a matching schedule is found, mark it as selected.
+    3. If no specific schedule is found, search for schedules based on validity dates and schedule type.
+    4. If still no schedules are found, calculate an average transit time and use fake schedules as a fallback.
+    5. Return the list of schedules and whether a matching schedule was found.
+    """
+
     schedules = None
     schedule_found = False
     
@@ -162,7 +201,19 @@ def get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_
             
             
 def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,destination_port_id):
-    
+        """
+        Structure freights based on provided data.
+
+        Returns:
+            list: List of structured freights based on the provided data.
+
+        Process:
+        1. If sailing schedules are required and the data source is not "cogo_assured_rate," find relevant schedules.
+        2. Structure the freights based on the matching schedules.
+        3. If no matching schedules are found, use fake schedules as a fallback.
+        4. If sailing schedules are not required or the source is "cogo_assured_rate," structure freights without schedules.
+        5. Return the list of structured freights.
+        """
         freights = []
         
         if sailing_schedules_required and data["source"] != "cogo_assured_rate":
@@ -232,6 +283,21 @@ def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,d
 
 
 def get_sailing_schedules_data(port_pair, shipping_line,validity_start):
+    
+    """Retrieve sailing schedule data for a specific port pair, shipping line, and validity start date.
+
+    Returns:
+        list: A list of sailing schedules that match the specified criteria.
+
+    Process:
+    1. Split the port_pair string to obtain the origin_port_id and destination_port_id.
+    2. Construct a data dictionary with filters, specifying shipping_line_id and departure_start.
+    3. Send a request to obtain sailing schedule data using the constructed data.
+    4. Extract the list of schedules from the response.
+    5. Add the origin_port_id and destination_port_id to each schedule in the list.
+    6. Return the list of sailing schedules that match the criteria.
+    
+    """
     origin_port_id = port_pair.split("_")[0]
     destination_port_id = port_pair.split("_")[1]
     
@@ -325,6 +391,29 @@ def format_rate_cards_params(fcl_freight_rate_cards_params):
  
      
 def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rate_cards_params, sailing_schedules_required):
+    """
+    Get FCL (Full Container Load) freight rate cards with associated schedules.
+    Returns:
+        dict: FCL freight rate cards with associated schedules.
+
+    Process:
+    1. Format the FCL freight rate cards parameters.
+    2. Extract relevant parameters, including origin and destination details, and importer/exporter information.
+    3. Fetch all relevant FCL freight rate cards, combining spot negotiation rates and retrieved data.
+    4. Create a hash of port pairs and shipping lines for later reference.
+    5. If sailing schedules are required:
+       a. Fetch sailing schedules data using multithreading for each port pair and associated shipping lines.
+       b. Create a hash of sailing schedules data.
+    6. Initialize an empty list for fake schedules.
+    7. Initialize a dictionary to store grouped rate data.
+    8. Iterate through all rates:
+       a. Fetch relevant schedules data, either from real sailing schedules or fake schedules.
+       b. Extract freight data for the rate, including price and local costs.
+       c. Update the grouping with the new data, considering currency conversion, schedule validity, and cost factors.
+    9. Collect the grouped rates' data and return it.
+
+    The function retrieves FCL freight rate cards, associates them with sailing schedules if required, and groups them based on specified criteria.
+    """
     fcl_freight_rate_cards_params = format_rate_cards_params(fcl_freight_rate_cards_params)
     
     origin_port_id = fcl_freight_rate_cards_params['origin_port_id']
