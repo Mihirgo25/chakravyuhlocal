@@ -10,6 +10,7 @@ from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
 from peewee import fn
 from playhouse.postgres_ext import SQL, Case
+from functools import reduce
 
 
 possible_direct_filters = [
@@ -90,7 +91,9 @@ def get_data(query, filters):
     for d in data:
         mappings_query = AirCustomsRateJobMapping.select(AirCustomsRateJobMapping.source_id, AirCustomsRateJobMapping.shipment_id, AirCustomsRateJobMapping.status).where(AirCustomsRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
-            mappings_query = mappings_query.where(AirCustomsRateJobMapping.source == filters.get('source'))
+            if not isinstance(filters.get('source'), list):
+                filters['source'] = [filters.get('source')]
+            mappings_query = mappings_query.where(AirCustomsRateJobMapping.source << filters.get('source'))
         mappings_data = mappings_query.first()
         if mappings_data:
             d['source_id'] = mappings_data.source_id
@@ -133,7 +136,11 @@ def apply_updated_at_filter(query, filters):
 
 
 def apply_source_filter(query, filters):
-    query = query.where(AirCustomsRateJob.sources.contains(filters["source"]))
+    if filters.get('source') and not isinstance(filters.get('source'), list):
+        filters['source'] = [filters.get('source')]
+    conditions = [AirCustomsRateJob.sources.contains(tag) for tag in filters["source"]]
+    combined_condition = reduce(lambda a, b: a | b, conditions)
+    query = query.where(combined_condition)
     return query
 
 

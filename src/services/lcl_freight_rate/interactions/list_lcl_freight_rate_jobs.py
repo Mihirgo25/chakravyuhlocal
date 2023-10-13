@@ -9,6 +9,7 @@ import json, math
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from datetime import datetime, timedelta
+from functools import reduce
 
 
 possible_direct_filters = [
@@ -90,7 +91,9 @@ def get_data(query, filters):
     for d in data:
         mappings_query = LclFreightRateJobMapping.select(LclFreightRateJobMapping.source_id, LclFreightRateJobMapping.shipment_id, LclFreightRateJobMapping.status).where(LclFreightRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
-            mappings_query = mappings_query.where(LclFreightRateJobMapping.source == filters.get('source'))
+            if not isinstance(filters.get('source'), list):
+                filters['source'] = [filters.get('source')]
+            mappings_query = mappings_query.where(LclFreightRateJobMapping.source << filters.get('source'))
         mappings_data = mappings_query.first()
         if mappings_data:
             d['source_id'] = mappings_data.source_id
@@ -133,7 +136,11 @@ def apply_updated_at_filter(query, filters):
 
 
 def apply_source_filter(query, filters):
-    query = query.where(LclFreightRateJob.sources.contains(filters["source"]))
+    if filters.get('source') and not isinstance(filters.get('source'), list):
+        filters['source'] = [filters.get('source')]
+    conditions = [LclFreightRateJob.sources.contains(tag) for tag in filters["source"]]
+    combined_condition = reduce(lambda a, b: a | b, conditions)
+    query = query.where(combined_condition)
     return query
 
 

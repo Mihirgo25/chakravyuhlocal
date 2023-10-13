@@ -9,6 +9,7 @@ import json, math
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from datetime import datetime, timedelta
+from functools import reduce
 
 
 possible_direct_filters = [
@@ -93,7 +94,9 @@ def get_data(query, filters):
     for d in data:
         mappings_query = FclCfsRateJobMapping.select(FclCfsRateJobMapping.source_id, FclCfsRateJobMapping.shipment_id, FclCfsRateJobMapping.status).where(FclCfsRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
-            mappings_query = mappings_query.where(FclCfsRateJobMapping.source == filters.get('source'))
+            if not isinstance(filters.get('source'), list):
+                filters['source'] = [filters.get('source')]
+            mappings_query = mappings_query.where(FclCfsRateJobMapping.source << filters.get('source'))
         mappings_data = mappings_query.first()
         if mappings_data:
             d['source_id'] = mappings_data.source_id
@@ -136,7 +139,11 @@ def apply_updated_at_filter(query, filters):
 
 
 def apply_source_filter(query, filters):
-    query = query.where(FclCfsRateJob.sources.contains(filters["source"]))
+    if filters.get('source') and not isinstance(filters.get('source'), list):
+        filters['source'] = [filters.get('source')]
+    conditions = [FclCfsRateJob.sources.contains(tag) for tag in filters["source"]]
+    combined_condition = reduce(lambda a, b: a | b, conditions)
+    query = query.where(combined_condition)
     return query
 
 
