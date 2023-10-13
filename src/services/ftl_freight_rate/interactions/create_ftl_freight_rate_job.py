@@ -6,7 +6,7 @@ from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
 from database.db_session import db
 from  configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
-from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
+from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
 from configs.env import DEFAULT_USER_ID
 from services.ftl_freight_rate.helpers.allocate_ftl_freight_rate_job import allocate_ftl_freight_rate_job
 
@@ -79,7 +79,7 @@ def create_job_object(params):
 
 
 def create_audit(jobs_id, request):
-    FtlServiceAudit.create(
+    FtlFreightRateAudit.create(
         action_name = 'create',
         object_id = jobs_id,
         object_type = 'FtlFreightRateJob',

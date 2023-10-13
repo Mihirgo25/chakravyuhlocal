@@ -31,7 +31,6 @@ def generate_csv_file_url_for_ltl(query):
 
 def get_ltl_freight_coverage_required_data(coverage_data):
     required_data = {}
-    breakpoint()
     required_data['origin_location'] = coverage_data['origin_location']['name']
     required_data['origin_port_code'] = coverage_data['origin_location']['port_code']
     required_data['destination_location'] = coverage_data['destination_location']['name']
