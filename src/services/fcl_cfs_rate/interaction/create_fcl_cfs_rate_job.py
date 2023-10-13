@@ -20,7 +20,7 @@ def execute_transaction_code(request, source):
     from services.fcl_cfs_rate.fcl_cfs_celery_worker import update_live_booking_visiblity_for_fcl_cfs_rate_job_delay
     request = jsonable_encoder(request)
     params = {
-        'location_id' : request.get('location_id') or request.get('origin_port_id') or request.get('destination_port_id'),
+        'location_id' : request.get('location_id') or request.get('port_id'),
         'service_provider_id' : request.get('service_provider_id'),
         'container_size' : request.get('container_size'),
         'container_type' : request.get('container_type'),
