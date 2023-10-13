@@ -7,6 +7,7 @@ from services.air_customs_rate.workers.update_air_customs_rate_jobs_to_backlog i
 from services.air_customs_rate.workers.update_air_customs_rate_job_on_rate_addition import (
     update_air_customs_rate_job_on_rate_addition,
 )
+from services.air_customs_rate.interaction.create_air_customs_rate_job import update_live_booking_visiblity_for_air_customs_rate_job
 
 from celery.schedules import crontab
 
@@ -76,6 +77,16 @@ def update_air_customs_rate_job_on_rate_addition_delay(self, request, id):
 def update_air_customs_rate_jobs_to_backlog_delay(self):
     try:
         return update_air_customs_rate_jobs_to_backlog()
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_live_booking_visiblity_for_air_customs_rate_job_delay(self, job_id):
+    try:
+        return update_live_booking_visiblity_for_air_customs_rate_job(job_id)
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass

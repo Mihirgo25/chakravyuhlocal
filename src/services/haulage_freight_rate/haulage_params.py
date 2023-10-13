@@ -209,6 +209,7 @@ class CreateHaulageFreightRateJob(BaseModel):
     container_type: str = None
     commodity: str = None
     transport_mode: str = None
+    is_visible: bool = True
     rate_type: str = None
 
 class DeleteHaulageFreightRateJob(BaseModel):

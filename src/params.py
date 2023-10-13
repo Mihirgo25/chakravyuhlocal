@@ -1034,6 +1034,7 @@ class CreateFclFreightRateLocalJob(BaseModel):
     container_type: str = None
     commodity: str = None
     trade_type: str = None
+    is_visible: bool = True
     rate_type: str = None
 
 

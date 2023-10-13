@@ -16,6 +16,7 @@ def create_ltl_freight_rate_job(request, source):
       return execute_transaction_code(request, source)
 
 def execute_transaction_code(request, source):
+    from services.ltl_freight_rate.ltl_celery_worker import update_live_booking_visiblity_for_ltl_freight_rate_job_delay
     request = jsonable_encoder(request)
     params = {
         'origin_location_id' : request.get('origin_location_id'),
@@ -45,6 +46,8 @@ def execute_transaction_code(request, source):
         set_jobs_mapping(ltl_freight_rate_job.id, request, source)
         create_audit(ltl_freight_rate_job.id, request)
         get_multiple_service_objects(ltl_freight_rate_job)
+        if source == 'live_booking':
+            update_live_booking_visiblity_for_ltl_freight_rate_job_delay.apply_async(args=[ltl_freight_rate_job.id], countdown=1800,queue='fcl_freight_rate')
 
         return {"id": ltl_freight_rate_job.id}
     
@@ -82,3 +85,6 @@ def create_audit(jobs_id, request):
         data = request,
         performed_by_id = DEFAULT_USER_ID
     )
+    
+def update_live_booking_visiblity_for_ltl_freight_rate_job(job_id):    
+    LtlFreightRateJob.update(is_visible=True).where((LtlFreightRateJob.id == job_id) & (LtlFreightRateJob.status == 'pending')).execute()

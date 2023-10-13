@@ -17,6 +17,7 @@ def create_air_customs_rate_job(request, source):
 
 
 def execute_transaction_code(request, source):
+    from services.air_customs_rate.air_customs_celery_worker import update_live_booking_visiblity_for_air_customs_rate_job_delay
 
     request = jsonable_encoder(request)
 
@@ -46,6 +47,8 @@ def execute_transaction_code(request, source):
         set_jobs_mapping(air_customs_rate_job.id, request, source)
         create_audit(air_customs_rate_job.id, request)
         get_multiple_service_objects(air_customs_rate_job)
+        if source == 'live_booking':
+            update_live_booking_visiblity_for_air_customs_rate_job_delay.apply_async(args=[air_customs_rate_job.id], countdown=1800,queue='fcl_freight_rate')
 
         return {"id": air_customs_rate_job.id}
     
@@ -82,3 +85,6 @@ def create_audit(jobs_id, request):
         data = request,
         performed_by_id = DEFAULT_USER_ID
     )
+
+def update_live_booking_visiblity_for_air_customs_rate_job(job_id):    
+    AirCustomsRateJob.update(is_visible=True).where((AirCustomsRateJob.id == job_id) & (AirCustomsRateJob.status == 'pending')).execute()

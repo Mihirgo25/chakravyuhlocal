@@ -14,6 +14,7 @@ class CreateLtlFreightRateJob(BaseModel):
     trip_type: str = None
     transit_time: str = None
     density_factor: float = None
+    is_visible: bool = True
     rate_type: str = None
 
 class DeleteLtlFreightRateJob(BaseModel):

@@ -150,6 +150,7 @@ class CreateFclCfsRateJob(BaseModel):
     commodity: str = None
     cargo_handling_type: str = None
     trade_type: str = None
+    is_visible: bool = True
     rate_type: str = None
     
 class UpdateFclCfsRateJob(BaseModel):

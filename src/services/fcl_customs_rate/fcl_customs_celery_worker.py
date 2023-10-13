@@ -10,7 +10,7 @@ from services.fcl_customs_rate.workers.update_fcl_customs_rate_job_on_rate_addit
 from services.fcl_customs_rate.workers.create_jobs_for_predicted_fcl_customs_rate import (
      create_jobs_for_predicted_fcl_customs_rate,
 )
-
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate_job import update_live_booking_visiblity_for_fcl_customs_rate_job
 from celery.schedules import crontab
 
 tasks = {
@@ -51,6 +51,16 @@ def update_fcl_customs_rate_job_on_rate_addition_delay(self, request, id):
 def update_fcl_customs_rate_jobs_to_backlog_delay(self):
     try:
         return update_fcl_customs_rate_jobs_to_backlog()
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_live_booking_visiblity_for_fcl_customs_rate_job_delay(self, job_id):
+    try:
+        return update_live_booking_visiblity_for_fcl_customs_rate_job(job_id)
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass

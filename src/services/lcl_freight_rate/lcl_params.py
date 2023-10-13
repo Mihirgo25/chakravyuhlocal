@@ -11,6 +11,7 @@ class CreateLclFreightRateJob(BaseModel):
     destination_port_id: str = None
     service_provider_id: str = None
     commodity: str = None
+    is_visible: bool = True
     rate_type: str = None
 
 class DeleteLclFreightRateJob(BaseModel):

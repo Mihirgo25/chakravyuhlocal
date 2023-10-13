@@ -10,6 +10,7 @@ class CreateLclCustomsRateJob(BaseModel):
     location_id: str = None
     service_provider_id: str = None
     commodity: str = None
+    is_visible: bool = True
     rate_type: str = None
     trade_type: str = None
 

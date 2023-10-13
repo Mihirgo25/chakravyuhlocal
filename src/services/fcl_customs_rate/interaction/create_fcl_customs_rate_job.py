@@ -17,6 +17,7 @@ def create_fcl_customs_rate_job(request, source):
       return execute_transaction_code(request, source)
 
 def execute_transaction_code(request, source):
+    from services.fcl_customs_rate.fcl_customs_celery_worker import update_live_booking_visiblity_for_fcl_customs_rate_job_delay
     request = jsonable_encoder(request)
     params = {
         'location_id' : request.get('location_id'),
@@ -45,6 +46,8 @@ def execute_transaction_code(request, source):
         set_jobs_mapping(fcl_customs_rate_job.id, request, source)
         create_audit(fcl_customs_rate_job.id, request)
         get_multiple_service_objects(fcl_customs_rate_job)
+        if source == 'live_booking':
+            update_live_booking_visiblity_for_fcl_customs_rate_job_delay.apply_async(args=[fcl_customs_rate_job.id], countdown=1800,queue='fcl_freight_rate')
 
         return {"id": fcl_customs_rate_job.id}
 
@@ -82,3 +85,6 @@ def create_audit(jobs_id, request):
         data = request,
         performed_by_id = DEFAULT_USER_ID
     )
+
+def update_live_booking_visiblity_for_fcl_customs_rate_job(job_id):    
+    FclCustomsRateJob.update(is_visible=True).where((FclCustomsRateJob.id == job_id) & (FclCustomsRateJob.status == 'pending')).execute()

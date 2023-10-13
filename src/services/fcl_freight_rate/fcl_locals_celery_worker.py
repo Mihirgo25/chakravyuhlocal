@@ -6,6 +6,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_job imp
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local_job import (
     delete_fcl_freight_rate_local_job,
 )
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_job import update_live_booking_visiblity_for_fcl_freight_rate_local_job
 
 
 @celery.task(bind=True, max_retries=5, retry_backoff=True)
@@ -34,6 +35,16 @@ def create_jobs_for_request_fcl_freight_rate_local_delay(self, requirements):
 def delete_jobs_for_fcl_freight_rate_local_delay(self, requirements):
     try:
         return delete_fcl_freight_rate_local_job(requirements)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_live_booking_visiblity_for_fcl_freight_rate_local_job_delay(self, job_id):
+    try:
+        return update_live_booking_visiblity_for_fcl_freight_rate_local_job(job_id)
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass

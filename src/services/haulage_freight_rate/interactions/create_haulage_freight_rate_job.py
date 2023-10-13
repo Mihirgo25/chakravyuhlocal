@@ -16,6 +16,7 @@ def create_haulage_freight_rate_job(request, source):
       return execute_transaction_code(request, source)
     
 def execute_transaction_code(request, source):
+    from services.haulage_freight_rate.haulage_celery_worker import update_live_booking_visiblity_for_haulage_freight_rate_job_delay
 
     request = jsonable_encoder(request)
 
@@ -54,6 +55,8 @@ def execute_transaction_code(request, source):
         set_jobs_mapping(haulage_freight_rate_job.id, request, source)
         create_audit(haulage_freight_rate_job.id, request)
         get_multiple_service_objects(haulage_freight_rate_job)
+        if source == 'live_booking':
+            update_live_booking_visiblity_for_haulage_freight_rate_job_delay.apply_async(args=[haulage_freight_rate_job.id], countdown=1800,queue='fcl_freight_rate')
 
         return {"id": haulage_freight_rate_job.id}
     
@@ -90,3 +93,6 @@ def create_audit(jobs_id, request):
         data = request,
         performed_by_id = DEFAULT_USER_ID
     )
+
+def update_live_booking_visiblity_for_haulage_freight_rate_job(job_id):    
+    HaulageFreightRateJob.update(is_visible=True).where((HaulageFreightRateJob.id == job_id) & (HaulageFreightRateJob.status == 'pending')).execute()

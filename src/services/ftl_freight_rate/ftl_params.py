@@ -298,6 +298,7 @@ class CreateFtlFreightRateJob(BaseModel):
     transit_time: str = None
     detention_free_time: str = None
     unit: str = None
+    is_visible: bool = True
     rate_type: str = None
     
 class DeleteFtlFreightRateJob(BaseModel):
