@@ -113,7 +113,7 @@ def build_line_item_object(line_item,request):
     if is_additional_service and line_item.get('code') not in request.get('additional_services') and request.get('additional_services'):
         return
 
-    line_item['quantity'] = request.get('packages_count') if line_item['unit'] == 'per_package' else (get_chargeable_weight() if line_item['unit'] == 'per_kg' else 1)
+    line_item['quantity'] = request.get('packages_count') if line_item['unit'] == 'per_package' else (get_chargeable_weight(request) if line_item['unit'] == 'per_kg' else 1)
     line_item['total_price'] = line_item['quantity'] * line_item['price']
     line_item['name'] = custom_code_config.get('name', '')
     line_item['source'] = 'system'
