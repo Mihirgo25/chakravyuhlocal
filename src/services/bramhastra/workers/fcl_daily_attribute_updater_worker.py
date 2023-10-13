@@ -8,6 +8,7 @@ from playhouse.postgres_ext import ServerSide
 import sentry_sdk
 from services.chakravyuh.models.worker_log import WorkerLog
 from services.bramhastra.enums import BrahmastraTrackModuleTypes, BrahmastraTrackStatus
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 
 
 class FclDailyAttributeUpdaterWorker:
@@ -49,9 +50,8 @@ class FclDailyAttributeUpdaterWorker:
                 FclFreightRateAudit.performed_by_id,
                 FclFreightRateAudit.performed_by_type,
                 FclFreightRateAudit.source,
-            ).where(
+            ).join(FclFreightRate, on = (FclFreightRate.id == FclFreightRateAudit.object_id)).where(
                 FclFreightRateAudit.created_at >= last_worker_execution_time,
-                FclFreightRateAudit.object_type == "FclFreightRate",
             )
             for fcl_freight_rate_audit in ServerSide(query):
                 params = dict()
