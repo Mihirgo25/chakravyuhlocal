@@ -40,7 +40,7 @@ def cache_data_worker_in_delay(self):
             raise self.retry(exc=exc)
 
 
-@celery.task(bind=True, retry_backoff=True, max_retries=5)
+@celery.task(bind=True, retry_backoff=True, max_retries=0)
 def fcl_daily_attributer_updater_in_delay(self):
     try:
         # this sets parent_rate_id for rates created via extensions
