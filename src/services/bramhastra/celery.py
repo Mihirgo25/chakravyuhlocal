@@ -26,7 +26,7 @@ from services.bramhastra.brahmastra import Brahmastra, BrahmastraV2
 #             raise self.retry(exc=exc)
 
 
-@celery.task(bind=True, retry_backoff=True, max_retries=5)
+@celery.task(bind=True, retry_backoff=True, max_retries=0)
 def cache_data_worker_in_delay(self):
     try:
         # this caches statistics csv into redis for huge data
