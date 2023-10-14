@@ -17,7 +17,6 @@ class FclDailyAttributeUpdaterWorker:
 
     def execute(self):
         try:
-            last_worker_execution_time = worker_log.last_updated_at
             worker_log = (
                 WorkerLog.select()
                 .where(
@@ -26,6 +25,7 @@ class FclDailyAttributeUpdaterWorker:
                 )
                 .first()
             )
+            last_worker_execution_time = worker_log.last_updated_at
             worker_log.started_time = datetime.utcnow()
             worker_log.ended_at = None
             worker_log.status = BrahmastraTrackStatus.started.value

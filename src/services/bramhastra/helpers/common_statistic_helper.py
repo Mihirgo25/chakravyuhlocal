@@ -69,12 +69,13 @@ def create_fcl_freight_rate_statistic_fallback(rate_id, validity_id) -> Model:
     ).get("list", [])
     if fcl_freight_rates:
         fcl_freight_rate = fcl_freight_rates[0]
-        if len(fcl_freight_rate["validities"]) > 1:
-            fcl_freight_rate["validities"] = [
-                validity
-                for validity in fcl_freight_rate["validities"]
-                if validity["id"] == validity_id
-            ]
+        fcl_freight_rate["validities"] = [
+            validity
+            for validity in fcl_freight_rate["validities"]
+            if validity["id"] == validity_id
+        ]
+        if not fcl_freight_rate["validities"]:
+            return
         apply_fcl_freight_rate_statistic(
             ApplyFclFreightRateStatistic(
                 action=Action.create, params={"freight": fcl_freight_rate}
