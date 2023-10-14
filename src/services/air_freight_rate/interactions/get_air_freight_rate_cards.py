@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from datetime import datetime
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
-from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES, COGOXPRESS,SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS,DEFAULT_NOT_APPLICABLE_LINE_ITEMS
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES, COGOXPRESS,SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS,DEFAULT_NOT_APPLICABLE_LINE_ITEMS,BREAK_EVEN_POINT_MAPPING
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_operators
 from database.rails_db import get_eligible_orgs
@@ -193,13 +193,13 @@ def add_freight_objects(freight_query_result, response_object, requirements):
     freight_validities = freight_query_result['validities']
     required_weight = get_chargeable_weight(requirements)
     for freight_validity in freight_validities:
-        freight_object = build_freight_object(freight_validity,required_weight,requirements)
+        freight_object = build_freight_object(freight_validity,required_weight,requirements,response_object)
         if not freight_object:
             continue
         response_object['freights'].append(freight_object)
     return len(response_object['freights'])>0
 
-def build_freight_object(freight_validity,required_weight,requirements):
+def build_freight_object(freight_validity,required_weight,requirements,response_object):
     validity_start = datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date()
     validity_end = datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date()
     if validity_start > requirements.get('validity_end').date() or validity_end < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < validity_start or requirements.get('cargo_clearance_date') > validity_end:
@@ -240,7 +240,7 @@ def build_freight_object(freight_validity,required_weight,requirements):
     if not required_slab:
         return None
 
-    if required_weight <= 500:
+    if required_weight <= 500 and not (response_object['airline_id'] in (BREAK_EVEN_POINT_MAPPING.get(response_object['origin_airport_id']) or [])):
         required_next_slab = None
         for weight_slab in weight_slabs:
             if int(weight_slab['lower_limit'])<=required_slab['upper_limit']+1 and weight_slab['upper_limit'] > (required_slab['upper_limit']+1):
