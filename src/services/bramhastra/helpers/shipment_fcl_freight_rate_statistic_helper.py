@@ -28,8 +28,10 @@ class Shipment:
 
     def set(self):
         shipment = self.request.dict(include={"shipment"})["shipment"]
-        actions = self.__get_actions(self.request.shipment.shipment_source_id)
-        print(actions, shipment, 'actions')
+        actions = self.__get_actions(
+            self.request.checkout_id or self.request.shipment.shipment_source_id
+        )
+        print(actions, shipment, "actions")
         if not actions:
             return
         print(self.request.fcl_freight_services, 'gg')
@@ -81,9 +83,9 @@ class Shipment:
     def __create(self, model, params):
         model.create(**params)
 
-    def __get_actions(self, checkout_id):
+    def __get_actions(self, source_id):
         actions = FclFreightAction.select().where(
-            FclFreightAction.checkout_id == checkout_id
+            FclFreightAction.checkout_id == source_id
         )
         actions_hash = dict()
         for action in actions:

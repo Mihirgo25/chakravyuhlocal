@@ -170,6 +170,7 @@ def shell(ipython_args):
     config.InteractiveShell.ast_node_interactivity = "all"
     config.InteractiveShell.debug = True
     config.InteractiveShell.xmode = 'Verbose'
+    config.TerminalInteractiveShell.highlighting_style = 'paraiso-dark'
     user_ns = {"database": db}
     with db.connection_context():
         IPython.start_ipython(argv=ipython_args, user_ns=user_ns, config=config)
