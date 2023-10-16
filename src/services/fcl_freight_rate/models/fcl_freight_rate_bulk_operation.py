@@ -1453,7 +1453,6 @@ class FclFreightRateBulkOperation(BaseModel):
                 break
 
             for local in batch_wise_local_rates:
-
                 count += 1
 
                 if FclFreightRateAudit.get_or_none(bulk_operation_id = self.id,object_id = local['id']):
