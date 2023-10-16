@@ -463,4 +463,4 @@ CREATE TABLE brahmastra.fcl_freight_actions
         version UInt64 DEFAULT 1
 )
 ENGINE = MergeTree()
-ORDER BY (origin_continent_id, origin_country_id, container_size, origin_port_id, rate_id, validity_id);
+ORDER BY (container_size, origin_continent_id, origin_country_id, origin_port_id, rate_id, validity_id);

@@ -26,9 +26,9 @@ DEFAULT_AGGREGATE_SELECT = {
 }
 
 ALLOWED_FREQUENCY_TYPES = {
-    "year": "toStartOfMonth(toDate(day))",
-    "month": "toStartOfMonth(toDate(day))",
-    "week": "toStartOfWeek(toDate(day))",
+    "month": "toStartOfMonth",
+    "week": "toStartOfWeek",
+    "day": "",
 }
 
 
@@ -63,35 +63,23 @@ def get_rate(filters: dict) -> list:
             ).items()
         ]
     )
-
-    interval = ALLOWED_FREQUENCY_TYPES[filters.get("frequency", "month")]
-
+    interval = ALLOWED_FREQUENCY_TYPES[filters.get("frequency", "week")]
     queries = [
-        f"""SELECT parent_mode as mode,{interval} AS day,{aggregate_select} FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,standard_price,parent_mode,sign,id FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"""
+        f"""SELECT parent_mode as mode,{aggregate_select},{interval}(toDate(arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)))) AS day FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"""
     ]
-
     location_object = dict()
-
     if filters.get(MapsFilter.origin_port_code.value) or filters.get(
         MapsFilter.destination_port_code.value
     ):
         set_port_code_filters_and_service_object(filters, location_object)
 
     where = get_direct_indirect_filters(filters, date=None)
-
-    if where:
-        queries.append(" WHERE ")
-        queries.append(where)
-        queries.append("AND is_deleted = false")
-
-    queries.append(
-        """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY parent_mode,day ORDER BY day,mode;"""
-    )
-
+    queries.append("WHERE is_deleted = false AND (day <= %(end_date)s) AND (day >= %(start_date)s)")
+    if where is not None:
+        queries.append(f"AND {where}")
+    queries.append("GROUP BY parent_mode,day ORDER BY day,mode;")
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
-
     formatted_charts = format_charts(charts, filters)
-
     return formatted_charts, location_object
 
 

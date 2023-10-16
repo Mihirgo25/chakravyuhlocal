@@ -28,9 +28,13 @@ class Shipment:
 
     def set(self):
         shipment = self.request.dict(include={"shipment"})["shipment"]
-        actions = self.__get_actions(self.request.shipment.shipment_source_id)
+        actions = self.__get_actions(
+            self.request.checkout_id or self.request.shipment.shipment_source_id
+        )
+        print(actions, shipment, "actions")
         if not actions:
             return
+        print(self.request.fcl_freight_services, 'gg')
         for fcl_freight_service in self.request.fcl_freight_services:
             shipment_copy = shipment.copy()
             shipment_copy.update(fcl_freight_service.dict())
@@ -38,6 +42,7 @@ class Shipment:
                 self.__get_unique_fcl_spot_search_service_key(fcl_freight_service)
             )
             action = actions.get(unique_fcl_spot_search_service_key)
+            print(action, 'llll')
             if action is not None:
                 action_update_params = shipment_copy.copy()
                 action_update_params[
@@ -55,6 +60,7 @@ class Shipment:
                 )
                 .first()
             )
+            print(statistic, 'statistic')
             if statistic is not None:
                 self.__update(
                     statistic,
@@ -77,9 +83,9 @@ class Shipment:
     def __create(self, model, params):
         model.create(**params)
 
-    def __get_actions(self, checkout_id):
+    def __get_actions(self, source_id):
         actions = FclFreightAction.select().where(
-            FclFreightAction.checkout_id == checkout_id
+            FclFreightAction.checkout_id == source_id
         )
         actions_hash = dict()
         for action in actions:

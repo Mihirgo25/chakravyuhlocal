@@ -100,7 +100,7 @@ class AirCustomsRate(BaseModel):
             grouped_charge_codes[line_item.get('code')] = grouped_charge_codes.get(line_item.get('code'),[]) + [line_item]
 
         for code, line_items in grouped_charge_codes.items():
-            code_config = AIR_CUSTOMS_CHARGES.get(code)
+            code_config = AIR_CUSTOMS_CHARGES.get().get(code)
 
             if not code_config:
                 self.line_items_error_messages[code] = ['is invalid']
@@ -147,7 +147,7 @@ class AirCustomsRate(BaseModel):
     
     def possible_charge_codes(self):
         self.set_airport()
-        air_custom_charges = AIR_CUSTOMS_CHARGES
+        air_custom_charges = AIR_CUSTOMS_CHARGES.get()
         airport = self.airport
         
         charge_codes = {}
