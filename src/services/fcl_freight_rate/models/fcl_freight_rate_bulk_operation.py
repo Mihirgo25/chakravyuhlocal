@@ -183,7 +183,7 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_delete_local_rate_line_item_data(self):
         data = self.data
         
-        fcl_freight_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+        fcl_freight_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
         charge_codes = fcl_freight_charges_dict.keys()
 
@@ -193,7 +193,7 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_add_local_conditions_data(self):
         data = self.data
         
-        fcl_freight_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+        fcl_freight_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
         charge_codes = fcl_freight_charges_dict.keys()
         line_items = data['line_items']
