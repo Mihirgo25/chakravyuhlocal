@@ -183,7 +183,7 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_delete_local_rate_line_item_data(self):
         data = self.data
         
-        fcl_freight_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+        fcl_freight_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
         charge_codes = fcl_freight_charges_dict.keys()
 
@@ -193,7 +193,7 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_add_local_conditions_data(self):
         data = self.data
         
-        fcl_freight_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+        fcl_freight_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
         charge_codes = fcl_freight_charges_dict.keys()
         line_items = data['line_items']
@@ -1453,6 +1453,9 @@ class FclFreightRateBulkOperation(BaseModel):
                 break
 
             for local in batch_wise_local_rates:
+
+                print(local.get('id'))
+                print(local.get('data').get('line_items'))
                 count += 1
 
                 if FclFreightRateAudit.get_or_none(bulk_operation_id = self.id,object_id = local['id']):
@@ -1561,6 +1564,8 @@ class FclFreightRateBulkOperation(BaseModel):
 
         for local in local_rates:
             count += 1
+            print(local.get('id'))
+            print(local.get('data').get('line_items'))
 
             if FclFreightRateAudit.get_or_none(bulk_operation_id = self.id,object_id = local['id']):
                 progress = int((count * 100.0) / total_count)
