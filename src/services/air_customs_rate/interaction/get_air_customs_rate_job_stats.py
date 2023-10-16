@@ -61,6 +61,8 @@ def get_air_customs_rate_job_stats(
     dynamic_statistics = get_statistics(
             filters, dynamic_statistics
         )
+    
+    statistics['backlog'] = get_all_backlogs(filters)
 
     return {
         "dynamic_statistics": dynamic_statistics,
@@ -230,6 +232,14 @@ def apply_extra_filters(query, filters):
 
     query = get_filters(applicable_filters, query, AirCustomsRateJob)
     return query
+
+def get_all_backlogs(filters):
+    query = AirCustomsRateJob.select()
+    if filters.get('user_id'):
+        query = query.where(AirCustomsRateJob.user_id == filters.get('user_id'))
+    backlog_count = query.where(AirCustomsRateJob.status == 'backlog').count()
+
+    return backlog_count
 
 def apply_is_visible_filter(query):
     query = query.where(AirCustomsRateJob.is_visible == True)

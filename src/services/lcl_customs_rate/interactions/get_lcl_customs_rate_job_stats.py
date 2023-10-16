@@ -62,6 +62,8 @@ def get_lcl_customs_rate_job_stats(filters={}):
 
     # remaining filters
     dynamic_statistics = get_statistics(filters, dynamic_statistics)
+    
+    statistics['backlog'] = get_all_backlogs(filters)
 
     return {
         "dynamic_statistics": dynamic_statistics,
@@ -230,6 +232,14 @@ def apply_extra_filters(query, filters):
 
     query = get_filters(applicable_filters, query, LclCustomsRateJob)
     return query
+
+def get_all_backlogs(filters):
+    query = LclCustomsRateJob.select()
+    if filters.get('user_id'):
+        query = query.where(LclCustomsRateJob.user_id == filters.get('user_id'))
+    backlog_count = query.where(LclCustomsRateJob.status == 'backlog').count()
+
+    return backlog_count
 
 def apply_is_visible_filter(query):
     query = query.where(LclCustomsRateJob.is_visible == True)

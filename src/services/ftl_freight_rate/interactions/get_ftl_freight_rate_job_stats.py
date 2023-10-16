@@ -67,6 +67,8 @@ def get_ftl_freight_rate_job_stats(
     dynamic_statistics = get_statistics(
             filters, dynamic_statistics
         )
+    
+    statistics['backlog'] = get_all_backlogs(filters)
 
     return {
         "dynamic_statistics": dynamic_statistics,
@@ -236,6 +238,14 @@ def apply_extra_filters(query, filters):
 
     query = get_filters(applicable_filters, query, FtlFreightRateJob)
     return query
+
+def get_all_backlogs(filters):
+    query = FtlFreightRateJob.select()
+    if filters.get('user_id'):
+        query = query.where(FtlFreightRateJob.user_id == filters.get('user_id'))
+    backlog_count = query.where(FtlFreightRateJob.status == 'backlog').count()
+
+    return backlog_count
 
 def apply_is_visible_filter(query):
     query = query.where(FtlFreightRateJob.is_visible == True)

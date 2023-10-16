@@ -68,6 +68,8 @@ def get_fcl_freight_rate_local_job_stats(filters={}):
 
     # remaining filters
     dynamic_statistics = get_statistics(filters, dynamic_statistics)
+    
+    statistics['backlog'] = get_all_backlogs(filters)
 
     return {
         "dynamic_statistics": dynamic_statistics,
@@ -241,6 +243,14 @@ def apply_extra_filters(query, filters):
 
     query = get_filters(applicable_filters, query, FclFreightRateLocalJob)
     return query
+
+def get_all_backlogs(filters):
+    query = FclFreightRateLocalJob.select()
+    if filters.get('user_id'):
+        query = query.where(FclFreightRateLocalJob.user_id == filters.get('user_id'))
+    backlog_count = query.where(FclFreightRateLocalJob.status == 'backlog').count()
+
+    return backlog_count
 
 def apply_is_visible_filter(query):
     query = query.where(FclFreightRateLocalJob.is_visible == True)
