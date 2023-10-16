@@ -16,6 +16,7 @@ possible_direct_filters = [
     "user_id",
     "serial_id",
     "status",
+    "service_provider_id",
     "cogo_entity_id"
 ]
 possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_reverted"]

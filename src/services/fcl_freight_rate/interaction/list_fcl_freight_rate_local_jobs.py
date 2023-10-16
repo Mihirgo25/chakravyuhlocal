@@ -23,6 +23,7 @@ possible_direct_filters = [
     "container_size",
     "container_type",
     "user_id",
+    "service_provider_id",
     "status",
     "cogo_entity_id"
 ]

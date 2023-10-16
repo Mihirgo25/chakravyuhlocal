@@ -16,6 +16,7 @@ possible_direct_filters = [
     "commodity",
     "user_id",
     "serial_id",
+    "service_provider_id",
     "status",
     "cogo_entity_id"
 ]
