@@ -62,15 +62,15 @@ def get_ftl_freight_rate_cards(request):
     ):
         return {"list": []}
 
-    query = select_fields()
-    query = initialize_query(query, request)
+    selected_fields = select_fields()
+    query = initialize_query(selected_fields, request)
     ftl_rates = list(query.dicts())
-    supply_rates = [ftl_freight_rate for ftl_freight_rate in ftl_rates if ftl_freight_rate['source']=='manual']
+    supply_rates = [ftl_freight_rate for ftl_freight_rate in ftl_rates if ftl_freight_rate['service_provider_id']=='manual']
     if len(supply_rates) == 0:
-        extension_query = initialize_query(query, request, extension = True)
-        ftl_rates_extended = get_ftl_freight_rate_extension(extension_query,request)
+        extension_query = initialize_query(selected_fields, request, extension = True)
+        ftl_rates_extended = list(extension_query.dicts())
         if len(ftl_rates_extended) > 0:
-            ftl_rates = ftl_rates_extended
+            ftl_rates = get_ftl_freight_rate_extension(ftl_rates_extended,request)
     rate_list = ignore_non_eligible_service_providers(ftl_rates)
     rate_list = process_ftl_freight_rates(request, rate_list)
     rate_list = build_response_list(rate_list, request)
@@ -213,6 +213,7 @@ def select_fields():
         FtlFreightRate.transit_time,
         FtlFreightRate.detention_free_time,
         FtlFreightRate.truck_type,
+        FtlFreightRate.truck_body_type,
         FtlFreightRate.minimum_chargeable_weight,
         FtlFreightRate.unit,
         FtlFreightRate.validity_start,
