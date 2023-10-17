@@ -121,7 +121,7 @@ def create_haulage_freight_rate(request):
     if request.get('haulage_freight_rate_request_id'):
         update_haulage_freight_rate_request_delay.apply_async(kwargs={'request':{'haulage_freight_rate_request_id': request.get('haulage_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')
     
-    if params["source"]  not in ["predicted", "cluster_extension"] and params['rate_type'] == "market_place":
+    if params["source"]  != "predicted" and params['rate_type'] == "market_place":
         update_haulage_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": haulage_freight_rate.id},queue='haulage_freight_rate')
     
     return {"id": haulage_freight_rate.id}

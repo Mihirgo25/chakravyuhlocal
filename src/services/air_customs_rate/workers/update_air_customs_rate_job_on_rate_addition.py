@@ -40,11 +40,14 @@ def update_air_customs_rate_job_on_rate_addition(request, id):
         AirCustomsRateJob.update(update_params).where(*conditions).execute()
     )
     if air_customs_rate_job:
+        update_mapping(affected_ids)
         for affected_id in affected_ids:
             create_audit(affected_id, jsonable_encoder(request))
     return {"ids": affected_ids}
 
-
+def update_mapping(jobs_ids):
+    update_params = {'status': "completed",  "updated_at": datetime.now()}
+    AirCustomsRateJobMapping.update(update_params).where(AirCustomsRateJobMapping.job_id << jobs_ids).execute()
 
 def create_audit(jobs_id, data):
     AirCustomsRateAudit.create(

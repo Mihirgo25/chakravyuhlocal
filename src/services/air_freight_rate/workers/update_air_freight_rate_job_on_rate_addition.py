@@ -36,11 +36,15 @@ def update_air_freight_rate_job_on_rate_addition(request, id):
     ])
     air_freight_rate_job = AirFreightRateJob.update(update_params).where(*conditions).execute()
     if air_freight_rate_job:
+        update_mapping(affected_ids)
         for affected_id in affected_ids:
             create_audit(affected_id, jsonable_encoder(request))
 
     return {"ids": affected_ids}
 
+def update_mapping(jobs_ids):
+    update_params = {'status': "completed",  "updated_at": datetime.now()}
+    AirFreightRateJobMapping.update(update_params).where(AirFreightRateJobMapping.job_id << jobs_ids).execute()
 
 def create_audit(jobs_id, data):
     AirServiceAudit.create(

@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from database.db_session import db
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
+from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
 
 def create_audit(haulage_id, request, transport_modes):
     audit_data = {
@@ -28,6 +29,7 @@ def update_haulage_freight_rate(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
+    from services.haulage_freight_rate.haulage_celery_worker import update_haulage_freight_rate_job_on_rate_addition_delay
     haulage = find_haulage_object(request)
 
     update_params =  {
@@ -50,6 +52,9 @@ def execute_transaction_code(request):
         haulage.save()
     except Exception as e:
         print("Exception in updating rate", e)
+    
+    if str(haulage.service_provider_id) != DEFAULT_SERVICE_PROVIDER_ID:
+        update_haulage_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": haulage.id},queue='fcl_freight_rate')
 
     return {"id": haulage.id}
 
