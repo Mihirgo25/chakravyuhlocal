@@ -13,6 +13,7 @@ from configs.definitions import FTL_FREIGHT_CHARGES
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
 from fastapi import HTTPException
 from configs.ftl_freight_rate_constants import PREDICTED_PRICE_SERVICE_PROVIDER
+from micro_services.client import maps
 
 def get_ftl_freight_rate_cards(request):
     """
@@ -63,7 +64,11 @@ def get_ftl_freight_rate_cards(request):
 
     query = select_fields()
     query = initialize_query(query, request)
-    rate_list = ignore_non_eligible_service_providers(request, query)
+    ftl_rates = list(query.dicts())
+    supply_rates = [ftl_freight_rate for ftl_freight_rate in ftl_rates if ftl_freight_rate['source']=='manual']
+    if len(supply_rates) == 0:
+        ftl_rates = extend_ftl_rates(request)
+    rate_list = ignore_non_eligible_service_providers(ftl_rates)
     rate_list = process_ftl_freight_rates(request, rate_list)
     rate_list = build_response_list(rate_list, request)
 
@@ -114,27 +119,14 @@ def initialize_query(query, request):
 
     destination_location_ids = [
         request.get("destination_location_id"),
-        request.get("destination_city"),
+        request.get("destination_city_id"),
     ]
     destination_location_ids = [
-        location_id
-        for location_id in destination_location_ids
-        if location_id is not None
+        location_id for location_id in destination_location_ids if location_id is not None
     ]
 
     if len(destination_location_ids) > 0:
-        query = query.where(
-            FtlFreightRate.destination_location_id << destination_location_ids
-        )
-
-    if request.get("origin_city_id"):
-        query = query.where(
-            (FtlFreightRate.origin_city_id == request.get("origin_city_id"))
-        )
-    if request.get("destination_city_id"):
-        query = query.where(
-            (FtlFreightRate.destination_city_id == request.get("destination_city_id"))
-        )
+        query = query.where(FtlFreightRate.destination_location_id << destination_location_ids)
 
     if request.get("origin_country_id"):
         query = query.where(
@@ -151,8 +143,110 @@ def initialize_query(query, request):
         & (FtlFreightRate.validity_end >= cargo_readiness_date)
     )
 
+    print("EXISTING")
+    print(query)
+
     return query
 
+def extend_ftl_rates(request):
+    ## TEST WITH FRONTEND, DETERMINE WHAT PARAMS ARE PASSED, ALTER THE SELECT QUERY
+    query = select_fields()
+
+    filters = {
+        "commodity": request.get("commodity"),
+        "trip_type": request.get("trip_type"),
+        "rate_not_available_entry": False,
+        "is_line_items_error_messages_present": False,
+        "truck_type": request.get("truck_type"),
+    }
+
+    for key in filters.keys():
+        if filters.get(key) is not None:
+            query = query.where(attrgetter(key)(FtlFreightRate) == filters[key])
+
+    query = query.where(
+        (FtlFreightRate.importer_exporter_id == request.get("importer_exporter_id")) |
+        (FtlFreightRate.importer_exporter_id.is_null(True))
+    )
+
+    if request.get("load_selection_type") in ["cargo_per_package", "cargo_gross"]:
+        query = query.where(
+            FtlFreightRate.unit == "per_ton"
+        )
+    elif request.get("load_selection_type") == "truck":
+        query = query.where(
+            (FtlFreightRate.unit == "per_truck") | 
+            (FtlFreightRate.unit.is_null(True))
+        )
+
+    if request.get("origin_city_id"):
+        query = query.where(
+            FtlFreightRate.origin_city_id == request.get("origin_city_id")
+        )
+    if request.get("destination_city_id"):
+        query = query.where(
+            FtlFreightRate.destination_city_id == request.get("destination_city_id")
+        )
+            
+    if request.get("origin_country_id"):
+        query = query.where(
+            FtlFreightRate.origin_country_id == request.get("origin_country_id")
+        )
+    if request.get("destination_country_id"):
+        query = query.where(
+            FtlFreightRate.destination_country_id == request.get("destination_country_id")
+        )
+    cargo_readiness_date = request.get("cargo_readiness_date")
+    query = query.where(
+        (FtlFreightRate.validity_start <= cargo_readiness_date)
+        & (FtlFreightRate.validity_end >= cargo_readiness_date)
+    )
+    query = query.where(
+        FtlFreightRate.source == 'manual'
+    )
+
+    print()
+    print("AVERAGED")
+    print(query)
+
+    ftl_rates_extended = list(query.dicts())
+    requested_distance = get_road_distance(request.get('origin_location_id'), request.get('destination_location_id'))
+
+    new_list = []
+
+    if len(ftl_rates_extended) > 0:
+        price_by_code = {}
+        code_count = {}
+        unit_val = ''
+
+        for item in ftl_rates_extended:
+            distance = get_road_distance(str(item.get('origin_location_id')), str(item.get('destination_location_id')))
+            for line_item in item.get("line_items", []):
+                code = line_item.get("code")
+                price_per_km = line_item.get("price") / distance
+                unit_val = line_item.get('unit')
+
+                if code not in price_by_code:
+                    price_by_code[code] = 0
+                    code_count[code] = 0
+                
+                price_by_code[code] += price_per_km
+                code_count[code] += 1
+
+        average_prices = {code: price_by_code[code] / code_count[code] for code in code_count}
+        new_list = [ftl_rates_extended[0].copy()]
+        new_list[0]["line_items"] = [
+            {
+                "code": code,
+                "price": avg_per_km * requested_distance,
+                "unit": unit_val,
+                "currency": "INR", ## POSSIBLE BREAKAGE, WHAT IF OTHER CURRENCIES ARE PRESENT
+                "remarks": []
+            }
+            for code, avg_per_km in average_prices.items()
+        ]
+
+    return new_list
 
 def select_fields():
     return FtlFreightRate.select(
@@ -200,18 +294,21 @@ def build_response_list(ftl_rates, request):
 
 
 def set_callback_for_request(request):
+    ## REWRITE THIS LOGIC -> WHY CALLING LOCATION EVERYTIME?
     if request.get("origin_location_id") and request.get("destination_location_id"):
         location_ids = [
             request.get("origin_location_id"),
             request.get("destination_location_id"),
         ]
         location_mapping = get_location_mapping(location_ids)
-        request["origin_city_id"] = location_mapping.get(
-            request.get("origin_location_id")
-        ).get("city_id")
-        request["destination_city_id"] = location_mapping.get(
-            request.get("destination_location_id")
-        ).get("city_id")
+        if request.get("origin_city_id") is None:
+            request["origin_city_id"] = location_mapping.get(
+                request.get("origin_location_id")
+            ).get("city_id")
+        if request.get("destination_city_id") is None:
+            request["destination_city_id"] = location_mapping.get(
+                request.get("destination_location_id")
+            ).get("city_id")
     if (
         request.get("break_point_location_ids")
         and type(request.get("break_point_location_ids")) != list
@@ -232,7 +329,10 @@ def set_callback_for_request(request):
 
 
 def get_location_mapping(location_ids):
-    location_data = maps.list_locations({"filters": {"id": location_ids,"status":"active"}})["list"]
+    location_data = maps.list_locations({
+        "filters": {"id": location_ids,"status":"active"},
+        'includes': {'id': True, 'name': True, 'city_id':True}
+        })["list"]
     location_mapping = {}
     for data in location_data:
         location_mapping[data["id"]] = data
@@ -376,8 +476,7 @@ def get_chargeable_weight(minimum_chargeable_weight, request):
     return chargeable_rate
 
 
-def ignore_non_eligible_service_providers(request, query_result):
-    ftl_rates = list(query_result.dicts())
+def ignore_non_eligible_service_providers(ftl_rates):
     ids = get_eligible_orgs("ftl_freight")
     final_list = []
     for data in ftl_rates:
@@ -401,7 +500,8 @@ def process_ftl_freight_rates(request, rate_list):
 
         query = select_fields()
         query = initialize_query(query, request)
-        rate_list = ignore_non_eligible_service_providers(request, query)
+        ftl_rates = list(query.dicts())
+        rate_list = ignore_non_eligible_service_providers(ftl_rates)
 
     # ignore predicted rate in case of manual rates being present
     if len(rate_list) > 1:
@@ -418,7 +518,6 @@ def get_predicted_ftl_freight_rate(request, rate_list):
         "commodity": request.get("commodity"),
         "weight": request.get("weight")
         }
-
     get_ftl_freight_rate_estimation(rate_estimation_params)
 
 
@@ -443,13 +542,14 @@ def additional_response_data(list_of_data):
 def get_buy_rate(line_items):
     net_price = 0
     for line_item_data in line_items:
-        price = common.get_money_exchange_for_fcl(
-            {
-                "from_currency": line_item_data["currency"],
-                "to_currency": line_item_data["buy_rate_currency"],
-                "price": line_item_data["price"] * line_item_data["quantity"],
-            }
-        )["price"]
+        # price = common.get_money_exchange_for_fcl(
+        #     {
+        #         "from_currency": line_item_data["currency"],
+        #         "to_currency": line_item_data["buy_rate_currency"],
+        #         "price": line_item_data["price"] * line_item_data["quantity"],
+        #     }
+        # )["price"]
+        price =  line_item_data['price']
         net_price += int(price)
 
     return net_price
@@ -487,3 +587,22 @@ def remove_unnecessary_fields(data):
         final_list.append(copy_of_main_data)
 
     return final_list
+
+def get_road_distance(origin_location_id, destination_location_id):
+    import time
+
+    start = time.time()
+    distance_data = maps.get_distance_matrix_valhalla(
+                {
+                    'origin_location_id':origin_location_id,
+                    'destination_location_id':destination_location_id
+                }
+            )
+    end = time.time()
+    print("TIME TAKEN FOR DISTANCE CALCULATION")
+    print((end-start)*1000)
+    try:
+        distance = distance_data['distance']
+        return distance
+    except:
+        return 1
