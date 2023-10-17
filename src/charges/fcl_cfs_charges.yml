@@ -28,12 +28,6 @@ QDF:
   trade_types: ['export', 'import']
   condition: true
   tags: ['additional_service']
-FC:
-  name: "Fumigation"
-  units: ['per_container']
-  trade_types: ['export']
-  condition: true
-  tags: ['additional_service']
 CFSCLO:
   name: "CFS Lift On/Off Charges"
   units: ['per_container']
@@ -57,7 +51,7 @@ ICDS:
   units: ['per_container']
   trade_types: ['export']
   condition: location['is_icd']
-  tags: ['mandatory']
+  tags: []
 ICDDS:
   name: "ICD Destuffing"
   units: ['per_container']
@@ -135,7 +129,7 @@ DSC:
   units: ['per_container']
   trade_types: ['import']
   condition: true
-  tags: ["mandatory", "dpd_cfs_dock_destuffing", 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing', 'slab_cargo_weight_per_container']
+  tags: ["dpd_cfs_dock_destuffing", 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing', 'slab_cargo_weight_per_container']
 EFC:
   name: "Excise Filing Charge"
   units: ['cargo_value_percentage']
@@ -147,13 +141,13 @@ PDPDC:
   units: ['per_container']
   trade_types: ['import']
   condition: true
-  tags: ["mandatory", "dpd_without_cfs"]
+  tags: ["dpd_without_cfs"]
 SLC:
   name: "Shipping Line Charge"
   units: ['per_container']
   trade_types: ['import']
   condition: true
-  tags: ["mandatory", 'dpd_cfs_factory_destuffing', 'dpd_cfs_dock_destuffing', 'dpd_without_cfs', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing']
+  tags: ['dpd_cfs_factory_destuffing', 'dpd_cfs_dock_destuffing', 'dpd_without_cfs', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing']
 ECDOC:
   name: "Empty Container Drop Off Charge"
   units: ['per_container']
@@ -165,7 +159,7 @@ RENC:
   units: ['per_container']
   trade_types: ['import']
   condition: true
-  tags: ['mandatory', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']
+  tags: ['non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']
 CEC:
   name: "Customs Examination Charge"
   units: ['per_container']

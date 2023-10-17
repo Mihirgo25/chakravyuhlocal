@@ -400,3 +400,9 @@ TRD:
   trade_types: ['import', 'export']
   condition: true
   tags: ['customs_clearance']
+FC:
+  name: "Fumigation"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service','customs_clearance']
