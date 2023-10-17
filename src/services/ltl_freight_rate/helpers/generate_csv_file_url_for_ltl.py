@@ -32,9 +32,7 @@ def generate_csv_file_url_for_ltl(query):
 def get_ltl_freight_coverage_required_data(coverage_data):
     required_data = {}
     required_data['origin_location'] = coverage_data['origin_location']['name']
-    required_data['origin_port_code'] = coverage_data['origin_location']['port_code']
     required_data['destination_location'] = coverage_data['destination_location']['name']
-    required_data['destination_port_code'] = coverage_data['destination_location']['port_code']
     required_data['commodity'] = coverage_data['commodity']
     required_data['density_factor']  = coverage_data['density_factor']
     required_data['transit_time'] = coverage_data['transit_time']
