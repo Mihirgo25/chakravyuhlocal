@@ -1,10 +1,10 @@
-from micro_services.client import maps
+from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import get_road_distance
 
 def get_ftl_freight_rate_extension(query, request):
     ftl_rates_extended = list(query.dicts())
     new_list = []
 
-    if len(ftl_rates_extended) > 0:
+    if ftl_rates_extended:
         requested_distance = get_road_distance(request.get('origin_location_id'), request.get('destination_location_id'))
         price_by_code = {}
         code_count = {}
@@ -38,17 +38,3 @@ def get_ftl_freight_rate_extension(query, request):
         ]
 
     return new_list
-
-
-def get_road_distance(origin_location_id, destination_location_id):
-    distance_data = maps.get_distance_matrix_valhalla(
-                {
-                    'origin_location_id':origin_location_id,
-                    'destination_location_id':destination_location_id
-                }
-            )
-    try:
-        distance = distance_data['distance']
-        return distance
-    except:
-        return 1

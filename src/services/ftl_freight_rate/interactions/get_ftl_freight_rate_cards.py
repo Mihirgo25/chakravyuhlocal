@@ -67,7 +67,7 @@ def get_ftl_freight_rate_cards(request):
     ftl_rates = list(query.dicts())
     supply_rates = [ftl_freight_rate for ftl_freight_rate in ftl_rates if ftl_freight_rate['source']=='manual']
     if len(supply_rates) == 0:
-        extension_query = initialize_query_extension(request)
+        extension_query = initialize_query(query, request, extension = True)
         ftl_rates_extended = get_ftl_freight_rate_extension(extension_query,request)
         if len(ftl_rates_extended) > 0:
             ftl_rates = ftl_rates_extended
@@ -81,11 +81,9 @@ def get_ftl_freight_rate_cards(request):
     if request.get("predicted_rate"):
         rate_list = remove_unnecessary_fields(rate_list)
 
-
     return {"list": rate_list}
 
-
-def initialize_query(query, request):
+def initialize_query(query, request, extension = False):
     filters = {
         "commodity": request.get("commodity"),
         "trip_type": request.get("trip_type"),
@@ -108,38 +106,33 @@ def initialize_query(query, request):
         query = query.where(
             (FtlFreightRate.unit == "per_truck") | (FtlFreightRate.unit.is_null(True))
         )
+    if not extension:
+        origin_location_ids = list(filter(None,[
+            request.get("origin_location_id"),
+            request.get("origin_city_id"),
+        ]))
 
-    origin_location_ids = [
-        request.get("origin_location_id"),
-        request.get("origin_city_id"),
-    ]
-    origin_location_ids = [
-        location_id for location_id in origin_location_ids if location_id is not None
-    ]
+        destination_location_ids = list(filter(None, [
+            request.get("destination_location_id"),
+            request.get("destination_city_id"),
+        ]))
 
-    if len(origin_location_ids) > 0:
-        query = query.where(FtlFreightRate.origin_location_id << origin_location_ids)
+        if origin_location_ids and destination_location_ids:
+            query = query.where(FtlFreightRate.origin_location_id << origin_location_ids,
+                                FtlFreightRate.destination_location_id << destination_location_ids)
+    else:
+        query = query.where(FtlFreightRate.origin_city_id == request.get("origin_city_id"),
+                            FtlFreightRate.destination_city_id == request.get("destination_city_id"),
+                            FtlFreightRate.source == 'manual')
 
-    destination_location_ids = [
-        request.get("destination_location_id"),
-        request.get("destination_city_id"),
-    ]
-    destination_location_ids = [
-        location_id for location_id in destination_location_ids if location_id is not None
-    ]
-
-    if len(destination_location_ids) > 0:
-        query = query.where(FtlFreightRate.destination_location_id << destination_location_ids)
-
-    if request.get("origin_country_id"):
-        query = query.where(
-            FtlFreightRate.origin_country_id == request.get("origin_country_id")
-        )
-    if request.get("destination_country_id"):
-        query = query.where(
-            FtlFreightRate.destination_country_id
-            == request.get("destination_country_id")
-        )
+    # if request.get("origin_country_id"):
+    #     query = query.where(
+    #         FtlFreightRate.origin_country_id == request.get("origin_country_id")
+    #     )
+    # if request.get("destination_country_id"):
+    #     query = query.where(
+    #         FtlFreightRate.destination_country_id == request.get("destination_country_id")
+    #     )
     cargo_readiness_date = request.get("cargo_readiness_date")
     query = query.where(
         (FtlFreightRate.validity_start <= cargo_readiness_date)
@@ -253,14 +246,14 @@ def build_response_list(ftl_rates, request):
 
 
 def set_callback_for_request(request):
-    ## REWRITE THIS LOGIC -> WHY CALLING LOCATION EVERYTIME?
     if request.get("origin_location_id") and request.get("destination_location_id"):
         location_ids = [
             request.get("origin_location_id"),
             request.get("destination_location_id"),
         ]
-        location_mapping = get_location_mapping(location_ids)
-        if request.get("origin_city_id") is None:
+
+        if not request.get("origin_city_id") or not request.get('destination_city_id'):
+            location_mapping = get_location_mapping(location_ids)
             request["origin_city_id"] = location_mapping.get(
                 request.get("origin_location_id")
             ).get("city_id")
@@ -270,14 +263,14 @@ def set_callback_for_request(request):
             ).get("city_id")
     if (
         request.get("break_point_location_ids")
-        and type(request.get("break_point_location_ids")) != list
+        and not isinstance(request.get("break_point_location_ids"), list)
     ):
         request["break_point_location_ids"] = json.loads(
             request.get("break_point_location_ids")
         )
     if (
         request.get("additional_services")
-        and type(request.get("additional_services")) != list
+        and not isinstance(request.get("additional_services"), list)
     ):
         request["additional_services"] = json.loads(request.get("additional_services"))
     request["trip_type"] = (
@@ -445,7 +438,6 @@ def ignore_non_eligible_service_providers(ftl_rates):
     unique_service_providers_count = len(set(rate['service_provider_id'] for rate in final_list if rate.get('service_provider_id')))
     if unique_service_providers_count > 1:
         final_list = [rate for rate in final_list if rate.get('service_provider_id') != PREDICTED_PRICE_SERVICE_PROVIDER]
-
     return final_list
 
 def process_ftl_freight_rates(request, rate_list):
@@ -463,8 +455,8 @@ def process_ftl_freight_rates(request, rate_list):
         rate_list = ignore_non_eligible_service_providers(ftl_rates)
 
     # ignore predicted rate in case of manual rates being present
-    if len(rate_list) > 1:
-        rate_list = [ftl_freight_rate for ftl_freight_rate in rate_list if ftl_freight_rate['source']=='manual']
+    # if len(rate_list) > 1:
+    #     rate_list = [ftl_freight_rate for ftl_freight_rate in rate_list if ftl_freight_rate['source']=='manual']
 
     return rate_list
 
