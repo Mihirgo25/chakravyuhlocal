@@ -66,10 +66,10 @@ WRC:
   tags: ['additional_service']
 LBC:
   name: "Labour Charges"
-  units: ['per_container']
+  units: ['per_container', 'per_shipment']
   trade_types: ['import']
   condition: true
-  tags: ['dpd_cfs_dock_destuffing', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']
+  tags: ['dpd_cfs_dock_destuffing', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing', 'additional_service']
 CFSTHC:
   name: "CFS Transportation & Handling Charges"
   units: ['per_container']
@@ -166,3 +166,177 @@ CEC:
   trade_types: ['export', 'import']
   condition: true
   tags: ['additional_service', 'stuffing_at_dock', 'dpd_cfs_factory_destuffing', 'dpd_cfs_dock_destuffing', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']
+FLC:
+  name: "Forklift Charges"
+  units: ['per_shipment', 'per_kg','per_awb', 'per_package', 'per_document', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996713'
+PDC:
+  name: "Pickup Charges"
+  units: ['per_shipment', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996713'
+LBL:
+  name: 'Label & Marking'
+  units: ['per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996713'
+LUC:
+  name: 'Loading/Unloading charges'
+  units: ['per_shipment', 'per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996713'
+EC:
+  name: "Examination charge"
+  units: ['per_package', 'per_shipment', 'per_document', 'per_container']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service','non_enpanelled_cfs_factory_destuffing']
+  sac_code: '996712'
+OE:
+  name: "Open Examination"
+  units: ['per_package', 'per_document', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+WC:
+  name: "Weighment Charge"
+  units: ['per_shipment', 'per_kg', 'per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+WEH:
+  name: "Weighbridge Fee"
+  units: ['per_shipment', 'per_kg', 'per_container']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+WHT:
+  name: "Weighing Charges"
+  units: ['per_shipment', 'per_kg', 'per_container']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+SUR:
+  name: "Export Survey Fee"
+  units: ['per_shipment']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+RPC:
+  name: "Repacking Charges"
+  units: ['per_shipment', 'per packet', 'per_container']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+WHC:
+  name: "Warehouse Charges"
+  trade_types: ['import','export']
+  units: ['per_shipment', 'per_kg', 'per packet', 'per_container']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996712'
+HLC:
+  name: "Handling Charges"
+  units: ['per_shipment', 'per_package', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+MCS:
+  name: "Miscellaneous Charges"
+  units: ['per_shipment', 'per_package', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+ADDCH:
+  name: "Additional Charges"
+  units: ['per_shipment', 'per_package', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+FCHC:
+  name: "Forklift/Crane/Hydra Charges"
+  units: ['per_package', 'per_container', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+HAZL:
+  name: "HAZ Labelling"
+  units: ['per_package', 'per_container', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+ATRNS:
+  name: "Transportation Fees"
+  units: ['per_kg','per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+ADS:
+  name: "Stamp Duty Charges"
+  units: ['per_shipment', 'per_document']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+H&T:
+  name: "Handling & Transportation charges"
+  units: ['per_kg','per_MT','per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+TSC:
+  name: "Terminal Service Charges"
+  units: ['per_kg','per_MT','per_shipment','per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+HZC:
+  name: "Hazardous Charges"
+  units: ['per_shipment','per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+SRC:
+  name: "Scanning related Charges"
+  units: ['per_shipment','per_container','per_document']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+CSC:
+  name: 'Container Scanning Charges'
+  units: ['per_container','per_document']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+LFLOC:
+  name: 'Lift on/Lift off charges'
+  units: ['per_container','per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+L&CC:
+  name: 'Lashing/chocking/Lashing & Chocking charges'
+  units: ['per_container','per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
