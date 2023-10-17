@@ -267,7 +267,7 @@ T1:
   units: ['per_bl']
   trade_types: ['import', 'export']
   condition: (location['country_code'] in ['CZ', 'MK', 'FR', 'IE', 'IS', 'BY', 'NI', 'AT', 'CH', 'HU', 'SE', 'RU', 'DK', 'FO', 'FI', 'BE', 'MD', 'LT', 'AM', 'LV', 'PT', 'NO', 'SK', 'RS', 'DE', 'EE', 'NL', 'AD', 'LI', 'PL', 'MC', 'GB', 'LU'])
-  tags: ['mandatory', 'customs_clearance']
+  tags: ['customs_clearance']
 SBILL:
   name: "Shipping Bill Cancellation Fee"
   units: ['per_shipping_bill']
@@ -309,7 +309,7 @@ UKS:
   units: ['per_container']
   trade_types: ['import']
   condition: location['country_code'] == 'GB'
-  tags: ['mandatory', 'customs_clearance']
+  tags: ['customs_clearance']
 ADCRF:
   name: "Port Registration Fee"
   units: ['per_shipment']
