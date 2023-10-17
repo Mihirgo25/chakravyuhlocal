@@ -199,7 +199,7 @@ EC:
   units: ['per_package', 'per_shipment', 'per_document', 'per_container']
   trade_types: ['export','import']
   condition: true
-  tags: ['additional_service','non_enpanelled_cfs_factory_destuffing']
+  tags: ['additional_service']
   sac_code: '996712'
 OE:
   name: "Open Examination"
