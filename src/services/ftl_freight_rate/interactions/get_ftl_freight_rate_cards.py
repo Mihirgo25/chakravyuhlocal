@@ -5,6 +5,7 @@ from services.ftl_freight_rate.interactions.list_trucks import list_trucks_data
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_estimation import (
     get_ftl_freight_rate_estimation,
 )
+from services.ftl_freight_rate.interactions.get_ftl_freight_rate_extension import get_ftl_freight_rate_extension
 from database.rails_db import get_eligible_orgs
 from micro_services.client import maps, common
 from operator import attrgetter
@@ -13,7 +14,6 @@ from configs.definitions import FTL_FREIGHT_CHARGES
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
 from fastapi import HTTPException
 from configs.ftl_freight_rate_constants import PREDICTED_PRICE_SERVICE_PROVIDER
-from micro_services.client import maps
 
 def get_ftl_freight_rate_cards(request):
     """
@@ -67,7 +67,10 @@ def get_ftl_freight_rate_cards(request):
     ftl_rates = list(query.dicts())
     supply_rates = [ftl_freight_rate for ftl_freight_rate in ftl_rates if ftl_freight_rate['source']=='manual']
     if len(supply_rates) == 0:
-        ftl_rates = extend_ftl_rates(request)
+        extension_query = initialize_query_extension(request)
+        ftl_rates_extended = get_ftl_freight_rate_extension(extension_query,request)
+        if len(ftl_rates_extended) > 0:
+            ftl_rates = ftl_rates_extended
     rate_list = ignore_non_eligible_service_providers(ftl_rates)
     rate_list = process_ftl_freight_rates(request, rate_list)
     rate_list = build_response_list(rate_list, request)
@@ -143,12 +146,9 @@ def initialize_query(query, request):
         & (FtlFreightRate.validity_end >= cargo_readiness_date)
     )
 
-    print("EXISTING")
-    print(query)
-
     return query
 
-def extend_ftl_rates(request):
+def initialize_query_extension(request):
     ## TEST WITH FRONTEND, DETERMINE WHAT PARAMS ARE PASSED, ALTER THE SELECT QUERY
     query = select_fields()
 
@@ -205,48 +205,7 @@ def extend_ftl_rates(request):
         FtlFreightRate.source == 'manual'
     )
 
-    print()
-    print("AVERAGED")
-    print(query)
-
-    ftl_rates_extended = list(query.dicts())
-    requested_distance = get_road_distance(request.get('origin_location_id'), request.get('destination_location_id'))
-
-    new_list = []
-
-    if len(ftl_rates_extended) > 0:
-        price_by_code = {}
-        code_count = {}
-        unit_val = ''
-
-        for item in ftl_rates_extended:
-            distance = get_road_distance(str(item.get('origin_location_id')), str(item.get('destination_location_id')))
-            for line_item in item.get("line_items", []):
-                code = line_item.get("code")
-                price_per_km = line_item.get("price") / distance
-                unit_val = line_item.get('unit')
-
-                if code not in price_by_code:
-                    price_by_code[code] = 0
-                    code_count[code] = 0
-                
-                price_by_code[code] += price_per_km
-                code_count[code] += 1
-
-        average_prices = {code: price_by_code[code] / code_count[code] for code in code_count}
-        new_list = [ftl_rates_extended[0].copy()]
-        new_list[0]["line_items"] = [
-            {
-                "code": code,
-                "price": avg_per_km * requested_distance,
-                "unit": unit_val,
-                "currency": "INR", ## POSSIBLE BREAKAGE, WHAT IF OTHER CURRENCIES ARE PRESENT
-                "remarks": []
-            }
-            for code, avg_per_km in average_prices.items()
-        ]
-
-    return new_list
+    return query
 
 def select_fields():
     return FtlFreightRate.select(
@@ -587,22 +546,3 @@ def remove_unnecessary_fields(data):
         final_list.append(copy_of_main_data)
 
     return final_list
-
-def get_road_distance(origin_location_id, destination_location_id):
-    import time
-
-    start = time.time()
-    distance_data = maps.get_distance_matrix_valhalla(
-                {
-                    'origin_location_id':origin_location_id,
-                    'destination_location_id':destination_location_id
-                }
-            )
-    end = time.time()
-    print("TIME TAKEN FOR DISTANCE CALCULATION")
-    print((end-start)*1000)
-    try:
-        distance = distance_data['distance']
-        return distance
-    except:
-        return 1
