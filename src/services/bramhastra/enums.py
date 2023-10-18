@@ -108,6 +108,7 @@ class BrahmastraTrackStatus(Bramhastra):
 
 class BrahmastraTrackModuleTypes(Bramhastra):
     table = "table"
+    function = "function"
 
 
 class AirSources(Bramhastra):
