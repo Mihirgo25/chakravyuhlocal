@@ -37,4 +37,4 @@ class UpdateLclFreightRateJobOnRateAddition(BaseModel):
     origin_port_id: str = None
     destination_port_id: str = None
     commodity: str = None
-    rate_type: str = None
+    service_provider_id: str = None

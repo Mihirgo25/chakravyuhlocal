@@ -40,5 +40,6 @@ class UpdateLtlFreightRateJobOnRateAddition(BaseModel):
     origin_location_id: str = None
     destination_location_id: str = None
     commodity: str = None
-    trip_type: str = None
-    rate_type: str = None
+    transit_time: str = None
+    density_factor: str = None
+    service_provider_id: str = None

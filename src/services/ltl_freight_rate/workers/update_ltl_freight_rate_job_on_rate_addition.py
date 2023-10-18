@@ -21,9 +21,10 @@ def update_ltl_freight_rate_job_on_rate_addition(request, id):
     params = {
         "origin_location_id": request.get("origin_location_id"),
         "destination_location_id": request.get("destination_location_id"),
-        "trip_type": request.get("trip_type"),
+        "transit_time": request.get("transit_time"),
         "commodity": request.get("commodity"),
-        "rate_type": request.get("rate_type"),
+        "service_provider_id": request.get("service_provider_id"),
+        "density_factor": request.get("density_factor"),
     }
     conditions = [
         (getattr(LtlFreightRateJob, key) == value) for key, value in params.items()

@@ -154,9 +154,10 @@ from services.lcl_freight_rate.lcl_params import UpdateLclFreightRateJob
 from services.lcl_freight_rate.interactions.update_lcl_freight_rate_job import update_lcl_freight_rate_job
 from services.lcl_customs_rate.lcl_customs_params import UpdateLclCustomsRateJob
 from services.lcl_customs_rate.interactions.update_lcl_customs_rate_job import update_lcl_customs_rate_job
-from services.lcl_customs_rate.lcl_customs_celery_worker import update_lcl_customs_rate_job_on_rate_addition_delay
-from services.lcl_freight_rate.lcl_celery_worker import update_lcl_freight_rate_job_on_rate_addition_delay
-from services.ltl_freight_rate.ltl_celery_worker import update_ltl_freight_rate_job_on_rate_addition_delay
+
+from services.lcl_customs_rate.workers.update_lcl_customs_rate_job_on_rate_addition import update_lcl_customs_rate_job_on_rate_addition
+from services.lcl_freight_rate.workers.update_lcl_freight_rate_job_on_rate_addition import update_lcl_freight_rate_job_on_rate_addition
+from services.ltl_freight_rate.workers.update_ltl_freight_rate_job_on_rate_addition import update_ltl_freight_rate_job_on_rate_addition
 
 from libs.rate_limiter import rate_limiter
 from configs.env import DEFAULT_USER_ID
@@ -2469,7 +2470,7 @@ def update_lcl_customs_rate_job_on_rate_addition_api(
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
-        data = update_lcl_customs_rate_job_on_rate_addition_delay(request.dict(exclude_none=True))
+        data = update_lcl_customs_rate_job_on_rate_addition(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         sentry_sdk.capture_exception(e)
@@ -2484,7 +2485,7 @@ def update_lcl_freight_rate_job_on_rate_addition_api(
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
-        data = update_lcl_freight_rate_job_on_rate_addition_delay(request.dict(exclude_none=True))
+        data = update_lcl_freight_rate_job_on_rate_addition(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         sentry_sdk.capture_exception(e)
@@ -2499,7 +2500,7 @@ def update_ltl_freight_rate_job_on_rate_addition_api(
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
-        data = update_ltl_freight_rate_job_on_rate_addition_delay(request.dict(exclude_none=True))
+        data = update_ltl_freight_rate_job_on_rate_addition(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         sentry_sdk.capture_exception(e)

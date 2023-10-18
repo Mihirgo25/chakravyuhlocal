@@ -4,7 +4,6 @@ from services.ltl_freight_rate.workers.update_ltl_freight_rate_jobs_to_backlog i
     update_ltl_freight_rate_jobs_to_backlog,
 )
 from services.ltl_freight_rate.interactions.create_ltl_freight_rate_job import update_live_booking_visiblity_for_ltl_freight_rate_job
-from services.ltl_freight_rate.workers.update_ltl_freight_rate_job_on_rate_addition import update_ltl_freight_rate_job_on_rate_addition
 from celery.schedules import crontab
 
 tasks = {
@@ -32,16 +31,6 @@ def update_ltl_freight_rate_jobs_to_backlog_delay(self):
 def update_live_booking_visiblity_for_ltl_freight_rate_job_delay(self, job_id):
     try:
         return update_live_booking_visiblity_for_ltl_freight_rate_job(job_id)
-    except Exception as exc:
-        if type(exc).__name__ == "HTTPException":
-            pass
-        else:
-            raise self.retry(exc=exc)
-
-@celery.task(bind=True, max_retries=1, retry_backoff=True)
-def update_ltl_freight_rate_job_on_rate_addition_delay(self, request, id):
-    try:
-        return update_ltl_freight_rate_job_on_rate_addition(request, id)
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass

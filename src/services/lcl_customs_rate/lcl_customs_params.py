@@ -38,6 +38,4 @@ class UpdateLclCustomsRateJobOnRateAddition(BaseModel):
     location_id: str = None
     commodity: str = None
     trade_type: str = None
-    container_size: str
-    container_type: str
-    rate_type: str = None
+    service_provider_id: str

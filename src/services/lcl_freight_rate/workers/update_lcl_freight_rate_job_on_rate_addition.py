@@ -22,7 +22,7 @@ def update_lcl_freight_rate_job_on_rate_addition(request, id):
         "origin_port_id": request.get("origin_port_id"),
         "destination_port_id": request.get("destination_port_id"),
         "commodity": request.get("commodity"),
-        "rate_type": request.get("rate_type"),
+        "service_provider_id": request.get("service_provider_id"),
     }
     conditions = [
         (getattr(LclFreightRateJob, key) == value) for key, value in params.items()
