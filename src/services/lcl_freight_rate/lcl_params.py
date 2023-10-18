@@ -31,3 +31,10 @@ class UpdateLclFreightRateJob(BaseModel):
     user_id: str
     performed_by_id: str = None
     performed_by_type: str = None
+
+class UpdateLclFreightRateJobOnRateAddition(BaseModel):
+    performed_by_id: str = None
+    origin_port_id: str = None
+    destination_port_id: str = None
+    commodity: str = None
+    rate_type: str = None

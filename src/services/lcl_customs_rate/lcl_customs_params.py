@@ -32,3 +32,12 @@ class UpdateLclCustomsRateJob(BaseModel):
     user_id: str
     performed_by_id: str = None
     performed_by_type: str = None
+    
+class UpdateLclCustomsRateJobOnRateAddition(BaseModel):
+    performed_by_id: str = None
+    location_id: str = None
+    commodity: str = None
+    trade_type: str = None
+    container_size: str
+    container_type: str
+    rate_type: str = None

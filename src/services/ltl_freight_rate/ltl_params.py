@@ -34,3 +34,11 @@ class UpdateLtlFreightRateJob(BaseModel):
     user_id: str
     performed_by_id: str = None
     performed_by_type: str = None
+    
+class UpdateLtlFreightRateJobOnRateAddition(BaseModel):
+    performed_by_id: str = None
+    origin_location_id: str = None
+    destination_location_id: str = None
+    commodity: str = None
+    trip_type: str = None
+    rate_type: str = None

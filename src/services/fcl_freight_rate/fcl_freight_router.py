@@ -113,7 +113,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local_job_stats 
     get_fcl_freight_rate_local_job_stats,
 )
 
-from services.ltl_freight_rate.ltl_params import CreateLtlFreightRateJob, DeleteLtlFreightRateJob
+from services.ltl_freight_rate.ltl_params import CreateLtlFreightRateJob, DeleteLtlFreightRateJob, UpdateLtlFreightRateJobOnRateAddition
 
 from services.ltl_freight_rate.interactions.create_ltl_freight_rate_job import (
     create_ltl_freight_rate_job,
@@ -128,7 +128,7 @@ from services.ltl_freight_rate.interactions.get_ltl_freight_rate_job_stats impor
     get_ltl_freight_rate_job_stats,
 )
 
-from services.lcl_customs_rate.lcl_customs_params import CreateLclCustomsRateJob, DeleteLclCustomsRateJob
+from services.lcl_customs_rate.lcl_customs_params import CreateLclCustomsRateJob, DeleteLclCustomsRateJob, UpdateLclCustomsRateJobOnRateAddition
 
 from services.lcl_customs_rate.interactions.create_lcl_customs_rate_job import (
     create_lcl_customs_rate_job,
@@ -143,7 +143,7 @@ from services.lcl_customs_rate.interactions.get_lcl_customs_rate_job_stats impor
     get_lcl_customs_rate_job_stats,
 )
 
-from services.lcl_freight_rate.lcl_params import CreateLclFreightRateJob, DeleteLclFreightRateJob
+from services.lcl_freight_rate.lcl_params import CreateLclFreightRateJob, DeleteLclFreightRateJob, UpdateLclFreightRateJobOnRateAddition
 
 from services.lcl_freight_rate.interactions.create_lcl_freight_rate_job import (
     create_lcl_freight_rate_job,
@@ -169,6 +169,9 @@ from services.lcl_freight_rate.lcl_params import UpdateLclFreightRateJob
 from services.lcl_freight_rate.interactions.update_lcl_freight_rate_job import update_lcl_freight_rate_job
 from services.lcl_customs_rate.lcl_customs_params import UpdateLclCustomsRateJob
 from services.lcl_customs_rate.interactions.update_lcl_customs_rate_job import update_lcl_customs_rate_job
+from services.lcl_customs_rate.lcl_customs_celery_worker import update_lcl_customs_rate_job_on_rate_addition_delay
+from services.lcl_freight_rate.lcl_celery_worker import update_lcl_freight_rate_job_on_rate_addition_delay
+from services.ltl_freight_rate.ltl_celery_worker import update_ltl_freight_rate_job_on_rate_addition_delay
 
 from libs.rate_limiter import rate_limiter
 from configs.env import DEFAULT_USER_ID
@@ -2577,6 +2580,51 @@ def update_lcl_customs_rate_job_api(
         request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
         data = update_lcl_customs_rate_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_freight_router.post("/update_lcl_customs_rate_job_on_rate_addition")    
+def update_lcl_customs_rate_job_on_rate_addition_api(
+    request: UpdateLclCustomsRateJobOnRateAddition, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        data = update_lcl_customs_rate_job_on_rate_addition_delay(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.post("/update_lcl_freight_rate_job_on_rate_addition")    
+def update_lcl_freight_rate_job_on_rate_addition_api(
+    request: UpdateLclFreightRateJobOnRateAddition, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        data = update_lcl_freight_rate_job_on_rate_addition_delay(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.post("/update_ltl_freight_rate_job_on_rate_addition")    
+def update_ltl_freight_rate_job_on_rate_addition_api(
+    request: UpdateLtlFreightRateJobOnRateAddition, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        data = update_ltl_freight_rate_job_on_rate_addition_delay(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         sentry_sdk.capture_exception(e)
