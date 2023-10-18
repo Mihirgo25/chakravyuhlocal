@@ -31,7 +31,7 @@ def execute_transaction_code(request):
 
   customs_rate.sourced_by_id = request.get("sourced_by_id")
   customs_rate.procured_by_id = request.get("procured_by_id")
-  customs_rate.customs_line_items = request.get('customs_line_items')
+  customs_rate.customs_line_items = customs_rate.set_prices(request.get('customs_line_items'))
   customs_rate.cfs_line_items = request.get('cfs_line_items')
 
   customs_rate.set_platform_price()

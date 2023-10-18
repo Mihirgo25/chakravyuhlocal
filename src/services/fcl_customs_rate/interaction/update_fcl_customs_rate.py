@@ -13,6 +13,7 @@ def execute_transaction_code(request):
     if not rate_object:
         raise HTTPException(status_code=500, detail='Rate Not Found')
     
+    request['customs_line_items'] = rate_object.set_prices(request.get('customs_line_items'))
     update_params = get_update_params(request)
     for attr, value in update_params.items():
         setattr(rate_object, attr, value)
