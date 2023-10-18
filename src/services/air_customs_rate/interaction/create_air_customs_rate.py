@@ -48,7 +48,7 @@ def execute_transaction_code(request):
   get_multiple_service_objects(air_customs_rate)
 
   if params['rate_type'] == "market_place":
-        update_air_customs_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": air_customs_rate.id},queue='air_customs_rate')
+        update_air_customs_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": air_customs_rate.id},queue='fcl_freight_rate')
 
   return {'id': air_customs_rate.id}
 
