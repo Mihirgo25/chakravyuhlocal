@@ -41,8 +41,7 @@ def select_fields():
         HaulageFreightRate.validity_start,
         HaulageFreightRate.validity_end,
         HaulageFreightRate.service_provider,
-        HaulageFreightRate.sourced_by_id,
-        HaulageFreightRate.source
+        HaulageFreightRate.sourced_by_id
     )
     return freight_query
 
@@ -194,7 +193,7 @@ def build_response_object(result, requirements):
         "haulage_type": result["haulage_type"],
         "transport_modes": result["transport_modes"],
         "line_items": [],
-        "source": result.get("source") or "spot_rates" if requirements["predicted_rate"] else "predicted",
+        "source": "spot_rates" if requirements["predicted_rate"] else "predicted",
         "updated_at": result["updated_at"],
         "tags": [],
         "transit_time": result["transit_time"],
