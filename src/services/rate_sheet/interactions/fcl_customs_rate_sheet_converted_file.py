@@ -95,6 +95,7 @@ def create_fcl_customs_rate(params, converted_file, rows, created_by_id, procure
             'code': t.get('code'),
             'unit': t.get('unit'),
             'price': parse_numeric(t.get('price')),
+            'market_price': parse_numeric(t.get('market_price')),
             'currency': t.get('currency'),
             'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []
