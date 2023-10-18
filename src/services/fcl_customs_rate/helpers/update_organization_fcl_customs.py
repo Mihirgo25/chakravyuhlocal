@@ -13,6 +13,6 @@ def update_organization_fcl_customs(request):
     if not query:
         params = {
             "id" : request.get("service_provider_id"), 
-            "customs_rates_added" : True
+            "freight_rates_added" : True
         }
         organization.update_organization(params)
