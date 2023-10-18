@@ -55,8 +55,8 @@ def execute_transaction_code(request):
   fcl_customs_functions_delay.apply_async(kwargs={'fcl_customs_object':customs_rate, 'request':request},queue = 'low')
   get_multiple_service_objects(customs_rate)
 
-  if params["mode"]  not in ["predicted", "cluster_extension"] and params['rate_type'] == "market_place":
-        update_fcl_customs_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": customs_rate.id},queue='fcl_customs_rate')
+  if params['rate_type'] == "market_place":
+        update_fcl_customs_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": customs_rate.id},queue='fcl_freight_rate')
 
   return {'id': customs_rate.id}
 

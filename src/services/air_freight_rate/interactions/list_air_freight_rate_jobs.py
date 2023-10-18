@@ -24,7 +24,7 @@ possible_direct_filters = [
     "cogo_entity_id",
     "service_provider_id",
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_reverted"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted"]
 
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -192,9 +192,11 @@ def apply_filters(query, filters):
 
     return query
 
-def apply_is_reverted_filter(query, filters):
-    if filters.get('is_reverted'):
+def apply_is_flash_booking_reverted_filter(query, filters):
+    if filters.get('is_flash_booking_reverted'):
         query = query.join(AirFreightRateJobMapping, on=(AirFreightRateJobMapping.job_id == AirFreightRateJob.id)).where(AirFreightRateJobMapping.status == 'reverted')
+    else:
+        query = query.join(AirFreightRateJobMapping, on=(AirFreightRateJobMapping.job_id == AirFreightRateJob.id)).where(AirFreightRateJobMapping.status != 'reverted')
     return query
 
 def apply_is_visible_filter(query):

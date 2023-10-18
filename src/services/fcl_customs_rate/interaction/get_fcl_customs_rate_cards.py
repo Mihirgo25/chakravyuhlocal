@@ -16,7 +16,7 @@ def get_fcl_customs_rate_cards(request):
             customs_rates = get_zone_average_customs_rate(request)
 
         customs_rates = discard_noneligible_lsps(customs_rates)
-        rate_cards, is_predicted = build_response_list(request, customs_rates)
+        rate_cards = build_response_list(request, customs_rates)
 
         return {'list':rate_cards}
        
@@ -75,18 +75,16 @@ def build_response_list(request, customs_rates):
       else:
         result = rates[0]
 
-      response_object, is_predicted = build_response_object(result, request)
+      response_object = build_response_object(result, request)
       if response_object:
         list.append(response_object) 
-    return list, is_predicted
+    return list
 
     
 def build_response_object(result, request):
-    is_predicted = False
     source = 'spot_rates'
     if result.get('mode') == 'predicted':
         source = 'predicted'
-        is_predicted = True
     elif result.get('rate_type') != 'market_place':
         source = result.get('rate_type')
 
@@ -104,7 +102,7 @@ def build_response_object(result, request):
 
     if not add_customs_clearance(result, response_object, request):
         return  
-    return response_object, is_predicted
+    return response_object
 
 def add_customs_clearance(result, response_object, request):
     if not result.get('customs_line_items'):
