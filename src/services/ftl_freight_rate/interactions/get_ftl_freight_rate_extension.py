@@ -11,6 +11,7 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
         # distance of requested route
         requested_distance = get_road_distance(request.get('origin_location_id'), request.get('destination_location_id'))
         min_chargeable_weights_list = []
+        count_by_code = {}
 
         final_line_items = [{"code": "BAS", "unit": "per_truck", "price": 0, "remarks": [], "currency": "INR"}, {"code": "FSC", "unit": "per_truck", "price": 0, "remarks": [], "currency": "INR"}]
         for ftl_rate in ftl_rates_extended:
@@ -20,12 +21,10 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
             # distance of existing route
             distance = get_road_distance(str(ftl_rate.get('origin_location_id')), str(ftl_rate.get('destination_location_id')))
             # calculate mean price
-            final_line_items = get_calculated_line_items(final_line_items, ftl_rate.get("line_items", []), distance, requested_distance)
-        
+            final_line_items = get_calculated_line_items(final_line_items, ftl_rate.get("line_items", []), distance, requested_distance, count_by_code)
         # divide by count for mean price
-        count_of_rates = len(ftl_rates_extended)
         for final_item in final_line_items:
-            final_item['price'] = final_item['price'] / count_of_rates
+            final_item['price'] = final_item['price'] / count_by_code[final_item['code']]
 
         detention_free_time = 1
         transit_time = round((requested_distance//250)*24)
@@ -66,9 +65,14 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
     return new_list
 
 
-def get_calculated_line_items(final_line_items, new_line_items, distance, requested_distance):
+def get_calculated_line_items(final_line_items, new_line_items, distance, requested_distance, count_by_code):
     for line_item in new_line_items:
         total_price = line_item.get("price",0)
+        code = line_item["code"]
+        # calculate count for each FTL Charge
+        if code not in count_by_code:
+            count_by_code[code] = 0
+        count_by_code[code] += 1
         # convert percentage_of_freight to per_truck (FSC)
         if line_item["code"] == "FSC" and line_item["unit"] == "percentage_of_freight":
             required_line_items = new_line_items
