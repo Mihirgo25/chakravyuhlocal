@@ -2,49 +2,30 @@ from services.ftl_freight_rate.interactions.create_ftl_freight_rate import creat
 from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import get_road_distance
 from configs.ftl_freight_rate_constants import ENVISION_USER_ID, PREDICTED_PRICE_SERVICE_PROVIDER
 from datetime import datetime,timedelta
+from micro_services.client import common
 
 def get_ftl_freight_rate_extension(ftl_rates_extended, request):
     new_list = []
 
     if ftl_rates_extended:
+        # distance of requested route
         requested_distance = get_road_distance(request.get('origin_location_id'), request.get('destination_location_id'))
-        price_by_code_dict = {}
-        code_count = {}
         min_chargeable_weights_list = []
 
-        for item in ftl_rates_extended:
-            truck_body_type = item.get('truck_body_type')
-            unit = item.get('unit')
-            min_chargeable_weights_list.append(item.get('minimum_chargeable_weight'))
-
-            distance = get_road_distance(str(item.get('origin_location_id')), str(item.get('destination_location_id')))
-            for line_item in item.get("line_items", []):
-                code = line_item.get("code")
-                price_per_km = line_item.get("price") / distance
-                line_item_unit = line_item.get("unit")
-
-                if code not in price_by_code_dict:
-                    price_by_code_dict[code] = {
-                        "price_per_km": [],
-                        "unit": line_item_unit,
-                        "currency": "INR"
-                    }
-                    code_count[code] = 0
-                
-                price_by_code_dict[code]['price_per_km'].append(price_per_km)
-                code_count[code] += 1
-
-            avereage_price_per_km = {code: sum(price_by_code_dict[code]['price_per_km']) / code_count[code] for code in code_count}
-            line_items_extension = [
-                {
-                    "code": code,
-                    "price": avg_per_km * requested_distance,
-                    "unit": price_by_code_dict[code]['unit'],
-                    "currency": price_by_code_dict[code]['currency'],
-                    "remarks": []
-                }
-                for code, avg_per_km in avereage_price_per_km.items()
-            ]
+        final_line_items = [{"code": "BAS", "unit": "per_truck", "price": 0, "remarks": [], "currency": "INR"}, {"code": "FSC", "unit": "per_truck", "price": 0, "remarks": [], "currency": "INR"}]
+        for ftl_rate in ftl_rates_extended:
+            truck_body_type = ftl_rate.get('truck_body_type')
+            unit = ftl_rate.get('unit')
+            min_chargeable_weights_list.append(ftl_rate.get('minimum_chargeable_weight'))
+            # distance of existing route
+            distance = get_road_distance(str(ftl_rate.get('origin_location_id')), str(ftl_rate.get('destination_location_id')))
+            # calculate mean price
+            final_line_items = get_calculated_line_items(final_line_items, ftl_rate.get("line_items", []), distance, requested_distance)
+        
+        # divide by count for mean price
+        count_of_rates = len(ftl_rates_extended)
+        for final_item in final_line_items:
+            final_item['price'] = final_item['price'] / count_of_rates
 
         detention_free_time = 1
         transit_time = round((requested_distance//250)*24)
@@ -53,6 +34,7 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
 
         validity_start = datetime.now().date()
         validity_end = (datetime.now() + timedelta(days = 2)).date()
+        # calculate median value for minimum_chargeable_weights
         median_minimum_chargeable_weight = find_median(min_chargeable_weights_list)
 
         params = {
@@ -65,7 +47,7 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
             'performed_by_id': ENVISION_USER_ID,
             'procured_by_id': ENVISION_USER_ID,
             'sourced_by_id': ENVISION_USER_ID,
-            'line_items': line_items_extension,
+            'line_items': final_line_items,
             'truck_body_type': truck_body_type,
             'transit_time': transit_time,
             'detention_free_time': detention_free_time,
@@ -76,14 +58,52 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
             'source': 'rate_extension'
         }
 
-        create_ftl_freight_rate(params)
-
+        # create extended freight rate
+        extended_rate = create_ftl_freight_rate(params)
+        params['id'] = str(extended_rate['id'])
         new_list.append(params)
-
+    
     return new_list
 
+
+def get_calculated_line_items(final_line_items, new_line_items, distance, requested_distance):
+    for line_item in new_line_items:
+        total_price = line_item.get("price",0)
+        # convert percentage_of_freight to per_truck (FSC)
+        if line_item["code"] == "FSC" and line_item["unit"] == "percentage_of_freight":
+            required_line_items = new_line_items
+            for required_line_item in required_line_items:
+                if required_line_item["code"] != "BAS":
+                    continue
+                total_price = float(required_line_item.get("price",0))
+                total_price = (total_price * float(line_item.get("price",0))/100)
+        # convert currencies to INR
+        if line_item["currency"] != 'INR':
+            total_price = convert_to_inr(total_price, line_item["currency"])
+        # summation of prices by code
+        for final_item in final_line_items:
+            if final_item['code'] == line_item['code']:
+                final_price = final_item.get("price")
+                final_price = ((final_price/requested_distance) + (total_price/distance)) * requested_distance
+                final_item['price'] = final_price
+    
+    return final_line_items
+
+def convert_to_inr(price, currency):
+    price = common.get_money_exchange_for_fcl(
+        {
+            "price": price,
+            "from_currency": currency,
+            "to_currency": "INR"
+        }
+    )["price"]
+    return price
+
 def find_median(unordered_list):
-    sorted_list = sorted(unordered_list)
+    cleaned_list = [item for item in unordered_list if item is not None]
+    if not cleaned_list:
+        return None 
+    sorted_list = sorted(cleaned_list)
     list_length = len(sorted_list)
 
     if list_length % 2 == 1:

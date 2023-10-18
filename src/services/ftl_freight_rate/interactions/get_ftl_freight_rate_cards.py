@@ -65,12 +65,17 @@ def get_ftl_freight_rate_cards(request):
     selected_fields = select_fields()
     query = initialize_query(selected_fields, request)
     ftl_rates = list(query.dicts())
-    supply_rates = [ftl_freight_rate for ftl_freight_rate in ftl_rates if ftl_freight_rate['service_provider_id']=='manual']
+    supply_rates = [ftl_freight_rate for ftl_freight_rate in ftl_rates if ftl_freight_rate['source'] in ('manual','rate_extension')]
+
+    # Rate Extension
     if len(supply_rates) == 0:
         extension_query = initialize_query(selected_fields, request, extension = True)
         ftl_rates_extended = list(extension_query.dicts())
         if len(ftl_rates_extended) > 0:
             ftl_rates = get_ftl_freight_rate_extension(ftl_rates_extended,request)
+    else:
+        ftl_rates = supply_rates
+
     rate_list = ignore_non_eligible_service_providers(ftl_rates)
     rate_list = process_ftl_freight_rates(request, rate_list)
     rate_list = build_response_list(rate_list, request)
@@ -137,65 +142,6 @@ def initialize_query(query, request, extension = False):
     query = query.where(
         (FtlFreightRate.validity_start <= cargo_readiness_date)
         & (FtlFreightRate.validity_end >= cargo_readiness_date)
-    )
-
-    return query
-
-def initialize_query_extension(request):
-    ## TEST WITH FRONTEND, DETERMINE WHAT PARAMS ARE PASSED, ALTER THE SELECT QUERY
-    query = select_fields()
-
-    filters = {
-        "commodity": request.get("commodity"),
-        "trip_type": request.get("trip_type"),
-        "rate_not_available_entry": False,
-        "is_line_items_error_messages_present": False,
-        "truck_type": request.get("truck_type"),
-    }
-
-    for key in filters.keys():
-        if filters.get(key) is not None:
-            query = query.where(attrgetter(key)(FtlFreightRate) == filters[key])
-
-    query = query.where(
-        (FtlFreightRate.importer_exporter_id == request.get("importer_exporter_id")) |
-        (FtlFreightRate.importer_exporter_id.is_null(True))
-    )
-
-    if request.get("load_selection_type") in ["cargo_per_package", "cargo_gross"]:
-        query = query.where(
-            FtlFreightRate.unit == "per_ton"
-        )
-    elif request.get("load_selection_type") == "truck":
-        query = query.where(
-            (FtlFreightRate.unit == "per_truck") | 
-            (FtlFreightRate.unit.is_null(True))
-        )
-
-    if request.get("origin_city_id"):
-        query = query.where(
-            FtlFreightRate.origin_city_id == request.get("origin_city_id")
-        )
-    if request.get("destination_city_id"):
-        query = query.where(
-            FtlFreightRate.destination_city_id == request.get("destination_city_id")
-        )
-            
-    if request.get("origin_country_id"):
-        query = query.where(
-            FtlFreightRate.origin_country_id == request.get("origin_country_id")
-        )
-    if request.get("destination_country_id"):
-        query = query.where(
-            FtlFreightRate.destination_country_id == request.get("destination_country_id")
-        )
-    cargo_readiness_date = request.get("cargo_readiness_date")
-    query = query.where(
-        (FtlFreightRate.validity_start <= cargo_readiness_date)
-        & (FtlFreightRate.validity_end >= cargo_readiness_date)
-    )
-    query = query.where(
-        FtlFreightRate.source == 'manual'
     )
 
     return query
@@ -438,7 +384,7 @@ def ignore_non_eligible_service_providers(ftl_rates):
 
     unique_service_providers_count = len(set(rate['service_provider_id'] for rate in final_list if rate.get('service_provider_id')))
     if unique_service_providers_count > 1:
-        final_list = [rate for rate in final_list if rate.get('service_provider_id') != PREDICTED_PRICE_SERVICE_PROVIDER]
+        final_list = [rate for rate in final_list if str(rate.get('service_provider_id')) != PREDICTED_PRICE_SERVICE_PROVIDER]
     return final_list
 
 def process_ftl_freight_rates(request, rate_list):
@@ -454,10 +400,6 @@ def process_ftl_freight_rates(request, rate_list):
         query = initialize_query(query, request)
         ftl_rates = list(query.dicts())
         rate_list = ignore_non_eligible_service_providers(ftl_rates)
-
-    # ignore predicted rate in case of manual rates being present
-    # if len(rate_list) > 1:
-    #     rate_list = [ftl_freight_rate for ftl_freight_rate in rate_list if ftl_freight_rate['source']=='manual']
 
     return rate_list
 
@@ -477,7 +419,7 @@ def additional_response_data(list_of_data):
     for data in list_of_data:
         data["last_updated_at"] = data.get("updated_at")
         data["buy_rate_currency"] = "INR"
-        data["buy_rate"] = get_buy_rate(data["line_items"])
+        data["buy_rate"] = get_buy_rate(data["line_items"], data["buy_rate_currency"])
 
         if data["service_provider"] is not None:
             data["service_provider_name"] = data["service_provider"].get("short_name")
@@ -491,16 +433,16 @@ def additional_response_data(list_of_data):
     return list_of_data
 
 
-def get_buy_rate(line_items):
+def get_buy_rate(line_items, currency):
     net_price = 0
     for line_item_data in line_items:
-        # price = common.get_money_exchange_for_fcl(
-        #     {
-        #         "from_currency": line_item_data["currency"],
-        #         "to_currency": line_item_data["buy_rate_currency"],
-        #         "price": line_item_data["price"] * line_item_data["quantity"],
-        #     }
-        # )["price"]
+        price = common.get_money_exchange_for_fcl(
+            {
+                "from_currency": line_item_data["currency"],
+                "to_currency": currency,
+                "price": line_item_data["price"] * line_item_data["quantity"],
+            }
+        )["price"]
         price =  line_item_data['price']
         net_price += int(price)
 
