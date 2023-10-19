@@ -426,7 +426,7 @@ def additional_response_data(list_of_data):
     for data in list_of_data:
         data["last_updated_at"] = data.get("updated_at")
         data["buy_rate_currency"] = "INR"
-        data["buy_rate"] = get_buy_rate(data["line_items"])
+        data["buy_rate"] = get_buy_rate(data["line_items"], data["buy_rate_currency"])
 
         if data["service_provider"] is not None:
             data["service_provider_name"] = data["service_provider"].get("short_name")
@@ -440,13 +440,13 @@ def additional_response_data(list_of_data):
     return list_of_data
 
 
-def get_buy_rate(line_items):
+def get_buy_rate(line_items, currency):
     net_price = 0
     for line_item_data in line_items:
         price = common.get_money_exchange_for_fcl(
             {
                 "from_currency": line_item_data["currency"],
-                "to_currency": line_item_data["buy_rate_currency"],
+                "to_currency": currency,
                 "price": line_item_data["price"] * line_item_data["quantity"],
             }
         )["price"]
