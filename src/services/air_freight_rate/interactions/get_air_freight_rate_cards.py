@@ -374,30 +374,6 @@ def pre_discard_noneligible_rates(freight_rates):
         freight_rates = discard_noneligible_airlines(freight_rates)
     return freight_rates
 
-def remove_cogoxpress_service_provider(freight_rates):
-    service_providers_hash = {}
-    for freight_rate in freight_rates:
-        key =':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or "",freight_rate['rate_type'] or "",freight_rate['source'] or ""])
-        if key in service_providers_hash.keys():
-            service_providers_hash[freight_rate['id']].append(freight_rate)
-        else:
-            service_providers_hash[freight_rate['id']] = [freight_rate]
-
-    
-    new_list = []
-    for key, rate_list in service_providers_hash.items():
-        service_providers = set()
-        for rate in rate_list:
-            service_providers.add(rate['service_provider_id'])
-        service_providers = list(service_providers)  
-        is_other_lsps_present = len(service_providers) > 1
-        for new_rate in rate_list:
-            if is_other_lsps_present and new_rate['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
-                continue
-            new_list.append(new_rate)
-    
-    return new_list
-
 def sort_items(item):
     return datetime.fromisoformat(item['updated_at'])
 
@@ -446,26 +422,24 @@ def post_discard_less_relevant_rates(freight_rates):
     return all_freight_rates
 
 def get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted):
+    try:
+        get_air_freight_rates_from_clusters(requirements)
+    except:
+        pass
+    cluster_query = initialize_freight_query(requirements)
+    cluster_rates = jsonable_encoder(list(cluster_query.dicts()))
+    cluster_rates = pre_discard_noneligible_rates(cluster_rates)
+    if cluster_rates:
+        freight_rates = cluster_rates
+        freight_rates = valid_weight_slabs(freight_rates,requirements)
+
+
     if len(freight_rates) == 0:
-        try:
-            get_air_freight_rates_from_clusters(requirements)
-        except:
-            pass
-        
-        cluster_query = initialize_freight_query(requirements)
-        cluster_rates = jsonable_encoder(list(cluster_query.dicts()))
-        if cluster_rates:
-            freight_rates = cluster_rates
-            freight_rates = pre_discard_noneligible_rates(freight_rates)
-            freight_rates = remove_cogoxpress_service_provider(freight_rates)
-            freight_rates = valid_weight_slabs(freight_rates,requirements)
-
-
-    if len(freight_rates) ==0:
         get_air_freight_rate_prediction(requirements)
         is_predicted = True
         freight_rates = initialize_freight_query(requirements,True)
         freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+
     return freight_rates,is_predicted
 
 def valid_weight_slabs(freight_rates, requirements):
@@ -492,6 +466,37 @@ def valid_weight_slabs(freight_rates, requirements):
             valid_rates.append(freight_rate)
     return valid_rates
 
+def all_rates_predicted(freight_rates):
+    freight_rates_length = len(freight_rates)
+    predicted_rates_length = 0
+    for rate in freight_rates:
+        if rate["source"] == "predicted":
+            predicted_rates_length += 1
+            
+    if predicted_rates_length == freight_rates_length != 0:
+        return True
+    else:
+        return False
+    
+def filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted):
+    freight_rates_length = len(freight_rates)
+    if freight_rates_length != 0 and not is_predicted:
+        
+        if not are_all_rates_predicted:
+            freight_rates = list(filter(lambda item: item['source'] != 'predicted', freight_rates))
+            new_freight_rates_length = len(freight_rates)
+            cogoxpress_freight_rates_length = 0
+            for val in freight_rates:
+                if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
+                    cogoxpress_freight_rates_length += 1
+            
+            if cogoxpress_freight_rates_length != 0 and cogoxpress_freight_rates_length != new_freight_rates_length:
+                freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+        else:
+                is_predicted = True
+                
+    return freight_rates, is_predicted
+
 
 def get_air_freight_rate_cards(requirements):
     try:
@@ -507,14 +512,16 @@ def get_air_freight_rate_cards(requirements):
         freight_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(freight_query.dicts()))
         freight_rates = pre_discard_noneligible_rates(freight_rates)
-        freight_rates = remove_cogoxpress_service_provider(freight_rates)
 
         freight_rates = valid_weight_slabs(freight_rates,requirements)
-        freight_rates = filter_predicted_or_extension_rates(freight_rates)
 
         is_predicted = False
-        
-        freight_rates,is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
+        are_all_rates_predicted = all_rates_predicted(freight_rates)
+        if len(freight_rates) == 0 or are_all_rates_predicted:
+            freight_rates, is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
+            
+        freight_rates, is_predicted = filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted)
+            
         freight_rates = post_discard_less_relevant_rates(freight_rates)
         missing_surcharge = get_missing_surcharges(freight_rates)
         surcharges = get_surcharges(requirements,missing_surcharge)
