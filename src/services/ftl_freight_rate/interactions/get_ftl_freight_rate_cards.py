@@ -443,7 +443,6 @@ def get_buy_rate(line_items, currency):
                 "price": line_item_data["price"] * line_item_data["quantity"],
             }
         )["price"]
-        price =  line_item_data['price']
         net_price += int(price)
 
     return net_price
