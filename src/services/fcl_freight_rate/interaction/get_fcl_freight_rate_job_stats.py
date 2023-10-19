@@ -1,4 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJob
+from services.fcl_freight_rate.models.fcl_freight_rate_job_mappings import (
+    FclFreightRateJobMapping,
+)
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
@@ -17,7 +20,7 @@ possible_direct_filters = [
     "cogo_entity_id",
     "service_provider_id",
 ]
-possible_indirect_filters = ["updated_at"]
+possible_indirect_filters = ["updated_at", "source", "is_flash_booking_reverted", "source_id", "shipment_id"]
 
 uncommon_filters = ["serial_id", "status"]
 
@@ -254,6 +257,33 @@ def get_all_backlogs(filters):
     backlog_count = query.where(FclFreightRateJob.status == 'backlog').count()
 
     return backlog_count
+
+def apply_source_id_filter(query, filters):
+    if filters.get('source_id') and not isinstance(filters.get('source_id'), list):
+        filters['source_id'] = [filters.get('source_id')]
+    subquery = list(FclFreightRateJobMapping.select(FclFreightRateJobMapping.job_id).where(FclFreightRateJobMapping.source_id << filters['source_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(FclFreightRateJob.id << job_ids)
+    return query
+
+def apply_shipment_id_filter(query, filters):
+    if filters.get('shipment_id') and not isinstance(filters.get('shipment_id'), list):
+        filters['shipment_id'] = [filters.get('shipment_id')]
+    subquery = list(FclFreightRateJobMapping.select(FclFreightRateJobMapping.job_id).where(FclFreightRateJobMapping.shipment_id << filters['shipment_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(FclFreightRateJob.id << job_ids)
+    return query
+
+def apply_is_flash_booking_reverted_filter(query, filters):
+    if filters.get('is_flash_booking_reverted'):
+        query = query.join(FclFreightRateJobMapping, on=(FclFreightRateJobMapping.job_id == FclFreightRateJob.id)).where(FclFreightRateJobMapping.status == 'reverted')
+    else:
+        query = query.join(FclFreightRateJobMapping, on=(FclFreightRateJobMapping.job_id == FclFreightRateJob.id)).where(FclFreightRateJobMapping.status != 'reverted')
+    return query
 
 def apply_is_visible_filter(query):
     query = query.where(FclFreightRateJob.is_visible == True)

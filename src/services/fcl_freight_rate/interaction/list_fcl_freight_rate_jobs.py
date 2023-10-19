@@ -24,7 +24,7 @@ possible_direct_filters = [
     "service_provider_id",
     "status"
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted", "source_id", "shipment_id"]
 
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
@@ -162,6 +162,25 @@ def apply_start_date_filter(query, filters):
     query = query.where(FclFreightRateJob.updated_at.cast("date") >= start_date.date())
     return query
 
+def apply_source_id_filter(query, filters):
+    if filters.get('source_id') and not isinstance(filters.get('source_id'), list):
+        filters['source_id'] = [filters.get('source_id')]
+    subquery = list(FclFreightRateJobMapping.select(FclFreightRateJobMapping.job_id).where(FclFreightRateJobMapping.source_id << filters['source_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(FclFreightRateJob.id << job_ids)
+    return query
+
+def apply_shipment_id_filter(query, filters):
+    if filters.get('shipment_id') and not isinstance(filters.get('shipment_id'), list):
+        filters['shipment_id'] = [filters.get('shipment_id')]
+    subquery = list(FclFreightRateJobMapping.select(FclFreightRateJobMapping.job_id).where(FclFreightRateJobMapping.shipment_id << filters['shipment_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(FclFreightRateJob.id << job_ids)
+    return query
 
 def apply_end_date_filter(query, filters):
     end_date = filters.get("end_date")
