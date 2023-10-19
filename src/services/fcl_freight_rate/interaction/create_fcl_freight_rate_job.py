@@ -62,9 +62,15 @@ def execute_transaction_code(request, source):
     previous_sources = fcl_freight_rate_job.sources
     if source not in previous_sources and source in POSSIBLE_SOURCES_IN_JOB_MAPPINGS:
         fcl_freight_rate_job.sources = previous_sources + [source]
-        fcl_freight_rate_job.save()
         set_jobs_mapping(fcl_freight_rate_job.id, request, source)
         create_audit(fcl_freight_rate_job.id, request)
+
+    fcl_freight_rate_job.status = 'pending'
+    fcl_freight_rate_job.is_visible = params['is_visible']
+    fcl_freight_rate_job.save()
+    if source == 'live_booking':
+            update_live_booking_visiblity_for_fcl_freight_rate_job_delay.apply_async(args=[fcl_freight_rate_job.id], countdown=1800,queue='fcl_freight_rate')
+
     return {"id": fcl_freight_rate_job.id}
 
 

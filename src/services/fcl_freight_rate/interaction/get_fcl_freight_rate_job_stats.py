@@ -106,7 +106,7 @@ def apply_start_date_filter(query, filters):
         start_date = datetime.strptime(start_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
-        query = query.where(FclFreightRateJob.created_at.cast("date") >= start_date.date())
+        query = query.where(FclFreightRateJob.updated_at.cast("date") >= start_date.date())
     return query
 
 
@@ -116,7 +116,7 @@ def apply_end_date_filter(query, filters):
         end_date = datetime.strptime(end_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
-        query = query.where(FclFreightRateJob.created_at.cast("date") <= end_date.date())
+        query = query.where(FclFreightRateJob.updated_at.cast("date") <= end_date.date())
     return query
 
 
@@ -143,7 +143,7 @@ def get_statistics(filters, dynamic_statistics):
 
 def build_daily_details(query, statistics):
     query = query.where(
-        FclFreightRateJob.created_at.cast("date") == datetime.now().date()
+        FclFreightRateJob.updated_at.cast("date") == datetime.now().date()
     )
     daily_stats_query = query.select(
         FclFreightRateJob.status, fn.COUNT(FclFreightRateJob.id).alias("count")
