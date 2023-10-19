@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from database.db_session import db
-from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
+from libs.get_normalized_line_items import get_normalized_line_items
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_SHIPPING_LINE_ID
 from configs.env import DEFAULT_USER_ID

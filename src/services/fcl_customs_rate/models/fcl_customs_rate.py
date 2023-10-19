@@ -450,10 +450,3 @@ class FclCustomsRate(BaseModel):
         self.validate_container_type()
         self.validate_commodity()
         self.validate_service_provider_id()
-    
-    def set_prices(self, line_items):
-        for line_item in line_items:
-            line_item['original_price'] = line_item.get('price')
-            if not line_item.get('market_price'):
-                line_item['market_price'] = line_item.get('price')
-        return line_items

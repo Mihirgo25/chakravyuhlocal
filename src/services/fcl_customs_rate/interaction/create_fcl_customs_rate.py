@@ -4,6 +4,7 @@ from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from libs.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_normalized_line_items import get_normalized_line_items
 
 def create_fcl_customs_rate(request):
     with db.atomic():
@@ -31,7 +32,7 @@ def execute_transaction_code(request):
 
   customs_rate.sourced_by_id = request.get("sourced_by_id")
   customs_rate.procured_by_id = request.get("procured_by_id")
-  customs_rate.customs_line_items = customs_rate.set_prices(request.get('customs_line_items'))
+  customs_rate.customs_line_items = get_normalized_line_items(request.get('customs_line_items'))
   customs_rate.cfs_line_items = request.get('cfs_line_items')
 
   customs_rate.set_platform_price()
