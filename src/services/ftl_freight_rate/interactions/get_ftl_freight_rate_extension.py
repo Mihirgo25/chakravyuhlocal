@@ -3,6 +3,7 @@ from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import get_road_
 from configs.ftl_freight_rate_constants import ENVISION_USER_ID, PREDICTED_PRICE_SERVICE_PROVIDER
 from datetime import datetime,timedelta
 from micro_services.client import common
+import statistics
 
 def get_ftl_freight_rate_extension(ftl_rates_extended, request):
     new_list = []
@@ -34,7 +35,11 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
         validity_start = datetime.now().date()
         validity_end = (datetime.now() + timedelta(days = 2)).date()
         # calculate median value for minimum_chargeable_weights
-        median_minimum_chargeable_weight = find_median(min_chargeable_weights_list)
+        min_chargeable_weights_list = [item for item in min_chargeable_weights_list if item is not None]
+        median_minimum_chargeable_weight = None
+        if min_chargeable_weights_list:
+            median_minimum_chargeable_weight = statistics.median(min_chargeable_weights_list)
+        
 
         params = {
             'origin_location_id': request.get('origin_location_id'),
@@ -102,19 +107,3 @@ def convert_to_inr(price, currency):
         }
     )["price"]
     return price
-
-def find_median(unordered_list):
-    cleaned_list = [item for item in unordered_list if item is not None]
-    if not cleaned_list:
-        return None 
-    sorted_list = sorted(cleaned_list)
-    list_length = len(sorted_list)
-
-    if list_length % 2 == 1:
-        median = sorted_list[list_length // 2]
-    else:
-        mid1 = sorted_list[(list_length - 1) // 2]
-        mid2 = sorted_list[list_length // 2]
-        median = (mid1 + mid2) / 2
-
-    return median

@@ -65,16 +65,16 @@ def get_ftl_freight_rate_cards(request):
     selected_fields = select_fields()
     query = initialize_query(selected_fields, request)
     ftl_rates = list(query.dicts())
-    supply_rates = [ftl_freight_rate for ftl_freight_rate in ftl_rates if ftl_freight_rate['source'] in ('manual','rate_extension')]
+    non_predicted_rates = [ftl_freight_rate for ftl_freight_rate in ftl_rates if ftl_freight_rate['source'] in ('manual','rate_extension')]
 
     # Rate Extension
-    if len(supply_rates) == 0:
+    if len(non_predicted_rates) == 0:
         extension_query = initialize_query(selected_fields, request, extension = True)
         ftl_rates_extended = list(extension_query.dicts())
         if len(ftl_rates_extended) > 0:
             ftl_rates = get_ftl_freight_rate_extension(ftl_rates_extended,request)
     else:
-        ftl_rates = supply_rates
+        ftl_rates = non_predicted_rates
 
     rate_list = ignore_non_eligible_service_providers(ftl_rates)
     rate_list = process_ftl_freight_rates(request, rate_list)
