@@ -38,8 +38,9 @@ def execute_transaction_code(request, source):
         'rate_type' : request.get('rate_type'),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
+        'shipment_id': request.get('shipment_id')
     }
-    init_key = f'{str(params.get("origin_port_id") or "")}:{str(params.get("origin_main_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("destination_main_port_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}'
+    init_key = f'{str(params.get("origin_port_id") or "")}:{str(params.get("origin_main_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("destination_main_port_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}'
     fcl_freight_rate_job = FclFreightRateJob.select().where(FclFreightRateJob.init_key == init_key, FclFreightRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
@@ -63,9 +64,6 @@ def execute_transaction_code(request, source):
     if source not in previous_sources and source in POSSIBLE_SOURCES_IN_JOB_MAPPINGS:
         fcl_freight_rate_job.sources = previous_sources + [source]
         set_jobs_mapping(fcl_freight_rate_job.id, request, source)
-    else:
-        update_jobs_mapping(fcl_freight_rate_job.id, request)
-        
 
     fcl_freight_rate_job.status = 'pending'
     fcl_freight_rate_job.is_visible = params['is_visible']
@@ -107,7 +105,3 @@ def create_audit(jobs_id, request):
 def update_live_booking_visiblity_for_fcl_freight_rate_job(job_id):    
     FclFreightRateJob.update(is_visible=True).where((FclFreightRateJob.id == job_id) & (FclFreightRateJob.status == 'pending')).execute()
 
-def update_jobs_mapping(job_id, request):
-    update_params = {'status': 'pending', 'source_id': request.get("source_id"), 'shipment_id': request.get("shipment_id"), 'shipment_serial_id': request.get("shipment_serial_id")}
-    FclFreightRateJobMapping.update(update_params).where(FclFreightRateJobMapping.job_id << job_id, FclFreightRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
-    

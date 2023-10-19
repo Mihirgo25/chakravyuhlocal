@@ -30,8 +30,9 @@ def execute_transaction_code(request, source):
         'rate_type' : request.get('rate_type'),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
+        'shipment_id': request.get('shipment_id')
     }
-    init_key = f'{str(params.get("location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("rate_type") or "")}'
+    init_key = f'{str(params.get("location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}'
     fcl_customs_rate_job = FclCustomsRateJob.select().where(FclCustomsRateJob.init_key == init_key, FclCustomsRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
@@ -54,9 +55,11 @@ def execute_transaction_code(request, source):
     previous_sources = fcl_customs_rate_job.sources
     if source not in previous_sources and source in POSSIBLE_SOURCES_IN_JOB_MAPPINGS:
         fcl_customs_rate_job.sources = previous_sources + [source]
-        fcl_customs_rate_job.save()
         set_jobs_mapping(fcl_customs_rate_job.id, request, source)
-        create_audit(fcl_customs_rate_job.id, request)
+    fcl_customs_rate_job.status = 'pending'
+    fcl_customs_rate_job.is_visible = params['is_visible']
+    fcl_customs_rate_job.save()
+    create_audit(fcl_customs_rate_job.id, request)
     return {"id": fcl_customs_rate_job.id}
 
 

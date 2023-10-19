@@ -31,8 +31,9 @@ def execute_transaction_code(request, source):
         "rate_type": request.get("rate_type"),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
+        'shipment_id': request.get('shipment_id')
     }
-    init_key = f'{str(params.get("origin_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or  "")}:{str(params.get("rate_type") or "")}'
+    init_key = f'{str(params.get("origin_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or  "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}'
     lcl_freight_rate_job = (
         LclFreightRateJob.select()
         .where(
@@ -62,9 +63,12 @@ def execute_transaction_code(request, source):
     previous_sources = lcl_freight_rate_job.sources
     if source not in previous_sources and source in POSSIBLE_SOURCES_IN_JOB_MAPPINGS:
         lcl_freight_rate_job.sources = previous_sources + [source]
-        lcl_freight_rate_job.save()
         set_jobs_mapping(lcl_freight_rate_job.id, request, source)
-        create_audit(lcl_freight_rate_job.id, request)
+    
+    lcl_freight_rate_job.status = 'pending'
+    lcl_freight_rate_job.is_visible = params['is_visible']
+    lcl_freight_rate_job.save()
+    create_audit(lcl_freight_rate_job.id, request)
     return {"id": lcl_freight_rate_job.id}
 
 

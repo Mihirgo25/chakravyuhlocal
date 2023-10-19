@@ -30,9 +30,10 @@ def execute_transaction_code(request, source):
         'trade_type': request.get('trade_type'),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
+        'shipment_id': request.get('shipment_id')
     }
     
-    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("trade_type") or "")}'
+    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("shipment_id") or "")}'
     air_customs_rate_job = AirCustomsRateJob.select().where(AirCustomsRateJob.init_key == init_key, AirCustomsRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
@@ -55,9 +56,11 @@ def execute_transaction_code(request, source):
     previous_sources = air_customs_rate_job.sources
     if source not in previous_sources and source in POSSIBLE_SOURCES_IN_JOB_MAPPINGS:
         air_customs_rate_job.sources = previous_sources + [source]
-        air_customs_rate_job.save()
         set_jobs_mapping(air_customs_rate_job.id, request, source)
-        create_audit(air_customs_rate_job.id, request)
+    air_customs_rate_job.status = 'pending'
+    air_customs_rate_job.is_visible = params['is_visible']
+    air_customs_rate_job.save()
+    create_audit(air_customs_rate_job.id, request)
     return {"id": air_customs_rate_job.id}
 
 

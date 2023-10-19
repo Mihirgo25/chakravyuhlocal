@@ -38,9 +38,10 @@ def execute_transaction_code(request, source):
         'rate_type' : request.get('rate_type'),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
+        'shipment_id': request.get('shipment_id')
     }
 
-    init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("haulage_type") or "")}:{str(params.get("trailer_type") or "")}:{str(params.get("transport_modes_keyword") or "")}:{str(params.get("rate_type") or "")}'
+    init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("haulage_type") or "")}:{str(params.get("trailer_type") or "")}:{str(params.get("transport_modes_keyword") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}'
     haulage_freight_rate_job = HaulageFreightRateJob.select().where(HaulageFreightRateJob.init_key == init_key, HaulageFreightRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
@@ -63,9 +64,11 @@ def execute_transaction_code(request, source):
     previous_sources = haulage_freight_rate_job.sources
     if source not in previous_sources and source in POSSIBLE_SOURCES_IN_JOB_MAPPINGS:
         haulage_freight_rate_job.sources = previous_sources + [source]
-        haulage_freight_rate_job.save()
         set_jobs_mapping(haulage_freight_rate_job.id, request, source)
-        create_audit(haulage_freight_rate_job.id, request)
+    haulage_freight_rate_job.status = 'pending'
+    haulage_freight_rate_job.is_visible = params['is_visible']
+    haulage_freight_rate_job.save()
+    create_audit(haulage_freight_rate_job.id, request)
     return {"id": haulage_freight_rate_job.id}
 
 def set_jobs_mapping(jobs_id, request, source):
