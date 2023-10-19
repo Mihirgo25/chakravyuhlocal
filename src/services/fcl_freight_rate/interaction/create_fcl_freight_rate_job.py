@@ -63,13 +63,16 @@ def execute_transaction_code(request, source):
     if source not in previous_sources and source in POSSIBLE_SOURCES_IN_JOB_MAPPINGS:
         fcl_freight_rate_job.sources = previous_sources + [source]
         set_jobs_mapping(fcl_freight_rate_job.id, request, source)
-        create_audit(fcl_freight_rate_job.id, request)
+    else:
+        update_jobs_mapping(fcl_freight_rate_job.id, request)
+        
 
     fcl_freight_rate_job.status = 'pending'
     fcl_freight_rate_job.is_visible = params['is_visible']
     fcl_freight_rate_job.save()
     if source == 'live_booking':
             update_live_booking_visiblity_for_fcl_freight_rate_job_delay.apply_async(args=[fcl_freight_rate_job.id], countdown=1800,queue='fcl_freight_rate')
+    create_audit(fcl_freight_rate_job.id, request)
 
     return {"id": fcl_freight_rate_job.id}
 
@@ -103,3 +106,8 @@ def create_audit(jobs_id, request):
     
 def update_live_booking_visiblity_for_fcl_freight_rate_job(job_id):    
     FclFreightRateJob.update(is_visible=True).where((FclFreightRateJob.id == job_id) & (FclFreightRateJob.status == 'pending')).execute()
+
+def update_jobs_mapping(job_id, request):
+    update_params = {'status': 'pending', 'source_id': request.get("source_id"), 'shipment_id': request.get("shipment_id"), 'shipment_serial_id': request.get("shipment_serial_id")}
+    FclFreightRateJobMapping.update(update_params).where(FclFreightRateJobMapping.job_id << job_id, FclFreightRateJobMapping.status.not_in(['completed', 'aborted'])).execute()
+    
