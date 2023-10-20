@@ -28,6 +28,8 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.add_fields(AirFreightRateJobMapping, shipment_id = UUIDField(null=True, index=True))
     migrator.add_fields(FclFreightRateJobMapping, shipment_serial_id = BigIntegerField(index=True, null=True))
     migrator.add_fields(AirFreightRateJobMapping, shipment_serial_id = BigIntegerField(index=True, null=True))
+    migrator.add_fields(FclFreightRateJobMapping, shipment_service_id = UUIDField(index=True, null=True))
+    migrator.add_fields(AirFreightRateJobMapping, shipment_service_id = UUIDField(index=True, null=True))
     
 def rollback(migrator: Migrator, database, fake=False, **kwargs):
     pass

@@ -544,6 +544,7 @@ class DeleteAirFreightRateJob(BaseModel):
     closing_remarks: str = None
     data: dict = {}
     source_id: str = None
+    service_id: str = None
     shipment_id: str = None
     rate_id: str = None
     performed_by_id: str = None
@@ -555,6 +556,7 @@ class CreateAirFreightRateJob(BaseModel):
     source_id: str = None
     shipment_id: str = None
     shipment_serial_id: int = None
+    service_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     origin_airport_id: str = None

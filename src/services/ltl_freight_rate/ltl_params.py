@@ -6,6 +6,7 @@ class CreateLtlFreightRateJob(BaseModel):
     source_id: str = None
     shipment_id: str = None
     shipment_serial_id: int = None
+    service_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     origin_location_id: str = None
@@ -23,6 +24,7 @@ class DeleteLtlFreightRateJob(BaseModel):
     closing_remarks: list[str] = None
     data: dict = {}
     source_id: str = None
+    service_id: str = None
     shipment_id: str = None
     ltl_freight_rate_feedback_ids: list[str] = None
     ltl_freight_rate_request_ids: list[str] = None

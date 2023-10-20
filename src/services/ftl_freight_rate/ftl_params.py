@@ -287,6 +287,7 @@ class CreateFtlFreightRateJob(BaseModel):
     source_id: str = None
     shipment_id: str = None
     shipment_serial_id: int = None
+    service_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     origin_location_id: str = None
@@ -309,6 +310,7 @@ class DeleteFtlFreightRateJob(BaseModel):
     ftl_freight_rate_feedback_ids: list[str] = None
     ftl_freight_rate_request_ids: list[str] = None
     source_id: str = None
+    service_id: str = None
     shipment_id: str = None
     rate_id: str = None
     performed_by_id: str = None

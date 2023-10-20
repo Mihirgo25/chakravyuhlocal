@@ -6,6 +6,7 @@ class CreateLclCustomsRateJob(BaseModel):
     source_id: str = None
     shipment_id: str = None
     shipment_serial_id: int = None
+    service_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     location_id: str = None
@@ -21,6 +22,7 @@ class DeleteLclCustomsRateJob(BaseModel):
     closing_remarks: list[str] = None
     data: dict = {}
     source_id: str = None
+    service_id: str = None
     shipment_id: str = None
     lcl_customs_rate_feedback_ids: list[str] = None
     lcl_customs_rate_request_ids: list[str] = None
