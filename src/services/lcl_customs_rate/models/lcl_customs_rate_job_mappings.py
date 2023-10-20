@@ -22,6 +22,7 @@ class LclCustomsRateJobMapping(BaseModel):
     source_id = UUIDField(index=True, null=True)
     shipment_id = UUIDField(index=True, null=True)
     shipment_serial_id = BigIntegerField(index=True, null=True)
+    shipment_service_id = UUIDField(index=True, null=True)
     status = CharField(index=True, null=True)
     job_id = ForeignKeyField(LclCustomsRateJob, to_field="id")
     created_at = DateField(default=datetime.datetime.now)
