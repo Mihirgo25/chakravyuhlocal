@@ -56,7 +56,7 @@ class AirFreightRateJob(BaseModel):
 
       ids = [str(self.origin_airport_id), str(self.destination_airport_id)]
 
-      obj = {'filters':{"id": ids, "type":'airport'}, 'includes': {"id": True, "type": True, "name": True, "display_name": True, "is_icd": True, "port_code": True, "country_id": True, "continent_id": True, "trade_id": True, "country_code": True, "display_name": True, "country": True}}
+      obj = {'filters':{"id": ids, "type":'airport'}, 'includes': {"id": True, "type": True, "name": True, "display_name": True, "is_icd": True, "port_code": True, "country_id": True, "continent_id": True, "trade_id": True, "country_code": True, "display_name": True, "country": True, "default_params_required": True}}
       locations_response = maps.list_locations(obj)
       locations = []
       if 'list' in locations_response:
@@ -81,6 +81,6 @@ class AirFreightRateJob(BaseModel):
           "trade_id": location["trade_id"],
           "country_code": location["country_code"],
           "display_name": location["display_name"],
-          "country": location["country"]["name"]
+          "country": location["country"]
         }
         return loc_data

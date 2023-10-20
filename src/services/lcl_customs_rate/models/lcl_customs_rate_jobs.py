@@ -54,7 +54,7 @@ class LclCustomsRateJob(BaseModel):
 
     def set_locations(self):
         ids = self.location_id
-        obj = {"filters": {"id": ids}, 'includes': {"id": True, "name": True, "is_icd": True, "port_code": True, "country_id": True, "continent_id": True, "trade_id": True, "country_code": True, "type": True, "display_name": True, "country": True}}
+        obj = {"filters": {"id": ids}, 'includes': {"id": True, "name": True, "is_icd": True, "port_code": True, "country_id": True, "continent_id": True, "trade_id": True, "country_code": True, "type": True, "display_name": True, "country": True, "default_params_required": True}}
         locations_response = maps.list_locations(obj)
         locations = []
         if "list" in locations_response:
@@ -78,6 +78,6 @@ class LclCustomsRateJob(BaseModel):
             "country_code": location["country_code"],
             "type": location["type"],
             "display_name": location["display_name"],
-            "country": location["country"]["name"]
+            "country": location["country"]
         }
         return loc_data

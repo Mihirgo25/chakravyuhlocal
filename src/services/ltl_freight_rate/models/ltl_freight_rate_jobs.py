@@ -75,7 +75,7 @@ class LtlFreightRateJob(BaseModel):
           "country_id": location["country_id"],
           "country_code": location["country_code"],
           "display_name": location["display_name"],
-          "country": location["country"]["name"]
+          "country": location["country"]
         }
         return loc_data
       
