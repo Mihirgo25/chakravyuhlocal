@@ -10,7 +10,7 @@ from libs.json_encoder import json_encoder
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
 
-possible_direct_filters = ['port_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'country_id', 'id']
+possible_direct_filters = ['id', 'port_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'country_id', 'id']
 
 def list_fcl_cfs_rate_requests(filters, page_limit=10, page=1, is_stats_required=True, performed_by_id=None):
     query = FclCfsRateRequest.select()
