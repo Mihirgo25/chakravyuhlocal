@@ -18,6 +18,7 @@ def update_lcl_freight_rate_jobs_to_backlog():
         lcl_conditions = (
             LclFreightRateJob.created_at < datetime.today().date() - timedelta(days=1),
             LclFreightRateJob.status == "pending",
+            ~(LclFreightRateJob.sources.contains('live_booking') | LclFreightRateJob.sources.contains('rate_feedback') | LclFreightRateJob.sources.contains('rate_request'))
         )
 
         affected_ids = jsonable_encoder(

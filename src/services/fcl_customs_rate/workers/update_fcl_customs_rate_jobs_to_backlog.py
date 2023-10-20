@@ -15,6 +15,7 @@ def update_fcl_customs_rate_jobs_to_backlog():
         haulage_conditions = (
             FclCustomsRateJob.created_at < datetime.today().date() - timedelta(days=1),
             FclCustomsRateJob.status == "pending",
+            ~(FclCustomsRateJob.sources.contains('live_booking') | FclCustomsRateJob.sources.contains('rate_feedback') | FclCustomsRateJob.sources.contains('rate_request'))
         )
         
         affected_ids = jsonable_encoder([job.id for job in FclCustomsRateJob.select(FclCustomsRateJob.id).where(*haulage_conditions).limit(BATCH_SIZE)])

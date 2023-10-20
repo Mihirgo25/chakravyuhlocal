@@ -18,6 +18,7 @@ def update_ltl_freight_rate_jobs_to_backlog():
         ltl_conditions = (
             LtlFreightRateJob.created_at < datetime.today().date() - timedelta(days=1),
             LtlFreightRateJob.status == "pending",
+            ~(LtlFreightRateJob.sources.contains('live_booking') | LtlFreightRateJob.sources.contains('rate_feedback') | LtlFreightRateJob.sources.contains('rate_request'))
         )
 
         affected_ids = jsonable_encoder(

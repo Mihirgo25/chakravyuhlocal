@@ -14,7 +14,8 @@ def update_air_freight_rate_jobs_to_backlog():
     while True:
         air_conditions = (
             AirFreightRateJob.created_at < datetime.today().date() - timedelta(days=1),
-            AirFreightRateJob.status == "pending"
+            AirFreightRateJob.status == "pending",
+            ~(AirFreightRateJob.sources.contains('live_booking') | AirFreightRateJob.sources.contains('rate_feedback') | AirFreightRateJob.sources.contains('rate_request'))
         )
 
         affected_ids = jsonable_encoder([job.id for job in AirFreightRateJob.select(AirFreightRateJob.id).where(*air_conditions).limit(BATCH_SIZE)])

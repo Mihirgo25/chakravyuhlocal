@@ -18,6 +18,7 @@ def update_lcl_customs_rate_jobs_to_backlog():
         lcl_conditions = (
             LclCustomsRateJob.created_at < datetime.today().date() - timedelta(days=1),
             LclCustomsRateJob.status == "pending",
+            ~(LclCustomsRateJob.sources.contains('live_booking') | LclCustomsRateJob.sources.contains('rate_feedback') | LclCustomsRateJob.sources.contains('rate_request'))
         )
 
         affected_ids = jsonable_encoder(

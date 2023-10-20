@@ -23,6 +23,7 @@ def update_haulage_freight_rate_jobs_to_backlog():
             HaulageFreightRateJob.created_at
             < datetime.today().date() - timedelta(days=1),
             HaulageFreightRateJob.status == "pending",
+            ~(HaulageFreightRateJob.sources.contains('live_booking') | HaulageFreightRateJob.sources.contains('rate_feedback') | HaulageFreightRateJob.sources.contains('rate_request'))
         )
 
         affected_ids = jsonable_encoder(

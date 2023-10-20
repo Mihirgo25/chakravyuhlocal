@@ -15,6 +15,7 @@ def update_fcl_cfs_rate_jobs_to_backlog():
         fcl_conditions = (
             FclCfsRateJob.created_at < datetime.today().date() - timedelta(days=1),
             FclCfsRateJob.status == "pending",
+            ~(FclCfsRateJob.sources.contains('live_booking') | FclCfsRateJob.sources.contains('rate_feedback') | FclCfsRateJob.sources.contains('rate_request'))
         )
         
         affected_ids = jsonable_encoder([job.id for job in FclCfsRateJob.select(FclCfsRateJob.id).where(*fcl_conditions).limit(BATCH_SIZE)])

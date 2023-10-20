@@ -15,6 +15,7 @@ def update_air_customs_rate_jobs_to_backlog():
         haulage_conditions = (
             AirCustomsRateJob.created_at < datetime.today().date() - timedelta(days=1),
             AirCustomsRateJob.status == "pending",
+            ~(AirCustomsRateJob.sources.contains('live_booking') | AirCustomsRateJob.sources.contains('rate_feedback') | AirCustomsRateJob.sources.contains('rate_request'))
         )
         
         affected_ids = jsonable_encoder([job.id for job in AirCustomsRateJob.select(AirCustomsRateJob.id).where(*haulage_conditions).limit(BATCH_SIZE)])

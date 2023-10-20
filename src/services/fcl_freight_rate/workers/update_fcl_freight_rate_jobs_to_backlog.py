@@ -15,6 +15,7 @@ def update_fcl_freight_rate_jobs_to_backlog():
         fcl_conditions = (
             FclFreightRateJob.created_at < datetime.today().date() - timedelta(days=1),
             FclFreightRateJob.status == "pending",
+            ~(FclFreightRateJob.sources.contains('live_booking') | FclFreightRateJob.sources.contains('rate_feedback') | FclFreightRateJob.sources.contains('rate_request'))
         )
         
         affected_ids = jsonable_encoder([job.id for job in FclFreightRateJob.select(FclFreightRateJob.id).where(*fcl_conditions).limit(BATCH_SIZE)])
