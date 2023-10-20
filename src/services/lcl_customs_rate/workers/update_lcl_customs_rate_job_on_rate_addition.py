@@ -10,7 +10,7 @@ from services.lcl_customs_rate.models.lcl_customs_rate_audit import LclCustomsRa
 
 
 
-def update_lcl_customs_rate_job_on_rate_addition(request, id):
+def update_lcl_customs_rate_job_on_rate_addition(request):
     update_params = {
         "status": "completed",
         "closed_by_id": request.get("performed_by_id"),

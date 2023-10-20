@@ -10,7 +10,7 @@ from services.lcl_freight_rate.models.lcl_freight_rate_audit import LclFreightRa
 
 
 
-def update_lcl_freight_rate_job_on_rate_addition(request, id):
+def update_lcl_freight_rate_job_on_rate_addition(request):
     update_params = {
         "status": "completed",
         "closed_by_id": request.get("performed_by_id"),
