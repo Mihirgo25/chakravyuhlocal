@@ -1,4 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJob
+from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobMapping
 from services.air_freight_rate.helpers.generate_csv_file_url_for_air import (
     generate_csv_file_url_for_air,
 )
@@ -20,7 +21,7 @@ possible_direct_filters = [
     "cogo_entity_id",
     "service_provider_id",
 ]
-possible_indirect_filters = ["updated_at"]
+possible_indirect_filters = ["updated_at", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
 
 uncommon_filters = ["serial_id", "status"]
 
@@ -107,6 +108,26 @@ def apply_start_date_filter(query, filters):
         query = query.where(AirFreightRateJob.created_at.cast("date") >= start_date.date())
     return query
 
+
+def apply_source_id_filter(query, filters):
+    if filters.get('source_id') and not isinstance(filters.get('source_id'), list):
+        filters['source_id'] = [filters.get('source_id')]
+    subquery = list(AirFreightRateJobMapping.select(AirFreightRateJobMapping.job_id).where(AirFreightRateJobMapping.source_id << filters['source_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(AirFreightRateJob.id << job_ids)
+    return query
+
+def apply_shipment_serial_id_filter(query, filters):
+    if filters.get('shipment_serial_id') and not isinstance(filters.get('shipment_serial_id'), list):
+        filters['shipment_serial_id'] = [filters.get('shipment_serial_id')]
+    subquery = list(AirFreightRateJobMapping.select(AirFreightRateJobMapping.job_id).where(AirFreightRateJobMapping.shipment_serial_id << filters['shipment_serial_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(AirFreightRateJob.id << job_ids)
+    return query
 
 def apply_end_date_filter(query, filters):
     end_date = filters.get("end_date")
@@ -252,6 +273,13 @@ def get_all_backlogs(filters):
     backlog_count = query.where(AirFreightRateJob.status == 'backlog').count()
 
     return backlog_count
+
+def apply_is_flash_booking_reverted_filter(query, filters):
+    if filters.get('is_flash_booking_reverted'):
+        query = query.join(AirFreightRateJobMapping, on=(AirFreightRateJobMapping.job_id == AirFreightRateJob.id)).where(AirFreightRateJobMapping.status == 'reverted')
+    else:
+        query = query.join(AirFreightRateJobMapping, on=(AirFreightRateJobMapping.job_id == AirFreightRateJob.id)).where(AirFreightRateJobMapping.status != 'reverted')
+    return query
 
 def apply_is_visible_filter(query):
     query = query.where(AirFreightRateJob.is_visible == True)

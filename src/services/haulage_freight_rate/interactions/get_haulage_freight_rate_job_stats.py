@@ -1,4 +1,5 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_jobs import HaulageFreightRateJob
+from services.haulage_freight_rate.models.haulage_freight_rate_job_mappings import HaulageFreightRateJobMapping
 from services.haulage_freight_rate.helpers.generate_csv_file_url_for_haulage import (
     generate_csv_file_url_for_haulage,
 )
@@ -21,7 +22,7 @@ possible_direct_filters = [
     "cogo_entity_id",
     "service_provider_id",
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
 
 uncommon_filters = ["serial_id", "status"]
 
@@ -121,6 +122,26 @@ def apply_start_date_filter(query, filters):
     query = query.where(HaulageFreightRateJob.created_at.cast("date") >= start_date.date())
     return query
 
+
+def apply_source_id_filter(query, filters):
+    if filters.get('source_id') and not isinstance(filters.get('source_id'), list):
+        filters['source_id'] = [filters.get('source_id')]
+    subquery = list(HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.source_id << filters['source_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(HaulageFreightRateJob.id << job_ids)
+    return query
+
+def apply_shipment_serial_id_filter(query, filters):
+    if filters.get('shipment_serial_id') and not isinstance(filters.get('shipment_serial_id'), list):
+        filters['shipment_serial_id'] = [filters.get('shipment_serial_id')]
+    subquery = list(HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.shipment_serial_id << filters['shipment_serial_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(HaulageFreightRateJob.id << job_ids)
+    return query
 
 def apply_end_date_filter(query, filters):
     end_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
@@ -247,6 +268,13 @@ def get_all_backlogs(filters):
     backlog_count = query.where(HaulageFreightRateJob.status == 'backlog').count()
 
     return backlog_count
+
+def apply_is_flash_booking_reverted_filter(query, filters):
+    if filters.get('is_flash_booking_reverted'):
+        query = query.join(HaulageFreightRateJobMapping, on=(HaulageFreightRateJobMapping.job_id == HaulageFreightRateJob.id)).where(HaulageFreightRateJobMapping.status == 'reverted')
+    else:
+        query = query.join(HaulageFreightRateJobMapping, on=(HaulageFreightRateJobMapping.job_id == HaulageFreightRateJob.id)).where(HaulageFreightRateJobMapping.status != 'reverted')
+    return query
 
 def apply_is_visible_filter(query):
     query = query.where(HaulageFreightRateJob.is_visible == True)

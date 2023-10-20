@@ -11,7 +11,7 @@ from functools import reduce
 
 
 possible_direct_filters = ["location_id", "commodity", "user_id", "serial_id", "status", "cogo_entity_id"]
-possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
 
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
@@ -143,6 +143,26 @@ def apply_start_date_filter(query, filters):
     query = query.where(LclCustomsRateJob.created_at.cast("date") >= start_date.date())
     return query
 
+
+def apply_source_id_filter(query, filters):
+    if filters.get('source_id') and not isinstance(filters.get('source_id'), list):
+        filters['source_id'] = [filters.get('source_id')]
+    subquery = list(LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.job_id).where(LclCustomsRateJobMapping.source_id << filters['source_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(LclCustomsRateJob.id << job_ids)
+    return query
+
+def apply_shipment_serial_id_filter(query, filters):
+    if filters.get('shipment_serial_id') and not isinstance(filters.get('shipment_serial_id'), list):
+        filters['shipment_serial_id'] = [filters.get('shipment_serial_id')]
+    subquery = list(LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.job_id).where(LclCustomsRateJobMapping.shipment_serial_id << filters['shipment_serial_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(LclCustomsRateJob.id << job_ids)
+    return query
 
 def apply_end_date_filter(query, filters):
     end_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
