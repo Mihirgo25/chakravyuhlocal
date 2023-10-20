@@ -39,8 +39,8 @@ def delete_air_customs_rate_job(request):
         job_ids = [ str(job.job_id) for job in AirCustomsRateJobMapping.select(AirCustomsRateJobMapping.job_id).where(AirCustomsRateJobMapping.source_id << request['air_customs_rate_request_ids'])]
     elif request.get("id"):
         job_ids = request.get("id")
-    elif request.get("shipment_id"):
-        job_ids = [ str(job.job_id) for job in AirCustomsRateJobMapping.select(AirCustomsRateJobMapping.job_id).where(AirCustomsRateJobMapping.shipment_id == request['shipment_id'])]
+    elif request.get("shipment_id") and request.get('shipment_service_id'):
+        job_ids = [ str(job.job_id) for job in AirCustomsRateJobMapping.select(AirCustomsRateJobMapping.job_id).where((AirCustomsRateJobMapping.shipment_id == request['shipment_id']) & (AirCustomsRateJobMapping.shipment_service_id == request['shipment_service_id']))]
     
     if not isinstance(job_ids, list):
         job_ids = [job_ids]

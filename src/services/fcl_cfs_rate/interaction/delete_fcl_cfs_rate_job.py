@@ -39,8 +39,8 @@ def delete_fcl_cfs_rate_job(request):
         job_ids = [ str(job.job_id) for job in FclCfsRateJobMapping.select(FclCfsRateJobMapping.job_id).where(FclCfsRateJobMapping.source_id << request['fcl_cfs_rate_request_ids'])]
     elif request.get("id"):
         job_ids = request.get("id")
-    elif request.get("shipment_id"):
-        job_ids = [ str(job.job_id) for job in FclCfsRateJobMapping.select(FclCfsRateJobMapping.job_id).where(FclCfsRateJobMapping.shipment_id == request['shipment_id'])]
+    elif request.get("shipment_id") and request.get('shipment_service_id'):
+        job_ids = [ str(job.job_id) for job in FclCfsRateJobMapping.select(FclCfsRateJobMapping.job_id).where((FclCfsRateJobMapping.shipment_id == request['shipment_id']) & (FclCfsRateJobMapping.shipment_service_id == request['shipment_service_id']))]
 
     if not isinstance(job_ids, list):
         job_ids = [job_ids]
