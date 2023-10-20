@@ -47,7 +47,7 @@ class AirCustomsRateJob(BaseModel):
 
       ids = self.airport_id
 
-      obj = {'filters':{"id": ids, "type":'airport'}}
+      obj = {'filters':{"id": ids, "type":'airport'}, 'includes': {"id": True, "type": True, "name": True, "display_name": True, "is_icd": True, "port_code": True, "country_id": True, "continent_id": True, "trade_id": True, "country_code": True, "display_name": True, "country": True}}
       locations_response = maps.list_locations(obj)
       locations = []
       if 'list' in locations_response:
@@ -70,6 +70,7 @@ class AirCustomsRateJob(BaseModel):
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
           "country_code": location["country_code"],
-          "display_name": location["display_name"]
+          "display_name": location["display_name"],
+          "country": location["country"]["name"]
         }
         return loc_data

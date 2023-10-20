@@ -55,7 +55,7 @@ class FtlFreightRateJob(BaseModel):
     def set_locations(self):
       ids = [str(self.origin_location_id), str(self.destination_location_id)]    
 
-      obj = {'filters':{"id": ids}}
+      obj = {'filters':{"id": ids}, 'includes': {"id": True, "name": True, "is_icd": True, "port_code": True, "country_id": True, "continent_id": True, "trade_id": True, "country_code": True, "display_name": True, "country": True}}
       locations_response = maps.list_locations(obj)
       locations = []
       if 'list' in locations_response:
@@ -80,6 +80,7 @@ class FtlFreightRateJob(BaseModel):
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
           "country_code": location["country_code"],
-          "display_name": location["display_name"]
+          "display_name": location["display_name"],
+          "country": location["country"]["name"]
         }
         return loc_data

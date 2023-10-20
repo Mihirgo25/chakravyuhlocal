@@ -53,7 +53,7 @@ class FclCfsRateJob(BaseModel):
     
     def set_locations(self):
       ids = [str(self.location_id)]
-      obj = {'filters':{"id": ids, "type":'seaport'}}
+      obj = {'filters':{"id": ids, "type":'seaport'}, 'includes': {"id": True, "name": True, "is_icd": True, "port_code": True, "country_id": True, "continent_id": True, "trade_id": True, "country_code": True, "display_name": True, "country": True}}
       locations_response = maps.list_locations(obj)
       locations = []
       if 'list' in locations_response:
@@ -79,7 +79,7 @@ class FclCfsRateJob(BaseModel):
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
           "country_code": location["country_code"],
-          "continent_id": location["continent_id"],
-          "display_name": location["display_name"]
+          "display_name": location["display_name"],
+          "country": location["country"]["name"]
         }
         return loc_data
