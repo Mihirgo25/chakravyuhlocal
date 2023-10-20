@@ -8,6 +8,7 @@ from database.rails_db import get_organization_service_experties,get_organizatio
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from micro_services.client import spot_search
+from libs.json_encoder import json_encoder
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity__less_than', 'similar_id']
 possible_direct_filters = ['origin_location_id','serial_id','destination_location_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_country_id', 'destination_country_id']
@@ -157,7 +158,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
     return { 'stats': stats }
 
 def get_data(query, spot_search_details_required):
-    data = list(query.dicts())
+    data = json_encoder(list(query.dicts()))
 
     service_provider_ids = []
     for item in data:
