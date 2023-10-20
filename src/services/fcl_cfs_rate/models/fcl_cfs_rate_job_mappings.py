@@ -20,6 +20,7 @@ class FclCfsRateJobMapping(BaseModel):
     source =  TextField(index=True)
     source_id = UUIDField(index=True, null=True)
     shipment_id = UUIDField(index=True, null=True)
+    shipment_serial_id = BigIntegerField(index=True, null=True)
     status =  TextField(index=True, null=True)
     job_id = ForeignKeyField(FclCfsRateJob,to_field="id")
     created_at = DateField(default=datetime.datetime.now)

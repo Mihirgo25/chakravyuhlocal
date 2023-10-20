@@ -20,6 +20,7 @@ class FclCustomsRateJobMapping(BaseModel):
     source =  TextField(index=True)
     source_id = UUIDField(index=True, null=True)
     shipment_id = UUIDField(index=True, null=True)
+    shipment_serial_id = BigIntegerField(index=True, null=True)
     status = CharField(index=True, null=True)
     job_id = ForeignKeyField(FclCustomsRateJob,to_field="id")
     created_at = DateField(default=datetime.datetime.now)

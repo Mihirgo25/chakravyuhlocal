@@ -61,6 +61,8 @@ def execute_transaction_code(request, source):
     ftl_freight_rate_job.status = 'pending'
     ftl_freight_rate_job.is_visible = params['is_visible']
     ftl_freight_rate_job.save()
+    if source == 'live_booking':
+        update_live_booking_visiblity_for_ftl_freight_rate_job_delay.apply_async(args=[ftl_freight_rate_job.id], countdown=1800,queue='fcl_freight_rate')
     create_audit(ftl_freight_rate_job.id, request)
     return {"id": ftl_freight_rate_job.id}
 
@@ -69,6 +71,7 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = FtlFreightRateJobMapping.create(
         source_id=request.get("source_id"),
         shipment_id=request.get("shipment_id"),
+        shipment_serial_id = request.get("shipment_serial_id"),
         job_id= jobs_id,
         source = source,
         status = 'pending'
