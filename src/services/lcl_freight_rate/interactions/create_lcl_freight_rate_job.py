@@ -56,7 +56,7 @@ def execute_transaction_code(request, source):
         create_audit(lcl_freight_rate_job.id, request)
         get_multiple_service_objects(lcl_freight_rate_job)
         if source == 'live_booking':
-            update_live_booking_visiblity_for_lcl_freight_rate_job_delay.apply_async(args=[lcl_freight_rate_job.id], countdown=1800,queue='fcl_freight_rate')
+            update_live_booking_visiblity_for_lcl_freight_rate_job_delay.apply_async(args=[lcl_freight_rate_job.id], countdown=1800,queue='critical')
 
         return {"id": lcl_freight_rate_job.id}
 
@@ -69,7 +69,7 @@ def execute_transaction_code(request, source):
     lcl_freight_rate_job.is_visible = params['is_visible']
     lcl_freight_rate_job.save()
     if source == 'live_booking':
-        update_live_booking_visiblity_for_lcl_freight_rate_job_delay.apply_async(args=[lcl_freight_rate_job.id], countdown=1800,queue='fcl_freight_rate')
+        update_live_booking_visiblity_for_lcl_freight_rate_job_delay.apply_async(args=[lcl_freight_rate_job.id], countdown=1800,queue='critical')
     create_audit(lcl_freight_rate_job.id, request)
     return {"id": lcl_freight_rate_job.id}
 
