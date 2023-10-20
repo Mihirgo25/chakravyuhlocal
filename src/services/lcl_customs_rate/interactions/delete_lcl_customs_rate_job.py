@@ -47,8 +47,8 @@ def delete_lcl_customs_rate_job(request):
         job_ids = [ str(job.job_id) for job in LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.job_id).where(LclCustomsRateJobMapping.source_id << request['lcl_customs_rate_request_ids'])]
     elif request.get("id"):
         job_ids = request.get("id")
-    elif request.get("shipment_id") and request.get('shipment_service_id'):
-        job_ids = [ str(job.job_id) for job in LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.job_id).where((LclCustomsRateJobMapping.shipment_id == request['shipment_id']) & (LclCustomsRateJobMapping.shipment_service_id == request['shipment_service_id']))]
+    elif request.get("shipment_id") and request.get('service_id'):
+        job_ids = [ str(job.job_id) for job in LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.job_id).where((LclCustomsRateJobMapping.shipment_id == request['shipment_id']) & (LclCustomsRateJobMapping.shipment_service_id == request['service_id']))]
     
     if not isinstance(job_ids, list):
         job_ids = [job_ids]

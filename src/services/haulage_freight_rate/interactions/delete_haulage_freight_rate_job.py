@@ -43,8 +43,8 @@ def delete_haulage_freight_rate_job(request):
         job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where(HaulageFreightRateJobMapping.source_id << request['trailer_freight_rate_request_ids'])]
     elif request.get("id"):
         job_ids = request.get("id")
-    elif request.get("shipment_id") and request.get('shipment_service_id'):
-        job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where((HaulageFreightRateJobMapping.shipment_id == request['shipment_id']) & (HaulageFreightRateJobMapping.shipment_service_id == request['shipment_service_id']))]
+    elif request.get("shipment_id") and request.get('service_id'):
+        job_ids = [ str(job.job_id) for job in HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.job_id).where((HaulageFreightRateJobMapping.shipment_id == request['shipment_id']) & (HaulageFreightRateJobMapping.shipment_service_id == request['service_id']))]
 
  
 

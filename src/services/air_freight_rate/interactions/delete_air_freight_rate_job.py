@@ -40,8 +40,8 @@ def delete_air_freight_rate_job(request):
         job_ids = [ str(job.job_id) for job in AirFreightRateJobMapping.select(AirFreightRateJobMapping.job_id).where(AirFreightRateJobMapping.source_id << request['air_freight_rate_request_ids'])]
     elif request.get("id"):
         job_ids = request.get("id")
-    elif request.get("shipment_id") and request.get('shipment_service_id'):
-        job_ids = [ str(job.job_id) for job in AirFreightRateJobMapping.select(AirFreightRateJobMapping.job_id).where((AirFreightRateJobMapping.shipment_id == request['shipment_id']) & (AirFreightRateJobMapping.shipment_service_id == request['shipment_service_id']))]
+    elif request.get("shipment_id") and request.get('service_id'):
+        job_ids = [ str(job.job_id) for job in AirFreightRateJobMapping.select(AirFreightRateJobMapping.job_id).where((AirFreightRateJobMapping.shipment_id == request['shipment_id']) & (AirFreightRateJobMapping.shipment_service_id == request['service_id']))]
         
     if not isinstance(job_ids, list):
         job_ids = [job_ids]
