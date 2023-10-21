@@ -1,12 +1,12 @@
 OCG:
   name: "Origin Certificate Charge"
-  units: ['per_bl']
+  units: ['per_bl', 'per_document']
   trade_types: ['export']
   condition: true
   tags: ['additional_service', 'customs_clearance']
 OE:
   name: "Open Examination"
-  units: ['per_container']
+  units: ['per_container', 'per_document', 'per_container']
   trade_types: ['export', 'import']
   condition: true
   tags: ['additional_service', 'customs_clearance']
@@ -42,7 +42,7 @@ WHT:
   tags: ['additional_service', 'customs_clearance']
 MLR:
   name: "Meis Licence Registration"
-  units: ['per_shipment']
+  units: ['per_shipment', 'per_document']
   trade_types: ['export']
   condition: location['country_code'] == 'IN'
   tags: ['additional_service', 'customs_clearance']
@@ -54,7 +54,7 @@ LRPC:
   tags: ['additional_service', 'customs_clearance']
 IGT:
   name: "ICEGATE Charges"
-  units: ['per_shipping_bill']
+  units: ['per_shipping_bill', 'per_document']
   trade_types: ['export']
   condition: location['country_code'] == 'IN'
   tags: ['additional_service', 'customs_clearance']
@@ -72,13 +72,13 @@ OWC:
   tags: ['additional_service', 'customs_clearance']
 DCG:
   name: "Destination Certificate Charge"
-  units: ['per_container']
+  units: ['per_container', 'per_document']
   trade_types: ['export', 'import']
   condition: true
   tags: ['additional_service', 'customs_clearance']
 DSI:
   name: "Document Stamp Tax Import"
-  units: ['per_container']
+  units: ['per_container', 'per_document']
   trade_types: ['import']
   condition: true
   tags: ['additional_service', 'cfs']
@@ -93,19 +93,19 @@ DS:
   units: ['per_container']
   trade_types: ['export']
   condition: location['country_code'] == 'IN'
-  tags: ['mandatory', 'dock_stuffing', 'cfs']
+  tags: ['dock_stuffing', 'cfs']
 DDS:
   name: "Dock Destuffing"
   units: ['per_container']
   trade_types: ['import']
   condition: location['country_code'] == 'IN'
-  tags: ['mandatory', 'dock_destuffing', 'cfs']
+  tags: ['dock_destuffing', 'cfs']
 FC:
   name: "Fumigation"
   units: ['per_container']
   trade_types: ['export']
   condition: true
-  tags: ['additional_service', 'cfs']
+  tags: ['additional_service', 'customs_clearance']
 # CFSCLO:
 #   name: "CFS Lift On/Off Charges"
 #   units: ['per_container']
@@ -129,13 +129,13 @@ ICDS:
   units: ['per_container']
   trade_types: ['export']
   condition: location['is_icd']
-  tags: ['mandatory', 'icd_stuffing', 'cfs']
+  tags: ['icd_stuffing', 'cfs']
 ICDDS:
   name: "ICD Destuffing"
   units: ['per_container']
   trade_types: ['import']
   condition: location['is_icd']
-  tags: ['mandatory', 'icd_destuffing', 'cfs']
+  tags: ['icd_destuffing', 'cfs']
 WRC:
   name: "Warai Charge"
   units: ['per_container']
@@ -204,7 +204,7 @@ ISCT:
   tags: ['additional_service', 'customs_clearance']
 RPC:
   name: "Repacking Charges"
-  units: ['per_shipment']
+  units: ['per_shipment', 'per_container']
   trade_types: ['import', 'export']
   condition: true
   tags: ['additional_service', 'customs_clearance']
@@ -216,7 +216,7 @@ CMC:
   tags: ['customs_clearance']
 LC:
   name: "Landing Certificate"
-  units: ['per_container']
+  units: ['per_container', 'per_document']
   trade_types: ['import', 'export']
   condition: true
   tags: ['additional_service', 'customs_clearance']
@@ -267,7 +267,7 @@ T1:
   units: ['per_bl']
   trade_types: ['import', 'export']
   condition: (location['country_code'] in ['CZ', 'MK', 'FR', 'IE', 'IS', 'BY', 'NI', 'AT', 'CH', 'HU', 'SE', 'RU', 'DK', 'FO', 'FI', 'BE', 'MD', 'LT', 'AM', 'LV', 'PT', 'NO', 'SK', 'RS', 'DE', 'EE', 'NL', 'AD', 'LI', 'PL', 'MC', 'GB', 'LU'])
-  tags: ['mandatory', 'customs_clearance']
+  tags: ['customs_clearance']
 SBILL:
   name: "Shipping Bill Cancellation Fee"
   units: ['per_shipping_bill']
@@ -282,7 +282,7 @@ BTT:
   tags: ['additional_service', 'customs_clearance']
 SAC:
   name: "S/BILL Amendment Charges"
-  units: ['per_shipping_bill']
+  units: ['per_shipping_bill', 'per_document']
   trade_types: ['export']
   condition: true
   tags: ['additional_service', 'customs_clearance']
@@ -300,7 +300,7 @@ WHC:
   tags: ['additional_service', 'customs_clearance']
 WEH:
   name: "Weighbridge Fee"
-  units: ['per_shipment']
+  units: ['per_shipment', 'per_container']
   trade_types: ['import', 'export']
   condition: true
   tags: ['customs_clearance']
@@ -309,7 +309,7 @@ UKS:
   units: ['per_container']
   trade_types: ['import']
   condition: location['country_code'] == 'GB'
-  tags: ['mandatory', 'customs_clearance']
+  tags: ['customs_clearance']
 ADCRF:
   name: "Port Registration Fee"
   units: ['per_shipment']
@@ -330,7 +330,7 @@ LIDC:
   tags: ['customs_clearance']
 NOCC:
   name: "Wild Life/ADC/P&Q NOC Charges"
-  units: ['per_shipment', 'per_container']
+  units: ['per_shipment', 'per_container', 'per_document']
   trade_types: ['export', 'import']
   condition: true
   tags: ['customs_clearance']
@@ -360,19 +360,19 @@ SORCH:
   tags: ['customs_clearance']
 FCHC:
   name: "Forklift/Crane/Hydra Charges"
-  units: ['per_container']
+  units: ['per_container', 'per_shipment']
   trade_types: ['export', 'import']
   condition: true
   tags: ['customs_clearance']
 HAZL:
   name: "HAZ Labelling"
-  units: ['per_container']
+  units: ['per_container', 'per_shipment']
   trade_types: ['export', 'import']
   condition: true
   tags: ['customs_clearance']
 CECC:
   name: "Chartered Engineer Certificate Charges"
-  units: ['per_shipment', 'per_container']
+  units: ['per_shipment', 'per_container', 'per_document']
   trade_types: ['export', 'import']
   condition: true
   tags: ['customs_clearance']
@@ -400,3 +400,156 @@ TRD:
   trade_types: ['import', 'export']
   condition: true
   tags: ['customs_clearance']
+TRCG:
+  name: 'Transportation charges'
+  units: ['per_shipment', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996712'
+WNOC:
+  name: "Wildlife Noc Charges"
+  units: ['per_shipment', 'per_kg', 'per_awb', 'per_document']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996713'
+THCG:
+  name: "Terminal Handling Charges"
+  units: ['per_kg', 'per_shipment', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service', 'customs_clearance']
+  sac_code: '996712'
+COC:
+  name: "Certification of Origin Charges"
+  units: ['per_shipment', 'per_document' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: [ 'additional_service','customs_clearance']
+  sac_code: '996712'
+FLC:
+  name: "Forklift Charges"
+  units: ['per_shipment', 'per_kg', 'per_awb', 'per_document']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996713'
+PDC:
+  name: "Pickup Charges"
+  units: ['per_shipment', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996713'
+ADCRC:
+  name: "AD Code Registration"
+  units: ['per_shipment', 'per_document']
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: [ 'additional_service','customs_clearance']
+  sac_code: '996713'
+LBL:
+  name: 'Label & Marking'
+  units: ['per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: [ 'additional_service','customs_clearance']
+  sac_code: '996713'
+LUC:
+  name: 'Loading/Unloading charges'
+  units: ['per_shipment', 'per_container']
+  trade_types: [ 'export' ]
+  condition: true
+  tags: [ 'additional_service','customs_clearance']
+  sac_code: '996713'
+EC:
+  name: "Examination charge"
+  units: ['per_package', 'per_shipment', 'per_document', 'per_container']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996712'
+LR:
+  name: "Licence Registration"
+  units: ['per_shipment', 'per_kg' , 'per_document']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996712'
+WC:
+  name: "Weighment Charge"
+  units: ['per_shipment', 'per_kg', 'per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996712'
+CCO:
+  name: 'Customs Clearance Origin'
+  units: ['per_shipment','per_document']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996712'
+CCD:
+  name: 'Customs Clearance Destination'
+  units: ['per_shipment', 'per_document']
+  trade_types: ['import','export']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996712'
+CCOV:
+  name: 'Customs Clearance Origin'
+  units: ['per_shipment','per_document']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996712'
+DOCG:
+  name: "Documentation Charges"
+  units: ['per document']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+AC:
+  name: "Amendment charges"
+  units: ['per_shipment']
+  trade_types: ['export', 'import' ]
+  condition: true
+  tags: ['additional_service','customs_clearance']
+ADS:
+  name: "Stamp Duty Charges"
+  units: ['per_shipment', 'per_document']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+IPC:
+  name: "Insurance Premium Charges"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+CFP:
+  name: 'Custom Fine & Penalty'
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+LDRF:
+  name: 'License de-registration fee'
+  units: ['per_shipment','per_document']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+LRF:
+  name: 'License registration fee'
+  units: ['per_document','per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+STFC:
+  name: 'Stuffing/Destuffing Charge'
+  units: ['per_container','per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service','customs_clearance']
