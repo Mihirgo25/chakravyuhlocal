@@ -22,7 +22,6 @@ def update_lcl_freight_rate_job_on_rate_addition(request):
         "origin_port_id": request.get("origin_port_id"),
         "destination_port_id": request.get("destination_port_id"),
         "commodity": request.get("commodity"),
-        "service_provider_id": request.get("service_provider_id"),
         "rate_type": request.get("rate_type"),
     }
     conditions = [

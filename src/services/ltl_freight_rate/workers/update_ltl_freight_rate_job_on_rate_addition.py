@@ -23,7 +23,6 @@ def update_ltl_freight_rate_job_on_rate_addition(request):
         "destination_location_id": request.get("destination_location_id"),
         "transit_time": request.get("transit_time"),
         "commodity": request.get("commodity"),
-        "service_provider_id": request.get("service_provider_id"),
         "density_factor": request.get("density_factor"),
     }
     conditions = [
