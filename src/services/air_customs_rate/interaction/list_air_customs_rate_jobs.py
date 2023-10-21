@@ -90,7 +90,7 @@ def list_air_customs_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = AirCustomsRateJobMapping.select(AirCustomsRateJobMapping.shipment_serial_id, AirCustomsRateJobMapping.source_id, AirCustomsRateJobMapping.shipment_id, AirCustomsRateJobMapping.status).where(AirCustomsRateJobMapping.job_id == d['id'])
+        mappings_query = AirCustomsRateJobMapping.select(AirCustomsRateJobMapping.shipment_service_id, AirCustomsRateJobMapping.shipment_serial_id, AirCustomsRateJobMapping.source_id, AirCustomsRateJobMapping.shipment_id, AirCustomsRateJobMapping.status).where(AirCustomsRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             if not isinstance(filters.get('source'), list):
                 filters['source'] = [filters.get('source')]
@@ -101,6 +101,7 @@ def get_data(query, filters):
             d['shipment_id'] = mappings_data.shipment_id
             d['reverted_status'] = mappings_data.status
             d['shipment_serial_id'] = mappings_data.shipment_serial_id
+            d['shipment_service_id'] = mappings_data.shipment_service_id
     return data
 
 
