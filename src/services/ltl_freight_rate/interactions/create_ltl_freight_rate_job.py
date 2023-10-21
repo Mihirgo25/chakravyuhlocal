@@ -1,7 +1,6 @@
 from services.ltl_freight_rate.models.ltl_freight_rate_jobs import LtlFreightRateJob
 from services.ltl_freight_rate.models.ltl_freight_rate_job_mappings import LtlFreightRateJobMapping
 from libs.get_multiple_service_objects import get_multiple_service_objects
-from libs.allocate_jobs import allocate_jobs
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
 from database.db_session import db
@@ -48,7 +47,7 @@ def execute_transaction_code(request, source):
         create_audit(ltl_freight_rate_job.id, request)
         get_multiple_service_objects(ltl_freight_rate_job)
         if source == 'live_booking':
-            update_live_booking_visiblity_for_ltl_freight_rate_job_delay.apply_async(args=[ltl_freight_rate_job.id], countdown=1800,queue='critical')
+            update_live_booking_visiblity_for_ltl_freight_rate_job_delay.apply_async(args=[ltl_freight_rate_job.id], countdown=1800,queue='fcl_freight_rate')
 
         return {"id": ltl_freight_rate_job.id}
     
@@ -61,7 +60,7 @@ def execute_transaction_code(request, source):
     ltl_freight_rate_job.is_visible = params['is_visible']
     ltl_freight_rate_job.save()
     if source == 'live_booking':
-        update_live_booking_visiblity_for_ltl_freight_rate_job_delay.apply_async(args=[ltl_freight_rate_job.id], countdown=1800,queue='critical')
+        update_live_booking_visiblity_for_ltl_freight_rate_job_delay.apply_async(args=[ltl_freight_rate_job.id], countdown=1800,queue='fcl_freight_rate')
     create_audit(ltl_freight_rate_job.id, request)
     return {"id": ltl_freight_rate_job.id}
 

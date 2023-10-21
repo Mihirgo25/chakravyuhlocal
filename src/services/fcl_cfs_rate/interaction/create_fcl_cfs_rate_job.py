@@ -1,7 +1,6 @@
 from services.fcl_cfs_rate.models.fcl_cfs_rate_jobs import FclCfsRateJob
 from services.fcl_cfs_rate.models.fcl_cfs_rate_job_mappings import FclCfsRateJobMapping
 from libs.get_multiple_service_objects import get_multiple_service_objects
-from libs.allocate_jobs import allocate_jobs
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
 from database.db_session import db
@@ -49,7 +48,7 @@ def execute_transaction_code(request, source):
         create_audit(fcl_cfs_rate_job.id, request)
         get_multiple_service_objects(fcl_cfs_rate_job)
         if source == 'live_booking':
-            update_live_booking_visiblity_for_fcl_cfs_rate_job_delay.apply_async(args=[fcl_cfs_rate_job.id], countdown=1800,queue='critical')
+            update_live_booking_visiblity_for_fcl_cfs_rate_job_delay.apply_async(args=[fcl_cfs_rate_job.id], countdown=1800,queue='fcl_freight_rate')
 
         return {"id": fcl_cfs_rate_job.id}
     
@@ -62,7 +61,7 @@ def execute_transaction_code(request, source):
     fcl_cfs_rate_job.is_visible = params['is_visible']
     fcl_cfs_rate_job.save()
     if source == 'live_booking':
-        update_live_booking_visiblity_for_fcl_cfs_rate_job_delay.apply_async(args=[fcl_cfs_rate_job.id], countdown=1800,queue='critical')
+        update_live_booking_visiblity_for_fcl_cfs_rate_job_delay.apply_async(args=[fcl_cfs_rate_job.id], countdown=1800,queue='fcl_freight_rate')
     create_audit(fcl_cfs_rate_job.id, request)
     return {"id": fcl_cfs_rate_job.id}
 
