@@ -22,7 +22,7 @@ possible_direct_filters = [
     "cogo_entity_id",
     "service_provider_id",
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
+possible_indirect_filters = ["updated_at", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
 
 uncommon_filters = ["serial_id", "status"]
 
@@ -152,9 +152,9 @@ def apply_end_date_filter(query, filters):
 
 
 def build_daily_details(query, statistics):
-    query = query.where(
-        HaulageFreightRateJob.created_at.cast("date") == datetime.now().date()
-    )
+    # query = query.where(
+    #     HaulageFreightRateJob.created_at.cast("date") == datetime.now().date()
+    # )
     daily_stats_query = query.select(
         HaulageFreightRateJob.status, fn.COUNT(HaulageFreightRateJob.id).alias("count")
     ).group_by(HaulageFreightRateJob.status)

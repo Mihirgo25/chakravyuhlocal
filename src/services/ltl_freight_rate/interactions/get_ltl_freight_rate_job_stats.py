@@ -164,9 +164,9 @@ def get_statistics(filters, dynamic_statistics):
 
 
 def build_daily_details(query, statistics):
-    query = query.where(
-        LtlFreightRateJob.created_at.cast("date") == datetime.now().date()
-    )
+    # query = query.where(
+    #     LtlFreightRateJob.created_at.cast("date") == datetime.now().date()
+    # )
     daily_stats_query = query.select(
         LtlFreightRateJob.status, fn.COUNT(LtlFreightRateJob.id).alias("count")
     ).group_by(LtlFreightRateJob.status)
@@ -265,8 +265,8 @@ def apply_extra_filters(query, filters):
             
 
     query = get_filters(applicable_filters, query, LtlFreightRateJob)
-    query = apply_start_date_filter(query, filters)
-    query = apply_end_date_filter(query, filters)
+    # query = apply_start_date_filter(query, filters)
+    # query = apply_end_date_filter(query, filters)
     return query
 
 def get_all_backlogs(filters):
