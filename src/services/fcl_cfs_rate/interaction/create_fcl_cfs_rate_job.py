@@ -48,7 +48,7 @@ def execute_transaction_code(request, source):
         create_audit(fcl_cfs_rate_job.id, request)
         get_multiple_service_objects(fcl_cfs_rate_job)
         if source == 'live_booking':
-            update_live_booking_visiblity_for_fcl_cfs_rate_job_delay.apply_async(args=[fcl_cfs_rate_job.id], countdown=1800,queue='fcl_freight_rate')
+            update_live_booking_visiblity_for_fcl_cfs_rate_job_delay.apply_async(args=[fcl_cfs_rate_job.id], countdown=1800,queue='critical')
 
         return {"id": fcl_cfs_rate_job.id}
     
@@ -61,7 +61,7 @@ def execute_transaction_code(request, source):
     fcl_cfs_rate_job.is_visible = params['is_visible']
     fcl_cfs_rate_job.save()
     if source == 'live_booking':
-        update_live_booking_visiblity_for_fcl_cfs_rate_job_delay.apply_async(args=[fcl_cfs_rate_job.id], countdown=1800,queue='fcl_freight_rate')
+        update_live_booking_visiblity_for_fcl_cfs_rate_job_delay.apply_async(args=[fcl_cfs_rate_job.id], countdown=1800,queue='critical')
     create_audit(fcl_cfs_rate_job.id, request)
     return {"id": fcl_cfs_rate_job.id}
 

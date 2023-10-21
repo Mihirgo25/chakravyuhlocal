@@ -48,7 +48,7 @@ def execute_transaction_code(request, source):
         create_audit(air_customs_rate_job.id, request)
         get_multiple_service_objects(air_customs_rate_job)
         if source == 'live_booking':
-            update_live_booking_visiblity_for_air_customs_rate_job_delay.apply_async(args=[air_customs_rate_job.id], countdown=1800,queue='fcl_freight_rate')
+            update_live_booking_visiblity_for_air_customs_rate_job_delay.apply_async(args=[air_customs_rate_job.id], countdown=1800,queue='critical')
 
         return {"id": air_customs_rate_job.id}
     
@@ -60,7 +60,7 @@ def execute_transaction_code(request, source):
     air_customs_rate_job.is_visible = params['is_visible']
     air_customs_rate_job.save()
     if source == 'live_booking':
-        update_live_booking_visiblity_for_air_customs_rate_job_delay.apply_async(args=[air_customs_rate_job.id], countdown=1800,queue='fcl_freight_rate')
+        update_live_booking_visiblity_for_air_customs_rate_job_delay.apply_async(args=[air_customs_rate_job.id], countdown=1800,queue='critical')
     create_audit(air_customs_rate_job.id, request)
     return {"id": air_customs_rate_job.id}
 
