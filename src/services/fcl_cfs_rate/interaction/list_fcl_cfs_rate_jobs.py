@@ -92,7 +92,7 @@ def list_fcl_cfs_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = FclCfsRateJobMapping.select(FclCfsRateJobMapping.source_id, FclCfsRateJobMapping.shipment_id, FclCfsRateJobMapping.status).where(FclCfsRateJobMapping.job_id == d['id'])
+        mappings_query = FclCfsRateJobMapping.select(FclCfsRateJobMapping.shipment_serial_id, FclCfsRateJobMapping.source_id, FclCfsRateJobMapping.shipment_id, FclCfsRateJobMapping.status).where(FclCfsRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             if not isinstance(filters.get('source'), list):
                 filters['source'] = [filters.get('source')]
@@ -102,6 +102,7 @@ def get_data(query, filters):
             d['source_id'] = mappings_data.source_id
             d['shipment_id'] = mappings_data.shipment_id
             d['reverted_status'] = mappings_data.status
+            d['shipment_serial_id'] = mappings_data.shipment_serial_id
     return data
 
 
