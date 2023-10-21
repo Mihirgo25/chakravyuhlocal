@@ -19,7 +19,7 @@ def redis_timed_cache(maxsize=500, conn=None):
                     conn.hdel(cache, key)
         
         def add_to_cache(key, cached_data):
-            hits, process_time = cached_data['hits'], cached_data['processe_time']
+            hits, process_time = cached_data['hits'], cached_data['process_time']
             conn.zadd(cache_sorted_keys, {str(key): hits * float(process_time)})
             conn.hset(cache, str(key), json.dumps(cached_data))
             conn.setex(str(key), REFRESH_TIME,f"{hits},{process_time}")
