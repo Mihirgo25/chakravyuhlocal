@@ -23,6 +23,9 @@ def update_lcl_customs_rate_job_on_rate_addition(request):
         "trade_type": request.get("trade_type"),
         "commodity": request.get("commodity"),
         "service_provider_id": request.get("service_provider_id"),
+        "container_size": request.get("container_size"),
+        "container_type": request.get("container_type"),
+        "rate_type": request.get("rate_type"),
     }
     conditions = [
         (getattr(LclCustomsRateJob, key) == value) for key, value in params.items()

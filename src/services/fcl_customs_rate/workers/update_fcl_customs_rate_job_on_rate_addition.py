@@ -24,6 +24,7 @@ def update_fcl_customs_rate_job_on_rate_addition(request, id):
         "container_type": request.get("container_type"),
         "commodity": request.get("commodity"),
         "rate_type": request.get("rate_type"),
+        'trade_type': request.get('trade_type'),
     }
     conditions = [
         (getattr(FclCustomsRateJob, key) == value) for key, value in params.items()

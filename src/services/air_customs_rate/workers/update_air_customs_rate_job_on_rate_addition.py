@@ -22,10 +22,7 @@ def update_air_customs_rate_job_on_rate_addition(request, id):
         "airport_id": request.get("airport_id"),
         "commodity": request.get("commodity"),
         "rate_type": request.get("rate_type"),
-        "commodity_type": request.get("commodity_type"),
-        "commodity_sub_type": request.get("commodity_sub_type"),
-        "stacking_type": request.get("stacking_type"),
-        "operation_type": request.get("operation_type"),
+        "trade_type": request.get("trade_type"),
     }
     conditions = [
         (getattr(AirCustomsRateJob, key) == value) for key, value in params.items()
