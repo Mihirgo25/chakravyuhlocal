@@ -7,8 +7,10 @@ from services.rate_sheet.interactions.upload_file import upload_media_file
 
 
 def process_fcl_customs_customs(params, converted_file, update):
+    valid_headers = ['location', 'trade_type', 'container_size', 'container_type', 'commodity', 'line_item_type', 'code', 'unit', 'price', 'market_price', 'currency', 'remark1', 'remark2', 'remark3']
     total_lines = 0
     original_path = get_original_file_path(converted_file)
+    invalidated = False
     with open(original_path, encoding='iso-8859-1') as file:
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         headers = next(reader)
@@ -33,7 +35,14 @@ def process_fcl_customs_customs(params, converted_file, update):
             csv_writer.writerow(headers)
         
         input_file = csv.DictReader(open(original_path))
+        headers = input_file.fieldnames
+        if len(set(valid_headers) & set(headers)) != len(valid_headers):
+            error_file = ['invalid header']
+            csv_writer.writerow(error_file)
+            invalidated = True
         for row in input_file:
+            if invalidated:
+                break
             index += 1
             for k, v in row.items():
                 if v == '':
@@ -52,9 +61,8 @@ def process_fcl_customs_customs(params, converted_file, update):
                 rows.append(row)
             if not rows:
                 return
-        create_fcl_customs_rate(                    
-            params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, ''
-        )
+        if not invalidated:
+            create_fcl_customs_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
         set_current_processing_line(total_lines, converted_file)
     try:
         valid = converted_file.get('valid_rates_count')
