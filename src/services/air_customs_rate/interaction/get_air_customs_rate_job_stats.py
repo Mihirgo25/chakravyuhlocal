@@ -32,12 +32,13 @@ STATISTICS = {
     "weekly_backlog_count": 0,
 }
 DYNAMIC_STATISTICS = {
+    "critical_ports": 0,
     "expiring_rates": 0,
+    "cancelled_shipments": 0,
     "live_booking": 0,
     "rate_request": 0,
     "rate_feedback":0,
 }
-
 
 def get_air_customs_rate_job_stats(
     filters={}

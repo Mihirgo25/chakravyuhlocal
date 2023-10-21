@@ -43,10 +43,6 @@ def update_haulage_freight_rate_jobs_to_backlog():
 
         rows_updated = haulage_query.execute()
 
-        HaulageFreightRateJobMapping.update(status="backlog").where(
-            HaulageFreightRateJobMapping.job_id.in_(affected_ids)
-        ).execute()
-
         total_updated += rows_updated
 
         for affected_id in affected_ids:

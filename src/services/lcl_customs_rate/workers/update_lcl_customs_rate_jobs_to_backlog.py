@@ -38,10 +38,6 @@ def update_lcl_customs_rate_jobs_to_backlog():
 
         rows_updated = lcl_query.execute()
 
-        LclCustomsRateJobMapping.update(status="backlog").where(
-            LclCustomsRateJobMapping.job_id.in_(affected_ids)
-        ).execute()
-
         total_updated += rows_updated
 
         for affected_id in affected_ids:

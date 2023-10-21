@@ -80,7 +80,7 @@ def list_lcl_customs_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.shipment_serial_id, LclCustomsRateJobMapping.source_id, LclCustomsRateJobMapping.shipment_id, LclCustomsRateJobMapping.status).where(LclCustomsRateJobMapping.job_id == d['id'])
+        mappings_query = LclCustomsRateJobMapping.select(LclCustomsRateJobMapping.shipment_service_id, LclCustomsRateJobMapping.shipment_serial_id, LclCustomsRateJobMapping.source_id, LclCustomsRateJobMapping.shipment_id, LclCustomsRateJobMapping.status).where(LclCustomsRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             if not isinstance(filters.get('source'), list):
                 filters['source'] = [filters.get('source')]
@@ -91,6 +91,7 @@ def get_data(query, filters):
             d['shipment_id'] = mappings_data.shipment_id
             d['reverted_status'] = mappings_data.status
             d['shipment_serial_id'] = mappings_data.shipment_serial_id
+            d['shipment_service_id'] = mappings_data.shipment_service_id
     return data
 
 

@@ -94,7 +94,7 @@ def list_ltl_freight_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = LtlFreightRateJobMapping.select(LtlFreightRateJobMapping.shipment_serial_id, LtlFreightRateJobMapping.source_id, LtlFreightRateJobMapping.shipment_id, LtlFreightRateJobMapping.status).where(LtlFreightRateJobMapping.job_id == d['id'])
+        mappings_query = LtlFreightRateJobMapping.select(LtlFreightRateJobMapping.shipment_service_id ,LtlFreightRateJobMapping.shipment_serial_id, LtlFreightRateJobMapping.source_id, LtlFreightRateJobMapping.shipment_id, LtlFreightRateJobMapping.status).where(LtlFreightRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             if not isinstance(filters.get('source'), list):
                 filters['source'] = [filters.get('source')]
@@ -105,6 +105,7 @@ def get_data(query, filters):
             d['shipment_id'] = mappings_data.shipment_id
             d['reverted_status'] = mappings_data.status
             d['shipment_serial_id'] = mappings_data.shipment_serial_id
+            d['shipment_service_id'] = mappings_data.shipment_service_id
     return data
 
 

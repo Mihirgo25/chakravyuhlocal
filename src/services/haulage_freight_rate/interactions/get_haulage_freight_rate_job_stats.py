@@ -38,7 +38,9 @@ STATISTICS = {
     "weekly_backlog_count": 0,
 }
 DYNAMIC_STATISTICS = {
+    "critical_ports": 0,
     "expiring_rates": 0,
+    "cancelled_shipments": 0,
     "live_booking": 0,
     "rate_request": 0,
     "rate_feedback":0,
@@ -175,7 +177,7 @@ def build_daily_details(query, statistics):
 
 
 def build_weekly_details(query, statistics):
-    query = query.where(                                   # change this query to same like in list_fcl_freight_rate_feedbacks.py
+    query = query.where(                                  
         HaulageFreightRateJob.created_at.cast("date")
         >= datetime.now().date() - timedelta(days=7)
     )

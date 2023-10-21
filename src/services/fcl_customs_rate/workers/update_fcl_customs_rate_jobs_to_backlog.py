@@ -12,25 +12,23 @@ def update_fcl_customs_rate_jobs_to_backlog():
     total_affected_ids = []
 
     while True:
-        haulage_conditions = (
+        fcl_customs_conditions = (
             FclCustomsRateJob.created_at < datetime.today().date() - timedelta(days=1),
             FclCustomsRateJob.status == "pending",
             ~(FclCustomsRateJob.sources.contains('live_booking') | FclCustomsRateJob.sources.contains('rate_feedback') | FclCustomsRateJob.sources.contains('rate_request'))
         )
         
-        affected_ids = jsonable_encoder([job.id for job in FclCustomsRateJob.select(FclCustomsRateJob.id).where(*haulage_conditions).limit(BATCH_SIZE)])
+        affected_ids = jsonable_encoder([job.id for job in FclCustomsRateJob.select(FclCustomsRateJob.id).where(*fcl_customs_conditions).limit(BATCH_SIZE)])
         if not affected_ids:
             break  
         
-        haulage_query = (
+        fcl_customs_query = (
             FclCustomsRateJob.update(status="backlog")
             .where(FclCustomsRateJob.id.in_(affected_ids))
         )
         
-        rows_updated = haulage_query.execute()
-        
-        FclCustomsRateJobMapping.update(status="backlog").where(FclCustomsRateJobMapping.job_id.in_(affected_ids)).execute()
-        
+        rows_updated = fcl_customs_query.execute()
+                
         total_updated += rows_updated
         
         for affected_id in affected_ids:

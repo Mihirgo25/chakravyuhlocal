@@ -12,25 +12,23 @@ def update_air_customs_rate_jobs_to_backlog():
     total_affected_ids = []
 
     while True:
-        haulage_conditions = (
+        air_customs_conditions = (
             AirCustomsRateJob.created_at < datetime.today().date() - timedelta(days=1),
             AirCustomsRateJob.status == "pending",
             ~(AirCustomsRateJob.sources.contains('live_booking') | AirCustomsRateJob.sources.contains('rate_feedback') | AirCustomsRateJob.sources.contains('rate_request'))
         )
         
-        affected_ids = jsonable_encoder([job.id for job in AirCustomsRateJob.select(AirCustomsRateJob.id).where(*haulage_conditions).limit(BATCH_SIZE)])
+        affected_ids = jsonable_encoder([job.id for job in AirCustomsRateJob.select(AirCustomsRateJob.id).where(*air_customs_conditions).limit(BATCH_SIZE)])
         if not affected_ids:
             break  
         
-        haulage_query = (
+        air_customs_query = (
             AirCustomsRateJob.update(status="backlog")
             .where(AirCustomsRateJob.id.in_(affected_ids))
         )
         
-        rows_updated = haulage_query.execute()
-        
-        AirCustomsRateJobMapping.update(status="backlog").where(AirCustomsRateJobMapping.job_id.in_(affected_ids)).execute()
-        
+        rows_updated = air_customs_query.execute()
+                
         total_updated += rows_updated
         
         for affected_id in affected_ids:
