@@ -52,7 +52,10 @@ class CommonApiClient:
     
     def create_saas_air_schedule_airport_pair_coverage(self,data={}):
         return self.client.request('POST','create_saas_air_schedule_airport_pair_coverage',data)
- 
+
+    def get_saas_schedules_airport_pair_coverages(self,data={}):
+        return self.client.request('GET','get_saas_schedules_airport_pair_coverages',data)
+
     def update_spot_negotiation_locals_rate(self,data = {}):
         return self.client.request('POST','spot_negotiation/update_spot_negotiation_locals_rate',data)
     

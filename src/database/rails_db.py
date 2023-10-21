@@ -650,26 +650,3 @@ def get_organization_partner(id):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
-
-
-def get_saas_schedules_airport_pair_coverages(origin_airport_id,destination_airport_id):
-    all_result = []
-    try:
-        conn = get_connection()
-        with conn:
-            with conn.cursor() as cur:
-               
-                sql = "select distinct airline_id from saas_air_schedule_airport_pair_coverages where origin_airport_id = %s AND destination_airport_id = %s  AND is_serviceable = true"
-                cur.execute(sql, (origin_airport_id,destination_airport_id,))
-
-                result = cur.fetchall()
-
-                for res in result:
-                    all_result.append(str(res[0]))
-                cur.close()
-        conn.close()
-        return all_result
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return all_result
-

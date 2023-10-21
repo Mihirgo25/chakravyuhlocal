@@ -4,7 +4,8 @@ from services.envision.interaction.get_air_freight_predicted_rate import predict
 from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,AIR_EXPORTS_HIGH_DENSITY_RATIO,AIR_EXPORTS_LOW_DENSITY_RATIO,AIR_IMPORTS_LOW_DENSITY_RATIO,AIR_IMPORTS_HIGH_DENSITY_RATIO,DEFAULT_AIRLINE_IDS,SLAB_WISE_CHANGE_FACTOR,DEFAULT_SERVICE_PROVIDER_ID
 from celery_worker import air_freight_rate_prediction_feedback_delay
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate_data
-from database.rails_db import get_eligible_orgs,get_saas_schedules_airport_pair_coverages
+from database.rails_db import get_eligible_orgs
+from micro_services.client import common
 from configs.env import DEFAULT_USER_ID
 from rms_utils.get_money_exchange_for_fcl_fallback import get_money_exchange_for_fcl_fallback
 from libs.get_distance import get_air_distance
@@ -140,7 +141,12 @@ def get_chargeable_weight(weight,volume):
 
 def get_params_for_model(request, locations):
     params = []
-    serviceable_airline_ids = get_saas_schedules_airport_pair_coverages(request.get('origin_airport_id'),request.get('destination_airport_id'))
+    airport_id = {
+        "origin_airport_id": request.get('origin_airport_id'),
+        "destination_airport_id": request.get('destination_airport_id')
+    }
+    serviceable_airline_ids = common.get_saas_schedules_airport_pair_coverages(airport_id)
+
     no_of_airlines = 3
     if serviceable_airline_ids:
         top_three_airline_ids = serviceable_airline_ids[:no_of_airlines]

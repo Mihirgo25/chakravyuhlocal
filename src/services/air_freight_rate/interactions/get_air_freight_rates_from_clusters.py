@@ -7,7 +7,7 @@ from configs.global_constants import SERVICE_PROVIDER_FF
 import concurrent.futures
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate_data
 from micro_services.client import maps
-from database.rails_db import get_saas_schedules_airport_pair_coverages
+from micro_services.client import common
 
 def get_air_freight_rates_from_clusters(request):
     request_locations = [request.get('origin_airport_id'),request.get('destination_airport_id')]
@@ -74,7 +74,11 @@ def create_params(request,origin_base_airport_id,destination_base_airport_id):
     critical_rates_count = critical_rates.count()
     if critical_rates_count==0:
         return create_params
-    servicealble_airlines = get_saas_schedules_airport_pair_coverages(request.get('origin_airport_id'),request.get('destination_airport_id'))
+    airport_id = {
+        "origin_airport_id": request.get('origin_airport_id'),
+        "destination_airport_id": request.get('destination_airport_id')
+    }
+    servicealble_airlines = common.get_saas_schedules_airport_pair_coverages(airport_id)
     for critical_rate in critical_rates:
         if servicebility_check(str(critical_rate.airline_id),servicealble_airlines):
             for validity in critical_rate.validities:
