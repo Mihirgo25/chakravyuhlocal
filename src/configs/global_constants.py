@@ -193,5 +193,5 @@ CONFIRMED_INVENTORY = {
 
 POSSIBLE_SOURCES_IN_JOB_MAPPINGS = ['expiring_rates','critical_ports', 'cancelled_shipments', 'spot_search', 'rate_request', 'rate_feedback']
 
-
+REFRESH_TIME = 10800
 
