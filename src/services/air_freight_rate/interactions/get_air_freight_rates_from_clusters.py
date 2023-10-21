@@ -78,9 +78,9 @@ def create_params(request,origin_base_airport_id,destination_base_airport_id):
         "origin_airport_id": request.get('origin_airport_id'),
         "destination_airport_id": request.get('destination_airport_id')
     }
-    servicealble_airlines = common.get_saas_schedules_airport_pair_coverages(airport_id)
+    serviceable_airlines = common.get_saas_schedules_airport_pair_coverages(airport_id)
     for critical_rate in critical_rates:
-        if servicebility_check(str(critical_rate.airline_id),servicealble_airlines):
+        if servicebility_check(str(critical_rate.airline_id),serviceable_airlines):
             for validity in critical_rate.validities:
                 validity_start = datetime.strptime(validity['validity_start'],'%Y-%m-%d').date()
                 validity_end = datetime.strptime(validity['validity_end'],'%Y-%m-%d').date()
