@@ -1,4 +1,3 @@
 LCL_FREIGHT_COVERAGE_USERS = [
-    "f47788fe-85e8-4f86-a9d7-7c7902ea864a",
-    "51641e0e-a5da-452a-81fc-ccb8fe6df343"
+    "51641e0e-a5da-452a-81fc-ccb8fe6df343",
 ]
