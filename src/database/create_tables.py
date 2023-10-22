@@ -42,29 +42,29 @@ class Table:
         try:
             db.execute_sql(
                 """
-              CREATE SEQUENCE haulage_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              CREATE SEQUENCE IF NOT EXISTS haulage_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
              
-              CREATE SEQUENCE lcl_customs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              CREATE SEQUENCE IF NOT EXISTS lcl_customs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
             
             
-              CREATE SEQUENCE fcl_customs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              CREATE SEQUENCE IF NOT EXISTS fcl_customs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
             
             
-              CREATE SEQUENCE air_customs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              CREATE SEQUENCE IF NOT EXISTS air_customs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
             
             
-              CREATE SEQUENCE ltl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              CREATE SEQUENCE IF NOT EXISTS ltl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
             
             
-              CREATE SEQUENCE ltl_freight_rate_audits_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              CREATE SEQUENCE IF NOT EXISTS ltl_freight_rate_audits_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
             
             
-              CREATE SEQUENCE ftl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              CREATE SEQUENCE IF NOT EXISTS ftl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
 
-              CREATE SEQUENCE lcl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              CREATE SEQUENCE IF NOT EXISTS lcl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
 
             
-              CREATE SEQUENCE fcl_cfs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"""
+              CREATE SEQUENCE IF NOT EXISTS fcl_cfs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"""
             )
 
             db.create_tables(models)
