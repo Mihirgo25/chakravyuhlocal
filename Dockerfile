@@ -1,4 +1,4 @@
-FROM python:3-slim as base
+FROM python:3.11-slim as base
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -30,7 +30,7 @@ EXPOSE 8110
 EXPOSE 8111
 
 FROM base as rms
-CMD ["gunicorn", "main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8110", "--preload", "--access-logfile", "-"]
+CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port", "8110","--workers","4"]
 
 FROM base as celery
 CMD ["celery" ,"-A" ,"celery_worker.celery" , "worker" ,"-B", "--concurrency", "6", "--loglevel=info" , "-Q" , "communication,critical,low,fcl_freight_rate,bulk_operations,statistics"]

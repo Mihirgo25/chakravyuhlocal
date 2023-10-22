@@ -4,7 +4,7 @@ import os
 import joblib
 from configs.ftl_freight_rate_constants import *
 from micro_services.client import maps
-
+from configs.yml_definitions import FTL_PREDICTION_MODEL
 
 def predict_ftl_freight_rate(request):
     if type(request) == dict:
@@ -35,10 +35,9 @@ def predict_ftl_freight_rate(request):
         distance = get_distance(origin_location,destination_location)
     except:
         distance = 250
-    MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "ftl_freight_prediction_model.pkl")
-    model = joblib.load(open(MODEL_PATH, "rb"))
+
     data = [tyre, weight, volume, ltr_per_km, distance, origin_gdp, destination_gdp]
-    model_result = model.predict([data])
+    model_result = FTL_PREDICTION_MODEL.predict([data])
     result["predicted_price"] = round(model_result[0])
     result["distance"] = distance
 

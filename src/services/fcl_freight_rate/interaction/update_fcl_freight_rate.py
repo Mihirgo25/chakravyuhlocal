@@ -1,10 +1,10 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
+from libs.get_normalized_line_items import get_normalized_line_items
 from database.db_session import db
 from datetime import datetime
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
 
 def create_audit(request, freight_id):

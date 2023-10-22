@@ -8,9 +8,9 @@ def list_rates_charge_codes(service_name, service_names):
 
     for name in service_names:
         # check this code once
-        for key, val in FCL_FREIGHT_CHARGES.get(name).items():
+        for key, val in FCL_FREIGHT_CHARGES.get().get(name).items():
             val['code'] = key
-        final_list += FCL_FREIGHT_CHARGES.get(name)
+        final_list += FCL_FREIGHT_CHARGES.get().get(name)
 
     final_list = remove_codes_with_deleted_tag(final_list)
     return {'list': final_list}

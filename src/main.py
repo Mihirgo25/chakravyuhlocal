@@ -52,7 +52,7 @@ app = FastAPI(**docs)
 
 
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router, tags=['Fcl Freight Rate'], dependencies=[Depends(get_db)])
-app.include_router(prefix = "/fcl_freight_rate", router=ftl_freight_router, tags=['Ftl Freight Rate'], dependencies=[Depends(get_db)])
+app.include_router(prefix = "/ftl_freight_rate", router=ftl_freight_router, tags=['Ftl Freight Rate'], dependencies=[Depends(get_db)])
 app.include_router(prefix="/fcl_freight_rate", router=envision_router, tags=['Predictions'], dependencies=[Depends(get_db)])
 app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router, tags=['Chakravyuh'], dependencies=[Depends(get_db)])
 app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Trailer Freight Rate'], dependencies=[Depends(get_db)])
@@ -106,8 +106,9 @@ if APP_ENV != "production":
 
 @app.on_event("startup")
 def startup():
-    if db.is_closed():
-        db.connect()
+    if APP_ENV == "development":
+        if db.is_closed():
+            db.connect()
     # insert_wagon_type()
     # insert_dbcargo_rates()
     # insert_france_germany_rates()

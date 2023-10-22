@@ -7,11 +7,11 @@ from database.db_session import db
 from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
-from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
+from libs.get_normalized_line_items import get_normalized_line_items
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE, EXTENSION_ENABLED_MODES, DEFAULT_VALUE_PROPS
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 import sentry_sdk
 
 def add_rate_properties(request,freight_id):
@@ -223,7 +223,7 @@ def create_fcl_freight_rate(request):
         
     send_stats(action,request,freight,port_to_region_id_mapping)
 
-    if row["mode"]  not in ["predicted", "cluster_extension"] and row['rate_type'] == "market_place":
+    if row["mode"]  not in ["predicted", "cluster_extension"] and row['rate_type'] == "market_place" and request.get('tag') != 'trend_GRI':
         update_fcl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
 
     return {"id": freight.id}

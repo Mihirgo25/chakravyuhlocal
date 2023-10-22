@@ -25,6 +25,8 @@ DEFAULT_IMPORT_DESTINATION_DETENTION = 4
 
 MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT = 100000
 
+MAX_PAGE_LIMIT = 1000
+
 CONFIRMED_INVENTORY = {
     "service_provider_ids": ["536abfe7-eab8-4a43-a4c3-6ff318ce01b5"],  # CogoXpress
     "tag": "confirmed_inventory",
@@ -182,4 +184,16 @@ VALUE_PROPS_TAG_MAPPING = {
     'priority_booking': 'Priority Booking'
   }
 
-POSSIBLE_SOURCES_IN_JOB_MAPPINGS = ['expiring_rates','critical_ports', 'cancelled_shipments', 'spot_search', 'rate_request', 'rate_feedback']
+
+
+CONFIRMED_INVENTORY = {
+    'service_provider_ids': ["536abfe7-eab8-4a43-a4c3-6ff318ce01b5"], #CogoXpress
+    'tag': "confirmed_inventory"
+}
+
+POSSIBLE_SOURCES_IN_JOB_MAPPINGS = ['expiring_rates','critical_ports', 'cancelled_shipments', 'spot_search', 'rate_request', 'rate_feedback', 'live_booking']
+
+POSSIBLE_CLOSING_REMARKS_FOR_JOBS = ['not_serviceable', 'rate_not_available', 'no_change_in_rate']
+
+
+

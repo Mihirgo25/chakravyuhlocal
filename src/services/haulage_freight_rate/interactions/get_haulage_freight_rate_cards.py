@@ -21,7 +21,6 @@ from libs.json_encoder import json_encoder
 from fastapi import HTTPException
 from database.rails_db import get_operators
 
-
 def select_fields():
     freight_query = HaulageFreightRate.select(
         HaulageFreightRate.id,
@@ -129,7 +128,7 @@ def get_query_results(query):
 
 
 def build_line_item_object(line_item, requirements):
-    code_config = HAULAGE_FREIGHT_CHARGES[line_item["code"]]
+    code_config = HAULAGE_FREIGHT_CHARGES.get()[line_item["code"]]
 
     # checking if additional_service is required in line item
     is_additional_service = code_config["tags"]
@@ -235,7 +234,7 @@ def build_response_object(result, requirements):
             line_item["quantity"] = requirements["containers_count"]
             line_item["unit"] = "per_trailer"
             line_item["price"] = line_item["total_price"] / line_item["quantity"]
-            code_config = HAULAGE_FREIGHT_CHARGES[line_item["code"]]
+            code_config = HAULAGE_FREIGHT_CHARGES.get()[line_item["code"]]
             line_item["name"] = code_config["name"]
         else:
             line_item = build_line_item_object(line_item, requirements)
@@ -297,7 +296,6 @@ def ignore_non_eligible_service_providers(requirements, data):
 
 
 def get_predicted_rate(requirements, data):
-
     if (
         not data
         and requirements.get("predicted_rate")
@@ -327,9 +325,8 @@ def get_predicted_rate(requirements, data):
         if response:
             requirements["predicted_rate"] = False
             data = get_haulage_freight_rate_cards(requirements)["list"]
-
+    
     return data
-
 
 def ignore_non_active_shipping_lines(data):
     shipping_line_ids = list(set(map(lambda ids: ids["shipping_line_id"], data)))

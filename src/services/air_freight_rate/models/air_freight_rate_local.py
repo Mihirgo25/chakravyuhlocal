@@ -81,7 +81,7 @@ class AirFreightRateLocal(BaseModel):
         commodity_sub_type = None
 
 
-        air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES
+        air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES.get()
         charge_codes={}
         for code,config in air_freight_local_charges_dict.items():
             if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and 'deleted' not in config['tags']:
@@ -94,8 +94,8 @@ class AirFreightRateLocal(BaseModel):
         line_items_info_messages = {}
         is_line_items_error_messages_present = False
         is_line_items_info_messages_present = False
-
-        air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES
+         
+        air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES.get()
         grouped_charge_codes = {}
         for line_item in self.line_items:
             grouped_charge_codes[line_item.get('code')] = line_item
@@ -193,11 +193,11 @@ class AirFreightRateLocal(BaseModel):
             raise HTTPException(status_code=400,detail = 'Invalid Commodity Type')
 
     def validate_service_provider_id(self):
-        service_provider_data = get_organization(id=str(self.service_provider_id))
-        if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
-            self.service_provider = service_provider_data[0]
+        service_provider_data = get_eligible_orgs(service='air_freight')
+        
+        if str(self.service_provider_id) in service_provider_data:
             return True
-        raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
+        raise HTTPException(status_code = 400, detail = 'Service Provider Is Not Valid for the service') 
 
     def validate(self):
         if not self.airport:

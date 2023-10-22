@@ -4,7 +4,7 @@ from configs.env import *
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from micro_services.client import organization, common
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from services.rate_sheet.interactions.validate_and_process_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
@@ -35,9 +35,9 @@ from services.air_freight_rate.interactions.create_draft_air_freight_rate import
 from database.rails_db import get_past_cost_booking_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate
-from services.fcl_customs_rate.helpers import update_organization_fcl_customs
+from services.fcl_customs_rate.helpers.update_organization_fcl_customs import update_organization_fcl_customs
 from services.fcl_freight_rate.helpers.cluster_extension_by_latest_trends_helper import cluster_extension_by_latest_trends_helper
-from services.fcl_cfs_rate.helpers import update_organization_fcl_cfs
+from services.fcl_cfs_rate.helpers.update_organisation_fcl_cfs import update_organization_fcl_cfs
 from services.air_freight_rate.interactions.update_air_freight_rate_request import update_air_freight_rate_request
 from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_feedback
 from services.air_freight_rate.interactions.create_air_freight_rate_local import create_air_freight_rate_local
@@ -81,7 +81,9 @@ from services.air_freight_rate.workers.air_freight_critical_port_pairs_scheduler
 from services.air_freight_rate.workers.air_freight_expiring_rates_scheduler import (
     air_freight_expiring_rates_scheduler,
 )
-
+from services.haulage_freight_rate.workers.haulage_freight_expiring_rates_scheduler import (
+    haulage_freight_expiring_rates_scheduler,
+)
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -171,14 +173,9 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     },
-    'brahmastra':{
-        'task': 'services.bramhastra.celery.brahmastra_in_delay',
-        'schedule': crontab(minute=0, hour='*/1'),
-        'options': {'queue': 'statistics'}
-    },
     'cluster_extension_by_latest_trends_worker':{
         'task': 'celery_worker.cluster_extension_by_latest_trends_worker',
-        'schedule': crontab(minute=0, hour='*/6'),
+        "schedule": crontab(hour=23, minute=00),
         'options': {'queue': 'fcl_freight_rate'}
     },
     'cache_data_worker':{
@@ -188,7 +185,7 @@ celery.conf.beat_schedule = {
     },
     'fcl_daily_attributer_updater':{
         'task': 'services.bramhastra.celery.fcl_daily_attributer_updater_in_delay',
-        'schedule': crontab(minute=0, hour='*/3'),
+        'schedule': crontab(hour = 22, minute = 00),
         'options': {'queue': 'statistics'}
     },
     "create_jobs_for_cancelled_shipments": {
@@ -211,9 +208,15 @@ celery.conf.beat_schedule = {
 
 celery.autodiscover_tasks(['services.air_customs_rate.air_customs_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.ftl_freight_rate.ftl_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
 celery.autodiscover_tasks(['services.air_freight_rate.air_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.fcl_freight_rate.fcl_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.fcl_customs_rate.fcl_customs_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.ltl_freight_rate.ltl_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.lcl_freight_rate.lcl_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.lcl_customs_rate.lcl_customs_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.fcl_cfs_rate.fcl_cfs_celery_worker'], force=True)
 
 
 
@@ -606,6 +609,7 @@ def update_fcl_freight_rate_request_in_delay(self, request):
             pass
         else:
             raise self.retry(exc= exc)
+    
 @celery.task(bind = True, retry_backoff=True, max_retries=1)
 def process_fuel_data_delay(self):
     try:
@@ -942,6 +946,8 @@ def create_job_for_expiring_rates_delay(self):
         # may insert 8k to 10k records on odd day for each fcl and air
         fcl_freight_expiring_rates_scheduler()
         air_freight_expiring_rates_scheduler()
+        haulage_freight_expiring_rates_scheduler()
+        
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass

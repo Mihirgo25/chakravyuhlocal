@@ -1,13 +1,15 @@
 from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from services.air_customs_rate.models.air_customs_rate_feedback import AirCustomsRateFeedback
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
 from database.db_migration import db
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import maps
 from celery_worker import create_communication_background
-
+from services.air_customs_rate.interaction.create_air_customs_rate_job import (
+    create_air_customs_rate_job
+)
 def create_air_customs_rate_feedback(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -53,6 +55,8 @@ def execute_transaction_code(request):
     create_audit(request, air_customs_feedback.id)
     get_multiple_service_objects(air_customs_feedback)
     send_notifications_to_supply_agents(request)
+    request['source_id'] = air_customs_feedback.id
+    create_air_customs_rate_job(request, "rate_feedback")
 
     return {
       'id': request.get('rate_id')

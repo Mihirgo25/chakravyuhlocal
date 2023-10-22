@@ -19,3 +19,5 @@ LOCATION_HIERARCHY = {
     'seaport' : 1,
     'country' : 2
 }
+
+FCL_CUSTOMS_COVERAGE_USERS = ['3a1599fa-35af-49be-93f9-7784617e088b']

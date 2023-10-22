@@ -11,7 +11,7 @@ def list_air_customs_charge_codes(request):
     return charges
 
 def get_charge_codes(request):
-    charge_codes = {code: config for code, config in AIR_CUSTOMS_CHARGES.items() if request.get('trade_type') in config['trade_types']}
+    charge_codes = {code: config for code, config in AIR_CUSTOMS_CHARGES.get().items() if request.get('trade_type') in config['trade_types']}
 
     response = {}
     response['list'] = []

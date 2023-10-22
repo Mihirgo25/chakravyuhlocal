@@ -68,11 +68,6 @@ TI:
   units: ['per_container']
   condition: true
   tags: ['trailer', 'barge']
-FSC:
-  name: "Fuel Surcharge"
-  units: ['per_container']
-  condition: true
-  tags: ['trailer', 'barge']
 MSTP:
   name: "Multistop"
   units: ["per_shipment"]
@@ -204,7 +199,7 @@ PNT:
   condition: (origin_location['country_code'] == destination_location['country_code'] == 'SG')
   tags: ['trailer']
 CMS:
-  name: "Content Management Service"
+  name: "Container Management Service"
   units: [ 'per_container','per_trailer' ]
   condition: (origin_location['country_code'] == destination_location['country_code'] == 'SG')
   tags: ['trailer']

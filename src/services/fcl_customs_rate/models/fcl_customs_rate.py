@@ -144,12 +144,9 @@ class FclCustomsRate(BaseModel):
       raise HTTPException(status_code=400, detail="Invalid commodity")
     
     def validate_service_provider_id(self):
-        if not self.service_provider_id:
-            return
-
-        service_provider_data = get_organization(id=self.service_provider_id)
-        if len(service_provider_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid service provider ID")
+        service_provider_data = get_eligible_orgs(service='fcl_customs')
+        if str(self.service_provider_id) not in service_provider_data:
+            raise HTTPException(status_code=400, detail="Service provider is not Valid for this service")
         
     def validate_location_ids(self):
         location_data = maps.list_locations({'filters':{'id': str(self.location_id)}})['list']
@@ -272,7 +269,7 @@ class FclCustomsRate(BaseModel):
 
     def possible_customs_charge_codes(self):
         self.set_location()
-        fcl_custom_charges = FCL_CUSTOMS_CHARGES
+        fcl_custom_charges = FCL_CUSTOMS_CHARGES.get()
         location = self.location
         
         charge_codes = {}
@@ -283,7 +280,7 @@ class FclCustomsRate(BaseModel):
 
     def possible_cfs_charge_codes(self):
         self.set_location()
-        fcl_cfs_charges = FCL_CUSTOMS_CHARGES
+        fcl_cfs_charges = FCL_CUSTOMS_CHARGES.get()
         location = self.location
 
         charge_codes = {}
@@ -322,7 +319,7 @@ class FclCustomsRate(BaseModel):
         for line_item in self.customs_line_items:
             grouped_charge_codes[line_item.get('code')] = line_item
         for code, line_items in grouped_charge_codes.items():
-            code_config = FCL_CUSTOMS_CHARGES.get(code)
+            code_config = FCL_CUSTOMS_CHARGES.get().get(code)
 
             code_config = {key:value for key,value in code_config.items() if 'customs_clearance' in code_config.get('tags', [])}
             location = self.location
@@ -407,7 +404,7 @@ class FclCustomsRate(BaseModel):
             grouped_charge_codes[line_item.get('code')] = line_item
 
         for code, line_items in grouped_charge_codes.items():
-            code_config = FCL_CUSTOMS_CHARGES.get(code)
+            code_config = FCL_CUSTOMS_CHARGES.get().get(code)
 
             code_config = {key:value for key,value in code_config.items() if 'cfs' in code_config.get('tags', [])}
 
@@ -452,3 +449,4 @@ class FclCustomsRate(BaseModel):
         self.validate_container_size()
         self.validate_container_type()
         self.validate_commodity()
+        self.validate_service_provider_id()

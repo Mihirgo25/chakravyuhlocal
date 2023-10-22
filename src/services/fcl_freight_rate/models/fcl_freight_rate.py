@@ -9,12 +9,14 @@ from fastapi.encoders import jsonable_encoder
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import *
 from schema import Schema, Optional
-from configs.definitions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES,FCL_FREIGHT_CURRENCIES
+from configs.definitions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES
+from configs.yml_definitions import FCL_FREIGHT_CURRENCIES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
+from database.rails_db import get_eligible_orgs
 from micro_services.client import *
 from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import is_price_in_range
 from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM, DEFAULT_RATE_TYPE
@@ -194,6 +196,12 @@ class FclFreightRate(BaseModel):
       if self.container_type and self.commodity in FREIGHT_CONTAINER_COMMODITY_MAPPINGS[f"{self.container_type}"]:
         return True
       return False
+    
+    def validate_service_provider_id(self):
+      eligible_service_providers = get_eligible_orgs(service='fcl_freight')
+      if str(self.service_provider_id) in eligible_service_providers:
+        return True
+      return False
 
     def set_omp_dmp_sl_sp(self):
       self.omp_dmp_sl_sp = ":".join([str(self.origin_main_port_id or ""), str(self.destination_main_port_id or ""), str(self.shipping_line_id), str(self.service_provider_id)])
@@ -344,7 +352,7 @@ class FclFreightRate(BaseModel):
         raise HTTPException(status_code=400, detail="line_items contains duplicates")
 
 
-      fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
+      fcl_freight_charges_dict = FCL_FREIGHT_CHARGES.get()
 
       invalid_line_items = [code for code in codes if code.strip() not in fcl_freight_charges_dict.keys()]
 
@@ -644,6 +652,9 @@ class FclFreightRate(BaseModel):
         raise HTTPException(status_code=400, detail="incorrect container type")
       if not self.validate_commodity():
         raise HTTPException(status_code=400, detail="incorrect commodity")
+      if not self.validate_service_provider_id():
+        raise HTTPException(status_code = 400, detail = 'Service provider is not Valid for this service') 
+        
 
       self.set_omp_dmp_sl_sp()
       self.validate_origin_local()
@@ -657,7 +668,7 @@ class FclFreightRate(BaseModel):
 
     def possible_origin_local_charge_codes(self):
       self.port = self.origin_port
-      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
       charge_codes = {}
       port = self.origin_port
@@ -674,7 +685,7 @@ class FclFreightRate(BaseModel):
 
     def possible_destination_local_charge_codes(self):
       self.port = self.destination_port
-      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
       port = self.destination_port
       main_port = self.destination_main_port
@@ -689,7 +700,7 @@ class FclFreightRate(BaseModel):
       return charge_codes
 
     def possible_charge_codes(self):
-      fcl_freight_charges = FCL_FREIGHT_CHARGES
+      fcl_freight_charges = FCL_FREIGHT_CHARGES.get()
 
       charge_codes = {}
       shipping_line_id = self.shipping_line_id

@@ -3,7 +3,7 @@ from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRa
 from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def create_air_customs_rate(request):
     with db.atomic():
@@ -11,7 +11,7 @@ def create_air_customs_rate(request):
 
 def execute_transaction_code(request):
   from services.air_customs_rate.air_customs_celery_worker import air_customs_functions_delay
-
+  from services.air_customs_rate.air_customs_celery_worker import update_air_customs_rate_job_on_rate_addition_delay
   request = {key: value for key, value in request.items() if value is not None}
   params = get_create_object_params(request)
   air_customs_rate = AirCustomsRate.select().where(
@@ -46,6 +46,9 @@ def execute_transaction_code(request):
 
   air_customs_functions_delay.apply_async(kwargs={'air_customs_object':air_customs_rate, 'request':request},queue = 'low')
   get_multiple_service_objects(air_customs_rate)
+
+  if params['rate_type'] == "market_place":
+        update_air_customs_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": air_customs_rate.id},queue='fcl_freight_rate')
 
   return {'id': air_customs_rate.id}
 

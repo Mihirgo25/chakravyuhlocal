@@ -95,6 +95,12 @@ class DeleteAirFreightRateParams(BaseModel):
     bulk_operation_id: str = None
     sourced_by_id: str = None
     procured_by_id: str = None
+    validity_start:date
+    validity_end:date
+    density_category:str
+    density_ratio:str
+    min_price:float
+    weight_slabs: list[WeightSlab]
 
 
 class UpdateAirFreightRateParams(BaseModel):
@@ -103,7 +109,7 @@ class UpdateAirFreightRateParams(BaseModel):
     validity_start: date = None
     validity_end: date = None
     currency: str = None
-    min_price: float
+    min_price: float = None
     performed_by_id: str = None
     performed_by_type: str = None
     bulk_operation_id: str = None
@@ -341,46 +347,86 @@ class UpdateAirFreightRateMarkUpParams(BaseModel):
     validity_end: datetime = None
 
 
+class BulkOperationSlabs(BaseModel):
+    lower_limit:float
+    upper_limit:float
+
 class AddFreightRateMarkupParams(BaseModel):
     markup: float
     markup_type: str
     markup_currency: str = None
-    validity_id: str = None
-    air_freight_rate_id: str
+    weight_slabs: List[BulkOperationSlabs] = []
+    filters:dict = {}
+    validity_start: date
+    validity_end: date
+    rate_sheet_serial_id: int = None
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
 
 
 class DeleteFreightRateParams(BaseModel):
-    air_freight_rate_id: str
-    validity_id: str = None
+    filters:dict = {}
+    weight_slabs: List[BulkOperationSlabs] = []
+    validity_start: date
+    validity_end: date
+    rate_sheet_serial_id: int = None
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
     
 class UpdateFreightRateParams(BaseModel):
-    validity_id: str = None
-    air_freight_rate_id: str
-    new_start_date: datetime
-    new_end_date: datetime
-
+    filters:dict = {}
+    end_date: date
+    markup: float = None
+    markup_type: str = None
+    markup_currency: str = None
+    rate_sheet_serial_id: int = None
 
 class DeleteAirFreightRateLocalParams(BaseModel):
-    id: str
-    performed_by_id: str = None
-    performed_by_type: str = None
+    filters: dict = {}
+    rate_sheet_serial_id: int = None
+    charge_codes: List[str] = []
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
 
 
 class DeleteAirFreightRateSurchargeParams(BaseModel):
-    id: str
-    performed_by_id: str = None
-    performed_by_type: str = None
+    filters: dict = {}
+    rate_sheet_serial_id: int = None
+    charge_codes: List[str] = []
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
 
+class UpdateFreightRateLocal(BaseModel):
+    filters: dict = {}
+    rate_sheet_serial_id: int = None
+    line_item: LineItem
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
+
+class UpdateFreightRateSurcharge(BaseModel):
+    filters: dict = {}
+    rate_sheet_serial_id: int = None
+    line_item: LineItem
+    comparison_currency: str = "USD"
+    rates_greater_than_price: float = None
+    rates_less_than_price: float = None
 
 class CreateBulkOperationParams(BaseModel):
     performed_by_id: str = None
     performed_by_type: str = None
-    add_freight_rate_markup: List[AddFreightRateMarkupParams] = None
-    delete_freight_rate: List[DeleteFreightRateParams] = None
-    add_freight_rate_markup: List[AddFreightRateMarkupParams] = None
-    update_freight_rate: List[UpdateFreightRateParams] = None
-    delete_freight_rate_local: List[DeleteAirFreightRateLocalParams] = None
-    delete_freight_rate_surcharge: List[DeleteAirFreightRateSurchargeParams] = None
+    add_freight_rate_markup: AddFreightRateMarkupParams = None
+    delete_freight_rate: DeleteFreightRateParams = None
+    update_freight_rate: UpdateFreightRateParams = None
+    delete_freight_rate_local: DeleteAirFreightRateLocalParams = None
+    delete_freight_rate_surcharge: DeleteAirFreightRateSurchargeParams = None
+    update_freight_rate_local: UpdateFreightRateLocal = None
+    update_freight_rate_surcharge: UpdateFreightRateSurcharge = None
+
 
 
 class CreateAirFreightRateParams(BaseModel):
@@ -431,12 +477,15 @@ class LineItem(BaseModel):
     price: float
     currency: str
     remarks: list[str] = []
-    quantity:float 
+    quantity: float
+
 
 class RevertedRateParams(BaseModel):
-    id:str
-    validity_id:str
-    weight_slabs:List[WeightSlab]
+    id: str
+    validity_id: str
+    weight_slabs: List[WeightSlab]
+
+
 class DeleteAirFreightRateFeedbackParams(BaseModel):
     air_freight_rate_feedback_ids: List[str]
     closing_remarks: List[str] = []
@@ -470,8 +519,8 @@ class UpdateAirFreightWarehouseRateParams(BaseModel):
 class UpdateAirFreightRateRequestParams(BaseModel):
     air_freight_rate_request_id: str
     closing_remarks: list[str] = None
-    status: str=None
-    remarks: str=None
+    status: str = None
+    remarks: str = None
     performed_by_id: str
 
 
@@ -482,10 +531,87 @@ class DeleteAirFreightRateRequestParams(BaseModel):
     validity_id: str = None
     performed_by_id: str = None
 
+class DeleteAirFreightRateLocal(BaseModel):
+    id:str
+    performed_by_id: str = None
+
+class DeleteAirFreightRateSurcharge(BaseModel):
+    id:str
+    performed_by_id: str = None
+
 class DeleteAirFreightRateJob(BaseModel):
     id: str = None
     closing_remarks: str = None
     data: dict = {}
+    source_id: str = None
+    service_id: str = None
+    shipment_id: str = None
     rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+
+class CreateAirFreightRateJob(BaseModel):
+    source: str = None
+    source_id: str = None
+    shipment_id: str = None
+    shipment_serial_id: int = None
+    service_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    origin_airport_id: str = None
+    destination_airport_id: str = None
+    airline_id: str = None
+    service_provider_id: str = None
+    commodity: str = None
+    rate_type: str = None
+    commodity_type: str = None
+    commodity_sub_type: str = None
+    operation_type: str = None
+    shipment_type: str = None
+    stacking_type: str = None
+    is_visible: bool = True
+    price_type: str = None
+
+
+class DeleteAirFreightRateLocalJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    source_id: str = None
+    shipment_id: str = None
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+
+class CreateAirFreightRateLocalJob(BaseModel):
+    source: str = None
+    source_id: str = None
+    shipment_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    airport_id: str = None
+    airline_id: str = None
+    trade_type: str = None
+    service_provider_id: str = None
+    commodity: str = None
+    commodity_type: str = None
+    rate_type: str = None
+    operation_type: str = None
+    shipment_type: str = None
+    stacking_type: str = None
+    is_visible: bool = True
+    price_type: str = None
+    
+class UpdateAirFreightRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
+    
+class UpdateAirFreightRateLocalJob(BaseModel):
+    id: str
+    user_id: str
     performed_by_id: str = None
     performed_by_type: str = None

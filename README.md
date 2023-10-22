@@ -2,11 +2,11 @@
 # Welcome to Dynamic Pricing Engine 
 ![ChakraVyuh Image](https://cogoport-production.sgp1.digitaloceanspaces.com/cf149142fb2b3b0a5c94b59cfe2a6513/chakravyuh-min.png)
 
-
+ 
 
 To manually create a virtualenv on MacOS and Linux: 
-
-``` 
+ 
+```  
 $ python3 -m venv .venv
 ```
 

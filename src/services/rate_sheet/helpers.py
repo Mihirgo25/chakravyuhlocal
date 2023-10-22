@@ -177,6 +177,8 @@ def get_port_id(port_code):
     return port_id
 
 def get_terminal_id(site_code):
+    if not site_code:
+        return None
     try:
         site_code = site_code.strip()
     except:

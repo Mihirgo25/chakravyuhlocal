@@ -6,7 +6,9 @@ from services.haulage_freight_rate.models.haulage_freight_rate_audit import (
 )
 from fastapi import HTTPException
 from database.db_session import db
-
+from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_job import (
+    delete_haulage_freight_rate_job,
+)
 
 def delete_haulage_freight_rate_feedback(request):
     with db.atomic():
@@ -20,7 +22,7 @@ def execute_transaction_code(request):
         {"ids": deleted_haulage_freight_rate_ids}
     """
 
-    from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+    from libs.get_multiple_service_objects import get_multiple_service_objects
 
 
     objects = find_objects(request)
@@ -45,6 +47,7 @@ def execute_transaction_code(request):
 
         create_audit(request, obj.id, obj.transport_mode)
         get_multiple_service_objects(obj)
+        delete_haulage_freight_rate_job(request)
     if request.get('haulage_freight_rate_feedback_ids'):
         return {"ids": request["haulage_freight_rate_feedback_ids"]}
     else:

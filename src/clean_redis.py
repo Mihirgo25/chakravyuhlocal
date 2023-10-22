@@ -3,7 +3,7 @@ from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRat
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import maps
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 # from celery_worker import delete_fcl_freight_rates_delay
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
 from configs.definitions import ROOT_DIR
@@ -125,6 +125,23 @@ def delete_rates():
         delete_fcl_freight_rate(obj)
         # delete_fcl_freight_rates_delay.apply_async(kwargs={'result':obj},queue='low')
         print('l')  
+
+def migrate_charges():
+    from configs.yml_definitions import LoadYmls
+    from configs.env import DEFAULT_USER_ID
+    from micro_services.client import loki
+    
+    yml_obj = LoadYmls()
+    charges = ['FCL_FREIGHT_CHARGES', 'FCL_FREIGHT_LOCAL_CHARGES', 'FCL_FREIGHT_SEASONAL_CHARGES', 'FCL_CFS_CHARGES', 'FCL_CUSTOMS_CHARGES', 'AIR_FREIGHT_CHARGES', 'AIR_FREIGHT_LOCAL_CHARGES', 'AIR_FREIGHT_SURCHARGES', 'AIR_FREIGHT_WAREHOUSE_CHARGES', 'HAULAGE_FREIGHT_CHARGES', 'AIR_CUSTOMS_CHARGES','FTL_FREIGHT_CHARGES']
+    
+    for charge in charges:
+        payload = {
+            'serviceChargeType': charge.lower(),
+            'created_by': DEFAULT_USER_ID,
+            'charges': eval(f'yml_obj.{charge}'),
+        }
+        res = loki.migrate_charge_codes(payload)
+        print(res, charge.lower(), '->done')
 
 def rate_extension():
     from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit

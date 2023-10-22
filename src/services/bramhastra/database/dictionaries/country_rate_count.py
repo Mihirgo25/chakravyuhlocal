@@ -28,7 +28,7 @@ class CountryRateCount:
                 password %(DATABASE_PASSWORD)s
                 db %(DATABASE_NAME)s                                                                                                                                                                                            
                 replica(host %(DATABASE_HOST)s port %(DATABASE_PORT)s priority 1)
-                query 'SELECT "combined_countries"."country_id", COUNT("combined_countries"."country_id") AS "rate_count" FROM ((SELECT "t1"."origin_country_id" AS "country_id" FROM "fcl_freight_rate_statistics" AS "t1") UNION ALL (SELECT "t2"."destination_country_id" AS "country_id" FROM "fcl_freight_rate_statistics" AS "t2")) AS "combined_countries" GROUP BY "combined_countries"."country_id"'
+                query 'SELECT "combined_countries"."country_id", COUNT("combined_countries"."country_id") AS "rate_count" FROM ((SELECT "t1"."origin_country_id" AS "country_id" FROM "fcl_freight_rate_statistics_temp" AS "t1") UNION ALL (SELECT "t2"."destination_country_id" AS "country_id" FROM "fcl_freight_rate_statistics_temp" AS "t2")) AS "combined_countries" GROUP BY "combined_countries"."country_id"'
             ))
             LAYOUT(COMPLEX_KEY_HASHED_ARRAY())
             LIFETIME({self.lifetime})
