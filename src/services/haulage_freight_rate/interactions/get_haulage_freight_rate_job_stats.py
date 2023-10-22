@@ -267,6 +267,8 @@ def get_all_backlogs(filters):
     query = HaulageFreightRateJob.select()
     if filters.get('user_id'):
         query = query.where(HaulageFreightRateJob.user_id == filters.get('user_id'))
+    if filters.get('transport_modes_keyword'):
+        query = query.where(HaulageFreightRateJob.transport_modes_keyword == filters.get('transport_modes_keyword'))
     backlog_count = query.where(HaulageFreightRateJob.status == 'backlog').count()
 
     return backlog_count
