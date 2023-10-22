@@ -7,6 +7,8 @@ class FclCustomsLineItems(BaseModel):
     code: str
     unit: str
     price: float
+    market_price: float = None
+    original_price: float = None
     currency: str
     remarks: list[str] = None
 

@@ -6,6 +6,7 @@ from math import ceil
 from libs.apply_eligible_lsp_filters import apply_eligible_lsp_filters
 from micro_services.client import common
 from configs.fcl_freight_rate_constants import RATE_TYPES
+from libs.get_normalized_line_items import get_normalized_line_items
 
 possible_direct_filters = ['id', 'location_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'service_provider_id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'is_customs_line_items_info_messages_present', 'is_customs_line_items_error_messages_present', 'is_cfs_line_items_info_messages_present', 'is_cfs_line_items_error_messages_present', 'procured_by_id', 'rate_type']
 
@@ -83,6 +84,7 @@ def get_data(query):
     data = list(query.dicts())
     for object in data:
         if object['customs_line_items']:
+            object['customs_line_items'] = get_normalized_line_items(object['customs_line_items'])
             object['total_price_currency'] = object['customs_line_items'][0].get('currency')
         else:
             object['total_price_currency'] = 'INR'
