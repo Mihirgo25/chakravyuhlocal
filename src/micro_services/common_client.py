@@ -3,6 +3,7 @@ from micro_services.global_client import GlobalClient
 from micro_services.discover_client import get_instance_url
 from rms_utils.get_money_exchange_for_fcl_fallback import get_money_exchange_for_fcl_fallback
 from libs.cached_money_exchange import get_money_exchange_from_rd, set_money_exchange_to_rd
+from libs.get_saas_schedules_airport_pair_coverages_from_rd import get_saas_schedules_airport_pair_coverages_from_rd, set_saas_schedules_airport_pair_coverages_to_rd
 
 class CommonApiClient:
     def __init__(self):
@@ -50,6 +51,20 @@ class CommonApiClient:
     def list_revenue_desk_show_rates(self,data = {}):
         return self.client.request('GET','list_revenue_desk_show_rates',data)
     
+    def create_saas_air_schedule_airport_pair_coverage(self,data={}):
+        return self.client.request('POST','create_saas_air_schedule_airport_pair_coverage',data)
+
+    def get_saas_schedules_airport_pair_coverages(self,data={}):
+        cached_resp = get_saas_schedules_airport_pair_coverages_from_rd(data)
+        if cached_resp:
+            return cached_resp
+        
+        resp = self.client.request('GET','get_saas_schedules_airport_pair_coverages',data)
+        if isinstance(resp,list):
+            set_saas_schedules_airport_pair_coverages_to_rd(data.get('origin_airport_id'), data.get('destination_airport_id'), resp)
+            return resp
+        return resp
+
     def update_spot_negotiation_locals_rate(self,data = {}):
         return self.client.request('POST','spot_negotiation/update_spot_negotiation_locals_rate',data)
     
