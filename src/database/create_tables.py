@@ -60,7 +60,9 @@ class Table:
             
             
               CREATE SEQUENCE ftl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
-            
+
+              CREATE SEQUENCE lcl_freight_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+
             
               CREATE SEQUENCE fcl_cfs_rate_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"""
             )
