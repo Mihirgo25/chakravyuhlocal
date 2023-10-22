@@ -29,6 +29,8 @@ def update_air_freight_rate_jobs_to_backlog():
         )
 
         rows_updated = air_query.execute()
+
+        AirFreightRateJobMapping.update(status="backlog").where(AirFreightRateJobMapping.job_id.in_(affected_ids)).execute()
         
         total_updated += rows_updated
 

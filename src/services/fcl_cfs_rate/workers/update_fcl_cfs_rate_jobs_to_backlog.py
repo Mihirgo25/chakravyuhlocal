@@ -28,6 +28,8 @@ def update_fcl_cfs_rate_jobs_to_backlog():
         )
         
         rows_updated = fcl_query.execute()
+
+        FclCfsRateJobMapping.update(status="backlog").where(FclCfsRateJobMapping.job_id.in_(affected_ids)).execute()
             
         total_updated += rows_updated
         

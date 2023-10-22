@@ -38,6 +38,8 @@ def update_lcl_freight_rate_jobs_to_backlog():
 
         rows_updated = lcl_query.execute()
 
+        LclFreightRateJobMapping.update(status="backlog").where(LclFreightRateJobMapping.job_id.in_(affected_ids)).execute()
+
         total_updated += rows_updated
 
         for affected_id in affected_ids:

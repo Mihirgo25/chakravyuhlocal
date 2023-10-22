@@ -38,6 +38,8 @@ def update_ltl_freight_rate_jobs_to_backlog():
 
         rows_updated = ltl_query.execute()
 
+        LtlFreightRateJobMapping.update(status="backlog").where(LtlFreightRateJobMapping.job_id.in_(affected_ids)).execute()
+
         total_updated += rows_updated
 
         for affected_id in affected_ids:

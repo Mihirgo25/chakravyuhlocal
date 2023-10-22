@@ -28,6 +28,8 @@ def update_air_customs_rate_jobs_to_backlog():
         )
         
         rows_updated = air_customs_query.execute()
+
+        AirCustomsRateJobMapping.update(status="backlog").where(AirCustomsRateJobMapping.job_id.in_(affected_ids)).execute()
                 
         total_updated += rows_updated
         
