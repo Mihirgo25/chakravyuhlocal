@@ -143,7 +143,7 @@ def build_daily_details(query, statistics):
     )
     daily_stats_query = query.select(
         FclFreightRateJob.status, fn.COUNT(FclFreightRateJob.id).alias("count")
-    ).group_by(FclFreightRateJob.status)
+    ).where(FclFreightRateJob.status != 'skipped').group_by(FclFreightRateJob.status)
 
     total_daily_count = 0
     daily_results = json_encoder(list(daily_stats_query.dicts()))
