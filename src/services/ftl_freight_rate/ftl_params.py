@@ -281,3 +281,43 @@ class ExtendFtlFreightRates(BaseModel):
     line_items: list[FtlLineItem]
     ftl_freight_rate_request_id: str = None
 
+    
+class CreateFtlFreightRateJob(BaseModel):
+    source: str = None
+    source_id: str = None
+    shipment_id: str = None
+    shipment_serial_id: int = None
+    service_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    origin_location_id: str = None
+    destination_location_id: str = None
+    service_provider_id: str = None
+    truck_type: str = None
+    truck_body_type: str = None
+    trip_type: str = None
+    commodity: str = None
+    transit_time: str = None
+    detention_free_time: str = None
+    unit: str = None
+    is_visible: bool = True
+    rate_type: str = None
+    
+class DeleteFtlFreightRateJob(BaseModel):
+    id: str = None
+    closing_remarks: list[str] = None
+    data: dict = {}
+    ftl_freight_rate_feedback_ids: list[str] = None
+    ftl_freight_rate_request_ids: list[str] = None
+    source_id: str = None
+    service_id: str = None
+    shipment_id: str = None
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    
+class UpdateFtlFreightRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None

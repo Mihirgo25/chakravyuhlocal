@@ -6,7 +6,9 @@ from micro_services.client import maps
 from celery_worker import create_communication_background
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
-
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate_job import (
+    create_fcl_customs_rate_job,
+)
 def create_fcl_customs_rate_request(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -45,6 +47,8 @@ def execute_transaction_code(request):
     create_audit(request, customs_request.id)
     get_multiple_service_objects(customs_request)
     send_notifications_to_supply_agents(request)
+    request['source_id'] = customs_request.id
+    create_fcl_customs_rate_job(request, "rate_request")
     
     return {
       'id': customs_request.id

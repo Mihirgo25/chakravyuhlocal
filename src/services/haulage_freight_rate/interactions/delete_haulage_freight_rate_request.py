@@ -2,7 +2,9 @@ from services.haulage_freight_rate.models.haulage_freight_rate_request import Ha
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-
+from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_job import (
+    delete_haulage_freight_rate_job,
+)
 def delete_haulage_freight_rate_request(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -35,6 +37,7 @@ def execute_transaction_code(request):
         create_audit(request, obj.id, obj.transport_mode)
 
     send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='low')
+    delete_haulage_freight_rate_job(request)
     if request.get('haulage_freight_rate_request_ids'):
         return {'haulage_freight_rate_request_ids' : request['haulage_freight_rate_request_ids']}
     else:

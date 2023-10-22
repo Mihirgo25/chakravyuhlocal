@@ -6,7 +6,9 @@ from database.db_session import db
 from fastapi.encoders import jsonable_encoder
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from micro_services.client import maps
-
+from services.haulage_freight_rate.interactions.create_haulage_freight_rate_job import (
+    create_haulage_freight_rate_job,
+)
 
 
 def create_haulage_freight_rate_feedback(request):
@@ -63,6 +65,8 @@ def execute_transaction_code(request):
     create_audit(request)
     get_multiple_service_objects(feedback)
 
+    request['source_id'] = feedback.id    
+    create_haulage_freight_rate_job(request, "rate_feedback")
     return {'id': feedback.id}
 
  

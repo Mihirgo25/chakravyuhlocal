@@ -9,7 +9,7 @@ from peewee import fn, SQL
 from micro_services.client import spot_search
 possible_indirect_filters = ['validity_start_greater_than', 'validity_end_less_than', 'similar_id']
 
-possible_direct_filters = ['port_id','performed_by_id', 'status', 'closed_by_id', 'trade_id', 'country_id']
+possible_direct_filters = ['port_id','performed_by_id', 'status', 'closed_by_id', 'trade_id', 'country_id', 'id']
 
 
 def list_fcl_freight_rate_local_requests(filters = {}, page_limit = 10, page = 1, is_stats_required = True, performed_by_id = None):
