@@ -29,6 +29,7 @@ def update_ltl_freight_rate_job_on_rate_addition(request):
         (getattr(LtlFreightRateJob, key) == value) for key, value in params.items()
     ]
     conditions.append(LtlFreightRateJob.status << ["pending", "backlog"])
+    conditions.append(~(LtlFreightRateJob.sources.contains('live_booking')))
     affected_ids = jsonable_encoder([
         job.id
         for job in LtlFreightRateJob.select(LtlFreightRateJob.id).where(*conditions)

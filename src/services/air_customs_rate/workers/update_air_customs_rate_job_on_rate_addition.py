@@ -28,6 +28,7 @@ def update_air_customs_rate_job_on_rate_addition(request, id):
         (getattr(AirCustomsRateJob, key) == value) for key, value in params.items()
     ]
     conditions.append(AirCustomsRateJob.status << ["pending", "backlog"])
+    conditions.append(~(AirCustomsRateJob.sources.contains('live_booking')))
     affected_ids = jsonable_encoder([
         job.id
         for job in AirCustomsRateJob.select(AirCustomsRateJob.id).where(*conditions)

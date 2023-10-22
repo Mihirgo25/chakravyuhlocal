@@ -30,6 +30,7 @@ def update_haulage_freight_rate_job_on_rate_addition(request, id):
         (getattr(HaulageFreightRateJob, key) == value) for key, value in params.items()
     ]
     conditions.append(HaulageFreightRateJob.status << ["pending", "backlog"])
+    conditions.append(~(HaulageFreightRateJob.sources.contains('live_booking')))
     affected_ids = jsonable_encoder([
         job.id
         for job in HaulageFreightRateJob.select(HaulageFreightRateJob.id).where(*conditions)

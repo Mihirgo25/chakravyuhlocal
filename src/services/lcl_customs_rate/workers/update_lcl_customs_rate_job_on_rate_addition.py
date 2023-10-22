@@ -30,6 +30,7 @@ def update_lcl_customs_rate_job_on_rate_addition(request):
         (getattr(LclCustomsRateJob, key) == value) for key, value in params.items()
     ]
     conditions.append(LclCustomsRateJob.status << ["pending", "backlog"])
+    conditions.append(~(LclCustomsRateJob.sources.contains('live_booking')))
     affected_ids = jsonable_encoder([
         job.id
         for job in LclCustomsRateJob.select(LclCustomsRateJob.id).where(*conditions)
