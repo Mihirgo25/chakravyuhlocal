@@ -650,4 +650,3 @@ def get_organization_partner(id):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
-

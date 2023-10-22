@@ -2,6 +2,7 @@ from services.ftl_freight_rate.models.ftl_freight_rate_feedback import FtlFreigh
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
+from services.ftl_freight_rate.interactions.delete_ftl_freight_rate_job import delete_ftl_freight_rate_job
 
 def delete_ftl_freight_rate_feedback(request):
     with db.atomic():
@@ -24,6 +25,8 @@ def execute_transaction_code(request):
             raise HTTPException(status_code=500, detail="Ftl Freight rate Feedback deletion failed")
 
         create_audit(request, obj.id)
+        
+        delete_ftl_freight_rate_job(request)
 
     return request['ftl_freight_rate_feedback_ids']
 

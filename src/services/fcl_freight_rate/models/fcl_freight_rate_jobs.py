@@ -40,7 +40,10 @@ class FclFreightRateJob(BaseModel):
     closing_remarks = TextField(null=True)
     rate_type = TextField(null=True)
     init_key = TextField(index=True, null=True)
+    is_visible = BooleanField(default=True)
+    cogo_entity_id = UUIDField(null=True, index=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_jobs_serial_id_seq')")],)
+    search_source = TextField(null=True, index=True)
 
     class Meta:
         table_name = 'fcl_freight_rate_jobs'
@@ -56,7 +59,7 @@ class FclFreightRateJob(BaseModel):
       if self.destination_main_port_id:
         ids.append(str(self.destination_main_port_id))
 
-      obj = {'filters':{"id": ids, "type":'seaport'}}
+      obj = {'filters':{"id": ids, "type":'seaport'}, 'includes': {"id": True, "name": True, "is_icd": True, "port_code": True, "country_id": True, "continent_id": True, "trade_id": True, "country_code": True, "display_name": True, "country": True, "default_params_required": True}}
       locations_response = maps.list_locations(obj)
       locations = []
       if 'list' in locations_response:
@@ -80,6 +83,8 @@ class FclFreightRateJob(BaseModel):
           "country_id": location["country_id"],
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
-          "country_code": location["country_code"]
+          "country_code": location["country_code"],
+          "display_name": location["display_name"],
+          "country": location["country"]
         }
         return loc_data

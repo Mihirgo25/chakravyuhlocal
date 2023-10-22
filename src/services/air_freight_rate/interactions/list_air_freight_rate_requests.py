@@ -12,7 +12,7 @@ from datetime import datetime
 from micro_services.client import spot_search
 from services.air_freight_rate.constants.air_freight_rate_constants import IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE, IMPORTER_EXPORTER_ID_FOR_ENTERPRISE_SALES
 
-possible_direct_filters = ['origin_airport_id', 'destination_airport_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id','source']
+possible_direct_filters = ['origin_airport_id', 'destination_airport_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id','source', 'id']
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'partner_id', 'freight_force_importer_exporter', 'except_freight_force_importer_exporter', 'q']
 
 def list_air_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True):

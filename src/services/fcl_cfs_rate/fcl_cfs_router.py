@@ -24,6 +24,12 @@ from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
+from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_job import create_fcl_cfs_rate_job
+from services.fcl_cfs_rate.interaction.delete_fcl_cfs_rate_job import delete_fcl_cfs_rate_job
+from services.fcl_cfs_rate.interaction.get_fcl_cfs_rate_job_stats import get_fcl_cfs_rate_job_stats
+from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate_jobs import list_fcl_cfs_rate_jobs
+from services.fcl_cfs_rate.fcl_cfs_params import UpdateFclCfsRateJob
+from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_job import update_fcl_cfs_rate_job
 fcl_cfs_router = APIRouter()
 
 @fcl_cfs_router.post('/create_fcl_cfs_rate')
@@ -356,5 +362,117 @@ def list_rates_sheet_stats_api(
     except HTTPException as e:
         raise
     except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_cfs_router.get("/get_fcl_cfs_rate_job_stats")
+def get_fcl_cfs_rate_job_stats_api(
+    filters: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = get_fcl_cfs_rate_job_stats(filters)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+
+
+@fcl_cfs_router.get("/list_fcl_cfs_rate_jobs")
+def list_fcl_cfs_rate_jobs_api(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'updated_at',
+    sort_type: str = 'desc',
+    generate_csv_url: bool = False,
+    pagination_data_required: bool = False,
+    includes: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_fcl_cfs_rate_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, pagination_data_required, includes)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_cfs_router.post("/delete_fcl_cfs_rate_job")
+def delete_fcl_cfs_rate_job_api(
+    request: DeleteFclCfsRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        rate = delete_fcl_cfs_rate_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@fcl_cfs_router.get("/get_fcl_cfs_rate_job_csv_url")
+def get_fcl_cfs_rate_job_csv_url_api(
+    filters: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_fcl_cfs_rate_jobs(filters, generate_csv_url=True)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@fcl_cfs_router.post("/create_fcl_cfs_rate_job")
+def create_fcl_cfs_rate_job_api(
+    request: CreateFclCfsRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    source = request.source
+    try:
+        rate = create_fcl_cfs_rate_job(request.dict(exclude_none=True), source)
+        return JSONResponse(status_code=200, content=json_encoder(rate))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+@fcl_cfs_router.post("/update_fcl_cfs_rate_job")    
+def update_fcl_cfs_rate_job_api(
+    request: UpdateFclCfsRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        data = update_fcl_cfs_rate_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

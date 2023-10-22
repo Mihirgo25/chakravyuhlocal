@@ -16,7 +16,7 @@ import sentry_sdk
 import traceback
 from libs.get_conditional_line_items import get_filtered_line_items
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
-from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_predicted_fcl_freight_rate_delay
+# from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_predicted_fcl_freight_rate_delay
 
 def initialize_freight_query(requirements, prediction_required = False, get_cogo_assured=False):
     freight_query = FclFreightRate.select(
@@ -45,7 +45,9 @@ def initialize_freight_query(requirements, prediction_required = False, get_cogo
     FclFreightRate.is_destination_local_line_items_error_messages_present,
     FclFreightRate.cogo_entity_id,
     FclFreightRate.mode,
-    FclFreightRate.rate_type
+    FclFreightRate.rate_type,
+    FclFreightRate.created_at,
+    FclFreightRate.updated_at
     ).where(
     FclFreightRate.origin_port_id == requirements['origin_port_id'],
     FclFreightRate.destination_port_id == requirements['destination_port_id'],
@@ -544,6 +546,8 @@ def build_freight_line_item_object(line_item, request):
 def build_freight_object(freight_validity, additional_weight_rate, additional_weight_rate_currency, request):
     freight_validity['validity_start'] = datetime.strptime(freight_validity['validity_start'],'%Y-%m-%d')
     freight_validity['validity_end'] = datetime.strptime(freight_validity['validity_end'],'%Y-%m-%d')
+    freight_validity['created_at'] = datetime.strptime(freight_validity['created_at'].split("T")[0], '%Y-%m-%d').date()
+    freight_validity['updated_at'] = datetime.strptime(freight_validity['updated_at'].split("T")[0], '%Y-%m-%d').date()
 
     if (freight_validity['validity_start'].date() > request['validity_end']) or (freight_validity['validity_end'].date() < request['validity_start']):
         return None
@@ -556,7 +560,10 @@ def build_freight_object(freight_validity, additional_weight_rate, additional_we
         'validity_id': freight_validity['id'],
         'likes_count': freight_validity['likes_count'],
         'dislikes_count': freight_validity['dislikes_count'],
-        'line_items': []
+        'line_items': [],
+        'created_at': freight_validity['created_at'],
+        'updated_at': freight_validity['updated_at'],
+        'rate_source': freight_validity['rate_source']
     }
 
     if freight_object['validity_start'].date() < request['validity_start']:
@@ -596,11 +603,14 @@ def add_freight_objects(freight_query_result, response_object, request):
     freight_validities = freight_query_result['validities']
 
     for freight_validity in freight_validities:
-      freight_object = build_freight_object(freight_validity, additional_weight_rate, additional_weight_rate_currency, request)
-      if not freight_object:
-        continue
+        freight_validity['created_at'] = freight_query_result['created_at']
+        freight_validity['updated_at'] = freight_query_result['updated_at']
+        freight_validity['rate_source'] = freight_query_result['mode']
+        freight_object = build_freight_object(freight_validity, additional_weight_rate, additional_weight_rate_currency, request)
+        if not freight_object:
+            continue
 
-      response_object['freights'].append(freight_object)
+        response_object['freights'].append(freight_object)
 
 
     return (len(response_object['freights']) > 0)
@@ -882,6 +892,9 @@ def get_fcl_freight_rate_cards(requirements):
                 currency:
                 remarks:
               }],
+              created_at:
+              updated_at:
+              rate_source:
             }]
         }]
     """
@@ -917,7 +930,7 @@ def get_fcl_freight_rate_cards(requirements):
         
         all_rates = supply_rates + selected_cogo_assured 
         all_rates = build_response_list(all_rates, requirements)
-        create_jobs_for_predicted_fcl_freight_rate_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements}, queue='critical')
+        # create_jobs_for_predicted_fcl_freight_rate_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements}, queue='critical')
         return {
             "list" : all_rates
         }
