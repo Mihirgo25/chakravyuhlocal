@@ -230,8 +230,8 @@ FCL_IMPORT_COVERAGE_USERS = [
 ]
 
 FCL_EXPORT_COVERAGE_USERS = [
-  '6addea60-a3de-4067-b08d-ece04be594ab'
-  'd7f62f2d-2b41-41ae-a9f0-200255de4d8f'
+  '6addea60-a3de-4067-b08d-ece04be594ab',
+  'd7f62f2d-2b41-41ae-a9f0-200255de4d8f',
   '329fb317-f2f9-4c41-aabd-4a9befc53721'
 ]
 
