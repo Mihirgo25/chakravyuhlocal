@@ -233,6 +233,8 @@ def build_weekly_details(query, statistics):
             weekly_stats[date] = round(
                 (total_completed_per_day / total_task_per_day * 100), 2
             )
+        else: 
+            weekly_stats[date] = 100
 
     statistics["weekly_completed_percentage"] = weekly_stats
 
