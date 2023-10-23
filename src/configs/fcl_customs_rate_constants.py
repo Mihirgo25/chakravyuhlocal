@@ -20,4 +20,11 @@ LOCATION_HIERARCHY = {
     'country' : 2
 }
 
-FCL_CUSTOMS_COVERAGE_USERS = ['3a1599fa-35af-49be-93f9-7784617e088b']
+FCL_CUSTOMS_COVERAGE_USERS = [
+    '6addea60-a3de-4067-b08d-ece04be594ab',
+    'f47788fe-85e8-4f86-a9d7-7c7902ea864a',
+    '51641e0e-a5da-452a-81fc-ccb8fe6df343',
+    'd7f62f2d-2b41-41ae-a9f0-200255de4d8f',
+    '922b367f-0f3e-4872-91d0-68413fc7f955',
+    '329fb317-f2f9-4c41-aabd-4a9befc53721'
+]
