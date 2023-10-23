@@ -46,11 +46,7 @@ def execute_transaction_code(request, source):
     if not fcl_freight_rate_job:
         fcl_freight_rate_job = create_job_object(params)
         fcl_freight_rate_job.set_locations()
-
-        trade_type = 'import'
-        if fcl_freight_rate_job.origin_port['country_code']=='IN':
-            trade_type = 'export'
-            
+        trade_type = 'export' if fcl_freight_rate_job.origin_port.get('country_code') == 'IN' else 'import'
         user_id = allocate_fcl_freight_rate_job(source, params['service_provider_id'], trade_type)
         fcl_freight_rate_job.user_id = user_id
         fcl_freight_rate_job.assigned_to = get_user(user_id)[0]
