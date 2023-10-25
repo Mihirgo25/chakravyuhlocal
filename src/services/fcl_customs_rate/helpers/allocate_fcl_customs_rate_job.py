@@ -1,5 +1,6 @@
 from services.fcl_customs_rate.models.fcl_customs_rate_jobs import FclCustomsRateJob
 from configs.fcl_customs_rate_constants import FCL_CUSTOMS_COVERAGE_USERS
+from datetime import datetime
 from database.db_session import rd
 from micro_services.client import common
 from peewee import fn
@@ -39,7 +40,8 @@ def allocate_live_booking_job(service_provider_id):
             .where(
                 (FclCustomsRateJob.sources.contains(['live_booking'])) &
                 (FclCustomsRateJob.service_provider_id == service_provider_id) &
-                (FclCustomsRateJob.status.not_in(['completed', 'aborted']))
+                (FclCustomsRateJob.status.not_in(['completed', 'aborted'])) &
+                (FclCustomsRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -67,7 +69,8 @@ def get_users_by_job_load(active_users):
     
     query = (FclCustomsRateJob.select(FclCustomsRateJob.user_id, fn.Count(FclCustomsRateJob.user_id).alias('user_id_count'))
             .where((FclCustomsRateJob.user_id << active_users) &
-                    (FclCustomsRateJob.status.not_in(['completed', 'aborted'])))
+                    (FclCustomsRateJob.status.not_in(['completed', 'aborted'])) &
+                    (FclCustomsRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date()))
             .group_by(FclCustomsRateJob.user_id)
             .order_by(fn.Count(FclCustomsRateJob.user_id)))
     

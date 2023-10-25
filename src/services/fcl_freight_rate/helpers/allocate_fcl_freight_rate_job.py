@@ -1,6 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJob
 from configs.fcl_freight_rate_constants import FCL_EXPORT_COVERAGE_USERS, FCL_IMPORT_COVERAGE_USERS
 from database.db_session import rd
+from datetime import datetime
 from micro_services.client import common
 from peewee import fn
 
@@ -47,7 +48,8 @@ def allocate_live_booking_job(service_provider_id):
             .where(
                 (FclFreightRateJob.sources.contains(['live_booking'])) &
                 (FclFreightRateJob.service_provider_id == service_provider_id) &
-                (FclFreightRateJob.status.not_in(['completed', 'aborted']))
+                (FclFreightRateJob.status.not_in(['completed', 'aborted'])) &
+                (FclFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -75,7 +77,8 @@ def get_users_by_job_load(active_users):
     
     query = (FclFreightRateJob.select(FclFreightRateJob.user_id, fn.Count(FclFreightRateJob.user_id).alias('user_id_count'))
             .where((FclFreightRateJob.user_id << active_users) &
-                    (FclFreightRateJob.status.not_in(['completed', 'aborted'])))
+                    (FclFreightRateJob.status.not_in(['completed', 'aborted'])) & 
+                    (FclFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date()))
             .group_by(FclFreightRateJob.user_id)
             .order_by(fn.Count(FclFreightRateJob.user_id)))
     

@@ -3,6 +3,7 @@ from configs.lcl_customs_rate_constants import LCL_CUSTOMS_COVERAGE_USERS
 from database.db_session import rd
 from micro_services.client import common
 from peewee import fn
+from datetime import datetime
 
 def allocate_lcl_customs_rate_job(source, service_provider_id):
     
@@ -39,7 +40,8 @@ def allocate_live_booking_job(service_provider_id):
             .where(
                 (LclCustomsRateJob.sources.contains(['live_booking'])) &
                 (LclCustomsRateJob.service_provider_id == service_provider_id) &
-                (LclCustomsRateJob.status.not_in(['completed', 'aborted']))
+                (LclCustomsRateJob.status.not_in(['completed', 'aborted'])) &
+                (LclCustomsRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -67,7 +69,8 @@ def get_users_by_job_load(active_users):
     
     query = (LclCustomsRateJob.select(LclCustomsRateJob.user_id, fn.Count(LclCustomsRateJob.user_id).alias('user_id_count'))
             .where((LclCustomsRateJob.user_id << active_users) &
-                    (LclCustomsRateJob.status.not_in(['completed', 'aborted'])))
+                    (LclCustomsRateJob.status.not_in(['completed', 'aborted'])) &
+                    (LclCustomsRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date()))
             .group_by(LclCustomsRateJob.user_id)
             .order_by(fn.Count(LclCustomsRateJob.user_id)))
     

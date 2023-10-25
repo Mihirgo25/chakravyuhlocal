@@ -3,6 +3,7 @@ from configs.fcl_cfs_rate_constants import FCL_CFS_COVERAGE_USERS
 from database.db_session import rd
 from micro_services.client import common
 from peewee import fn
+from datetime import datetime
 
 def allocate_fcl_cfs_rate_job(source, service_provider_id):
     
@@ -39,7 +40,8 @@ def allocate_live_booking_job(service_provider_id):
             .where(
                 (FclCfsRateJob.sources.contains(['live_booking'])) &
                 (FclCfsRateJob.service_provider_id == service_provider_id) &
-                (FclCfsRateJob.status.not_in(['completed', 'aborted']))
+                (FclCfsRateJob.status.not_in(['completed', 'aborted'])) &
+                (FclCfsRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -67,7 +69,8 @@ def get_users_by_job_load(active_users):
     
     query = (FclCfsRateJob.select(FclCfsRateJob.user_id, fn.Count(FclCfsRateJob.user_id).alias('user_id_count'))
             .where((FclCfsRateJob.user_id << active_users) &
-                    (FclCfsRateJob.status.not_in(['completed', 'aborted'])))
+                    (FclCfsRateJob.status.not_in(['completed', 'aborted'])) &
+                    (FclCfsRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date()))
             .group_by(FclCfsRateJob.user_id)
             .order_by(fn.Count(FclCfsRateJob.user_id)))
     
