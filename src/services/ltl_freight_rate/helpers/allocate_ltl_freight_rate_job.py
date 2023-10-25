@@ -41,7 +41,7 @@ def allocate_live_booking_job(service_provider_id):
                 (LtlFreightRateJob.sources.contains(['live_booking'])) &
                 (LtlFreightRateJob.service_provider_id == service_provider_id) &
                 (LtlFreightRateJob.status.not_in(['completed', 'aborted'])) &
-                (LtlFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 24))
+                (LtlFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 24).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -70,7 +70,7 @@ def get_users_by_job_load(active_users):
     query = (LtlFreightRateJob.select(LtlFreightRateJob.user_id, fn.Count(LtlFreightRateJob.user_id).alias('user_id_count'))
             .where((LtlFreightRateJob.user_id << active_users) &
                     (LtlFreightRateJob.status.not_in(['completed', 'aborted'])) &
-                    (LtlFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 24)))
+                    (LtlFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 24).date()))
             .group_by(LtlFreightRateJob.user_id)
             .order_by(fn.Count(LtlFreightRateJob.user_id)))
     

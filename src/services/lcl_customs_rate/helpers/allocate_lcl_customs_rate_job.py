@@ -41,7 +41,7 @@ def allocate_live_booking_job(service_provider_id):
                 (LclCustomsRateJob.sources.contains(['live_booking'])) &
                 (LclCustomsRateJob.service_provider_id == service_provider_id) &
                 (LclCustomsRateJob.status.not_in(['completed', 'aborted'])) &
-                (LclCustomsRateJob.updated_at.cast('date') > datetime(2023, 10, 24))
+                (LclCustomsRateJob.updated_at.cast('date') > datetime(2023, 10, 24).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -70,7 +70,7 @@ def get_users_by_job_load(active_users):
     query = (LclCustomsRateJob.select(LclCustomsRateJob.user_id, fn.Count(LclCustomsRateJob.user_id).alias('user_id_count'))
             .where((LclCustomsRateJob.user_id << active_users) &
                     (LclCustomsRateJob.status.not_in(['completed', 'aborted'])) &
-                    (LclCustomsRateJob.updated_at.cast('date') > datetime(2023, 10, 24)))
+                    (LclCustomsRateJob.updated_at.cast('date') > datetime(2023, 10, 24).date()))
             .group_by(LclCustomsRateJob.user_id)
             .order_by(fn.Count(LclCustomsRateJob.user_id)))
     
