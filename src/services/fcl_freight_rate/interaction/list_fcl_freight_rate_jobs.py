@@ -237,9 +237,9 @@ def add_pagination_data(
     return response
 
 def get_reverted_count(mappings_data):
-    result = FclFreightRateJobMapping.select(fn.Count(FclFreightRateJobMapping.status).alias('reverted_count')).where(
+    result = FclFreightRateJobMapping.select().where(
                     (FclFreightRateJobMapping.shipment_id == mappings_data.shipment_id) &
                     (FclFreightRateJobMapping.status == 'reverted')
-                ).execute()
-    return result[0].reverted_count
+                ).count()
+    return result
 
