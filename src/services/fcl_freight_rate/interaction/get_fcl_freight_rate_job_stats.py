@@ -74,6 +74,7 @@ def get_fcl_freight_rate_job_stats(
         )
     
     statistics['backlog'] = get_all_backlogs(filters)
+    statistics['total'] = get_all_pendings(filters)
     return {
         "dynamic_statistics": dynamic_statistics,
         "statistics": statistics,
@@ -145,24 +146,29 @@ def get_statistics(filters, dynamic_statistics):
 
 
 def build_daily_details(query, statistics):
-    # query = query.where(
-    #     FclFreightRateJob.updated_at.cast("date") == datetime.now().date()
-    # )
+    query = query.where(
+        FclFreightRateJob.updated_at.cast("date") == datetime.now().date()
+    )
     daily_stats_query = query.select(
         FclFreightRateJob.status, fn.COUNT(FclFreightRateJob.id).alias("count")
     ).where(FclFreightRateJob.status != 'skipped').group_by(FclFreightRateJob.status)
 
     total_daily_count = 0
+    total_completed = 0
     daily_results = json_encoder(list(daily_stats_query.dicts()))
     for data in daily_results:
         total_daily_count += data["count"]
-        statistics[data["status"]] = data["count"]
-    statistics["completed"] = statistics["completed"] + statistics["aborted"]
-    statistics["total"] = total_daily_count
+        if data['status'] in ["completed", "aborted"]:
+            total_completed += data["count"]
+    
+    statistics['completed'] = total_completed
+    
     if total_daily_count != 0:
         statistics["completed_percentage"] = round(
-            ((statistics["completed"]) / total_daily_count) * 100, 2
+            (total_completed / total_daily_count) * 100, 2
         )
+    else:
+        statistics["completed_percentage"] = 100
     return statistics
 
 
@@ -259,6 +265,14 @@ def get_all_backlogs(filters):
     backlog_count = query.where(FclFreightRateJob.status == 'backlog').count()
 
     return backlog_count
+
+def get_all_pendings(filters):
+    query = FclFreightRateJob.select()
+    if filters.get('user_id'):
+        query = query.where(FclFreightRateJob.user_id == filters.get('user_id'))
+    pending_count = query.where(FclFreightRateJob.status == 'pending').count()
+
+    return pending_count
 
 def apply_source_id_filter(query, filters):
     if filters.get('source_id') and not isinstance(filters.get('source_id'), list):
