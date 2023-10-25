@@ -44,10 +44,9 @@ def fcl_freight_objects_updation():
         delay_func(object)
     print('Done')
     
-
 def update_kwd_currency_error():
     records_to_update = FclFreightRate.select().where(
-        (FclFreightRate.origin_port_id == 'edd08c37-e9d9-41a2-8e8c-88336c19428a') &
+        (FclFreightRate.origin_port_id == 'edd08c37-e9d9-41a2-8e8c-88336c19428a'),
         (FclFreightRate.destination_port_id == 'acdc2621-d37f-4f25-9637-9d364ad9fda2') 
     )
 
