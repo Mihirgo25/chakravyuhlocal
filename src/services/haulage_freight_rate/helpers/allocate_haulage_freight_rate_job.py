@@ -1,6 +1,7 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_jobs import HaulageFreightRateJob
 from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_COVERAGE_USERS
 from database.db_session import rd
+from datetime import datetime
 from micro_services.client import common
 from peewee import fn
 
@@ -39,7 +40,8 @@ def allocate_live_booking_job(service_provider_id):
             .where(
                 (HaulageFreightRateJob.sources.contains(['live_booking'])) &
                 (HaulageFreightRateJob.service_provider_id == service_provider_id) &
-                (HaulageFreightRateJob.status.not_in(['completed', 'aborted']))
+                (HaulageFreightRateJob.status.not_in(['completed', 'aborted'])) &
+                (HaulageFreightRateJob.updated_at > datetime(2023, 10, 24))
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -67,7 +69,8 @@ def get_users_by_job_load(active_users):
     
     query = (HaulageFreightRateJob.select(HaulageFreightRateJob.user_id, fn.Count(HaulageFreightRateJob.user_id).alias('user_id_count'))
             .where((HaulageFreightRateJob.user_id << active_users) &
-                    (HaulageFreightRateJob.status.not_in(['completed', 'aborted'])))
+                    (HaulageFreightRateJob.status.not_in(['completed', 'aborted'])) &
+                    (HaulageFreightRateJob.updated_at > datetime(2023, 10, 24)))
             .group_by(HaulageFreightRateJob.user_id)
             .order_by(fn.Count(HaulageFreightRateJob.user_id)))
     
