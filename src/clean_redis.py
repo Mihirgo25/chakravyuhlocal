@@ -49,17 +49,20 @@ def update_kwd_currency_error():
         (FclFreightRate.origin_port_id == 'edd08c37-e9d9-41a2-8e8c-88336c19428a'),
         (FclFreightRate.destination_port_id == 'acdc2621-d37f-4f25-9637-9d364ad9fda2') 
     )
-
+    
     for record in records_to_update:
+        updated_validities = []
         for validity in record.validities:
-            if record.currency == 'KD':
-                record.currency= 'KWD'
+            if validity.currency == 'KD':
+                validity.currency= 'KWD'
             for line_item in validity['line_items']:
                 if line_item['currency'] == 'KD':
                     line_item['currency'] = 'KWD'
-                    
-            record.validities = validity
-            record.save()
+            updated_validities.append(validity) 
+            
+        record.validities = updated_validities 
+        record.save()  
+
 
 def update_transformation_objects():
     origins = FclFreightRateEstimation.select(FclFreightRateEstimation.origin_location_id.distinct()).where(FclFreightRateEstimation.origin_location.is_null(True), FclFreightRateEstimation.status == 'active')
