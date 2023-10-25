@@ -31,6 +31,8 @@ def get_create_params(params):
     return relevant_params
 
 def validate_service_provider_id(service_provider_id, service_name):
+    if service_name == "trailer_freight":
+        service_name = "haulage_freight"
     service_provider_data = get_eligible_orgs(service=service_name)
     if str(service_provider_id) in service_provider_data:
         return True
