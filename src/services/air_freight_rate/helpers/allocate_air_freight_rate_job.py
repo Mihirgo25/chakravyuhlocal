@@ -41,7 +41,7 @@ def allocate_live_booking_job(service_provider_id):
                 (AirFreightRateJob.sources.contains(['live_booking'])) &
                 (AirFreightRateJob.service_provider_id == service_provider_id) &
                 (AirFreightRateJob.status.not_in(['completed', 'aborted'])) &
-                (AirFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 24).date())
+                (AirFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -70,7 +70,7 @@ def get_users_by_job_load(active_users):
     query = (AirFreightRateJob.select(AirFreightRateJob.user_id, fn.Count(AirFreightRateJob.user_id).alias('user_id_count'))
             .where((AirFreightRateJob.user_id << active_users) &
                     (AirFreightRateJob.status.not_in(['completed', 'aborted'])) &
-                    (AirFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 24).date()))
+                    (AirFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date()))
             .group_by(AirFreightRateJob.user_id)
             .order_by(fn.Count(AirFreightRateJob.user_id)))
     
