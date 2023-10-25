@@ -104,6 +104,7 @@ def get_data(query, filters):
             d['reverted_status'] = mappings_data.status
             d['shipment_serial_id'] = mappings_data.shipment_serial_id
             d['shipment_service_id'] = mappings_data.shipment_service_id
+            d['reverted_count'] = get_reverted_count(filters, mappings_data)
     return data
 
 
@@ -228,3 +229,12 @@ def add_pagination_data(
     response["success"] = True
     response["list"] = final_data
     return response
+
+def get_reverted_count(filters, mappings_data):
+    if filters.get('source') and 'live_booking' in filters.get('source'):
+        result = FclCfsRateJobMapping.select(FclCfsRateJobMapping.id).where(
+                    (FclCfsRateJobMapping.shipment_id == mappings_data.shipment_id) &
+                    (FclCfsRateJobMapping.status == 'reverted')
+                ).count()
+        return result
+    return None
