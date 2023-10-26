@@ -45,22 +45,30 @@ def fcl_freight_objects_updation():
     print('Done')
     
 def update_kwd_currency_error():
-    records_to_update = FclFreightRate.select().where(
-        (FclFreightRate.origin_port_id == 'edd08c37-e9d9-41a2-8e8c-88336c19428a'),
-        (FclFreightRate.destination_port_id == 'acdc2621-d37f-4f25-9637-9d364ad9fda2') 
+    records_to_update = FclFreightRateLocal.select().where(
+        (FclFreightRateLocal.port_id == 'acdc2621-d37f-4f25-9637-9d364ad9fda2') 
     )
-    
+
     for record in records_to_update:
-        updated_validities = []
-        for validity in record.validities:
-            if validity.currency == 'KD':
-                validity.currency= 'KWD'
-            for line_item in validity['line_items']:
+        updated_data_line_items = []
+        updated_line_items = []
+        
+        if record.data and record.data['line_items']:
+            for line_item in record.data['line_items']:
                 if line_item['currency'] == 'KD':
                     line_item['currency'] = 'KWD'
-            updated_validities.append(validity) 
-            
-        record.validities = updated_validities 
+                updated_data_line_items.append(line_item)
+        
+        if record.line_items:
+            for line_item in record.line_items:
+                if line_item['currency'] == 'KD':
+                    line_item['currency'] = 'KWD'
+                updated_line_items.append(line_item)
+                
+        if record.data and record.data['line_items']:
+            record.data['line_items'] = updated_data_line_items 
+        if record.line_items:
+            record.line_items = updated_line_items
         record.save()  
 
 
