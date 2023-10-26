@@ -1,6 +1,5 @@
 import os
-from micro_services.client import loki
-from micro_services.client import common
+from micro_services.client import loki,common
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..")) 
 
 class Charges:
