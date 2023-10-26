@@ -477,12 +477,15 @@ class LineItem(BaseModel):
     price: float
     currency: str
     remarks: list[str] = []
-    quantity:float 
+    quantity: float
+
 
 class RevertedRateParams(BaseModel):
-    id:str
-    validity_id:str
-    weight_slabs:List[WeightSlab]
+    id: str
+    validity_id: str
+    weight_slabs: List[WeightSlab]
+
+
 class DeleteAirFreightRateFeedbackParams(BaseModel):
     air_freight_rate_feedback_ids: List[str]
     closing_remarks: List[str] = []
@@ -516,8 +519,8 @@ class UpdateAirFreightWarehouseRateParams(BaseModel):
 class UpdateAirFreightRateRequestParams(BaseModel):
     air_freight_rate_request_id: str
     closing_remarks: list[str] = None
-    status: str=None
-    remarks: str=None
+    status: str = None
+    remarks: str = None
     performed_by_id: str
 
 
@@ -540,6 +543,75 @@ class DeleteAirFreightRateJob(BaseModel):
     id: str = None
     closing_remarks: str = None
     data: dict = {}
+    source_id: str = None
+    service_id: str = None
+    shipment_id: str = None
     rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+
+class CreateAirFreightRateJob(BaseModel):
+    source: str = None
+    source_id: str = None
+    shipment_id: str = None
+    shipment_serial_id: int = None
+    service_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    origin_airport_id: str = None
+    destination_airport_id: str = None
+    airline_id: str = None
+    service_provider_id: str = None
+    commodity: str = None
+    rate_type: str = None
+    commodity_type: str = None
+    commodity_sub_type: str = None
+    operation_type: str = None
+    shipment_type: str = None
+    stacking_type: str = None
+    is_visible: bool = True
+    price_type: str = None
+
+
+class DeleteAirFreightRateLocalJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    source_id: str = None
+    shipment_id: str = None
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+
+class CreateAirFreightRateLocalJob(BaseModel):
+    source: str = None
+    source_id: str = None
+    shipment_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    airport_id: str = None
+    airline_id: str = None
+    trade_type: str = None
+    service_provider_id: str = None
+    commodity: str = None
+    commodity_type: str = None
+    rate_type: str = None
+    operation_type: str = None
+    shipment_type: str = None
+    stacking_type: str = None
+    is_visible: bool = True
+    price_type: str = None
+    
+class UpdateAirFreightRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
+    
+class UpdateAirFreightRateLocalJob(BaseModel):
+    id: str
+    user_id: str
     performed_by_id: str = None
     performed_by_type: str = None
