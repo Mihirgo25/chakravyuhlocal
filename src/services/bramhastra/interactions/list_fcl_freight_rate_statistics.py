@@ -5,19 +5,35 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
     add_pagination_data,
 )
 from micro_services.client import maps
+from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.bramhastra.enums import FclFilterTypes
+from services.bramhastra.models.fcl_freight_rate_statistic import (
+    FclFreightRateStatistic,
+)
 
-DEFAULT_INCUDE_PARAMS = {
+DEFAULT_PARAMS = {
     "origin_port_id",
     "destination_port_id",
     "origin_main_port_id",
     "destination_main_port_id",
     "shipping_line_id",
     "service_provider_id",
-    "cogo_entity_id",
     "container_size",
     "container_type",
     "commodity",
     "rate_type",
+}
+
+DEFAULT_AGGREGATE_PARAMS = {
+    "spot_search_count": "COUNT(DISTINCT spot_search_id)",
+    "checkout_count": "SUM(checkout*sign)",
+    "bookings_created": "SUM(shipment*sign)",
+    "rate_deviation_from_booking_rate": "MAX(ABS(bas_standard_price_diff_from_selected_rate))",
+}
+
+DEFAULT_SELECT_KEYS = {
+    "origin_port_id",
+    "destination_port_id",
 }
 
 LOCATION_KEYS = {
@@ -26,6 +42,10 @@ LOCATION_KEYS = {
     "origin_main_port_id",
     "destination_main_port_id",
 }
+
+DEFAULT_QUERY_TYPE = "default"
+
+ALLOWABLE_QUERY_TYPES = {"default", "average_price", "rates_affected"}
 
 
 async def add_service_objects(statistics):
@@ -42,7 +62,7 @@ async def add_service_objects(statistics):
     shipping_lines = await get_shipping_lines(shipping_line_ids)
 
     locations = await get_locations(location_ids)
-    
+
     for statistic in statistics:
         update_statistic = dict()
         for k, v in statistic.items():
@@ -88,32 +108,102 @@ async def get_locations(ids):
     }
 
 
-async def list_fcl_freight_rate_statistics(filters, page_limit, page):
+async def list_fcl_freight_rate_statistics(
+    filters, page_limit, page, is_service_object_required
+):
+    if (
+        "query_type" in filters
+        and filters.get("query_type") not in ALLOWABLE_QUERY_TYPES
+    ):
+        raise ValueError("invalid type")
+    return await eval(
+        f"use_{filters.get('query_type') or DEFAULT_QUERY_TYPE}_filter(filters, page_limit, page,is_service_object_required)"
+    )
+
+
+async def use_average_price_filter(
+    filters, page_limit, page, is_service_object_required
+):
+    grouping = filters.get("group_by") or DEFAULT_PARAMS
+
     clickhouse = ClickHouse()
 
-    select = ",".join(DEFAULT_INCUDE_PARAMS)
+    if not grouping:
+        grouping = DEFAULT_SELECT_KEYS.copy()
+
+    select = ",".join(grouping)
 
     queries = [
-        f"""SELECT {select},rate_deviation_from_booking_rate from brahmastra.fcl_freight_rate_statistics"""
+        f"""SELECT {select},AVG(bas_standard_price) as average_standard_price FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE sign = 1 AND bas_standard_price > 0 AND is_deleted = False"""
+    ]
+
+    if where := get_direct_indirect_filters(filters):
+        queries.append("AND")
+        queries.append(where)
+
+    queries.append(f"GROUP BY {select}")
+
+    total_count, total_pages = add_pagination_data(
+        clickhouse, queries, filters, page, page_limit
+    )
+
+    statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
+
+    if statistics and is_service_object_required:
+        await add_service_objects(statistics)
+
+    return dict(
+        list=statistics,
+        page=page,
+        page_limit=page_limit,
+        total_pages=total_pages,
+        total_count=total_count,
+    )
+
+
+async def use_rates_affected_filter(
+    filters, page_limit, page, is_service_object_required
+):
+    clickhouse = ClickHouse()
+    query = [
+        f"""SELECT toUnixTimestamp(DATE(rate_updated_at),'Asia/Tokyo')*1000 AS day,COUNT(*) as rates_count FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"""
+    ]
+    query.append(
+        f"WHERE rate_updated_at >= %(start_date)s AND rate_updated_at <= %(end_date)s AND day > 0 "
+    )
+    where = get_direct_indirect_filters(filters, date=None)
+    if where:
+        query.append(f"AND {where}")
+    query.append("GROUP BY DATE(rate_updated_at) ORDER BY day ASC")
+    return {"list": clickhouse.execute(" ".join(query), filters)}
+
+
+async def use_default_filter(filters, page_limit, page, is_service_object_required):
+    clickhouse = ClickHouse()
+
+    select = ",".join(DEFAULT_PARAMS)
+
+    aggregate_select = ",".join(
+        [f"{v} AS aggregate_{k}" for k, v in DEFAULT_AGGREGATE_PARAMS.items()]
+    )
+
+    queries = [
+        f"""SELECT {select},{aggregate_select} from brahmastra.{FclFreightAction._meta.table_name}"""
     ]
 
     if where := get_direct_indirect_filters(filters):
         queries.append("WHERE")
         queries.append(where)
 
+    queries.append(f"GROUP BY {select}")
+
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
     )
 
-    queries.insert(0, "WITH list AS (")
-
-    queries.append(
-        f") SELECT {select},MAX(ABS(rate_deviation_from_booking_rate)) as deviation FROM list GROUP BY {select}"
-    )
-
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
-    
-    if statistics:
+
+    if statistics and is_service_object_required:
         await add_service_objects(statistics)
 
     return dict(

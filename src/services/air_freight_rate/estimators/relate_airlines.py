@@ -5,7 +5,7 @@ from services.air_freight_rate.models.air_freight_location_cluster_mapping impor
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_past_air_invoices,get_spot_search_count
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_FACTORS_WEIGHT_SLABS
-from micro_services.client import common,maps
+from micro_services.client import common
 from peewee import SQL
 from statistics import mean 
 from services.air_freight_rate.helpers.get_matching_weight_slab import get_matching_slab
@@ -138,8 +138,9 @@ class RelateAirline:
             'origin_airport_id': origin_airport_id,
             'destination_airport_id': destination_airport_id
         }
-        airlines = maps.get_airlines_for_route(data)
-
+        airlines = common.get_saas_schedules_airport_pair_coverages(data)
+        if not isinstance(airlines,list):
+            return []
         return airlines
 
     def generate_ratios(self,prime_arline_id,airline_dict,origin_cluster,destination_cluster,origin_locations,destination_locations,critical_rate):
@@ -154,7 +155,7 @@ class RelateAirline:
                     spot_search_count = get_spot_search_count(origin,destination)
                     if spot_search_count < 10:
                         continue
-                    airlines = self.get_airlines_for_airport_pair(origin,destination)['airline_ids']
+                    airlines = self.get_airlines_for_airport_pair(origin,destination)
                     for airline in airlines:
                         key = ":".join([origin,destination,airline])
                         slab_wise_ratio = {}

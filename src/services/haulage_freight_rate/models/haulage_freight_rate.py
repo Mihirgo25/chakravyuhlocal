@@ -9,6 +9,8 @@ from configs.global_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_TYPES, TRANSPORT_MODES, TRIP_TYPES, HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS, TRAILER_TYPES
 from configs.haulage_freight_rate_constants import RATE_TYPES
 from libs.get_applicable_filters import is_valid_uuid
+from database.rails_db import get_eligible_orgs
+
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -187,11 +189,17 @@ class HaulageFreightRate(BaseModel):
         if self.transit_time is not None:
             if self.transport_modes[0] == 'trailer' and self.transit_time < 0:
                 raise HTTPException(status_code=400, detail="transit time is invalid")
+        else:
+            if self.transport_modes[0] == 'trailer': 
+                raise HTTPException(status_code=400, detail="transit time is required")
     
     def validate_detention_free_time(self):
         if self.detention_free_time is not None:
             if self.transport_modes[0] == 'trailer' and self.detention_free_time < 0:
                 raise HTTPException(status_code=400, detail="detention free time is invalid")
+        else:
+            if self.transport_modes[0] == 'trailer': 
+                raise HTTPException(status_code=400, detail="detention free time is required")
 
     def validate_shipping_line_id(self):
         if not self.shipping_line_id and self.haulage_type == 'carrier':
@@ -224,6 +232,12 @@ class HaulageFreightRate(BaseModel):
         if invalid_haulage_line_items:
             raise HTTPException(status_code=400, detail="Invalid line items")
         
+    def validate_service_provider_id(self):
+        service_provider_data = get_eligible_orgs(service='haulage_freight')
+        if str(self.service_provider_id) in service_provider_data:
+            return True
+        raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
+        
     def validate_before_save(self):
         self.validate_container_size()
         self.validate_container_type()
@@ -239,6 +253,7 @@ class HaulageFreightRate(BaseModel):
         self.validate_duplicate_line_items()
         self.validate_invalid_line_items()
         self.validate_slabs()
+        self.validate_service_provider_id()
         return True
         
       
@@ -278,7 +293,10 @@ class HaulageFreightRate(BaseModel):
             mandatory_line_items = [line_item for line_item in rates.get('line_items') if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
 
             for prices in mandatory_line_items:
+                if prices['currency']!=currency:
                     sum = sum + int(common.get_money_exchange_for_fcl({'price': prices["price"], 'from_currency': prices['currency'], 'to_currency':currency})['price'])
+                else:
+                    sum = sum + int(prices["price"])
 
             if sum and result > sum:
                 result = sum
@@ -303,7 +321,10 @@ class HaulageFreightRate(BaseModel):
         result = 0
 
         for line_item in line_items:
-            result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
+            if line_item['currency']!= currency:
+                result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
+            else:
+                result = result + int(line_item["price"])
         return result
     
     def update_platform_prices_for_other_service_providers(self):
@@ -342,7 +363,7 @@ class HaulageFreightRate(BaseModel):
             grouped_charge_codes[line_item.get('code')] = item + [line_item]
 
         for code,line_items in grouped_charge_codes.items():
-            code_config = HAULAGE_FREIGHT_CHARGES[code]
+            code_config = HAULAGE_FREIGHT_CHARGES.get()[code]
 
             if not code_config:
                 self.line_items_error_messages[code] = ['is invalid']
@@ -409,7 +430,7 @@ class HaulageFreightRate(BaseModel):
         return {'haulage_freight': haulage_freight}
 
     def possible_charge_codes(self):
-        haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES
+        haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES.get()
 
         charge_codes = {}
         origin_location = self.origin_location

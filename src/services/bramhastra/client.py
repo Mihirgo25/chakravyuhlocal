@@ -1,7 +1,18 @@
 from clickhouse_driver import Client
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
-from configs.env import CLICK_DATABASE_HOST, CLICK_DATABASE_PASSWORD
+from configs.env import (
+    CLICK_DATABASE_HOST,
+    CLICK_DATABASE_PASSWORD,
+    ENVIRONMENT_TYPE,
+    APP_ENV,
+)
+from services.bramhastra.enums import AppEnv, EnvironmentType
+import logging
+import time
+
+logger = logging.getLogger("click")
+logger.setLevel(logging.DEBUG)
 
 
 class ClickHouse:
@@ -9,7 +20,16 @@ class ClickHouse:
         self.client = Client(host=CLICK_DATABASE_HOST, password=CLICK_DATABASE_PASSWORD)
 
     def execute(self, query, parameters=None):
-        if result := self.client.execute(query, parameters, with_column_types=True):
+        start_time = time.perf_counter_ns()
+        result = self.client.execute(query, parameters, with_column_types=True)
+        end_time = time.perf_counter_ns()
+        if (
+            ENVIRONMENT_TYPE == EnvironmentType.cli.value
+            or APP_ENV == AppEnv.development.value
+        ):
+            logger.debug((query, parameters))
+            logger.info("Execution Time: %.2f ms" % ((end_time - start_time) / 1e6))
+        if result is not None:
             column_names = [column[0] for column in result[1]]
             data = [row for row in result[0]]
             return [dict(zip(column_names, row)) for row in data]

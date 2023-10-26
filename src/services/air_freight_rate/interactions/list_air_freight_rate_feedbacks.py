@@ -14,9 +14,10 @@ from configs.global_constants import RATE_ENTITY_MAPPING
 from micro_services.client import spot_search
 from database.rails_db import get_organization
 from libs.json_encoder import json_encoder
+from services.air_freight_rate.constants.air_freight_rate_constants import IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE, IMPORTER_EXPORTER_ID_FOR_ENTERPRISE_SALES
 
-possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status','trade_type','origin_airport_id', 'destination_airport_id','origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id','airline_id']
-possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id']
+possible_direct_filters = ['id', 'feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status','trade_type','origin_airport_id', 'destination_airport_id','origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id','airline_id']
+possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'freight_force_importer_exporter', 'except_freight_force_importer_exporter', 'q']
 
 def list_air_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
     query = AirFreightRateFeedback.select()
@@ -69,10 +70,21 @@ def apply_validity_start_greater_than_filter(query, filters):
 
     return query
 
+def apply_q_filter(query, filters):
+    q = str(filters.get('q', ''))
+    query = query.where(AirFreightRateFeedback.serial_id.cast("text") ** (q + "%"))
+    return query
+
 def apply_validity_end_less_than_filter(query, filters):
     query = query.where(AirFreightRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
 
     return query
+
+def apply_freight_force_importer_exporter_filter(query, filters):
+    return query.where(AirFreightRateFeedback.performed_by_org_id in IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE)
+
+def apply_except_freight_force_importer_exporter_filter(query, filters):
+    return query.where(AirFreightRateFeedback.performed_by_org_id not in IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE)
 
 
 def apply_similar_id_filter(query, filters):
@@ -164,6 +176,10 @@ def get_data(query, spot_search_details_required, booking_details_required):
                     object['price']=weight_slab['tariff_price']
                     break
             object['reverted_rate_data']['currency'] = reverted_validity_data.get('currency')
+        if str(object['performed_by_org_id']) in IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE:
+            object['service_provider'] = 'FREIGHT_FORCE'
+        elif str(object['performed_by_org_id']) in IMPORTER_EXPORTER_ID_FOR_ENTERPRISE_SALES:
+            object['service_provider'] = 'ENTERPRISE_SALES'
 
         new_data.append(object)
     return new_data

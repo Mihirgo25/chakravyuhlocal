@@ -210,6 +210,8 @@ RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
 
 DEFAULT_RATE_TYPE = 'market_place'
 
+DEFAULT_PERFORMED_BY_TYPE = 'system'
+
 VN_ENTITY_ID = 'b67d40b1-616c-4471-b77b-de52b4c9f2ff'
 
 SPECIFICITY_TYPE_HIERARCHY = {
@@ -220,3 +222,29 @@ SPECIFICITY_TYPE_HIERARCHY = {
 
 
 REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}
+
+FCL_IMPORT_COVERAGE_USERS = [
+  'f47788fe-85e8-4f86-a9d7-7c7902ea864a',
+  '51641e0e-a5da-452a-81fc-ccb8fe6df343',
+  '922b367f-0f3e-4872-91d0-68413fc7f955'
+]
+
+FCL_EXPORT_COVERAGE_USERS = [
+  '6addea60-a3de-4067-b08d-ece04be594ab',
+  'd7f62f2d-2b41-41ae-a9f0-200255de4d8f',
+  '329fb317-f2f9-4c41-aabd-4a9befc53721'
+]
+
+CRITICAL_PORTS_INDIA_VIETNAM = [
+    'eb187b38-51b2-4a5e-9f3c-978033ca1ddf',
+    '7aa6ac82-c295-497f-bfe1-90294cdfa7a9',
+    '3c843f50-867c-4b07-bb57-e61af97dabfe',
+    'b0a48e84-48d5-438b-841a-e800fb68e439',
+    'c2d6fb91-2875-4d73-b12b-dd1b78fdfe8a',
+    '76fdeee3-1c7f-4f6e-a5d2-2a729445f2d9'
+]
+
+MIN_ALLOWED_PERCENTAGE_CHANGE = -3
+MAX_ALLOWED_PERCENTAGE_CHANGE = 15
+MIN_ALLOWED_MARKUP = -50
+MAX_ALLOWED_MARKUP = 100

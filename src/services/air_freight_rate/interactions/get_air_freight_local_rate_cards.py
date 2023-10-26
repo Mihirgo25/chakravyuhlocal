@@ -33,7 +33,8 @@ def initialize_local_query(request):
         AirFreightRateLocal.commodity == request.get('commodity'),
         AirFreightRateLocal.commodity_type == request.get('commodity_type'),
         ~(AirFreightRateLocal.is_line_items_error_messages_present),
-        ~(AirFreightRateLocal.rate_not_available_entry)
+        ~(AirFreightRateLocal.rate_not_available_entry),
+        ((AirFreightRateLocal.importer_exporter_id == request.get('importer_exporter_id')) | (AirFreightRateLocal.importer_exporter_id.is_null(True)))
     )
 
     if request.get('airline_id'):
@@ -92,7 +93,7 @@ def build_local_line_items(request,query_result, response_object):
 
 def build_local_line_item_object(request,line_item):
     chargeable_weight = get_chargeable_weight(request)
-    code_config = AIR_FREIGHT_LOCAL_CHARGES.get(line_item['code'])
+    code_config = AIR_FREIGHT_LOCAL_CHARGES.get().get(line_item['code'])
     if not code_config:
         return
     if code_config.get('inco_terms') and request.get('inco_term') and request.get('inco_term') not in code_config.get('inco_terms'):

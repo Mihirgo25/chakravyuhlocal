@@ -4,7 +4,7 @@ from configs.env import *
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from micro_services.client import organization, common
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from services.rate_sheet.interactions.validate_and_process_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
@@ -18,13 +18,14 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import 
 from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
 from services.haulage_freight_rate.schedulers.electricity_price_scheduler import electricity_price_scheduler
 from services.fcl_freight_rate.interaction.add_local_rates_on_country import add_local_rates_on_country
+from services.fcl_freight_rate.helpers.fcl_freight_rates_to_cogo_assured_helper import fcl_freight_rates_to_cogo_assured_helper
 from kombu import Exchange, Queue
 from celery.schedules import crontab
+import asyncio
 from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 from services.fcl_freight_rate.interaction.update_cogo_assured_fcl_freight_rate_validities import update_cogo_assured_fcl_freight_rate_validities
-from services.fcl_freight_rate.interaction.update_fcl_rates_to_cogo_assured import update_fcl_rates_to_cogo_assured
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
 from services.chakravyuh.interaction.get_air_invoice_estimation_prediction import invoice_rates_updation
 from services.fcl_customs_rate.interaction.update_fcl_customs_rate_platform_prices import update_fcl_customs_rate_platform_prices
@@ -34,8 +35,9 @@ from services.air_freight_rate.interactions.create_draft_air_freight_rate import
 from database.rails_db import get_past_cost_booking_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate
-from services.fcl_customs_rate.helpers import update_organization_fcl_customs
-from services.fcl_cfs_rate.helpers import update_organization_fcl_cfs
+from services.fcl_customs_rate.helpers.update_organization_fcl_customs import update_organization_fcl_customs
+from services.fcl_freight_rate.helpers.cluster_extension_by_latest_trends_helper import cluster_extension_by_latest_trends_helper
+from services.fcl_cfs_rate.helpers.update_organisation_fcl_cfs import update_organization_fcl_cfs
 from services.air_freight_rate.interactions.update_air_freight_rate_request import update_air_freight_rate_request
 from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_feedback
 from services.air_freight_rate.interactions.create_air_freight_rate_local import create_air_freight_rate_local
@@ -61,6 +63,28 @@ from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as Fc
 from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreightVyuhSetter
 from playhouse.postgres_ext import ServerSide
 
+from services.fcl_freight_rate.workers.fcl_freight_critical_port_pairs_scheduler import (
+    fcl_freight_critical_port_pairs_scheduler,
+)
+from services.fcl_freight_rate.workers.fcl_freight_cancelled_shipments_scheduler import (
+    fcl_freight_cancelled_shipments_scheduler,
+)
+from services.fcl_freight_rate.workers.fcl_freight_expiring_rates_scheduler import (
+    fcl_freight_expiring_rates_scheduler,
+)
+from services.air_freight_rate.workers.air_freight_cancelled_shipments_scheduler import (
+    air_freight_cancelled_shipments_scheduler,
+)
+from services.air_freight_rate.workers.air_freight_critical_port_pairs_scheduler import (
+    air_freight_critical_port_pairs_scheduler,
+)
+from services.air_freight_rate.workers.air_freight_expiring_rates_scheduler import (
+    air_freight_expiring_rates_scheduler,
+)
+from services.haulage_freight_rate.workers.haulage_freight_expiring_rates_scheduler import (
+    haulage_freight_expiring_rates_scheduler,
+)
+
 CELERY_CONFIG = {
     "enable_utc": True,
     "task_serializer": "pickle",
@@ -69,7 +93,8 @@ CELERY_CONFIG = {
     "accept_content": ['application/json', 'application/x-python-serialize'],
     "task_acks_late": True,
     "result_expires": 60*30,
-    "celeryd_prefetch_multiplier": 1
+    "celeryd_prefetch_multiplier": 2,
+    "celery_queue_max_length": 1000
 }
 
 if APP_ENV == 'development':
@@ -100,7 +125,7 @@ celery.conf.update(**CELERY_CONFIG)
 celery.conf.beat_schedule = {
     'fcl_freigh_rates_to_cogo_assured': {
         'task': 'celery_worker.fcl_freight_rates_to_cogo_assured',
-        'schedule': crontab(minute=30,hour=18),
+        'schedule': crontab(minute=0, hour='*/2'),
         'options': {'queue' : 'fcl_freight_rate'}
         },
     # 'update_cogo_assured_fcl_freight_rates': {
@@ -148,24 +173,52 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     },
-    'brahmastra':{
-        'task': 'services.bramhastra.celery.brahmastra_in_delay',
-        'schedule': crontab(minute=0, hour='*/2'),
-        'options': {'queue': 'statistics'}
+    'cluster_extension_by_latest_trends_worker':{
+        'task': 'celery_worker.cluster_extension_by_latest_trends_worker',
+        "schedule": crontab(hour=23, minute=00),
+        'options': {'queue': 'fcl_freight_rate'}
     },
     'cache_data_worker':{
         'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
         'schedule': crontab(hour=16, minute=00),
         'options': {'queue': 'low'}
     },
-    'fcl_daily_attribute_updater':{
-        'task': 'services.bramhastra.celery.fcl_daily_attribute_updater_worker',
-        'schedule': crontab(hour=22, minute=30),
+    'fcl_daily_attributer_updater':{
+        'task': 'services.bramhastra.celery.fcl_daily_attributer_updater_in_delay',
+        'schedule': crontab(hour = 22, minute = 00),
         'options': {'queue': 'statistics'}
-    }
+    },
+    "create_jobs_for_cancelled_shipments": {
+        "task": "celery_worker.create_job_for_cancelled_shipments_delay",
+        "schedule": crontab(hour=2, minute=30),
+        "options": {"queue": "fcl_freight_rate"},
+    },
+    "create_jobs_for_expiring_rates": {
+        "task": "celery_worker.create_job_for_expiring_rates_delay",
+        "schedule": crontab(hour=00, minute=00),
+        "options": {"queue": "fcl_freight_rate"},
+    },
+    "create_jobs_for_critical_port_pairs": {
+        "task": "celery_worker.create_job_for_critical_port_pairs_delay",
+        'schedule': crontab(hour=1, minute=00),
+        "options": {"queue": "fcl_freight_rate"},
+    },
 }
+
+
+celery.autodiscover_tasks(['services.air_customs_rate.air_customs_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.ftl_freight_rate.ftl_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
+celery.autodiscover_tasks(['services.air_freight_rate.air_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.fcl_freight_rate.fcl_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.fcl_customs_rate.fcl_customs_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.ltl_freight_rate.ltl_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.lcl_freight_rate.lcl_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.lcl_customs_rate.lcl_customs_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.fcl_cfs_rate.fcl_cfs_celery_worker'], force=True)
+
+
 
 
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
@@ -173,12 +226,12 @@ def fcl_cost_booking_estimation(self):
     try:
         limit = 500
         offset = 0
-        while True: 
+        while True:
             cost_booking_data = get_past_cost_booking_data(limit, offset)
             offset += 500
             if not cost_booking_data:
                 break
-            
+
             for booking_data in cost_booking_data:
                 setter = FclBookingVyuhSetters(booking_data)
                 setter.set_dynamic_pricing()
@@ -341,7 +394,7 @@ def send_closed_notifications_to_sales_agent_feedback(self, object):
             pass
         else:
             raise self.retry(exc= exc)
-        
+
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def send_closed_notifications_to_user_feedback(self, object):
     try:
@@ -395,9 +448,13 @@ def celery_create_fcl_freight_rate_local(self, request):
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_id,procured_by_id,cogo_entity_id):
-    eval_string = f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')"
+
+    args = [f"sourced_by_id='{sourced_by_id}'", f"procured_by_id='{procured_by_id}'"] if sourced_by_id is not None and procured_by_id is not None else []
     if cogo_entity_id:
-        eval_string = f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}',cogo_entity_id='{cogo_entity_id}')"
+        args.append(f"cogo_entity_id='{cogo_entity_id}'")
+
+    eval_string = f"object.perform_{action_name}_action({', '.join(args)})"
+    
     try:
         eval(eval_string)
     except Exception as exc:
@@ -405,7 +462,7 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             pass
         else:
             raise self.retry(exc= exc)
-        
+
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def air_freight_bulk_operation_delay(self, action_name,object,sourced_by_id,procured_by_id):
     try:
@@ -440,29 +497,9 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_freight_rates_to_cogo_assured(self):
     try:
-        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.updated_at.cast('date') >= datetime.now().date()-timedelta(days = 1), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE)
-        
-        grouped_set = set()
-        for rate in ServerSide(query):
-            grouped_set.add(f'{str(rate.origin_port_id)}:{str(rate.origin_main_port_id or "")}:{str(rate.destination_port_id)}:{str(rate.destination_main_port_id or "")}:{str(rate.container_size)}:{str(rate.container_type)}:{str(rate.commodity)}')
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
-            futures = [executor.submit(execute_update_fcl_rates_to_cogo_assured, key) for key in grouped_set]
+        fcl_freight_rates_to_cogo_assured_helper()
     except Exception as exc:
         pass
-
-def execute_update_fcl_rates_to_cogo_assured(key):
-    origin_port_id, origin_main_port_id, destination_port_id, destination_main_port_id, container_size, container_type, commodity = key.split(":")
-    param = {
-        "origin_port_id": origin_port_id,
-        "origin_main_port_id": None if not origin_main_port_id else origin_main_port_id,
-        "destination_port_id":destination_port_id,
-        "destination_main_port_id": None if not destination_main_port_id else destination_main_port_id,
-        "container_size": container_size,
-        "container_type": container_type,
-        "commodity": commodity
-    }
-    update_fcl_rates_to_cogo_assured(param)
 
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
 def update_contract_service_task_delay(self, object):
@@ -473,10 +510,10 @@ def update_contract_service_task_delay(self, object):
             pass
         else:
             raise self.retry(exc= exc)
-        
+
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
 def update_spot_negotiation_locals_rate_task_delay(self,object):
-    try: 
+    try:
        common.update_spot_negotiation_locals_rate(object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
@@ -547,7 +584,7 @@ def create_country_wise_locals_in_delay(self, request):
         if type(exc).__name__ == 'HTTPException':
             pass
         else:
-            raise self.retry(exc= exc)        
+            raise self.retry(exc= exc)
 
 @celery.task(bind=True, retry_backoff=True, max_retries=1)
 def update_cogo_assured_fcl_freight_rates(self):
@@ -558,7 +595,7 @@ def update_cogo_assured_fcl_freight_rates(self):
         batched_rates = cogo_assured_rates.limit(batch_size).offset(batch)
         if not batched_rates.exists():
             break
-        
+
         batch_rates = list(batched_rates.dicts())
         with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
             futures = [executor.submit(update_cogo_assured_fcl_freight_rate_validities, rate) for rate in batch_rates]
@@ -572,6 +609,7 @@ def update_fcl_freight_rate_request_in_delay(self, request):
             pass
         else:
             raise self.retry(exc= exc)
+    
 @celery.task(bind = True, retry_backoff=True, max_retries=1)
 def process_fuel_data_delay(self):
     try:
@@ -637,6 +675,17 @@ def process_freight_look_rates(self, rate, locations):
 def create_fcl_customs_rate_delay(self, request):
     try:
         return create_fcl_customs_rate(request)
+    except Exception as e:
+        if type(e).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= e)
+        
+@celery.task(bind = True, retry_backoff=True, max_retries=5)
+def create_fcl_cfs_rate_delay(self, request):
+    from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate import create_fcl_cfs_rate
+    try:
+        return create_fcl_cfs_rate(request)
     except Exception as e:
         if type(e).__name__ == 'HTTPException':
             pass
@@ -712,7 +761,7 @@ def air_freight_rate_prediction_feedback_delay(self, result):
             pass
         else:
             raise self.retry(exc= exc)
-        
+
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def create_saas_air_schedule_airport_pair_delay (self,air_object,request):
     try:
@@ -722,7 +771,7 @@ def create_saas_air_schedule_airport_pair_delay (self,air_object,request):
             pass
         else:
             raise self.retry(exc= exc)
-        
+
 @celery.task(bind = True, retry_backoff = True, max_retries=5)
 def create_air_freight_rate_local_delay(self, request):
     try:
@@ -732,7 +781,7 @@ def create_air_freight_rate_local_delay(self, request):
             pass
         else:
             raise self.retry(exc= exc)
-        
+
 @celery.task(bind = True,retry_backoff = True, max_retries=5)
 def create_air_freight_rate_freight_delay(self, request):
     try:
@@ -742,7 +791,7 @@ def create_air_freight_rate_freight_delay(self, request):
             pass
         else:
             raise self.retry(exc= exc)
-    
+
 @celery.task(bind = True, retry_backoff = True, max_retries=5)
 def create_air_freight_rate_surcharge_delay(self, request):
     try:
@@ -784,7 +833,7 @@ def send_air_freight_rate_task_notification_in_delay(self,task_id):
             pass
         else:
             raise self.retry(exc= exc)
-        
+
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def get_rate_from_cargo_ai_in_delay(self,air_freight_rate,feedback,performed_by_id):
     try:
@@ -794,7 +843,7 @@ def get_rate_from_cargo_ai_in_delay(self,air_freight_rate,feedback,performed_by_
             pass
         else:
             raise self.retry(exc= exc)
-        
+
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def send_air_freight_local_charges_update_reminder_notification_in_delay(self):
     try:
@@ -824,7 +873,7 @@ def send_near_expiry_air_freight_rate_notification_in_delay(self):
             pass
         else:
             raise self.retry(exc= exc)
-        
+
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight_rate,airports):
     try:
@@ -854,7 +903,7 @@ def extend_air_freight_rates_in_delay(self, rate,base_to_base=False):
         if type(exc).__name__ == 'HTTPException':
             pass
         else:
-            raise self.retry(exc= exc) 
+            raise self.retry(exc= exc)
 
 @celery.task(bind = True,retry_backoff=True,max_retries=3)
 def air_freight_airline_factors_in_delay(self):
@@ -866,3 +915,53 @@ def air_freight_airline_factors_in_delay(self):
             pass
         else:
             raise self.retry(exc= exc) 
+
+
+@celery.task(bind = True,retry_backoff=True,max_retries=3)
+def cluster_extension_by_latest_trends_worker(self):
+    try:
+        cluster_extension_by_latest_trends_helper()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc) 
+
+
+@celery.task(bind=True, retry_backoff=True, max_retries=3)
+def create_job_for_cancelled_shipments_delay(self):
+    try:
+        fcl_freight_cancelled_shipments_scheduler()
+        air_freight_cancelled_shipments_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+
+
+@celery.task(bind=True, retry_backoff=True, max_retries=3)
+def create_job_for_expiring_rates_delay(self):
+    try:
+        # may insert 8k to 10k records on odd day for each fcl and air
+        fcl_freight_expiring_rates_scheduler()
+        air_freight_expiring_rates_scheduler()
+        haulage_freight_expiring_rates_scheduler()
+        
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+
+
+@celery.task(bind=True, max_retries=3, retry_backoff=True)
+def create_job_for_critical_port_pairs_delay(self):
+    try:
+        fcl_freight_critical_port_pairs_scheduler()
+        air_freight_critical_port_pairs_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)

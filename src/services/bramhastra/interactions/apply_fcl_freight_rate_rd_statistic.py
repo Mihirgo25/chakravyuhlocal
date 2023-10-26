@@ -1,10 +1,10 @@
-from services.bramhastra.helpers.post_fcl_freight_helper import RevenueDesk
-from services.bramhastra.enums import RDAction
+from services.bramhastra.helpers.rd_fcl_freight_rate_statistic_helper import RevenueDesk
+from services.bramhastra.enums import RDAction, AppEnv
 from configs.env import APP_ENV
 
 
 def apply_fcl_freight_rate_rd_statistic(request):
-    if APP_ENV == "production":
+    if APP_ENV == AppEnv.production.value:
         revenue_desk = RevenueDesk(request)
         if (
             not getattr(request, "selected_for_booking")
@@ -16,7 +16,7 @@ def apply_fcl_freight_rate_rd_statistic(request):
         if request.action == RDAction.update.value and getattr(
             request, "selected_for_booking"
         ):
-            revenue_desk.set_rate_stats()
+            revenue_desk.set(request)
         elif request.action == RDAction.update.value and getattr(
             request, "selected_for_preference"
         ):

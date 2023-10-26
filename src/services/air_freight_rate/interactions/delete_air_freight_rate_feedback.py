@@ -4,11 +4,12 @@ from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from celery_worker import send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from database.rails_db import (
     get_organization_partner,
 )
 
+from services.air_freight_rate.interactions.delete_air_freight_rate_job import delete_air_freight_rate_job
 
 def delete_air_freight_rate_feedback(request):
     with db.atomic():
@@ -47,7 +48,7 @@ def execute_transaction_code(request):
         else:
             send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')    
 
-
+        delete_air_freight_rate_job(request)  
     return {"id":request['air_freight_rate_feedback_ids']}      
 
 def create_audit(request,id):

@@ -57,7 +57,7 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
 
 def get_data(query, filters):
     new_data = []
-    fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
+    fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES.get()
     data_list = list(query.dicts())
 
     for object in data_list:

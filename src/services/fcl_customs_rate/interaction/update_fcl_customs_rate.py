@@ -2,7 +2,8 @@ from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_normalized_line_items import get_normalized_line_items
 
 def update_fcl_customs_rate(request):
     with db.atomic():
@@ -13,6 +14,7 @@ def execute_transaction_code(request):
     if not rate_object:
         raise HTTPException(status_code=500, detail='Rate Not Found')
     
+    request['customs_line_items'] = get_normalized_line_items(request.get('customs_line_items'))
     update_params = get_update_params(request)
     for attr, value in update_params.items():
         setattr(rate_object, attr, value)

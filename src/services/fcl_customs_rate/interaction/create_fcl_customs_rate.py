@@ -3,7 +3,8 @@ from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRa
 from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_normalized_line_items import get_normalized_line_items
 
 def create_fcl_customs_rate(request):
     with db.atomic():
@@ -11,6 +12,7 @@ def create_fcl_customs_rate(request):
 
 def execute_transaction_code(request):
   from celery_worker import fcl_customs_functions_delay
+  from services.fcl_customs_rate.fcl_customs_celery_worker import update_fcl_customs_rate_job_on_rate_addition_delay
   request = {key: value for key, value in request.items() if value is not None}
   params = get_create_object_params(request)
   customs_rate = FclCustomsRate.select().where(
@@ -32,7 +34,7 @@ def execute_transaction_code(request):
 
   customs_rate.sourced_by_id = request.get("sourced_by_id")
   customs_rate.procured_by_id = request.get("procured_by_id")
-  customs_rate.customs_line_items = request.get('customs_line_items')
+  customs_rate.customs_line_items = get_normalized_line_items(request.get('customs_line_items'))
   customs_rate.cfs_line_items = request.get('cfs_line_items')
 
   customs_rate.set_platform_price()
@@ -54,6 +56,9 @@ def execute_transaction_code(request):
   customs_rate.update_platform_prices_for_other_service_providers()
   fcl_customs_functions_delay.apply_async(kwargs={'fcl_customs_object':customs_rate, 'request':request},queue = 'low')
   get_multiple_service_objects(customs_rate)
+
+  if params['rate_type'] == "market_place":
+        update_fcl_customs_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": customs_rate.id},queue='fcl_freight_rate')
 
   return {'id': customs_rate.id}
 

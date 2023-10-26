@@ -28,7 +28,8 @@ possible_direct_filters = [
     "closed_by_id",
     "origin_country_id",
     "destination_country_id",
-    "transport_mode"
+    "transport_mode",
+    "id"
 ]
 
 

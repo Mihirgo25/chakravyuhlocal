@@ -12,6 +12,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreigh
 from micro_services.client import *
 from database.rails_db import get_operators
 import concurrent.futures
+from database.rails_db import get_eligible_orgs
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 
 class UnknownField(object):
@@ -62,6 +63,8 @@ class FclFreightRateLocal(BaseModel):
     trade_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(index=True, default=datetime.datetime.now)
+    terminal_id = UUIDField(index=True, null=True)
+    terminal = BinaryJSONField(null=True)
     rate_type = CharField(default='market_place', choices = RATE_TYPES)
 
     def save(self, *args, **kwargs):
@@ -106,7 +109,13 @@ class FclFreightRateLocal(BaseModel):
         if self.container_type and self.commodity not in LOCAL_CONTAINER_COMMODITY_MAPPINGS[self.container_type]:
             return False
         return True
-
+    
+    def validate_service_provider_id(self):
+        eligible_service_providers = get_eligible_orgs(service='fcl_freight')
+        if str(self.service_provider_id) in eligible_service_providers:
+            return True
+        return False
+        
     def validate_before_save(self):
         self.local_data_instance = FclFreightRateLocalData(self.data)
 
@@ -124,9 +133,12 @@ class FclFreightRateLocal(BaseModel):
 
         if not self.validate_commodity():
             raise HTTPException(status_code=400, detail='commodity is not valid')
+        
+        if not self.validate_service_provider_id():
+            raise HTTPException(status_code=400, detail='Service Provider is not valid for this service')
 
-        if not self.local_data_instance.validate_duplicate_charge_codes():
-            raise HTTPException(status_code=400, detail='duplicate line items present')
+        # if not self.local_data_instance.validate_duplicate_charge_codes():
+        #     raise HTTPException(status_code=400, detail='duplicate line items present')
 
         invalid_charge_codes = []
         if not self.rate_not_available_entry:
@@ -161,6 +173,22 @@ class FclFreightRateLocal(BaseModel):
         self.is_detention_slabs_missing = len(new_free_days['detention']['slabs']) == 0 if new_free_days and new_free_days.get('detention') else True
         self.is_demurrage_slabs_missing = len(new_free_days['demurrage']['slabs']) == 0 if new_free_days and new_free_days.get('demurrage') else True
         self.is_plugin_slabs_missing = len(new_free_days['plugin']['slabs']) == 0 if new_free_days and new_free_days.get('plugin') else True
+
+    def set_terminal(self):
+
+        if self.terminal:
+            return
+        
+        if not self.terminal_id:
+            return
+        
+        location_ids = [str(self.terminal_id)]
+        
+        terminals = maps.list_locations({'filters':{'id': location_ids}})['list']
+        for terminal in terminals:
+            if str(terminal.get('id')) == str(self.terminal_id):
+                self.terminal = terminal
+        
 
     def set_port(self):
         if self.port:
@@ -204,7 +232,7 @@ class FclFreightRateLocal(BaseModel):
         container_type = self.container_type
         commodity = self.commodity
 
-        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
         charge_codes = {}
         for code, config in fcl_freight_local_charges_dict.items():
@@ -238,7 +266,7 @@ class FclFreightRateLocal(BaseModel):
         t.execute()
 
     def detail(self):
-        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
+        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES.get()
 
         free_day_ids = []
 
@@ -337,3 +365,9 @@ class FclFreightRateLocal(BaseModel):
             item.update({'name': line_item_name})
 
         return detail
+    
+    def set_data(self, new_line_items = []):
+        self.data = {} if not self.data else self.data
+        old_line_items = self.data.get("line_items") or []
+        conditional_line_items = [line_item for line_item in old_line_items if line_item.get("conditions")]
+        self.data["line_items"] = conditional_line_items + new_line_items

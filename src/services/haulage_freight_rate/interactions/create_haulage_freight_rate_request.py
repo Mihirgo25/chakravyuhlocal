@@ -1,12 +1,14 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_request import HaulageFreightRateRequest 
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from celery_worker import create_communication_background
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import maps
 from database.db_session import db
 import uuid
-
+from services.haulage_freight_rate.interactions.create_haulage_freight_rate_job import (
+    create_haulage_freight_rate_job,
+)
 def create_haulage_freight_rate_request(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -54,6 +56,10 @@ def execute_transaction_code(request):
     get_multiple_service_objects(request_object)
 
     send_notifications_to_supply_agents(request)
+    
+    request['source_id'] = request_object.id
+        
+    create_haulage_freight_rate_job(request, "rate_request")
 
     return {
         'id': request_object.id
@@ -61,7 +67,7 @@ def execute_transaction_code(request):
 
 def get_create_params(request):
     if request.get('cargo_readiness_date'):
-        request['cargo_readiness_date'] = request.get('cargo_readiness_date')
+        request['cargo_readiness_date'] = request.get('cargo_readiness_date').isoformat()
     loc_ids = []
 
     if request.get('origin_location_id'):
@@ -140,6 +146,3 @@ def send_notifications_to_supply_agents(request):
     for user_id in request_info['user_ids']:
             data['user_id'] = user_id
             create_communication_background.apply_async(kwargs={'data':data},queue='communication')
-
-
-

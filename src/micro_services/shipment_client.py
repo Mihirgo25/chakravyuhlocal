@@ -29,3 +29,6 @@ class ShipmentApiClient:
     
     def update_sell_and_buy_quotations_for_air_freight_request(self,data = {}):
         return self.client.request('POST','update_sell_and_buy_quotations_for_air_freight_request',data)
+    
+    def list_shipment_flash_booking_rates(self,data = {}):
+        return self.client.request('GET','list_shipment_flash_booking_rates',data)

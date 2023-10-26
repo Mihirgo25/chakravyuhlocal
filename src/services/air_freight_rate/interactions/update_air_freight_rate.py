@@ -10,6 +10,8 @@ from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRa
 from services.air_freight_rate.models.air_freight_rate_validity import AirFreightRateValidity
 from fastapi.encoders import jsonable_encoder
 from configs.global_constants import SERVICE_PROVIDER_FF
+from services.air_freight_rate.constants.air_freight_rate_constants import COGOXPRESS
+from services.air_freight_rate.air_celery_worker import update_air_freight_rate_job_on_rate_addition_delay
 
 def update_air_freight_rate(request):
       with db.atomic():
@@ -25,53 +27,43 @@ def execute(request):
     validity_object = {}
     for validity in validities:
         if validity['id']==request.get('validity_id'):
-            validity_object = validity
-
             if request.get('validity_start') and request.get('validity_end'):
 
                 if validate_validity_object(request['validity_start'],request['validity_end']):
-
-                    validity['validity_start']=datetime.strftime(request.get('validity_start'),'%Y-%m-%d')
-                    validity['validity_end']=datetime.strftime(request.get('validity_end'),'%Y-%m-%d')
+                    validity_start=request.get('validity_start')
+                    validity_end=request.get('validity_end')
+                    validity_id = None
+            else:
+                validity_start=datetime.strptime(validity.get('validity_start'),'%Y-%m-%d').date() 
+                validity_end=datetime.strptime(validity.get('validity_end'),'%Y-%m-%d').date()
+                validity_id = request.get("validity_id")
+            density_ratio = request.get("density_ratio") or "1:{}".format(validity['min_density_weight'])
             
-            validity['status']=True
-
-            if request.get('min_price') !=0.0: 
-
-                object.min_price=request['min_price']
-                validity['min_price'] = request['min_price']
-
-            if request.get('currency'):
-
-                object.currency = request['currency']
-
-            if request.get('weight_slabs'):
-                object.weight_slabs = sorted(request.get('weight_slabs'), key=lambda x: x['lower_limit'])
-                validity['weight_slabs'] = sorted(request.get('weight_slabs'), key=lambda x: x['lower_limit'])
-
-            if request.get('available_volume'): 
-                validity['available_volume'] = request['available_volume']
-                
-            if request.get('available_gross_weight'): 
-                validity['available_gross_weight'] = request['available_gross_weight']
+            object.set_validities(validity_start,validity_end,request.get("min_price") or validity['min_price'],
+                                  validity['currency'],request.get('weight_slabs'),False,validity_id,validity['density_category'],density_ratio,
+                                  validity['initial_volume'] or request.get('initial_volume'),request.get('initial_gross_weight') or validity['initial_gross_weight'],
+                                  request.get('available_volume') or validity['available_volume'],request.get('available_gross_weight') or validity['available_gross_weight'],
+                                  object.rate_type,request.get('likes_count') or validity['likes_count'],request.get('dislikes_count') or validity['dislikes_count']
+                                  )
+            validity_object = jsonable_encoder(validity)
             
-            if request.get('length'):
-                object.length = request.get('length') 
+    if request.get('weight_slabs'):
+        object.weight_slabs = sorted(request.get('weight_slabs'), key=lambda x: x['lower_limit'])
+            
+    if request.get('length'):
+        object.length = request.get('length') 
 
-            if request.get('breadth'):
-                object.breadth = request.get('breadth') 
+    if request.get('breadth'):
+        object.breadth = request.get('breadth') 
 
-            if request.get('height'):
-                object.height = request.get('height')
+    if request.get('height'):
+        object.height = request.get('height')
 
-            if request.get('maximum_weight'):
-                object.maximum_weight = request.get('maximum_weight')
+    if request.get('maximum_weight'):
+        object.maximum_weight = request.get('maximum_weight')
 
-            validity = AirFreightRateValidity(**validity)
-            validity.validations()
-            object.validities= jsonable_encoder(validities)
 
-            break
+    object.maximum_weight = request.get('maximum_weight')
     object.validate_before_save()
     try:
         object.save()
@@ -82,6 +74,11 @@ def execute(request):
 
     if str(object.service_provider_id)== SERVICE_PROVIDER_FF and not request.get('extension_not_required'):
         extend_rate_fun(object,request,validity_object)
+        
+    send_stats(request,object)
+
+    if str(object.service_provider_id) != COGOXPRESS:
+        update_air_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": object.id},queue='fcl_freight_rate')
 
     return {
         'id':object.id
@@ -89,6 +86,8 @@ def execute(request):
 
 def extend_rate_fun(object,request,validity_object):
     from celery_worker import extend_air_freight_rates_in_delay
+    validity_object['validity_start']=datetime.strptime(validity_object.get('validity_start'),'%Y-%m-%d')
+    validity_object['validity_end']=datetime.strptime(validity_object.get('validity_end'),'%Y-%m-%d')
     rate = request | {
         'origin_airport_id':str(object.origin_airport_id),
         'destination_airport_id':str(object.destination_airport_id),
@@ -116,8 +115,8 @@ def extend_rate_fun(object,request,validity_object):
         'initial_gross_weight':validity_object['initial_gross_weight'],
         'available_volume':validity_object['available_volume'],
         'available_gross_weight':validity_object['available_gross_weight'],
-        'validity_start': datetime.combine(request['validity_start'],datetime.min.time()),
-        'validity_end':datetime.combine(request['validity_end'],datetime.min.time())
+        'validity_start': datetime.combine(request.get('validity_start') or  validity_object['validity_start'] ,datetime.min.time()),
+        'validity_end':datetime.combine(request.get('validity_end') or validity_object['validity_end'] ,datetime.min.time())
     }
     extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': rate,'base_to_base':True }, queue='fcl_freight_rate')
 
@@ -162,3 +161,7 @@ def find_object(request):
     except:
         object=None
     return object
+
+def send_stats(request,freight):
+    from services.bramhastra.celery import send_air_rate_stats_in_delay
+    send_air_rate_stats_in_delay.apply_async(kwargs = {'action':'update','request':request,'freight':freight},queue = 'statistics')

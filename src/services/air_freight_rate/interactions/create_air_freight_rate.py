@@ -3,7 +3,7 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from database.db_session import db
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from configs.global_constants import SERVICE_PROVIDER_FF
 
 def create_audit(request, freight_id,validity_id):
@@ -44,7 +44,10 @@ def create_air_freight_rate(request):
     
 def create_air_freight_rate_data(request):
     from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,extend_air_freight_rates_in_delay
-
+    from services.air_freight_rate.air_celery_worker import update_air_freight_rate_job_on_rate_addition_delay
+    
+    action = "update"
+    
     if request['rate_type'] == 'general':
         request['rate_type'] = 'market_place'
 
@@ -96,6 +99,8 @@ def create_air_freight_rate_data(request):
     freight = (AirFreightRate.select().where(AirFreightRate.init_key == init_key).first())
    
     if not freight:
+        action = "create"
+        
         freight = AirFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
@@ -156,6 +161,10 @@ def create_air_freight_rate_data(request):
         update_air_freight_rate_details_delay.apply_async(kwargs={ 'request':request }, queue='fcl_freight_rate')
     if request.get('service_provider_id')== SERVICE_PROVIDER_FF and not request.get('extension_not_required'):
         extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': request,'base_to_base':True }, queue='fcl_freight_rate')
+        
+    send_stats(action,request,freight)
+    if row["source"] not in ["predicted", 'rate_extention']  and row['rate_type'] == "market_place":
+        update_air_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
 
     freight_object = {
         "id": freight.id,
@@ -171,3 +180,12 @@ def set_object_parameters(freight, request):
     freight.weight_slabs = request.get('weight_slabs')
     freight.rate_not_available_entry = False
     freight.currency = request.get('currency')
+    
+
+def send_stats(action, request, freight):
+    from services.bramhastra.celery import send_air_rate_stats_in_delay
+
+    send_air_rate_stats_in_delay.apply_async(
+        kwargs={"action": action, "request": request, "freight": freight},
+        queue="statistics",
+    )

@@ -2,8 +2,10 @@ from services.fcl_customs_rate.models.fcl_customs_rate_request import FclCustoms
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-
+from libs.get_multiple_service_objects import get_multiple_service_objects
+from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_job import (
+    delete_fcl_customs_rate_job
+)
 def delete_fcl_customs_rate_request_data(request):
     with db.atomic():
         return delete_fcl_customs_rate_request(request)
@@ -13,7 +15,7 @@ def delete_fcl_customs_rate_request(request):
   if not request_objects:
     raise HTTPException(status_code=500, detail = 'Requests Not Found')
     
-  data = {key:value for key,value in request.items() if key != 'fcl_customs_rate_request_ids'},
+  data = {key:value for key,value in request.items() if key != 'fcl_customs_rate_request_ids'}
   for object in request_objects:
     object.status = 'inactive'
     object.closed_by_id = request.get('performed_by_id')
@@ -25,6 +27,9 @@ def delete_fcl_customs_rate_request(request):
         print("Exception in deleting request", e)
     get_multiple_service_objects(object)
     create_audit_for_customs_request(request, object, data)
+    
+    delete_fcl_customs_rate_job(request)
+
   return {'fcl_customs_rate_request_ids' : request.get('fcl_customs_rate_request_ids')}
 
 def find_request_objects(request):

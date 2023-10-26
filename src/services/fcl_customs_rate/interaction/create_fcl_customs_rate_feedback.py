@@ -1,10 +1,12 @@
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from services.fcl_customs_rate.models.fcl_customs_rate_feedback import FclCustomsRateFeedback
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
 from database.db_migration import db
-
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate_job import (
+    create_fcl_customs_rate_job,
+)
 def create_fcl_customs_rate_feedback(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -50,6 +52,8 @@ def execute_transaction_code(request):
     create_audit(request, customs_feedback)
     get_multiple_service_objects(customs_feedback)
 
+    request['source_id'] = customs_feedback.id
+    create_fcl_customs_rate_job(request, "rate_feedback")
     return {
       'id': request.get('rate_id')
     }

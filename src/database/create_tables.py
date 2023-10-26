@@ -1,12 +1,11 @@
 from database.db_session import db
-from services. bramhastra.models.data_migration import DataMigration
-
+from services.lcl_freight_rate.models.lcl_freight_rate_audit import LclFreightRateAudit
 
 class Table:
     def __init__(self) -> None:
         pass
 
-    def create_tables(self,models):
+    def create_tables(self, models):
         try:
             db.create_tables(models)
             db.close()
@@ -17,6 +16,8 @@ class Table:
 
 
 if __name__ == "__main__":
-    models = [DataMigration]
+    models = [
+        LclFreightRateAudit
+    ]
 
     Table().create_tables(models)

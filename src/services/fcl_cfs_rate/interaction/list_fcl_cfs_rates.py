@@ -5,6 +5,7 @@ import json
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from micro_services.client import common
 from configs.fcl_freight_rate_constants import RATE_TYPES
+from libs.apply_eligible_lsp_filters import apply_eligible_lsp_filters
 
 possible_direct_filters = ['id', 'location_id', 'country_code', 'trade_id', 'content_id', 'trade_type', 'service_provider id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'cargo_handling_type','rate_type']
 possible_indirect_filters = ['location_ids', 'importer_exporter_present', 'is_rate_available']
@@ -22,7 +23,10 @@ def list_fcl_cfs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updat
   
         query = get_filters(direct_filters, query, FclCfsRate)
         query = apply_indirect_filters(query, indirect_filters)
-
+    
+    if not filters or not 'service_provider_id' in filters:
+        query = apply_eligible_lsp_filters(query, FclCfsRate, 'fcl_cfs')
+    
     if return_query:
         return {'list': query}
     
