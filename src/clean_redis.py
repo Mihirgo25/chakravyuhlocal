@@ -47,18 +47,25 @@ def fcl_freight_objects_updation():
     
 def update_kwd_currency_error():
     records_to_update = FclFreightRateLocal.select().where(
-        (FclFreightRateLocal.port_id == 'acdc2621-d37f-4f25-9637-9d364ad9fda2') 
+        (FclFreightRateLocal.service_provider_id == '5dc403b3-c1bd-4871-b8bd-35543aaadb36'),
+        (FclFreightRateLocal.rate_not_available_entry == False),
     )
+    
     count = 0
     for record in ServerSide(records_to_update):
         updated_data_line_items = []
         updated_line_items = []
+        data = None
         
-        if record.data and record.data['line_items']:
-            for line_item in record.data['line_items']:
-                if line_item['currency'].lower() == 'kd':
-                    line_item['currency'] = 'KWD'
-                updated_data_line_items.append(line_item)
+        if record.data:
+            data = record.data
+            if 'line_items' in data:
+                for line_item in data['line_items']:
+                    if line_item['currency'].lower() == 'kd':
+                        line_item['currency'] = 'KWD'
+                    updated_data_line_items.append(line_item)
+            if 'line_items' in data:
+                data['line_items'] = updated_data_line_items
         
         if record.line_items:
             for line_item in record.line_items:
@@ -66,13 +73,16 @@ def update_kwd_currency_error():
                     line_item['currency'] = 'KWD'
                 updated_line_items.append(line_item)
                 
-        if record.data and record.data['line_items']:
-            record.data['line_items'] = updated_data_line_items 
+        if record.data:
+            record.data = data 
         if record.line_items:
             record.line_items = updated_line_items
+            
         record.save()
-        count += 1
+        
+        count = count + 1
         print(count)
+
 
 
 def update_transformation_objects():
@@ -332,4 +342,5 @@ def create_func(idx, row):
     
         
         
+update_kwd_currency_error()
     
