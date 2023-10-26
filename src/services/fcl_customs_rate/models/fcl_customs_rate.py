@@ -5,6 +5,7 @@ import datetime, uuid
 from micro_services.client import maps, common
 from configs.fcl_freight_rate_constants import *
 from configs.fcl_customs_rate_constants import CONTAINER_TYPE_COMMODITY_MAPPINGS
+from configs.fcl_cfs_rate_constants import EXPORT_CARGO_HANDLING_TYPES, IMPORT_CARGO_HANDLING_TYPES
 from database.rails_db import *
 from fastapi import HTTPException
 from configs.definitions import FCL_CUSTOMS_CHARGES
@@ -111,23 +112,12 @@ class FclCustomsRate(BaseModel):
         if self.trade_type and self.trade_type in TRADE_TYPES:
             return 
         raise HTTPException(status_code=400, detail="Invalid trade type")
-
-    def valid_uniqueness(self):
-        uniqueness = FclCustomsRate.select(FclCustomsRate.id).where(
-            FclCustomsRate.location_id == self.location_id,
-            FclCustomsRate.trade_type == self.trade_type,
-            FclCustomsRate.container_size == self.container_size,
-            FclCustomsRate.container_type == self.container_type,
-            FclCustomsRate.commodity == self.commodity,
-            FclCustomsRate.service_provider_id == self.service_provider_id,
-            FclCustomsRate.importer_exporter_id == self.importer_exporter_id
-        ).count()
-
-        if self.id and uniqueness == 1:
-            return True
-        if not self.id and uniqueness == 0:
-            return True
-        return False
+    
+    def validate_cargo_handling_type(self):
+        if self.trade_type == 'export' and self.cargo_handling_type not in EXPORT_CARGO_HANDLING_TYPES:
+            raise HTTPException(status_code=400,detail='Invalid cargo_handling_type for export')
+        if self.trade_type == 'import' and self.cargo_handling_type not in IMPORT_CARGO_HANDLING_TYPES:
+            raise HTTPException(status_code=400,detail='Invalid cargo_handling_type for import')
     
     def validate_container_size(self):
         if self.container_size and self.container_size in CONTAINER_SIZES:
@@ -216,6 +206,7 @@ class FclCustomsRate(BaseModel):
             ((FclCustomsRate.importer_exporter_id == self.importer_exporter_id) | (FclCustomsRate.importer_exporter_id.is_null(True))),
             FclCustomsRate.is_customs_line_items_error_messages_present == False,
             FclCustomsRate.rate_type == self.rate_type,
+            ((FclCustomsRate.cargo_handling_type == self.cargo_handling_type)) | (FclCustomsRate.cargo_handling_type.is_null(True)),
             ~FclCustomsRate.service_provider_id == self.service_provider_id
         ).execute()
 
@@ -298,6 +289,7 @@ class FclCustomsRate(BaseModel):
           FclCustomsRate.container_size == self.container_size,
           FclCustomsRate.container_type == self.container_type,
           FclCustomsRate.commodity == self.commodity,
+          FclCustomsRate.cargo_handling_type == self.cargo_handling_type,
           FclCustomsRate.rate_not_available_entry == True
         ).execute() 
 
@@ -451,3 +443,4 @@ class FclCustomsRate(BaseModel):
         self.validate_container_type()
         self.validate_commodity()
         self.validate_service_provider_id()
+        self.validate_cargo_handling_type()

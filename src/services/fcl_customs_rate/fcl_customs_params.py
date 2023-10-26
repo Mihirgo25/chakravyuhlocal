@@ -57,6 +57,7 @@ class CreateFclCustomsRateNotAvailable(BaseModel):
   container_size: str
   container_type: str
   commodity: str = None
+  cargo_handling_type: str
   performed_by_type: str = None
   performed_by_id: str = None
 
