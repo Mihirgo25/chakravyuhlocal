@@ -67,9 +67,9 @@ class FclFreightRateLocal(BaseModel):
     terminal = BinaryJSONField(null=True)
     rate_type = CharField(default='market_place', choices = RATE_TYPES)
 
-    # def save(self, *args, **kwargs):
-    #   self.updated_at = datetime.datetime.now()
-    #   return super(FclFreightRateLocal, self).save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateLocal, self).save(*args, **kwargs)
 
 
     class Meta:
