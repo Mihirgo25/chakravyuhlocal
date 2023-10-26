@@ -6,7 +6,7 @@ from configs.transformation_constants import HANDLING_TYPE_FACTORS, PACKING_TYPE
 from services.air_freight_rate.models.air_freight_location_cluster import AirFreightLocationCluster
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from services.air_freight_rate.models.air_freight_airline_factor import AirFreightAirlineFactor
-from micro_services.client import maps
+from micro_services.client import common
 from services.air_freight_rate.helpers.get_matching_weight_slab import get_matching_slab
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
@@ -72,7 +72,9 @@ class AirFreightVyuh():
             'origin_airport_id': origin_airport_id,
             'destination_airport_id': destination_airport_id
         }
-        airlines = maps.get_airlines_for_route(data)['airline_ids']
+        airlines = common.get_saas_schedules_airport_pair_coverages(data)
+        if not isinstance(airlines,list):
+            return []
 
         return airlines
     def get_rate_combinations_to_extend(self,base_to_base):
