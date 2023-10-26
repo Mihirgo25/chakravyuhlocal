@@ -1,5 +1,6 @@
 import os
-from micro_services.client import loki 
+from micro_services.client import loki
+from micro_services.client import common
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..")) 
 
 class Charges:
@@ -22,3 +23,11 @@ AIR_FREIGHT_WAREHOUSE_CHARGES=Charges('air_freight_warehouse_charges')
 HAULAGE_FREIGHT_CHARGES = Charges('haulage_freight_charges')
 AIR_CUSTOMS_CHARGES = Charges('air_customs_charges')
 FTL_FREIGHT_CHARGES = Charges('ftl_freight_charges')
+
+
+class Currency:    
+    def get(self):
+        return common.list_exchange_rate_currencies()
+    
+FCL_FREIGHT_CURRENCIES=Currency()    
+    
