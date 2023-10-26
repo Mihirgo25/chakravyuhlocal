@@ -15,6 +15,7 @@ from database.rails_db import get_ff_mlo
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
 from joblib import Parallel, delayed
+from playhouse.postgres_ext import ServerSide
 
 def clean_full_redis():
     redis_keys = rd.keys('*celery-task-meta*')
@@ -49,19 +50,19 @@ def update_kwd_currency_error():
         (FclFreightRateLocal.port_id == 'acdc2621-d37f-4f25-9637-9d364ad9fda2') 
     )
     count = 0
-    for record in records_to_update:
+    for record in ServerSide(records_to_update):
         updated_data_line_items = []
         updated_line_items = []
         
         if record.data and record.data['line_items']:
             for line_item in record.data['line_items']:
-                if line_item['currency'] == 'KD':
+                if line_item['currency'].lower() == 'kd':
                     line_item['currency'] = 'KWD'
                 updated_data_line_items.append(line_item)
         
         if record.line_items:
             for line_item in record.line_items:
-                if line_item['currency'] == 'KD':
+                if line_item['currency'].lower() == 'kd':
                     line_item['currency'] = 'KWD'
                 updated_line_items.append(line_item)
                 
