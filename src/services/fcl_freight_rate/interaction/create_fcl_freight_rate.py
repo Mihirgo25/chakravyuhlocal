@@ -241,6 +241,11 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'service_provider_id': freight.service_provider_id,
         'extend_rates_for_existing_system_rates': True
     }
+    if 'fcl_freight_rate_request_id' in rate_obj:
+        rate_obj.pop('fcl_freight_rate_request_id')
+    if 'fcl_freight_rate_feedback_id' in rate_obj:
+        rate_obj.pop('fcl_freight_rate_feedback_id')
+        
     if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
     
