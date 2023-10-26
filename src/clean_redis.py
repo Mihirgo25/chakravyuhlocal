@@ -339,8 +339,3 @@ def create_func(idx, row):
             source='gri',
         )
         print(idx)
-    
-        
-        
-update_kwd_currency_error()
-    
