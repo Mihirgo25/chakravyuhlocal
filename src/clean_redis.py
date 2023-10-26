@@ -48,7 +48,7 @@ def update_kwd_currency_error():
     records_to_update = FclFreightRateLocal.select().where(
         (FclFreightRateLocal.port_id == 'acdc2621-d37f-4f25-9637-9d364ad9fda2') 
     )
-
+    count = 0
     for record in records_to_update:
         updated_data_line_items = []
         updated_line_items = []
@@ -69,7 +69,9 @@ def update_kwd_currency_error():
             record.data['line_items'] = updated_data_line_items 
         if record.line_items:
             record.line_items = updated_line_items
-        record.save()  
+        record.save()
+        count += 1
+        print(count)
 
 
 def update_transformation_objects():
