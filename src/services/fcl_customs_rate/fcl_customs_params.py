@@ -79,7 +79,6 @@ class CreateFclCustomsRateRequest(BaseModel):
   port_id: str
   container_type: str
   trade_type: str = None
-  cargo_handling_type: str = None
 
 class CreateFclCustomsRateFeedback(BaseModel):
   source: str
