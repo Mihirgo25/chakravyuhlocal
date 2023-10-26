@@ -24,7 +24,8 @@ def execute_transaction_code(request):
         FclCustomsRate.service_provider_id==request.get('service_provider_id'),
         FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id'),
         FclCustomsRate.rate_type == request.get('rate_type'),
-        FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')).first()
+        ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True)))
+        ).order_by(FclCustomsRate.cargo_handling_type.desc(nulls='LAST')).first()
 
   if not customs_rate:
     customs_rate = FclCustomsRate(**params)

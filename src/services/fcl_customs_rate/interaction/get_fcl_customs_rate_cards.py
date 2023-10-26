@@ -53,6 +53,7 @@ def initialize_customs_query(request):
     if request.get('country_id'):
         query = query.where(FclCustomsRate.country_id == request.get('country_id'))
 
+    query = query.order_by(FclCustomsRate.cargo_handling_type.desc(nulls='LAST'))
     return query
 
 
