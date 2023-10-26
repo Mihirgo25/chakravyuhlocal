@@ -15,6 +15,7 @@ from database.rails_db import get_ff_mlo
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
 from joblib import Parallel, delayed
+from playhouse.postgres_ext import ServerSide
 
 def clean_full_redis():
     redis_keys = rd.keys('*celery-task-meta*')
@@ -43,6 +44,45 @@ def fcl_freight_objects_updation():
     for object in rates_to_update.iterator():
         delay_func(object)
     print('Done')
+    
+def update_kwd_currency_error():
+    records_to_update = FclFreightRateLocal.select().where(
+        (FclFreightRateLocal.service_provider_id == '5dc403b3-c1bd-4871-b8bd-35543aaadb36'),
+        (FclFreightRateLocal.rate_not_available_entry == False),
+    )
+    
+    count = 0
+    for record in ServerSide(records_to_update):
+        updated_data_line_items = []
+        updated_line_items = []
+        data = None
+        
+        if record.data:
+            data = record.data
+            if 'line_items' in data:
+                for line_item in data['line_items']:
+                    if line_item['currency'].lower() == 'kd':
+                        line_item['currency'] = 'KWD'
+                    updated_data_line_items.append(line_item)
+            if 'line_items' in data:
+                data['line_items'] = updated_data_line_items
+        
+        if record.line_items:
+            for line_item in record.line_items:
+                if line_item['currency'].lower() == 'kd':
+                    line_item['currency'] = 'KWD'
+                updated_line_items.append(line_item)
+                
+        if record.data:
+            record.data = data 
+        if record.line_items:
+            record.line_items = updated_line_items
+            
+        record.save()
+        
+        count = count + 1
+        print(count)
+
 
 
 def update_transformation_objects():
@@ -299,7 +339,3 @@ def create_func(idx, row):
             source='gri',
         )
         print(idx)
-    
-        
-        
-    
