@@ -177,6 +177,7 @@ def get_fcl_customs_rate_api(
     importer_exporter_id: str = None,
     trade_type: str = None,
     rate_type: str = 'market_place',
+    cargo_handling_type: str = None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -190,7 +191,8 @@ def get_fcl_customs_rate_api(
         'service_provider_id': service_provider_id,
         'importer_exporter_id': importer_exporter_id,
         'trade_type': trade_type,
-        'rate_type' : rate_type
+        'rate_type' : rate_type,
+        'cargo_handling_type': cargo_handling_type
     }
 
     try:

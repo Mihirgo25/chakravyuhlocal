@@ -42,7 +42,8 @@ def find_object(request):
         FclCustomsRate.commodity == request.get('commodity'), 
         FclCustomsRate.service_provider_id == request.get('service_provider_id'), 
         FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id'),
-        FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')).first()
+        FclCustomsRate.rate_type == request.get('rate_type'),
+        ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True)))).first()
     return object
 
 def get_object_params(request):
