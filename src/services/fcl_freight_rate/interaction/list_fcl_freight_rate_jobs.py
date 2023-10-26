@@ -10,6 +10,7 @@ from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from datetime import datetime, timedelta
 from functools import reduce
+from peewee import fn
 
 
 
@@ -110,6 +111,8 @@ def get_data(query, filters):
             d['reverted_status'] = mappings_data.status
             d['shipment_serial_id'] = mappings_data.shipment_serial_id
             d['shipment_service_id'] = mappings_data.shipment_service_id
+            d['reverted_count'] = get_reverted_count(mappings_data)
+
     return data
 
 
@@ -233,3 +236,13 @@ def add_pagination_data(
     response["success"] = True
     response["list"] = final_data
     return response
+
+def get_reverted_count(mappings_data):
+    if mappings_data.shipment_id:
+        result = FclFreightRateJobMapping.select(FclFreightRateJobMapping.id).where(
+                    (FclFreightRateJobMapping.shipment_id == mappings_data.shipment_id) &
+                    (FclFreightRateJobMapping.status == 'reverted')
+                ).count()
+        return result
+    return None
+    

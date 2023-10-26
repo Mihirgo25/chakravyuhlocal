@@ -1,6 +1,7 @@
 from services.air_customs_rate.models.air_customs_rate_jobs import AirCustomsRateJob
 from services.air_customs_rate.air_customs_rate_constants import AIR_CUSTOMS_COVERAGE_USERS
 from database.db_session import rd
+from datetime import datetime
 from micro_services.client import common
 from peewee import fn
 
@@ -39,7 +40,8 @@ def allocate_live_booking_job(service_provider_id):
             .where(
                 (AirCustomsRateJob.sources.contains(['live_booking'])) &
                 (AirCustomsRateJob.service_provider_id == service_provider_id) &
-                (AirCustomsRateJob.status.not_in(['completed', 'aborted']))
+                (AirCustomsRateJob.status.not_in(['completed', 'aborted'])) &
+                (AirCustomsRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -67,7 +69,8 @@ def get_users_by_job_load(active_users):
     
     query = (AirCustomsRateJob.select(AirCustomsRateJob.user_id, fn.Count(AirCustomsRateJob.user_id).alias('user_id_count'))
             .where((AirCustomsRateJob.user_id << active_users) &
-                    (AirCustomsRateJob.status.not_in(['completed', 'aborted'])))
+                    (AirCustomsRateJob.status.not_in(['completed', 'aborted'])) &
+                    (AirCustomsRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date()))
             .group_by(AirCustomsRateJob.user_id)
             .order_by(fn.Count(AirCustomsRateJob.user_id)))
     
