@@ -11,7 +11,7 @@ from micro_services.client import spot_search
 from libs.json_encoder import json_encoder
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity__less_than', 'similar_id']
-possible_direct_filters = ['origin_location_id','serial_id','destination_location_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_country_id', 'destination_country_id']
+possible_direct_filters = ['id', 'origin_location_id','serial_id','destination_location_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_country_id', 'destination_country_id', 'id']
 
 def list_ftl_freight_rate_requests(filters, page_limit, page, sort_by, sort_type,is_stats_required,spot_search_details_required,performed_by_id, includes = {}):
     query = get_query(sort_by, sort_type, includes)

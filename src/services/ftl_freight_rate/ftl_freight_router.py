@@ -29,6 +29,10 @@ from services.ftl_freight_rate.interactions.update_truck import update_truck_dat
 from services.ftl_freight_rate.ftl_params import *
 from services.ftl_freight_rate.interactions.create_fuel_data import create_fuel_data
 from services.ftl_freight_rate.interactions.get_truck_detail import get_truck_detail
+from services.ftl_freight_rate.interactions.get_ftl_freight_rate_job_stats import get_ftl_freight_rate_job_stats
+from services.ftl_freight_rate.interactions.list_ftl_freight_rate_jobs import list_ftl_freight_rate_jobs
+from services.ftl_freight_rate.interactions.delete_ftl_freight_rate_job import delete_ftl_freight_rate_job
+from services.ftl_freight_rate.interactions.create_ftl_freight_rate_job import create_ftl_freight_rate_job
 
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate import (
     create_ftl_freight_rate,
@@ -87,6 +91,8 @@ from services.ftl_freight_rate.interactions.get_ftl_freight_rate_min_max_validit
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_cards import (
     get_ftl_freight_rate_cards,
 )
+from services.ftl_freight_rate.interactions.update_ftl_freight_rate_job import update_ftl_freight_rate_job
+
 ftl_freight_router = APIRouter()
 
 
@@ -922,3 +928,114 @@ def get_ftl_freight_rate_cards_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
+@ftl_freight_router.get("/get_ftl_freight_rate_job_stats")
+def get_ftl_freight_rate_job_stats_api(
+    filters: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = get_ftl_freight_rate_job_stats(filters)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+
+
+@ftl_freight_router.get("/list_ftl_freight_rate_jobs")
+def list_ftl_freight_rate_jobs_api(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'updated_at',
+    sort_type: str = 'desc',
+    generate_csv_url: bool = False,
+    pagination_data_required: bool = False,
+    includes: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_ftl_freight_rate_jobs(filters, page_limit, page, sort_by, sort_type, generate_csv_url, pagination_data_required, includes)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@ftl_freight_router.post("/delete_ftl_freight_rate_job")
+def delete_ftl_freight_rate_job_api(
+    request: DeleteFtlFreightRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        rate = delete_ftl_freight_rate_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@ftl_freight_router.get("/get_ftl_freight_rate_job_csv_url")
+def get_ftl_freight_rate_job_csv_url_api(
+    filters: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_ftl_freight_rate_jobs(filters, generate_csv_url=True)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@ftl_freight_router.post("/create_ftl_freight_rate_job")
+def create_ftl_freight_rate_job_api(
+    request: CreateFtlFreightRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    source = request.source
+    try:
+        rate = create_ftl_freight_rate_job(request.dict(exclude_none=True), source)
+        return JSONResponse(status_code=200, content=json_encoder(rate))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+@ftl_freight_router.post("/update_ftl_freight_rate_job")    
+def update_ftl_freight_rate_job_api(
+    request: UpdateFtlFreightRateJob, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        data = update_ftl_freight_rate_job(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

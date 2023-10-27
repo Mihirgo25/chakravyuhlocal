@@ -2,6 +2,7 @@ from database.db_session import db
 from fastapi import HTTPException
 from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
+from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
 
 def create_audit(ftl_id, request):
     audit_data = {
@@ -30,6 +31,7 @@ def update_ftl_freight_rate(request):
       return execute_transaction_code(request)
 
 def execute_transaction_code(request):
+    from services.ftl_freight_rate.ftl_celery_worker import update_ftl_freight_rate_job_on_rate_addition_delay
     rate_object = find_ftl_object(request)
     update_params = {}
     for params in request.keys():
@@ -51,6 +53,9 @@ def execute_transaction_code(request):
         rate_object.save()
     except Exception as error_message:
         raise HTTPException(status_code=500,detail=error_message)
+    
+    if str(rate_object.service_provider_id) != DEFAULT_SERVICE_PROVIDER_ID:
+        update_ftl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": rate_object.id},queue='fcl_freight_rate')
 
     return {"id": rate_object.id}
 

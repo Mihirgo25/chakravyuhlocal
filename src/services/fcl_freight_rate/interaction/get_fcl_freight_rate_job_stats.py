@@ -1,4 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJob
+from services.fcl_freight_rate.models.fcl_freight_rate_job_mappings import (
+    FclFreightRateJobMapping,
+)
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
@@ -13,9 +16,11 @@ possible_direct_filters = [
     "destination_port_id",
     "shipping_line_id",
     "commodity",
-    "user_id"
+    "user_id",
+    "cogo_entity_id",
+    "service_provider_id",
 ]
-possible_indirect_filters = ["updated_at"]
+possible_indirect_filters = ["updated_at", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
 
 uncommon_filters = ["serial_id", "status"]
 
@@ -36,8 +41,10 @@ STATISTICS = {
 DYNAMIC_STATISTICS = {
     "critical_ports": 0,
     "expiring_rates": 0,
-    "spot_search": 0,
     "cancelled_shipments": 0,
+    "live_booking": 0,
+    "rate_request": 0,
+    "rate_feedback":0,
 }
 
 
@@ -102,7 +109,7 @@ def apply_start_date_filter(query, filters):
         start_date = datetime.strptime(start_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
-        query = query.where(FclFreightRateJob.created_at.cast("date") >= start_date.date())
+        query = query.where(FclFreightRateJob.updated_at.cast("date") >= start_date.date())
     return query
 
 
@@ -112,7 +119,7 @@ def apply_end_date_filter(query, filters):
         end_date = datetime.strptime(end_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
-        query = query.where(FclFreightRateJob.created_at.cast("date") <= end_date.date())
+        query = query.where(FclFreightRateJob.updated_at.cast("date") <= end_date.date())
     return query
 
 
@@ -138,12 +145,12 @@ def get_statistics(filters, dynamic_statistics):
 
 
 def build_daily_details(query, statistics):
-    query = query.where(
-        FclFreightRateJob.created_at.cast("date") == datetime.now().date()
-    )
+    # query = query.where(
+    #     FclFreightRateJob.updated_at.cast("date") == datetime.now().date()
+    # )
     daily_stats_query = query.select(
         FclFreightRateJob.status, fn.COUNT(FclFreightRateJob.id).alias("count")
-    ).group_by(FclFreightRateJob.status)
+    ).where(FclFreightRateJob.status != 'skipped').group_by(FclFreightRateJob.status)
 
     total_daily_count = 0
     daily_results = json_encoder(list(daily_stats_query.dicts()))
@@ -209,6 +216,8 @@ def build_weekly_details(query, statistics):
             weekly_stats[date] = round(
                 (total_completed_per_day / total_task_per_day * 100), 2
             )
+        else: 
+            weekly_stats[date] = 100
 
     statistics["weekly_completed_percentage"] = weekly_stats
 
@@ -225,6 +234,8 @@ def apply_filters(query, filters):
 
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
+    
+    query = apply_is_visible_filter(query)
 
     return query
 
@@ -237,8 +248,8 @@ def apply_extra_filters(query, filters):
             
 
     query = get_filters(applicable_filters, query, FclFreightRateJob)
-    query = apply_start_date_filter(query, filters)
-    query = apply_end_date_filter(query, filters)
+    # query = apply_start_date_filter(query, filters)
+    # query = apply_end_date_filter(query, filters)
     return query
 
 def get_all_backlogs(filters):
@@ -248,3 +259,34 @@ def get_all_backlogs(filters):
     backlog_count = query.where(FclFreightRateJob.status == 'backlog').count()
 
     return backlog_count
+
+def apply_source_id_filter(query, filters):
+    if filters.get('source_id') and not isinstance(filters.get('source_id'), list):
+        filters['source_id'] = [filters.get('source_id')]
+    subquery = list(FclFreightRateJobMapping.select(FclFreightRateJobMapping.job_id).where(FclFreightRateJobMapping.source_id << filters['source_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(FclFreightRateJob.id << job_ids)
+    return query
+
+def apply_shipment_serial_id_filter(query, filters):
+    if filters.get('shipment_serial_id') and not isinstance(filters.get('shipment_serial_id'), list):
+        filters['shipment_serial_id'] = [filters.get('shipment_serial_id')]
+    subquery = list(FclFreightRateJobMapping.select(FclFreightRateJobMapping.job_id).where(FclFreightRateJobMapping.shipment_serial_id << filters['shipment_serial_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(FclFreightRateJob.id << job_ids)
+    return query
+
+def apply_is_flash_booking_reverted_filter(query, filters):
+    if filters.get('is_flash_booking_reverted'):
+        query = query.join(FclFreightRateJobMapping, on=(FclFreightRateJobMapping.job_id == FclFreightRateJob.id)).where(FclFreightRateJobMapping.status == 'reverted')
+    else:
+        query = query.join(FclFreightRateJobMapping, on=(FclFreightRateJobMapping.job_id == FclFreightRateJob.id)).where(FclFreightRateJobMapping.status != 'reverted')
+    return query
+
+def apply_is_visible_filter(query):
+    query = query.where(FclFreightRateJob.is_visible == True)
+    return query

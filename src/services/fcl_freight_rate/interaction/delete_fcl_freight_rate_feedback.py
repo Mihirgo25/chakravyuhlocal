@@ -7,6 +7,7 @@ from database.rails_db import (
 )
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
 from services.bramhastra.celery import send_feedback_delete_stats_in_delay
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_job import delete_fcl_freight_rate_job
 
 def delete_fcl_freight_rate_feedback(request):
     with db.atomic():
@@ -42,6 +43,8 @@ def execute_transaction_code(request):
             send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue='critical')
         else:
             send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')
+
+        delete_fcl_freight_rate_job(request)
 
     return request['fcl_freight_rate_feedback_ids']
 

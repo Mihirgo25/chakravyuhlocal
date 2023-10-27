@@ -21,7 +21,6 @@ from libs.json_encoder import json_encoder
 from fastapi import HTTPException
 from database.rails_db import get_operators
 
-
 def select_fields():
     freight_query = HaulageFreightRate.select(
         HaulageFreightRate.id,
@@ -297,7 +296,6 @@ def ignore_non_eligible_service_providers(requirements, data):
 
 
 def get_predicted_rate(requirements, data):
-
     if (
         not data
         and requirements.get("predicted_rate")
@@ -327,9 +325,8 @@ def get_predicted_rate(requirements, data):
         if response:
             requirements["predicted_rate"] = False
             data = get_haulage_freight_rate_cards(requirements)["list"]
-
+    
     return data
-
 
 def ignore_non_active_shipping_lines(data):
     shipping_line_ids = list(set(map(lambda ids: ids["shipping_line_id"], data)))

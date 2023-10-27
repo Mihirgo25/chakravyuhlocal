@@ -7,6 +7,8 @@ class FclCustomsLineItems(BaseModel):
     code: str
     unit: str
     price: float
+    market_price: float = None
+    original_price: float = None
     currency: str
     remarks: list[str] = None
 
@@ -144,3 +146,38 @@ class DeleteFclCustomsRate(BaseModel):
   performed_by_type: str = None
   bulk_operation_id: str = None
   rate_type: str = 'market_place'
+
+class CreateFclCustomsRateJob(BaseModel):
+    source: str = None
+    source_id: str = None
+    shipment_id: str = None
+    shipment_serial_id: int = None
+    service_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    location_id: str = None
+    service_provider_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    trade_type: str = None
+    is_visible: bool = True
+    rate_type: str = None
+    port_id: str = None
+
+class DeleteFclCustomsRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    source_id: str = None
+    service_id: str = None
+    shipment_id: str = None
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    
+class UpdateFclCustomsRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None

@@ -27,6 +27,7 @@ def create_fcl_cfs_rate(request):
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):
+    from services.fcl_cfs_rate.fcl_cfs_celery_worker import update_fcl_cfs_rate_job_on_rate_addition_delay
     request = {key: value for key, value in request.items() if value is not None}
     params = {
         "location_id": request.get("location_id"),
@@ -82,6 +83,9 @@ def execute_transaction_code(request):
     cfs_object.update_platform_prices_for_other_service_providers()
     fcl_cfs_functions_delay.apply_async(kwargs={'fcl_cfs_object':cfs_object,'request':request},queue='low')
     get_multiple_service_objects(cfs_object)
+    
+    if params['rate_type'] == "market_place":
+        update_fcl_cfs_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": cfs_object.id},queue='fcl_freight_rate')
     
     return {
       "id": cfs_object.id

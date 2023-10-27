@@ -10,7 +10,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from configs.fcl_freight_rate_constants import VALID_UNITS, SCHEDULE_TYPES, PAYMENT_TERM, RATE_TYPES
 from libs.common_validations import validate_shipping_line
 from database.rails_db import get_operators, get_organization
-from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
+from libs.get_normalized_line_items import get_normalized_line_items
+from configs.definitions import FCL_FREIGHT_CURRENCIES
 
 # validate_validity_object
 def validate_fcl_freight_object(module, object):
@@ -111,6 +112,8 @@ def get_local_object(object):
     for line_item in line_items:
         if line_item['unit'] not in VALID_UNITS:
             validation['error']+= ' ' + "unit is_invalid"
+        if line_item['currency'] not in FCL_FREIGHT_CURRENCIES.get():
+            validation['error']+= ' ' + "currency is invalid"
 
     if not validate_shipping_line(local):
          validation['error']+=' Invalid shipping line'

@@ -1,0 +1,3 @@
+LCL_CUSTOMS_COVERAGE_USERS = [
+    '51641e0e-a5da-452a-81fc-ccb8fe6df343'
+]
