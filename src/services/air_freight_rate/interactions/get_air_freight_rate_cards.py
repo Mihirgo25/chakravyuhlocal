@@ -439,6 +439,7 @@ def get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted):
         is_predicted = True
         freight_rates = initialize_freight_query(requirements,True)
         freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+        freight_rates = pre_discard_noneligible_rates(freight_rates)
 
     return freight_rates,is_predicted
 
