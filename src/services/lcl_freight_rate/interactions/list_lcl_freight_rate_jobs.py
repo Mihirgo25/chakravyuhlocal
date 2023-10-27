@@ -194,6 +194,8 @@ def apply_filters(query, filters):
         filters, possible_direct_filters, possible_indirect_filters
     )
     # applying direct filters
+    if direct_filters.get('status') == 'completed':
+        direct_filters['status'] = ['completed','aborted']
     query = get_filters(direct_filters, query, LclFreightRateJob)
 
     # applying indirect filters

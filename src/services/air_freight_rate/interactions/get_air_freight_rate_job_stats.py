@@ -262,6 +262,9 @@ def apply_extra_filters(query, filters):
     for key in uncommon_filters:
         if filters.get(key):
             applicable_filters[key] = filters[key]
+            if filters.get(key) == 'completed':
+                applicable_filters[key] = ['completed','aborted']
+
     query = get_filters(applicable_filters, query, AirFreightRateJob)
     # query = apply_start_date_filter(query, filters)
     # query = apply_end_date_filter(query, filters)

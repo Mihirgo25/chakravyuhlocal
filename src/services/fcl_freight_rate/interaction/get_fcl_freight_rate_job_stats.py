@@ -254,6 +254,8 @@ def apply_extra_filters(query, filters):
     for key in uncommon_filters:
         if filters.get(key):
             applicable_filters[key] = filters[key]
+            if filters.get(key) == 'completed':
+                applicable_filters[key] = ['completed','aborted']
             
 
     query = get_filters(applicable_filters, query, FclFreightRateJob)
