@@ -256,8 +256,8 @@ def apply_extra_filters(query, filters):
             applicable_filters[key] = filters[key]
 
     query = get_filters(applicable_filters, query, FclFreightRateJob)
-    # query = apply_start_date_filter(query, filters)
-    # query = apply_end_date_filter(query, filters)
+    query = apply_start_date_filter(query, filters)
+    query = apply_end_date_filter(query, filters)
     return query
 
 def get_all_backlogs(filters):
