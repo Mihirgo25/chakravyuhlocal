@@ -12,6 +12,7 @@ from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import FTL_FREIGHT_CHARGES
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
 from fastapi import HTTPException
+from configs.ftl_freight_rate_constants import PREDICTED_PRICE_SERVICE_PROVIDER
 
 def get_ftl_freight_rate_cards(request):
     """
@@ -296,7 +297,7 @@ def build_response_object(result, request):
                 line_item["total_price"] = total_price
                 line_item["price"] = line_item["total_price"]
                 line_item["quantity"] = 1
-                code_config = FTL_FREIGHT_CHARGES[line_item["code"]]
+                code_config = FTL_FREIGHT_CHARGES.get()[line_item["code"]]
                 line_item["name"] = code_config["name"]
         else:
             line_item = build_line_item_object(
@@ -325,7 +326,7 @@ def build_response_object(result, request):
 def build_line_item_object(
     request, line_item, trucks_count=0, minimum_chargeable_weight=0
 ):
-    code_config = FTL_FREIGHT_CHARGES[line_item["code"]]
+    code_config = FTL_FREIGHT_CHARGES.get()[line_item["code"]]
 
     is_additional_service = False
 
@@ -340,6 +341,8 @@ def build_line_item_object(
         return 0
     line_item_copy = {}
     for key in ["code", "unit", "price", "currency", "remarks"]:
+        if key == 'remarks' and not line_item.get(key):
+            line_item[key] = []
         line_item_copy[key] = line_item[key]
 
     line_item = line_item_copy
@@ -383,6 +386,10 @@ def ignore_non_eligible_service_providers(request, query_result):
         if str(data.get("service_provider_id")) in ids:
             final_list.append(data)
 
+    unique_service_providers_count = len(set(rate['service_provider_id'] for rate in final_list if rate.get('service_provider_id')))
+    if unique_service_providers_count > 1:
+        final_list = [rate for rate in final_list if rate.get('service_provider_id') != PREDICTED_PRICE_SERVICE_PROVIDER]
+
     return final_list
 
 def process_ftl_freight_rates(request, rate_list):
@@ -421,7 +428,7 @@ def additional_response_data(list_of_data):
     for data in list_of_data:
         data["last_updated_at"] = data.get("updated_at")
         data["buy_rate_currency"] = "INR"
-        data["buy_rate"] = get_buy_rate(data["line_items"])
+        data["buy_rate"] = get_buy_rate(data["line_items"], data["buy_rate_currency"])
 
         if data["service_provider"] is not None:
             data["service_provider_name"] = data["service_provider"].get("short_name")
@@ -435,13 +442,13 @@ def additional_response_data(list_of_data):
     return list_of_data
 
 
-def get_buy_rate(line_items):
+def get_buy_rate(line_items, currency):
     net_price = 0
     for line_item_data in line_items:
         price = common.get_money_exchange_for_fcl(
             {
                 "from_currency": line_item_data["currency"],
-                "to_currency": line_item_data["buy_rate_currency"],
+                "to_currency": currency,
                 "price": line_item_data["price"] * line_item_data["quantity"],
             }
         )["price"]

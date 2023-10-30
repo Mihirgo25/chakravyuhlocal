@@ -5,7 +5,8 @@ from micro_services.client import *
 from fastapi import HTTPException
 from datetime import datetime
 from database.rails_db import *
-from configs.definitions import HAULAGE_FREIGHT_CHARGES, FCL_FREIGHT_CURRENCIES
+from configs.definitions import HAULAGE_FREIGHT_CHARGES
+from configs.definitions import FCL_FREIGHT_CURRENCIES
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from services.haulage_freight_rate.interactions.list_haulage_freight_rates import list_haulage_freight_rates
@@ -56,7 +57,7 @@ class HaulageFreightRateBulkOperation(BaseModel):
         if data.get('markup_type') not in markup_types:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
         
-        haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES
+        haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES.get()
 
         charge_codes = haulage_freight_charges_dict.keys()
 
@@ -66,7 +67,7 @@ class HaulageFreightRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = FCL_FREIGHT_CURRENCIES
+        currencies = FCL_FREIGHT_CURRENCIES.get()
 
         if data.get('markup_currency') not in currencies:
             raise HTTPException(status_code=400, detail='markup_currency is invalid')

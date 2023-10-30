@@ -5,6 +5,7 @@ from services.air_freight_rate.constants.air_freight_rate_constants import AIR_S
 from celery_worker import air_freight_rate_prediction_feedback_delay
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate_data
 from database.rails_db import get_eligible_orgs
+from micro_services.client import common
 from configs.env import DEFAULT_USER_ID
 from rms_utils.get_money_exchange_for_fcl_fallback import get_money_exchange_for_fcl_fallback
 from libs.get_distance import get_air_distance
@@ -38,6 +39,8 @@ def get_air_freight_rate_prediction(request):
 
     density_category = get_density_category(request.get('weight'), request.get('volume'), request.get('trade_type'))
     params = get_params_for_model(request,locations)
+    if not params:
+        return
     results = []
     for param in params:
         try:
@@ -137,23 +140,18 @@ def get_chargeable_weight(weight,volume):
     return round(chargeable_weight,2)
 
 def get_params_for_model(request, locations):
-    default_airlines_ids = DEFAULT_AIRLINE_IDS
     params = []
-    no_of_airlines = 3
-    data = {}
-    data['origin_airport_id'] = request.get('origin_airport_id')
-    data['destination_Airport_id'] = request.get('destination_airport_id')
-    data['no_of_airlines'] = no_of_airlines
-    # top_three_airline_ids = shipment.get_previous_shipment_airlines(data)
-    top_three_airline_ids = []
-    if len(top_three_airline_ids) < no_of_airlines:
-        for airline_id in default_airlines_ids:
-            if len(top_three_airline_ids) >= no_of_airlines:
-                break
-            if airline_id in top_three_airline_ids:
-                continue
-            top_three_airline_ids.append(airline_id)
+    airport_id = {
+        "origin_airport_id": request.get('origin_airport_id'),
+        "destination_airport_id": request.get('destination_airport_id')
+    }
+    serviceable_airline_ids = common.get_saas_schedules_airport_pair_coverages(airport_id)
 
+    no_of_airlines = 3
+    if isinstance(serviceable_airline_ids,list):
+        top_three_airline_ids = serviceable_airline_ids[:no_of_airlines]
+    else:
+        return params
     for loc in locations:
         if loc["id"] == request.get('origin_airport_id'):
             origin_location = (loc["latitude"], loc["longitude"])
@@ -167,7 +165,6 @@ def get_params_for_model(request, locations):
             Distance = get_air_distance(origin_location[0],origin_location[1], destination_location[0], destination_location[1])
     except:
         Distance = 2500
-    
     for id in top_three_airline_ids:
         same_parameter = {
             "origin_airport_id": request["origin_airport_id"],

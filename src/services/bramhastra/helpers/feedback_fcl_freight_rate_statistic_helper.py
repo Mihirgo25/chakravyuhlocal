@@ -3,6 +3,7 @@ from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
 )
 from services.bramhastra.helpers.common_statistic_helper import (
     get_fcl_freight_identifier,
+    create_fcl_freight_rate_statistic_fallback,
 )
 from micro_services.client import common
 from services.bramhastra.enums import (
@@ -66,10 +67,8 @@ class Feedback:
         self.__update_fcl_freight_action()
 
     def __update_fcl_freight_statistic(self):
-        if (
-            not self.increment_keys
-            and not self.decrement_keys
-            and not self.rate_stats_update_params
+        if not any(
+            [self.increment_keys, self.decrement_keys, self.rate_stats_update_params]
         ):
             return
 
@@ -80,9 +79,9 @@ class Feedback:
                 == get_fcl_freight_identifier(self.rate_id, self.validity_id)
             )
             .first()
-        )
+        ) or create_fcl_freight_rate_statistic_fallback(self.rate_id, self.validity_id)
 
-        if fcl_freight_rate_statistic:
+        if fcl_freight_rate_statistic is not None:
             self.params["fcl_freight_rate_statistic_id"] = fcl_freight_rate_statistic.id
 
             for key in self.increment_keys:
@@ -175,6 +174,7 @@ class Feedback:
             .where(
                 FclFreightAction.spot_search_id == self.params.get("source_id"),
                 FclFreightAction.rate_id == self.params.get("rate_id"),
+                FclFreightAction.validity_id == self.params.get("validity_id"),
             )
             .first()
         )

@@ -68,11 +68,6 @@ TI:
   units: ['per_container']
   condition: true
   tags: ['trailer', 'barge']
-FSC:
-  name: "Fuel Surcharge"
-  units: ['per_container']
-  condition: true
-  tags: ['trailer', 'barge']
 MSTP:
   name: "Multistop"
   units: ["per_shipment"]

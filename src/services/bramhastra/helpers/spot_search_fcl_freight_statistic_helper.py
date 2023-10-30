@@ -1,5 +1,6 @@
 from services.bramhastra.helpers.common_statistic_helper import (
     get_fcl_freight_identifier,
+    create_fcl_freight_rate_statistic_fallback,
 )
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
@@ -81,7 +82,7 @@ class SpotSearch:
                 continue
             covered_rates.add(identifier)
             self.fcl_freight_rate_statistic = self.__get_fcl_freight_rate_statistic(
-                identifier
+                rate.rate_id, rate.validity_id, identifier
             )
             if self.fcl_freight_rate_statistic is None:
                 continue
@@ -113,15 +114,23 @@ class SpotSearch:
         )
         if fcl_freight_action is not None:
             return
+        print(params, "paramsa")
         fcl_freight_action = FclFreightAction(**params)
         fcl_freight_action.save()
 
-    def __get_fcl_freight_rate_statistic(self, identifier) -> Union[None, Model]:
-        return (
+    def __get_fcl_freight_rate_statistic(
+        self, rate_id, validity_id, identifier
+    ) -> Union[None, Model]:
+        fcl_freight_rate_statistic = (
             FclFreightRateStatistic.select()
             .where(FclFreightRateStatistic.identifier == identifier)
             .first()
         )
+        if fcl_freight_rate_statistic is None:
+            fcl_freight_rate_statistic = create_fcl_freight_rate_statistic_fallback(
+                rate_id, validity_id
+            )
+        return fcl_freight_rate_statistic
 
     def __update_statistics(self, params) -> None:
         for key in self.increment_keys:

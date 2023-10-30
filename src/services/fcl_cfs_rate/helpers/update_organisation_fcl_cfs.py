@@ -17,3 +17,4 @@ def update_organization_fcl_cfs(request):
             "freight_rates_added" : True
         }
         organization.update_organization(params)
+

@@ -4,9 +4,14 @@ from services.bramhastra.helpers.fcl_freight_filter_helper import (
 )
 import math
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
-from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
+from services.bramhastra.models.fcl_freight_rate_statistic import (
+    FclFreightRateStatistic,
+)
 from services.bramhastra.enums import ShipmentState
-from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
+from services.bramhastra.models.fcl_freight_rate_statistic import (
+    FclFreightRateStatistic,
+)
+
 
 async def get_fcl_freight_rate_distribution(filters):
     clickhouse = ClickHouse()
@@ -29,7 +34,7 @@ async def get_fcl_freight_rate_distribution(filters):
 
     queries.append("GROUP BY parent_mode,rate_id")
 
-    total_rate_count = await get_total_rate_count(filters, where)
+    total_rate_count = 0
 
     queries.append(
         f"""
@@ -49,7 +54,7 @@ async def get_fcl_freight_rate_distribution(filters):
         ), stats_mode_count AS (
             SELECT
                 parent_mode,
-                count(sign) AS value
+                COUNT(DISTINCT rate_id) AS value
             FROM brahmastra.{FclFreightRateStatistic._meta.table_name} GROUP BY parent_mode
         )
             SELECT 
@@ -68,6 +73,9 @@ async def get_fcl_freight_rate_distribution(filters):
 
     format_distribution(response, distribution)
 
+    for val in distribution.values():
+        total_rate_count += val.get("value", 0)
+
     distribution["total_rate_count"] = total_rate_count
 
     return distribution
@@ -75,7 +83,7 @@ async def get_fcl_freight_rate_distribution(filters):
 
 def format_distribution(response, distribution):
     for data in response:
-        if data.get('mode') and len(data.get('mode'))>0:
+        if data.get("mode") and len(data.get("mode")) > 0:
             for k, v in data.items():
                 if not isinstance(v, str) and (math.isnan(v) or math.isinf(v)):
                     data[k] = 0
