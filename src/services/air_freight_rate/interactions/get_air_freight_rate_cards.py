@@ -109,8 +109,8 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
     if not surcharge_object:
         return
 
-    # if apply_density_matching:
-    #     response_object = get_density_wise_rate_card(response_object, requirements['trade_type'], requirements['weight'], requirements['volume'], chargeable_weight)
+    if apply_density_matching:
+        response_object = get_density_wise_rate_card(response_object, requirements['trade_type'], requirements['weight'], requirements['volume'], chargeable_weight)
    
     return response_object
 
