@@ -71,10 +71,11 @@ def initialize_freight_query(requirements,prediction_required=False):
 
 def build_response_object(freight_rate,requirements,apply_density_matching):
     source = 'spot_rates'
+    rate_type = freight_rate.get('rate_type')
     if freight_rate['source'] == 'predicted':
         source = 'predicted'
-    if freight_rate.get('rate_type') == 'non_tariff_rates':
-        freight_rate['rate_type'] = 'market_place'
+    if rate_type == 'non_tariff_rates':
+        rate_type = 'market_place'
         source = 'non_tariff_rates'
 
     response_object = {
@@ -95,7 +96,7 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
         'rate_id': freight_rate['id'],
         'importer_exporter_id': freight_rate['importer_exporter_id'],
         'cogo_entity_id': freight_rate['cogo_entity_id'],
-        'rate_type': freight_rate.get('rate_type')
+        'rate_type': rate_type
     }
     
     freight_object = add_freight_objects(freight_rate,response_object,requirements)
@@ -108,8 +109,8 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
     if not surcharge_object:
         return
 
-    if apply_density_matching:
-        response_object = get_density_wise_rate_card(response_object, requirements['trade_type'], requirements['weight'], requirements['volume'], chargeable_weight)
+    # if apply_density_matching:
+    #     response_object = get_density_wise_rate_card(response_object, requirements['trade_type'], requirements['weight'], requirements['volume'], chargeable_weight)
    
     return response_object
 
