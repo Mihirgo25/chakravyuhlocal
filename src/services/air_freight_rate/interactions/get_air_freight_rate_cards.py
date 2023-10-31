@@ -73,6 +73,9 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
     source = 'spot_rates'
     if freight_rate['source'] == 'predicted':
         source = 'predicted'
+    if freight_rate.get('rate_type') == 'non_tariff_rates':
+        freight_rate['rate_type'] = 'market_place'
+        source = 'non_tariff_rates'
 
     response_object = {
         'airline_id': freight_rate['airline_id'],
@@ -204,6 +207,7 @@ def build_freight_object(freight_validity,required_weight,requirements,response_
     validity_start = datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date()
     validity_end = datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date()
     if validity_start > requirements.get('validity_end').date() or validity_end < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < validity_start or requirements.get('cargo_clearance_date') > validity_end:
+        print("1224")
         return None
 
     freight_validity['density_category'] = freight_validity['density_category'] if  freight_validity.get('density_category') else 'general'
