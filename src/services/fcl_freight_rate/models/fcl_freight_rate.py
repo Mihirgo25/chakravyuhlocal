@@ -10,7 +10,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from configs.fcl_freight_rate_constants import *
 from schema import Schema, Optional
 from configs.definitions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES
-from configs.yml_definitions import FCL_FREIGHT_CURRENCIES
+from configs.definitions import FCL_FREIGHT_CURRENCIES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
@@ -359,7 +359,7 @@ class FclFreightRate(BaseModel):
       if invalid_line_items:
           raise HTTPException(status_code=400, detail="line_items {} are invalid".format(", ".join(invalid_line_items)))
 
-      fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
+      fcl_freight_currencies = FCL_FREIGHT_CURRENCIES.get()
 
       currencies = [currency for currency in fcl_freight_currencies]
       line_item_currencies = [item['currency'] for item in line_items]
