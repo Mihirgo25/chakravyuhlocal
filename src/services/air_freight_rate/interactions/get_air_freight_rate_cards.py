@@ -207,7 +207,6 @@ def build_freight_object(freight_validity,required_weight,requirements,response_
     validity_start = datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date()
     validity_end = datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date()
     if validity_start > requirements.get('validity_end').date() or validity_end < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < validity_start or requirements.get('cargo_clearance_date') > validity_end:
-        print("1224")
         return None
 
     freight_validity['density_category'] = freight_validity['density_category'] if  freight_validity.get('density_category') else 'general'
