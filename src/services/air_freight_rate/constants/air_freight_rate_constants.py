@@ -86,7 +86,7 @@ PACKING_TYPE = ["pallet", "box", "crate", "loose"]
 
 HANDLING_TYPE = ["stackable", "non_stackable"]
 
-RATE_TYPES = ["market_place", "promotional", "consolidated", "cogo_assured", "general"]
+RATE_TYPES = ["market_place", "promotional", "consolidated", "cogo_assured", "general","non_tariff_rates"]
 
 DEFAULT_RATE_TYPE = "market_place"
 
