@@ -1,5 +1,5 @@
 from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
-from database.rails_db import get_organization, get_eligible_orgs
+from database.rails_db import get_organization
 from micro_services.client import organization
 
 def get_ftl_freight_rate_visibility(request):
@@ -8,8 +8,12 @@ def get_ftl_freight_rate_visibility(request):
     org_details = get_organization(id=request.get('service_provider_id'))
     if org_details:
         org_details = org_details[0]
-        org_services = get_eligible_orgs(None, str(org_details.get('id') or ''))
-
+        org_services_data = organization.list_organization_services({'filters':{'organization_id' : str(org_details['id']), 'status' : 'active'}})
+        if org_services_data:
+            org_services_data = org_services_data['list']
+        else:
+            org_services_data = []
+        org_services = [service['service'] for service in org_services_data]
     kyc_and_service_status = is_kyc_verified_and_service_validation_status(org_details, org_services)
     if kyc_and_service_status:
         response_object['reason'] += kyc_and_service_status
@@ -21,10 +25,6 @@ def get_ftl_freight_rate_visibility(request):
         if (not request['from_date']) or (not request['to_date']):
             response_object['is_visible'] = False
         return response_object
-
-    weight_limit_status = is_weight_limit_verified(ftl_freight_rate_data)
-    if weight_limit_status:
-        response_object['reason'] += weight_limit_status
 
     response_object['is_visible'] = not response_object['reason']
     response_object['is_rate_available'] = True if ftl_freight_rate_data else False
@@ -58,14 +58,3 @@ def get_ftl_freight_rate_data(request):
             FtlFreightRate.commodity  ==  request['commodity'],
             ).first()
     return ftl_freight_rate_data
-
-def is_weight_limit_verified(ftl_freight_rate_data):
-    weight_limit = ftl_freight_rate_data.weight_limit
-    if not weight_limit:
-        return ' weight limit not present,'
-    if (not weight_limit['free_limit']):
-        return ' overweight weight surcharge free limit is not present,'
-    if (not weight_limit['slabs']):
-        return ' weight limit slabs is not present,'
-
-    return ''
