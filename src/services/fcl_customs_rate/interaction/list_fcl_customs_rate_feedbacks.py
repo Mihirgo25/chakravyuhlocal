@@ -12,7 +12,7 @@ from database.rails_db import get_organization
 
 possible_direct_filters = ['id', 'feedback_type', 'performed_by_org_id', 'performed_by_id', 'status', 'closed_by_id', 'country_id', 'trade_type', 'port_id', 'trade_id', 'service_provider_id', 'serial_id']
 
-possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
+possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id', 'q']
 
 def list_fcl_customs_rate_feedbacks(filters = {}, spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
     query = FclCustomsRateFeedback.select()
@@ -65,6 +65,11 @@ def apply_validity_start_greater_than_filter(query, filters):
 
 def apply_validity_end_less_than_filter(query, filters):
     query = query.where(FclCustomsRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than'].split('T')[0]).date())
+    return query
+
+def apply_q_filter(query, filters):
+    q = str(filters.get('q', ''))
+    query = query.where(FclCustomsRateFeedback.serial_id.cast("text") ** (q + "%"))
     return query
 
 def apply_similar_id_filter(query, filters):

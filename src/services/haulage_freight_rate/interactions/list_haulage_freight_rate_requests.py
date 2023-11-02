@@ -19,6 +19,7 @@ possible_indirect_filters = [
     "similar_id",
     "shipping_line_id",
     "relevant_supply_agent",
+    "q",
 ]
 possible_direct_filters = [
     "origin_location_id",
@@ -94,6 +95,11 @@ def apply_validity_end_less_than_filter(query, filters):
         HaulageFreightRateRequest.created_at.cast("date")
         <= datetime.fromisoformat(filters["validity_end_less_than"]).date()
     )
+
+def apply_q_filter(query, filters):
+    q = str(filters.get('q', ''))
+    query = query.where(HaulageFreightRateRequest.serial_id.cast("text") ** (q + "%"))
+    return query
 
 
 def apply_similar_id_filter(query, filters):
