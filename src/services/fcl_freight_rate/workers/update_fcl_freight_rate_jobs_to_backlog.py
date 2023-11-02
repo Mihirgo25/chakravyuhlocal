@@ -13,7 +13,7 @@ def update_fcl_freight_rate_jobs_to_backlog():
 
     while True:
         fcl_conditions = (
-            FclFreightRateJob.created_at < datetime.today().date() - timedelta(days=1),
+            FclFreightRateJob.created_at < datetime.today().date(),
             FclFreightRateJob.status == "pending",
             ~(FclFreightRateJob.sources.contains('live_booking') | FclFreightRateJob.sources.contains('rate_feedback') | FclFreightRateJob.sources.contains('rate_request'))
         )
