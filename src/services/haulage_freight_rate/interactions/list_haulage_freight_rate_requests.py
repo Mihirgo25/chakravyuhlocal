@@ -29,7 +29,8 @@ possible_direct_filters = [
     "origin_country_id",
     "destination_country_id",
     "transport_mode",
-    "id"
+    "id",
+    "serial_id"
 ]
 
 

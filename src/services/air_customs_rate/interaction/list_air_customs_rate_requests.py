@@ -10,7 +10,7 @@ from peewee import fn
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id']
 
-possible_direct_filters = ['airport_id', 'performed_by_id', 'status', 'closed_by_id', 'country_id','trade_id', 'id']
+possible_direct_filters = ['airport_id', 'performed_by_id', 'status', 'closed_by_id', 'country_id','trade_id', 'id', 'serial_id']
 
 def list_air_customs_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = False, spot_search_details_required=False):
     query = AirCustomsRateRequest.select()
