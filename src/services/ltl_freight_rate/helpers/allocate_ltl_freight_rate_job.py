@@ -3,6 +3,7 @@ from configs.ltl_freight_rate_constants import LTL_FREIGHT_COVERAGE_USERS
 from database.db_session import rd
 from micro_services.client import common
 from peewee import fn
+from datetime import datetime
 
 def allocate_ltl_freight_rate_job(source, service_provider_id):
     
@@ -39,7 +40,8 @@ def allocate_live_booking_job(service_provider_id):
             .where(
                 (LtlFreightRateJob.sources.contains(['live_booking'])) &
                 (LtlFreightRateJob.service_provider_id == service_provider_id) &
-                (LtlFreightRateJob.status.not_in(['completed', 'aborted']))
+                (LtlFreightRateJob.status.not_in(['completed', 'aborted'])) &
+                (LtlFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -53,13 +55,14 @@ def get_active_users():
     filters = {"agent_id": LTL_FREIGHT_COVERAGE_USERS}
     agent_filters['filters'] = filters
     online_users = common.list_chat_agents(agent_filters)
-    if online_users:
-        online_users = online_users['list']
     
     active_users = []
-    for user in online_users:
-        if user['status'] == 'active':
-            active_users.append(user['agent_id'])
+    if isinstance(online_users, dict) and online_users.get('list'):
+        online_users = online_users['list']
+    
+        for user in online_users:
+            if user['status'] == 'active':
+                active_users.append(user['agent_id'])
             
     return active_users
 
@@ -67,7 +70,8 @@ def get_users_by_job_load(active_users):
     
     query = (LtlFreightRateJob.select(LtlFreightRateJob.user_id, fn.Count(LtlFreightRateJob.user_id).alias('user_id_count'))
             .where((LtlFreightRateJob.user_id << active_users) &
-                    (LtlFreightRateJob.status.not_in(['completed', 'aborted'])))
+                    (LtlFreightRateJob.status.not_in(['completed', 'aborted'])) &
+                    (LtlFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date()))
             .group_by(LtlFreightRateJob.user_id)
             .order_by(fn.Count(LtlFreightRateJob.user_id)))
     

@@ -4,7 +4,8 @@ from micro_services.discover_client import get_instance_url
 from rms_utils.get_money_exchange_for_fcl_fallback import get_money_exchange_for_fcl_fallback
 from libs.cached_money_exchange import get_money_exchange_from_rd, set_money_exchange_to_rd
 from libs.get_saas_schedules_airport_pair_coverages_from_rd import get_saas_schedules_airport_pair_coverages_from_rd, set_saas_schedules_airport_pair_coverages_to_rd
-
+from libs.get_exhange_currencies_from_rd import list_exchange_rate_currencies_from_rd,set_exchange_rate_currencies_to_rd
+from configs.yml_definitions import FCL_FREIGHT_CURRENCIES
 class CommonApiClient:
     def __init__(self):
         self.client=GlobalClient(url = str(get_instance_url('common')),headers={
@@ -29,7 +30,21 @@ class CommonApiClient:
         
         resp = get_money_exchange_for_fcl_fallback(**data)
         return resp
+    
+    def list_exchange_rate_currencies(self):
+        cached_resp = list_exchange_rate_currencies_from_rd()
+        if cached_resp:
+            return cached_resp
 
+        resp = self.client.request('GET', 'list_exchange_rate_currencies', timeout=5, data={"page_limit": 200})
+
+        if isinstance(resp, dict) and resp.get('list'):
+            currency_code = [entry['iso_code'] for entry in resp.get('list', [])]
+            set_exchange_rate_currencies_to_rd(currency_code)
+            return currency_code
+        
+        return FCL_FREIGHT_CURRENCIES
+    
     def create_communication(self, data = {}):
         return self.client.request('POST','communication/create_communication',data, timeout=60)
 
@@ -76,3 +91,8 @@ class CommonApiClient:
 
     def list_chat_agents(self, data = {}):
         return self.client.request('GET','communication/list_chat_agents',data)
+    
+    
+    
+    
+    

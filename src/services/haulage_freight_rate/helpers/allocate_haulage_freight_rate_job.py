@@ -1,6 +1,7 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_jobs import HaulageFreightRateJob
 from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_COVERAGE_USERS
 from database.db_session import rd
+from datetime import datetime
 from micro_services.client import common
 from peewee import fn
 
@@ -39,7 +40,8 @@ def allocate_live_booking_job(service_provider_id):
             .where(
                 (HaulageFreightRateJob.sources.contains(['live_booking'])) &
                 (HaulageFreightRateJob.service_provider_id == service_provider_id) &
-                (HaulageFreightRateJob.status.not_in(['completed', 'aborted']))
+                (HaulageFreightRateJob.status.not_in(['completed', 'aborted'])) &
+                (HaulageFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -53,13 +55,14 @@ def get_active_users():
     filters = {"agent_id": HAULAGE_FREIGHT_COVERAGE_USERS}
     agent_filters['filters'] = filters
     online_users = common.list_chat_agents(agent_filters)
-    if online_users:
-        online_users = online_users['list']
     
     active_users = []
-    for user in online_users:
-        if user['status'] == 'active':
-            active_users.append(user['agent_id'])
+    if isinstance(online_users, dict) and online_users.get('list'):
+        online_users = online_users['list']
+    
+        for user in online_users:
+            if user['status'] == 'active':
+                active_users.append(user['agent_id'])
             
     return active_users
 
@@ -67,7 +70,8 @@ def get_users_by_job_load(active_users):
     
     query = (HaulageFreightRateJob.select(HaulageFreightRateJob.user_id, fn.Count(HaulageFreightRateJob.user_id).alias('user_id_count'))
             .where((HaulageFreightRateJob.user_id << active_users) &
-                    (HaulageFreightRateJob.status.not_in(['completed', 'aborted'])))
+                    (HaulageFreightRateJob.status.not_in(['completed', 'aborted'])) &
+                    (HaulageFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date()))
             .group_by(HaulageFreightRateJob.user_id)
             .order_by(fn.Count(HaulageFreightRateJob.user_id)))
     
