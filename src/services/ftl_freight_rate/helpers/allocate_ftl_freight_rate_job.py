@@ -56,14 +56,15 @@ def get_active_users():
     filters = {"agent_id": FTL_FREIGHT_COVERAGE_USERS}
     agent_filters['filters'] = filters
     online_users = common.list_chat_agents(agent_filters)
-    if online_users:
-        online_users = online_users['list']
     
     active_users = []
-    for user in online_users:
-        if user['status'] == 'active':
-            active_users.append(user['agent_id'])
-            
+    if isinstance(online_users, dict) and online_users.get('list'):
+        online_users = online_users['list']
+    
+        for user in online_users:
+            if user['status'] == 'active':
+                active_users.append(user['agent_id'])    
+
     return active_users
 
 def get_users_by_job_load(active_users):
