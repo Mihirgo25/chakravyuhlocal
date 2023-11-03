@@ -100,11 +100,12 @@ def apply_updated_at_filter(query, filters):
 
 
 def apply_source_filter(query, filters):
-    if filters.get('source') and not isinstance(filters.get('source'), list):
-        filters['source'] = [filters.get('source')]
-    conditions = [FclFreightRateJob.sources.contains(tag) for tag in filters["source"]]
-    combined_condition = reduce(lambda a, b: a | b, conditions)
-    query = query.where(combined_condition)
+    if filters.get('source'):
+        if not isinstance(filters.get('source'), list):
+            filters['source'] = [filters.get('source')]
+        conditions = [FclFreightRateJob.sources.contains(tag) for tag in filters["source"]]
+        combined_condition = reduce(lambda a, b: a | b, conditions)
+        query = query.where(combined_condition)
     return query
 
 

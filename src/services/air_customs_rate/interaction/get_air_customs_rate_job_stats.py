@@ -7,6 +7,7 @@ from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
 from peewee import fn
 from playhouse.postgres_ext import SQL, Case
+from functools import reduce
 
 
 possible_direct_filters = [
@@ -58,7 +59,7 @@ def get_air_customs_rate_job_stats(
 
     # getting weekly_stats
     if filters.get("weekly_stats"):
-        statistics = build_weekly_details(query, statistics)
+        statistics = build_weekly_details(query, statistics, filters)
 
     # remaining filters
     dynamic_statistics = get_statistics(
@@ -91,7 +92,12 @@ def apply_updated_at_filter(query, filters):
 
 
 def apply_source_filter(query, filters):
-    query = query.where(AirCustomsRateJob.sources.contains(filters["source"]))
+    if filters.get('source'):
+        if not isinstance(filters.get('source'), list):
+            filters['source'] = [filters.get('source')]
+        conditions = [AirCustomsRateJob.sources.contains(tag) for tag in filters["source"]]
+        combined_condition = reduce(lambda a, b: a | b, conditions)
+        query = query.where(combined_condition)
     return query
 
 
@@ -186,11 +192,13 @@ def build_daily_details(query, statistics):
     return statistics
 
 
-def build_weekly_details(query, statistics):
+def build_weekly_details(query, statistics, filters):
     query = query.where(
         AirCustomsRateJob.created_at.cast("date")
         >= datetime.now().date() - timedelta(days=7)
     )
+
+    query = apply_source_filter(query, filters)
     weekly_stats_query = query.select(
         AirCustomsRateJob.status,
         fn.COUNT(AirCustomsRateJob.id).alias("count"),
