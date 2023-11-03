@@ -8,9 +8,9 @@ from datetime import datetime
 from math import ceil
 from libs.json_encoder import json_encoder
 
-possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
+possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id', 'q']
 
-possible_direct_filters = ['id', 'port_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'country_id', 'id']
+possible_direct_filters = ['id', 'port_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'country_id', 'id', 'serial_id']
 
 def list_fcl_cfs_rate_requests(filters, page_limit=10, page=1, is_stats_required=True, performed_by_id=None):
     query = FclCfsRateRequest.select()
@@ -46,6 +46,11 @@ def apply_validity_start_greater_than_filter(query, filters):
 
 def apply_validity_end_less_than_filter(query, filters):
     return query.where(FclCfsRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than'].split('T')[0]).date())
+
+def apply_q_filter(query, filters):
+    q = str(filters.get('q', ''))
+    query = query.where(FclCfsRateRequest.serial_id.cast("text") ** (q + "%"))
+    return query
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('fcl_cfs', filters['relevant_supply_agent'])
