@@ -155,16 +155,9 @@ def get_statistics(filters, dynamic_statistics):
 
 def build_daily_details(query, statistics, filters):
     
-    query = apply_start_date_filter(query, filters)
-    query = apply_end_date_filter(query, filters)
-
-    pending_count = query.where(FclFreightRateJob.status == 'pending').count()
+    query, pending_count = apply_date_filter_and_get_pending_count(query, filters)
     statistics['pending'] = pending_count
     
-    if not(filters.get("start_date") or filters.get("end_date")):
-        query = query.where(
-            FclFreightRateJob.updated_at.cast("date") == datetime.now().date()
-        )
     query = query.select(
         FclFreightRateJob.status, fn.COUNT(FclFreightRateJob.id).alias("count")
     ).where(FclFreightRateJob.status.not_in(['skipped', 'pending'])).group_by(FclFreightRateJob.status)
@@ -188,6 +181,20 @@ def build_daily_details(query, statistics, filters):
         statistics["completed_percentage"] = 100
         
     return statistics
+
+def apply_date_filter_and_get_pending_count(query, filters):
+    
+    query = apply_start_date_filter(query, filters)
+    query = apply_end_date_filter(query, filters)
+
+    pending_count = query.where(FclFreightRateJob.status == 'pending').count()
+    
+    if not(filters.get("start_date") or filters.get("end_date")):
+        query = query.where(
+            FclFreightRateJob.updated_at.cast("date") == datetime.now().date()
+        )
+        
+    return query, pending_count
 
 
 def build_weekly_details(query, statistics, filters):
