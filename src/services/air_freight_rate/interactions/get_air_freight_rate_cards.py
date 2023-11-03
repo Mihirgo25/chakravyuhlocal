@@ -76,7 +76,7 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
         source = 'predicted'
     if rate_type == 'non_tariff_rate':
         rate_type = 'market_place'
-        source = 'non_tariff_rates'
+        source = 'non_tariff_rate'
 
     response_object = {
         'airline_id': freight_rate['airline_id'],
