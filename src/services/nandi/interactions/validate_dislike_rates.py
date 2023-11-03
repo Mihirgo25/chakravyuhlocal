@@ -1,7 +1,9 @@
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from micro_services.client import common
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
+
 def validate_freight_rate_feedback(request):
     rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id,AirFreightRate.source).where(AirFreightRate.id==request['rate_id']).first()
     if not rate:
@@ -63,3 +65,100 @@ def validate_ftl_freight_unsatisfactory_rate_function(request):
     return {}
 def validate_lcl_freight_unsatisfactory_rate_function(request):
     return {}
+    
+def validate_fcl_freight_unsatisfactory_rate_function(request):
+    from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
+
+    feedback = FclFreightRateFeedback.select().where(FclFreightRateFeedback.fcl_freight_rate_id == request['rate_id'], FclFreightRateFeedback.feedback_type == 'disliked').order_by(FclFreightRateFeedback.updated_at.desc()).first()
+
+    if feedback:
+        if feedback.get('reverted_validities') and feedback.get('updated_at') > datetime.now() - timedelta(days=4):
+            return {'message': 'Best available rate for this port pair'}
+        else:
+            ### create job
+            return {}
+
+    fcl_freight_rate = FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.rate_type, FclFreightRate.mode, FclFreightRate.updated_at).where(FclFreightRate.id == request['rate_id']).first()
+
+    if not fcl_freight_rate:
+        raise HTTPException(status_code=404, detail='Fcl Freight Rate Not Found')
+    
+    rate_type = fcl_freight_rate.get('rate_type')
+    mode = fcl_freight_rate.get('mode')
+
+    if rate_type == 'promotional':
+        return {'message': 'This is a Promotional Rate'}
+
+    elif mode in ['predicted', 'rate_extension', 'cluster_extension']:
+        ### create job
+        return {}
+    
+    elif mode == 'flash_booking':
+        if fcl_freight_rate.get('updated_at') > datetime.now() - timedelta(hours=4):
+            return {'message': 'Best available rate for this port pair'}
+        else:
+            ### create job
+            return {}
+    
+    elif mode in ['rms_upload', 'forcasted_rfq']:
+        avg_price = 100 ## take from statistics (from spot ans supply rates)
+        sigma = 20 ## take from statistics later
+
+        lower_bound = avg_price - 0.1 * sigma
+        upper_bound = avg_price + 0.1 * sigma
+
+        bas_standard_price = request.get('check later')
+
+        if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
+            return {'message': 'Best available rate for this port pair'}
+        else:
+            ### create job
+            return {}
+
+def validate_air_freight_unsatisfactory_rate_function(request):
+    from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
+
+    feedback = AirFreightRateFeedback.select().where(AirFreightRateFeedback.air_freight_rate_id == request['rate_id'], AirFreightRateFeedback.feedback_type == 'disliked').order_by(AirFreightRateFeedback.updated_at.desc()).first()
+
+    if feedback:
+        if feedback.get('status') == 'inactive' and feedback.get('updated_at') > datetime.now() - timedelta(days=4):
+            return {'message': 'Best available rate for this port pair'}
+        else:
+            ### create job
+            return {}
+
+    air_freight_rate = AirFreightRate.select(AirFreightRate.id, AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id, AirFreightRate.rate_type, AirFreightRate.source, AirFreightRate.updated_at).where(AirFreightRate.id == request['rate_id']).first()
+
+    if not air_freight_rate:
+        raise HTTPException(status_code=404, detail='Air Freight Rate Not Found')
+    
+    rate_type = air_freight_rate.get('rate_type')
+    source = air_freight_rate.get('source')
+
+    if rate_type == 'promotional':
+        return {'message': 'This is a Promotional Rate'}
+
+    elif source in ['predicted', 'rate_extension']:
+        ### create job
+        return {}
+    
+    elif rate_type == 'flash_booking':
+        if air_freight_rate.get('updated_at') > datetime.now() - timedelta(hours=4):
+            return {'message': 'Best available rate for this port pair'}
+        else:
+            ### create job
+            return {}
+        
+    avg_price = 100 ## take from statistics (from spot and supply rates)
+    sigma = 20 ## take from statistics later
+
+    lower_bound = avg_price - 0.1 * sigma
+    upper_bound = avg_price + 0.1 * sigma
+
+    bas_standard_price = request.get('check later')
+
+    if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
+        return {'message': 'Best available rate for this port pair'}
+    else:
+        ### create job
+        return {}
