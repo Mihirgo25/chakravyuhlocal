@@ -65,8 +65,10 @@ def execute_transaction_code(request):
     create_audit(request)
     get_multiple_service_objects(feedback)
 
-    request['source_id'] = feedback.id    
-    create_haulage_freight_rate_job(request, "rate_feedback")
+    if feedback.feedback_type == 'disliked':
+        request['source_id'] = feedback.id    
+        create_haulage_freight_rate_job(request, "rate_feedback")
+        
     return {'id': feedback.id}
 
  

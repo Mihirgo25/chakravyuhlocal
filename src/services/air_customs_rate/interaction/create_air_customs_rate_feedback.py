@@ -55,8 +55,9 @@ def execute_transaction_code(request):
     create_audit(request, air_customs_feedback.id)
     get_multiple_service_objects(air_customs_feedback)
     send_notifications_to_supply_agents(request)
-    request['source_id'] = air_customs_feedback.id
-    create_air_customs_rate_job(request, "rate_feedback")
+    if air_customs_feedback.feedback_type == 'disliked':
+        request['source_id'] = air_customs_feedback.id
+        create_air_customs_rate_job(request, "rate_feedback")
 
     return {
       'id': request.get('rate_id')

@@ -43,7 +43,8 @@ DEFAULT_REQUIRED_FIELDS = [
     "airport_id",
     "serial_id",
     "sources",
-    "trade_type"
+    "trade_type",
+    "rate_type"
 ]
 
 

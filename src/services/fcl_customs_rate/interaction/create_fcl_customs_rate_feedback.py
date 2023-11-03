@@ -52,8 +52,10 @@ def execute_transaction_code(request):
     create_audit(request, customs_feedback)
     get_multiple_service_objects(customs_feedback)
 
-    request['source_id'] = customs_feedback.id
-    create_fcl_customs_rate_job(request, "rate_feedback")
+    if customs_feedback.feedback_type == 'disliked':
+        request['source_id'] = customs_feedback.id
+        create_fcl_customs_rate_job(request, "rate_feedback")
+        
     return {
       'id': request.get('rate_id')
     }
