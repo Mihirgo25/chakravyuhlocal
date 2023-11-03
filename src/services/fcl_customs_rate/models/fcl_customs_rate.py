@@ -114,9 +114,9 @@ class FclCustomsRate(BaseModel):
         raise HTTPException(status_code=400, detail="Invalid trade type")
     
     def validate_cargo_handling_type(self):
-        if self.trade_type == 'export' and self.cargo_handling_type not in EXPORT_CARGO_HANDLING_TYPES:
+        if self.trade_type == 'export' and self.cargo_handling_type and self.cargo_handling_type not in EXPORT_CARGO_HANDLING_TYPES:
             raise HTTPException(status_code=400,detail='Invalid cargo_handling_type for export')
-        if self.trade_type == 'import' and self.cargo_handling_type not in IMPORT_CARGO_HANDLING_TYPES:
+        if self.trade_type == 'import' and self.cargo_handling_type and self.cargo_handling_type not in IMPORT_CARGO_HANDLING_TYPES:
             raise HTTPException(status_code=400,detail='Invalid cargo_handling_type for import')
     
     def validate_container_size(self):

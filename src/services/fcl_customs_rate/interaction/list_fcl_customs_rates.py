@@ -8,9 +8,9 @@ from micro_services.client import common
 from configs.fcl_freight_rate_constants import RATE_TYPES
 from libs.get_normalized_line_items import get_normalized_line_items
 
-possible_direct_filters = ['id', 'location_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'service_provider_id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'cargo_handling_type', 'is_customs_line_items_info_messages_present', 'is_customs_line_items_error_messages_present', 'is_cfs_line_items_info_messages_present', 'is_cfs_line_items_error_messages_present', 'procured_by_id', 'rate_type']
+possible_direct_filters = ['id', 'location_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'service_provider_id', 'importer_exporter_id', 'container_type', 'container_size', 'cargo_handling_type', 'is_customs_line_items_info_messages_present', 'is_customs_line_items_error_messages_present', 'is_cfs_line_items_info_messages_present', 'is_cfs_line_items_error_messages_present', 'procured_by_id', 'rate_type']
 
-possible_indirect_filters = ['location_ids', 'importer_exporter_present', 'is_rate_available']
+possible_indirect_filters = ['location_ids', 'importer_exporter_present', 'is_rate_available', 'commodity']
 
 def list_fcl_customs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, pagination_data_required = False):
     query = get_query(sort_by, sort_type, page, page_limit)
@@ -114,6 +114,13 @@ def apply_importer_exporter_present_filter(query, filters):
 def apply_is_rate_available_filter(query, filters):
     rate_not_available_entry = not filters.get('is_rate_available')
     query = query.where(FclCustomsRate.rate_not_available_entry == rate_not_available_entry)
+    return query
+
+def apply_commodity_filter(query, filters):
+    commodity = filters['commodity']
+    if filters['commodity'] == 'all_commodity':
+        commodity = None
+    query = query.where(FclCustomsRate.commodity == commodity)
     return query 
 
 def get_total_price(line_items, total_price_currency):
