@@ -4,8 +4,7 @@ from playhouse.postgres_ext import *
 import datetime, uuid
 from micro_services.client import maps, common
 from configs.fcl_freight_rate_constants import *
-from configs.fcl_customs_rate_constants import CONTAINER_TYPE_COMMODITY_MAPPINGS
-from configs.fcl_cfs_rate_constants import EXPORT_CARGO_HANDLING_TYPES, IMPORT_CARGO_HANDLING_TYPES
+from configs.fcl_customs_rate_constants import CONTAINER_TYPE_COMMODITY_MAPPINGS, EXPORT_CARGO_HANDLING_TYPES, IMPORT_CARGO_HANDLING_TYPES
 from database.rails_db import *
 from fastapi import HTTPException
 from configs.definitions import FCL_CUSTOMS_CHARGES
