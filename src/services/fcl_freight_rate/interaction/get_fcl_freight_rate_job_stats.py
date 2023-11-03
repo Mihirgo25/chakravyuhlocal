@@ -180,7 +180,7 @@ def build_daily_details(query, statistics, filters):
     statistics['completed'] = total_completed
     statistics["total"] = total_daily_count + pending_count
     
-    if total_daily_count != 0:
+    if statistics["total"] != 0:
         statistics["completed_percentage"] = round(
             (total_completed / statistics["total"] ) * 100, 2
         )
