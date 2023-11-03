@@ -13,7 +13,7 @@ def update_fcl_customs_rate_jobs_to_backlog():
 
     while True:
         fcl_customs_conditions = (
-            FclCustomsRateJob.created_at < datetime.today().date() - timedelta(days=1),
+            FclCustomsRateJob.created_at <= datetime.today().date(),
             FclCustomsRateJob.status == "pending",
             ~(FclCustomsRateJob.sources.contains('live_booking') | FclCustomsRateJob.sources.contains('rate_feedback') | FclCustomsRateJob.sources.contains('rate_request'))
         )
