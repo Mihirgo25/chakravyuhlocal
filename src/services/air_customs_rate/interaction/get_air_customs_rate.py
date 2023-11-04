@@ -9,7 +9,9 @@ def get_air_customs_rate(request):
         detail = air_custom_object.detail()
     else:
         detail = {}
-
+        air_custom_object = AirCustomsRate(**request)
+    detail['air_customs_charge_codes'] = air_custom_object.possible_charge_codes()
+ 
     return detail
 
 def all_fields_present(request):
