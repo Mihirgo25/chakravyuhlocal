@@ -204,7 +204,7 @@ def set_callback_for_request(request):
             request["origin_city_id"] = location_mapping.get(
                 request.get("origin_location_id")
             ).get("city_id")
-        if request.get("destination_city_id") is None:
+
             request["destination_city_id"] = location_mapping.get(
                 request.get("destination_location_id")
             ).get("city_id")
