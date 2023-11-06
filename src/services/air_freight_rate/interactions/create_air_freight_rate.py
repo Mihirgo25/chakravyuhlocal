@@ -158,7 +158,7 @@ def create_air_freight_rate_data(request):
 
 
     if request.get('air_freight_rate_request_id'):
-        update_air_freight_rate_details_delay.apply_async(kwargs={ 'request':request }, queue='fcl_freight_rate')
+        update_air_freight_rate_details_delay.apply_async(kwargs={'request':{'air_freight_rate_request_id': request.get('air_freight_rate_request_id'), 'reverted_rates': [{"weight_slabs":request.get('weight_slabs'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id'),'closing_remarks':['rate_added']}},queue='critical')
     if request.get('service_provider_id')== SERVICE_PROVIDER_FF and not request.get('extension_not_required'):
         extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': request,'base_to_base':True }, queue='fcl_freight_rate')
         
