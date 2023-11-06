@@ -20,6 +20,7 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
             transit_time_list.append(ftl_rate.get('transit_time'))
             # calculate sum of prices
             final_line_items = get_calculated_line_items(final_line_items, ftl_rate.get("line_items", []), count_by_code)
+
         # divide by count for mean price
         for final_item in final_line_items:
             if count_by_code.get(final_item['code']):
@@ -84,9 +85,7 @@ def get_calculated_line_items(final_line_items, new_line_items, count_by_code):
         # summation of prices by code
         for final_item in final_line_items:
             if final_item['code'] == line_item['code']:
-                final_price = final_item.get("price")
-                final_price = final_price + total_price
-                final_item['price'] = final_price
+                final_item['price'] = final_item.get("price") + total_price
     return final_line_items
 
 def convert_to_inr(price, currency):
