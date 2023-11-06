@@ -216,7 +216,7 @@ def create_fcl_freight_rate(request):
     adjust_dynamic_pricing(request, row, freight, current_validities, is_rate_extended_via_bo)
 
     if request.get('fcl_freight_rate_request_id'):
-        update_fcl_freight_rate_request_in_delay.apply_async(kwargs={'request':{'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'reverted_rates': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id'),'closing_remarks':['rate_added']}},queue='critical')
+        update_fcl_freight_rate_request_in_delay.apply_async(kwargs={'request':{'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'reverted_rates': [{"id": freight.id, "line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id'),'closing_remarks':['rate_added']}},queue='critical')
 
     if request.get('fcl_freight_rate_feedback_id'):
         update_fcl_freight_rate_feedback_in_delay.apply_async(kwargs={'request':{'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')}},queue='critical')
