@@ -59,7 +59,7 @@ class HaulageFreightRateRequest(BaseModel):
     reverted_rate_id = UUIDField(null=True)
     reverted_rate = BinaryJSONField(null=True)
     transport_mode = TextField(index=True)
-
+    reverted_rates = ArrayField(field_class=BinaryJSONField, null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
