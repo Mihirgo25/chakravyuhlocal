@@ -22,7 +22,7 @@ possible_direct_filters = [
     "service_provider_id",
     "transport_modes_keyword"
 ]
-possible_indirect_filters = ["updated_at", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
 
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
@@ -113,6 +113,7 @@ def get_data(query, filters):
             d['reverted_status'] = mappings_data.status
             d['shipment_serial_id'] = mappings_data.shipment_serial_id
             d['shipment_service_id'] = mappings_data.shipment_service_id
+            d['reverted_count'] = get_reverted_count(mappings_data)
     return data
 
 
@@ -162,7 +163,7 @@ def apply_start_date_filter(query, filters):
     start_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
         hours=5, minutes=30
     )
-    query = query.where(HaulageFreightRateJob.created_at.cast("date") >= start_date.date())
+    query = query.where(HaulageFreightRateJob.updated_at.cast("date") >= start_date.date())
     return query
 
 
@@ -187,10 +188,10 @@ def apply_shipment_serial_id_filter(query, filters):
     return query
 
 def apply_end_date_filter(query, filters):
-    end_date = datetime.strptime(filters["start_date"], STRING_FORMAT) + timedelta(
+    end_date = datetime.strptime(filters["end_date"], STRING_FORMAT) + timedelta(
         hours=5, minutes=30
     )
-    query = query.where(HaulageFreightRateJob.created_at.cast("date") <= end_date.date())
+    query = query.where(HaulageFreightRateJob.updated_at.cast("date") <= end_date.date())
     return query
 
 
@@ -230,3 +231,12 @@ def add_pagination_data(
     response["success"] = True
     response["list"] = final_data
     return response
+
+def get_reverted_count(mappings_data):
+    if mappings_data.shipment_id:
+        result = HaulageFreightRateJobMapping.select(HaulageFreightRateJobMapping.id).where(
+                    (HaulageFreightRateJobMapping.shipment_id == mappings_data.shipment_id) &
+                    (HaulageFreightRateJobMapping.status == 'reverted')
+                ).count()
+        return result
+    return None

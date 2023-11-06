@@ -1159,7 +1159,7 @@ def get_air_freight_local_rate_cards_api(
 @air_freight_router.post("/delete_air_freight_rate_request")
 def delete_air_freight_rate_request_api(request:DeleteAirFreightRateRequestParams , resp:dict = Depends(authorize_token)):
     if resp['status_code']!=200:
-        return JSONResponse(status_code=resp['statuse_code'],content=resp)
+        return JSONResponse(status_code=resp['status_code'],content=resp)
     
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]

@@ -148,7 +148,7 @@ def get_params_for_model(request, locations):
     serviceable_airline_ids = common.get_saas_schedules_airport_pair_coverages(airport_id)
 
     no_of_airlines = 3
-    if serviceable_airline_ids:
+    if isinstance(serviceable_airline_ids,list):
         top_three_airline_ids = serviceable_airline_ids[:no_of_airlines]
     else:
         return params

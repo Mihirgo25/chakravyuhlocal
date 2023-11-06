@@ -1,6 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_jobs import FclFreightRateJob
 from configs.fcl_freight_rate_constants import FCL_EXPORT_COVERAGE_USERS, FCL_IMPORT_COVERAGE_USERS
 from database.db_session import rd
+from datetime import datetime
 from micro_services.client import common
 from peewee import fn
 
@@ -47,7 +48,8 @@ def allocate_live_booking_job(service_provider_id):
             .where(
                 (FclFreightRateJob.sources.contains(['live_booking'])) &
                 (FclFreightRateJob.service_provider_id == service_provider_id) &
-                (FclFreightRateJob.status.not_in(['completed', 'aborted']))
+                (FclFreightRateJob.status.not_in(['completed', 'aborted'])) &
+                (FclFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -61,13 +63,14 @@ def get_active_users(fcl_users):
     filters = {"agent_id": fcl_users}
     agent_filters['filters'] = filters
     online_users = common.list_chat_agents(agent_filters)
-    if online_users:
-        online_users = online_users['list']
     
     active_users = []
-    for user in online_users:
-        if user['status'] == 'active':
-            active_users.append(user['agent_id'])
+    if isinstance(online_users, dict) and online_users.get('list'):
+        online_users = online_users['list']
+    
+        for user in online_users:
+            if user['status'] == 'active':
+                active_users.append(user['agent_id'])
             
     return active_users
 
@@ -75,7 +78,8 @@ def get_users_by_job_load(active_users):
     
     query = (FclFreightRateJob.select(FclFreightRateJob.user_id, fn.Count(FclFreightRateJob.user_id).alias('user_id_count'))
             .where((FclFreightRateJob.user_id << active_users) &
-                    (FclFreightRateJob.status.not_in(['completed', 'aborted'])))
+                    (FclFreightRateJob.status.not_in(['completed', 'aborted'])) & 
+                    (FclFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date()))
             .group_by(FclFreightRateJob.user_id)
             .order_by(fn.Count(FclFreightRateJob.user_id)))
     

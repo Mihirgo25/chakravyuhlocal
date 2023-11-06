@@ -2,6 +2,7 @@ from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRat
 from services.air_freight_rate.constants.air_freight_rate_constants import AIR_COVERAGE_USERS
 from database.db_session import rd
 from micro_services.client import common
+from datetime import datetime
 from peewee import fn
 
 def allocate_air_freight_rate_job(source, service_provider_id):
@@ -39,7 +40,8 @@ def allocate_live_booking_job(service_provider_id):
             .where(
                 (AirFreightRateJob.sources.contains(['live_booking'])) &
                 (AirFreightRateJob.service_provider_id == service_provider_id) &
-                (AirFreightRateJob.status.not_in(['completed', 'aborted']))
+                (AirFreightRateJob.status.not_in(['completed', 'aborted'])) &
+                (AirFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date())
             ))
     user_ids = [job.user_id for job in query]
     if user_ids:
@@ -53,13 +55,14 @@ def get_active_users():
     filters = {"agent_id": AIR_COVERAGE_USERS}
     agent_filters['filters'] = filters
     online_users = common.list_chat_agents(agent_filters)
-    if online_users:
-        online_users = online_users['list']
     
     active_users = []
-    for user in online_users:
-        if user['status'] == 'active':
-            active_users.append(user['agent_id'])
+    if isinstance(online_users, dict) and online_users.get('list'):
+        online_users = online_users['list']
+    
+        for user in online_users:
+            if user['status'] == 'active':
+                active_users.append(user['agent_id'])
             
     return active_users
 
@@ -67,7 +70,8 @@ def get_users_by_job_load(active_users):
     
     query = (AirFreightRateJob.select(AirFreightRateJob.user_id, fn.Count(AirFreightRateJob.user_id).alias('user_id_count'))
             .where((AirFreightRateJob.user_id << active_users) &
-                    (AirFreightRateJob.status.not_in(['completed', 'aborted'])))
+                    (AirFreightRateJob.status.not_in(['completed', 'aborted'])) &
+                    (AirFreightRateJob.updated_at.cast('date') > datetime(2023, 10, 25).date()))
             .group_by(AirFreightRateJob.user_id)
             .order_by(fn.Count(AirFreightRateJob.user_id)))
     
