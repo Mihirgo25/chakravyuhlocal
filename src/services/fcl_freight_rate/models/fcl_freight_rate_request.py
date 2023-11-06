@@ -60,7 +60,7 @@ class FclFreightRateRequest(BaseModel):
     reverted_by_user_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     expiration_time = DateTimeField(null = True)
     relevant_supply_agent_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
-    reverted_rates = ArrayField(field_class=BinaryJSONField, null=True)
+    reverted_rates = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
