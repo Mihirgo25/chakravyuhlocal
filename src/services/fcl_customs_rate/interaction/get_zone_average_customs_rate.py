@@ -28,7 +28,8 @@ def get_zone_wise_rate_query(request):
             FclCustomsRate.rate_not_available_entry == False,
             FclCustomsRate.mode == 'manual',
             ((FclCustomsRate.commodity == request.get('commodity')) | (FclCustomsRate.commodity.is_null(True))),
-            ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True)))
+            ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True))),
+            ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True)))
         )
         custom_rates = jsonable_encoder(list(zone_wise_rates.dicts()))
         return custom_rates
@@ -89,6 +90,7 @@ def get_create_params(request, line_items):
         'container_size' : request.get('container_size'),
         'container_type' : request.get('container_type'),
         'commodity' :  request.get('commodity'),
+        'cargo_handling_type' : request.get('cargo_handling_type'),
         'service_provider_id' : DEFAULT_SERVICE_PROVIDER_ID,
         'procured_by_id' : DEFAULT_USER_ID,
         'sourced_by_id' : DEFAULT_USER_ID,
