@@ -1,5 +1,5 @@
 from configs.definitions import ROOT_DIR
-from configs.fcl_freight_rate_constants import SHIPPING_LINES_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID
+from configs.fcl_freight_rate_constants import SHIPPING_LINES_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID, TOP_SHIPPING_LINES_FOR_PREDICTION
 from configs.global_constants import HAZ_CLASSES
 import pickle, joblib, os
 from datetime import datetime, timedelta
@@ -33,6 +33,16 @@ def relevant_shipping_lines(request):
         return sl_ids
     return SHIPPING_LINES_FOR_PREDICTION
 
+def get_top_shipping_lines_for_prediction(shipping_lines):
+    filtered_shipping_lines = [line for line in shipping_lines if line in TOP_SHIPPING_LINES_FOR_PREDICTION][:10]
+    
+    if len(filtered_shipping_lines) < 10 and len(shipping_lines) >= 10:
+        non_top_lines = [line for line in shipping_lines if line not in TOP_SHIPPING_LINES_FOR_PREDICTION]
+        filtered_shipping_lines.extend(non_top_lines[:10 - len(filtered_shipping_lines)])
+    
+    return filtered_shipping_lines
+        
+
 
 def get_fcl_freight_predicted_rate(request, servicable_shipping_lines):
     from celery_worker import create_fcl_freight_rate_feedback_for_prediction
@@ -51,7 +61,7 @@ def get_fcl_freight_predicted_rate(request, servicable_shipping_lines):
         if request.get('shipping_line_id') and request['shipping_line_id'] in hash['shipping_lines']:
             all_shipping_lines = [request['shipping_line_id']]
         else:
-            all_shipping_lines = hash.get('shipping_lines')
+            all_shipping_lines = get_top_shipping_lines_for_prediction(hash['shipping_lines'])
         
         ports_distance = maps.get_sea_route({'origin_port_id': origin_port_id, 'destination_port_id': destination_port_id, 'includes':['length']})
         if ports_distance and isinstance(ports_distance, dict):
