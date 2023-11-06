@@ -13,7 +13,7 @@ def update_air_freight_rate_jobs_to_backlog():
 
     while True:
         air_conditions = (
-            AirFreightRateJob.created_at < datetime.today().date() - timedelta(days=1),
+            AirFreightRateJob.created_at <= datetime.today().date(),
             AirFreightRateJob.status == "pending",
             ~(AirFreightRateJob.sources.contains('live_booking') | AirFreightRateJob.sources.contains('rate_feedback') | AirFreightRateJob.sources.contains('rate_request'))
         )

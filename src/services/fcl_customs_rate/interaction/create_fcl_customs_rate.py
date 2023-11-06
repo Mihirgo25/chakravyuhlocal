@@ -23,8 +23,10 @@ def execute_transaction_code(request):
         FclCustomsRate.commodity == request.get('commodity'),
         FclCustomsRate.service_provider_id==request.get('service_provider_id'),
         FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id'),
-        FclCustomsRate.rate_type == request.get('rate_type')).first()
-      
+        FclCustomsRate.rate_type == request.get('rate_type'),
+        ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True)))
+        ).order_by(FclCustomsRate.cargo_handling_type.desc(nulls='LAST')).first()
+
   if not customs_rate:
     customs_rate = FclCustomsRate(**params)
     customs_rate.set_location()
@@ -41,7 +43,7 @@ def execute_transaction_code(request):
 
   customs_rate.validate_before_save()
   customs_rate.update_customs_line_item_messages()
-  
+
   try:
      customs_rate.save()
   except Exception as e:
@@ -72,7 +74,8 @@ def get_create_object_params(request):
       'importer_exporter_id' : request.get('importer_exporter_id'),
       'accuracy': request.get('accuracy', 100),
       'mode' : request.get('mode','manual'),
-      "rate_type" : request.get('rate_type', DEFAULT_RATE_TYPE)
+      "rate_type" : request.get('rate_type', DEFAULT_RATE_TYPE),
+      "cargo_handling_type":request.get('cargo_handling_type')
     }
 
 def create_audit(request, customs_rate_id):

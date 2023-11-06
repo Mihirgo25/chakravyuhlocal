@@ -75,12 +75,10 @@ def execute_transaction_code(request):
     # update_likes_dislikes_count(rate, request)
     if request['feedback_type'] == 'disliked':
         set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
+        request['source_id'] = feedback.id
+        create_fcl_freight_rate_job(request, "rate_feedback")
         
     send_feedback_statistics_in_delay.apply_async(kwargs = {'action': action,'feedback': feedback, 'request': request},queue = 'statistics')
-    
-    request['source_id'] = feedback.id
-    
-    create_fcl_freight_rate_job(request, "rate_feedback")
 
     return {'id': request['rate_id']}
 

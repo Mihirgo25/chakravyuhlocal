@@ -43,7 +43,8 @@ DEFAULT_REQUIRED_FIELDS = [
     "serial_id",
     "container_type",
     "sources",
-    "trade_type"
+    "trade_type",
+    "cargo_handling_type"
 ]
 
 
