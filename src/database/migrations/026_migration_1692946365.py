@@ -20,7 +20,7 @@ SQL = pw.SQL
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
     """Write your migrations here."""
     migrator.add_fields(FclCustomsRate, cargo_handling_type = CharField(null=True, index=True))
-    migrator.add_fields(FclCustomsRateFeedback, cargo_handling_type = CharField(null=True))
+    migrator.add_fields(FclCustomsRateFeedback, cargo_handling_type = CharField(null=True, index=True))
     migrator.add_fields(FclCustomsRateJob, cargo_handling_type = CharField(null = True, index=True))
 
 
