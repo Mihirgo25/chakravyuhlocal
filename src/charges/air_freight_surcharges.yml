@@ -81,7 +81,7 @@ CS:
   name: "Commercial Surcharge"
   units: ['per_kg']
   trade_types: ['export', 'import']
-  condition: airline_id in CS_AIRLINES
+  condition: true
   tags: ['additional_service']
-  sac_code: ''
+  sac_code: '996763'
 

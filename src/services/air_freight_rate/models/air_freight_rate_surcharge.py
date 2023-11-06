@@ -94,7 +94,6 @@ class AirFreightRateSurcharge(BaseModel):
         is_line_items_info_messages_present = False
 
         commodity = self.commodity
-        airline_id = str(self.airline_id)
         air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES.get()
         grouped_charge_codes = {}
         for line_item in self.line_items:
@@ -186,7 +185,6 @@ class AirFreightRateSurcharge(BaseModel):
     def possible_charge_codes(self):
         commodity = self.commodity
         commodity_type = self.commodity_type
-        airline_id = str(self.airline_id)
         air_freight_surcharges = AIR_FREIGHT_SURCHARGES.get()
 
 
