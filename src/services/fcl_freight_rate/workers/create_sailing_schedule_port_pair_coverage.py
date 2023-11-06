@@ -1,4 +1,3 @@
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from micro_services.client import schedule_client
 
 

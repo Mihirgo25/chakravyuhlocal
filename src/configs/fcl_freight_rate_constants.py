@@ -186,26 +186,22 @@ DEFAULT_LOCAL_AGENT_IDS = {
 }
 
 
-SHIPPING_LINES_FOR_PREDICTION = ['b2f92d49-6180-43bd-93a5-4d64f5819a9b','fb1aa2f1-d136-4f26-ad8f-2e1545cc772a', 'a2a447b4-0ce5-4d3c-afa9-2f81b313aecd','9ee49704-f5a7-4f17-9e25-c5c3b5ec3d1d']
 TOP_SHIPPING_LINES_FOR_PREDICTION = [
-  '25c0df76-5e1a-4f14-9c85-e7f794d8e8b9', 
-  '91ac3a61-5e28-43f6-84e7-f4ed38267e4e', 
-  '2df9777e-01e9-4f86-83b8-28b36ddf1be1', 
-  'be57f277-0c81-47b4-9322-bf06ccc5314c', 
-  '256c0d0c-e0f1-439b-8c3b-70edfe27278e', 
-  '83af97eb-09a7-4a17-a3ca-561f0bbc0b6f', 
-  '2d477bb2-8956-4dbe-bd8b-71144b60374c', 
-  '3c5d996c-4d4e-4a2b-bce7-1024b46f7300', 
-  'fb1aa2f1-d136-4f26-ad8f-2e1545cc772a', 
-  '3b786382-f751-43b0-a0a6-2ff1a6128be4', 
-  'c3649537-0c4b-4614-b313-98540cffcf40', 
-  'a2a447b4-0ce5-4d3c-afa9-2f81b313aecd', 
-  'bfd2a958-b70c-4f2e-ae9b-f66f5a211535', 
-  'b2f92d49-6180-43bd-93a5-4d64f5819a9b', 
-  '9ee49704-f5a7-4f17-9e25-c5c3b5ec3d1d'
+  'c3649537-0c4b-4614-b313-98540cffcf40', #'Maersk'
+  'a2a447b4-0ce5-4d3c-afa9-2f81b313aecd', #'MSC'
+  'fb1aa2f1-d136-4f26-ad8f-2e1545cc772a', #'Hapag Lloyd'
+  '2d477bb2-8956-4dbe-bd8b-71144b60374c', #'ONE Line'
+  'b2f92d49-6180-43bd-93a5-4d64f5819a9b', #'CMA CGM'
+  '256c0d0c-e0f1-439b-8c3b-70edfe27278e', #'Evergreen'
+  '3c5d996c-4d4e-4a2b-bce7-1024b46f7300', #'Cosco'
+  '83af97eb-09a7-4a17-a3ca-561f0bbc0b6f', #'Emirates'
+  '3b786382-f751-43b0-a0a6-2ff1a6128be4', #'Hyundai'
+  '9ee49704-f5a7-4f17-9e25-c5c3b5ec3d1d', #'OOCL'
+  'bfd2a958-b70c-4f2e-ae9b-f66f5a211535', #'Wan Hai'
+  'be57f277-0c81-47b4-9322-bf06ccc5314c', #'Zim'
+  '2df9777e-01e9-4f86-83b8-28b36ddf1be1', #'PIL'
+  '25c0df76-5e1a-4f14-9c85-e7f794d8e8b9'  #'ANL'
 ]
-#Maersk, cma, hapag, msc, oocl
-# maersk = 'c3649537-0c4b-4614-b313-98540cffcf40'
 
 EXTENSION_ENABLED_MODES = ['manual', 'flash_booking', 'missing_rate', 'disliked_rate', 'spot_negotation', 'rate_sheet']
 
