@@ -13,8 +13,8 @@ from math import ceil
 from micro_services.client import spot_search, partner
 from database.rails_db import get_organization
 
-possible_direct_filters = ['id', 'feedback_type', 'performed_by_id', 'closed_by_id', 'status', 'origin_location_id', 'destination_location_id', 'origin_country_id', 'destination_country_id', 'service_provider_id']
-possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id']
+possible_direct_filters = ['id', 'feedback_type', 'performed_by_id', 'closed_by_id', 'status', 'origin_location_id', 'destination_location_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'serial_id']
+possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'q']
 
 def list_ftl_freight_rate_feedbacks(filters = {}, includes = {}, spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
     query = get_query(includes)
@@ -77,6 +77,11 @@ def apply_validity_start_greater_than_filter(query, filters):
 
 def apply_validity_end_less_than_filter(query, filters):
     query = query.where(FtlFreightRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
+    return query
+
+def apply_q_filter(query, filters):
+    q = str(filters.get('q', ''))
+    query = query.where(FtlFreightRateFeedback.serial_id.cast("text") ** (q + "%"))
     return query
 
 def apply_similar_id_filter(query, filters):
