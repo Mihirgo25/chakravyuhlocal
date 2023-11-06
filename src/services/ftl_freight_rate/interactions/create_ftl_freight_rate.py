@@ -105,7 +105,7 @@ def execute_transaction_code(request):
     adding_multiple_service_objects.apply_async(kwargs={'ftl_object':ftl_freight_rate,'request':request},queue='low')
 
     if request.get('ftl_freight_rate_request_id'):
-      update_ftl_freight_rate_request_delay.apply_async(kwargs={'request':{'ftl_freight_rate_request_id': request.get('ftl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')
+      update_ftl_freight_rate_request_delay.apply_async(kwargs={'request':{'ftl_freight_rate_request_id': request.get('ftl_freight_rate_request_id'), 'reverted_rates': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id'),'closing_remarks':['rate_added']}},queue='critical')
     
     if params["source"]  != "predicted" and params['rate_type'] == "market_place":
         update_ftl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": ftl_freight_rate.id},queue='fcl_freight_rate')

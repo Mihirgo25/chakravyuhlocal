@@ -76,7 +76,7 @@ class AirFreightRateRequest(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     volume = DoubleField(null=True)
     weight = DoubleField(null=True)
-    reverted_rates = ArrayField(field_class=BinaryJSONField, null=True)
+    reverted_rates = BinaryJSONField(null=True)
 
     class Meta:
         table_name = "air_freight_rate_requests"

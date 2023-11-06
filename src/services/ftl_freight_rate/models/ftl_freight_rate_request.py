@@ -55,7 +55,7 @@ class FtlFreightRateRequest(BaseModel):
     free_detention_hours = IntegerField(null= True)
     load_selection_type = TextField(null= True)
     trade_type = TextField(null=True)
-    reverted_rates = ArrayField(field_class=BinaryJSONField, null=True)
+    reverted_rates = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
