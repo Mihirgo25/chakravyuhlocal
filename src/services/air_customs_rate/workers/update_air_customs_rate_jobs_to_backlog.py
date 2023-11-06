@@ -13,7 +13,7 @@ def update_air_customs_rate_jobs_to_backlog():
 
     while True:
         air_customs_conditions = (
-            AirCustomsRateJob.created_at < datetime.today().date() - timedelta(days=1),
+            AirCustomsRateJob.created_at <= datetime.today().date(),
             AirCustomsRateJob.status == "pending",
             ~(AirCustomsRateJob.sources.contains('live_booking') | AirCustomsRateJob.sources.contains('rate_feedback') | AirCustomsRateJob.sources.contains('rate_request'))
         )

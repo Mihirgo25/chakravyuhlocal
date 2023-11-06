@@ -64,5 +64,6 @@ def get_update_params(request):
           'cfs_line_items':request.get('cfs_line_items'),
           'procured_by_id':request.get('procured_by_id'),
           'sourced_by_id':request.get('sourced_by_id'),
-          'rate_type':request.get('rate_type')
+          'rate_type':request.get('rate_type'),
+          'cargo_handling_type':request.get('cargo_handling_type')
       }

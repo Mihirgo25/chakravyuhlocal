@@ -17,6 +17,8 @@ def get_estimated_ftl_freight_rate(
     ids = [origin_location_id, destination_location_id]
     location_data_mapping = get_location_data_mapping(ids)
     country_info = get_country_info(location_data_mapping,origin_location_id,destination_location_id)
+    if country_info == {}:
+        return {'list':[]}
     truck_and_commodity_data = get_truck_and_commodity_data(
         country_info,truck_type, weight,trip_type,commodity,truck_body_type
     )
@@ -88,7 +90,7 @@ def get_country_info(location_data_mapping,origin_location_id,destination_locati
         return {'country_code':'VN','currency_code':'VND','country_id':country_id}
     elif origin_country_code == 'SG':
         return {'country_code':'SG','currency_code':'SGD','country_id':country_id}
-    return {'country_code':'not_found','currency_code':'not_found','country_id':country_id}
+    return {}
 
 def get_additional_truck_and_commodity_data(truck_details,truck_body_type,weight,commodity,trip_type,closest_truck_type):
     truck_and_commodity_data = {

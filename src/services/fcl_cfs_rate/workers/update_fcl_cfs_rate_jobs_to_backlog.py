@@ -13,7 +13,7 @@ def update_fcl_cfs_rate_jobs_to_backlog():
 
     while True:
         fcl_conditions = (
-            FclCfsRateJob.created_at < datetime.today().date() - timedelta(days=1),
+            FclCfsRateJob.created_at <= datetime.today().date(),
             FclCfsRateJob.status == "pending",
             ~(FclCfsRateJob.sources.contains('live_booking') | FclCfsRateJob.sources.contains('rate_feedback') | FclCfsRateJob.sources.contains('rate_request'))
         )
