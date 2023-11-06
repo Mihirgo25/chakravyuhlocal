@@ -168,6 +168,7 @@ class CreateFclCustomsRateJob(BaseModel):
     is_visible: bool = True
     rate_type: str = None
     port_id: str = None
+    cargo_handling_type: str = None
 
 class DeleteFclCustomsRateJob(BaseModel):
     id: str = None
