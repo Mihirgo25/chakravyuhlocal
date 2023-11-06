@@ -19,11 +19,4 @@ def create_sailing_schedules_port_pair_coverages(request):
         "port_pair_type": str(port_pair_type)
     }
 
-    # fcl_freight_query = FclFreightRate.select(FclFreightRate.id).where(
-    #                     FclFreightRate.origin_port_id == data["origin_port_id"],
-    #                     FclFreightRate.destination_port_id == data["destination_port_id"],
-    #                     FclFreightRate.shipping_line_id == data["shipping_line_id"],
-    #                     FclFreightRate.rate_not_available_entry == False)
-
-    # if not fcl_freight_query.exists():
     return schedule_client.create_sailing_schedule_port_pair_coverage(data)
