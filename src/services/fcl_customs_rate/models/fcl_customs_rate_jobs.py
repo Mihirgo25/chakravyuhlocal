@@ -23,6 +23,7 @@ class FclCustomsRateJob(BaseModel):
     container_size = CharField(null=True, index=True)
     container_type = CharField(null=True, index=True)
     commodity = CharField(null=True, index=True)
+    cargo_handling_type = CharField(null = True, index=True)
     sources = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     user_id = UUIDField(index=True, null=True)
     assigned_to = BinaryJSONField(null=True)

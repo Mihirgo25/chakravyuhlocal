@@ -36,5 +36,6 @@ def get_fcl_customs_coverage_required_data(coverage_data):
     required_data['container_type']  = coverage_data['container_type']
     required_data['container_size'] = coverage_data['container_size']
     required_data['trade_type'] = coverage_data['trade_type']
+    required_data['cargo_handling_type'] = coverage_data['cargo_handling_type']
     required_data['service_provider'] = coverage_data['service_provider']['short_name'] if coverage_data.get('service_provider') else None
     return required_data
