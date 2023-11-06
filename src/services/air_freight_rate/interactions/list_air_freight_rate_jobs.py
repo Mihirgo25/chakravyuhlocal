@@ -1,14 +1,16 @@
 from services.air_freight_rate.models.air_freight_rate_jobs import AirFreightRateJob
+from services.air_freight_rate.models.air_freight_rate_jobs_mapping import AirFreightRateJobMapping
 from services.air_freight_rate.helpers.generate_csv_file_url_for_air import (
     generate_csv_file_url_for_air,
 )
-import json
+import json, math
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
 from peewee import fn
 from playhouse.postgres_ext import SQL, Case
+from functools import reduce
 
 
 possible_direct_filters = [
@@ -18,9 +20,11 @@ possible_direct_filters = [
     "commodity",
     "user_id",
     "serial_id",
-    "status"
+    "status",
+    "cogo_entity_id",
+    "service_provider_id",
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date", "source"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
 
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -52,6 +56,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "serial_id",
     "price_type",
     "sources",
+
 ]
 
 
@@ -62,8 +67,11 @@ def list_air_freight_rate_jobs(
     sort_by="updated_at",
     sort_type="desc",
     generate_csv_url=False,
+    pagination_data_required=False,
     includes={},
 ):
+    response = {"success": False, "status_code": 200}
+    
     query = includes_filters(includes)
 
     if filters:
@@ -75,20 +83,40 @@ def list_air_freight_rate_jobs(
 
     if generate_csv_url:
         return generate_csv_file_url_for_air(query)
+    
+    total_count = query.count() if pagination_data_required else None
+    
     if page_limit:
         query = query.paginate(page, page_limit)
 
     query = sort_query(sort_by, sort_type, query)
 
-    data = get_data(query)
+    data = get_data(query, filters)
 
-    return {
-        "list": data,
-    }
+    response = add_pagination_data(
+        response, page, page_limit, data, pagination_data_required, total_count
+    )
+
+    return response
 
 
-def get_data(query):
-    return list(query.dicts())
+def get_data(query, filters):
+    data = list(query.dicts())
+    for d in data:
+        mappings_query = AirFreightRateJobMapping.select(AirFreightRateJobMapping.shipment_service_id ,AirFreightRateJobMapping.shipment_serial_id, AirFreightRateJobMapping.source_id, AirFreightRateJobMapping.shipment_id, AirFreightRateJobMapping.status).where(AirFreightRateJobMapping.job_id == d['id'])
+        if filters and filters.get('source'):
+            if not isinstance(filters.get('source'), list):
+                filters['source'] = [filters.get('source')]
+            mappings_query = mappings_query.where(AirFreightRateJobMapping.source << filters.get('source'))
+        mappings_data = mappings_query.first()
+        if mappings_data:
+            d['source_id'] = mappings_data.source_id
+            d['shipment_id'] = mappings_data.shipment_id
+            d['reverted_status'] = mappings_data.status
+            d['shipment_serial_id'] = mappings_data.shipment_serial_id
+            d['shipment_service_id'] = mappings_data.shipment_service_id
+            d['reverted_count'] = get_reverted_count(mappings_data)
+    return data
 
 
 def includes_filters(includes):
@@ -125,7 +153,11 @@ def apply_updated_at_filter(query, filters):
 
 
 def apply_source_filter(query, filters):
-    query = query.where(AirFreightRateJob.sources.contains(filters["source"]))
+    if filters.get('source') and not isinstance(filters.get('source'), list):
+        filters['source'] = [filters.get('source')]
+    conditions = [AirFreightRateJob.sources.contains(tag) for tag in filters["source"]]
+    combined_condition = reduce(lambda a, b: a | b, conditions)
+    query = query.where(combined_condition)
     return query
 
 
@@ -135,9 +167,29 @@ def apply_start_date_filter(query, filters):
         start_date = datetime.strptime(start_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
-        query = query.where(AirFreightRateJob.created_at.cast("date") >= start_date.date())
+        query = query.where(AirFreightRateJob.updated_at.cast("date") >= start_date.date())
     return query
 
+
+def apply_source_id_filter(query, filters):
+    if filters.get('source_id') and not isinstance(filters.get('source_id'), list):
+        filters['source_id'] = [filters.get('source_id')]
+    subquery = list(AirFreightRateJobMapping.select(AirFreightRateJobMapping.job_id).where(AirFreightRateJobMapping.source_id << filters['source_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(AirFreightRateJob.id << job_ids)
+    return query
+
+def apply_shipment_serial_id_filter(query, filters):
+    if filters.get('shipment_serial_id') and not isinstance(filters.get('shipment_serial_id'), list):
+        filters['shipment_serial_id'] = [filters.get('shipment_serial_id')]
+    subquery = list(AirFreightRateJobMapping.select(AirFreightRateJobMapping.job_id).where(AirFreightRateJobMapping.shipment_serial_id << filters['shipment_serial_id']).dicts())
+    job_ids = []
+    for data in subquery:
+        job_ids.append(data['job_id'])
+    query = query.where(AirFreightRateJob.id << job_ids)
+    return query
 
 def apply_end_date_filter(query, filters):
     end_date = filters.get("end_date")
@@ -145,7 +197,7 @@ def apply_end_date_filter(query, filters):
         end_date = datetime.strptime(end_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
-        query = query.where(AirFreightRateJob.created_at.cast("date") <= end_date.date())
+        query = query.where(AirFreightRateJob.updated_at.cast("date") <= end_date.date())
     return query
 
 
@@ -158,5 +210,39 @@ def apply_filters(query, filters):
 
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
+    
+    query = apply_is_visible_filter(query)
 
     return query
+
+def apply_is_flash_booking_reverted_filter(query, filters):
+    if filters.get('is_flash_booking_reverted'):
+        query = query.join(AirFreightRateJobMapping, on=(AirFreightRateJobMapping.job_id == AirFreightRateJob.id)).where(AirFreightRateJobMapping.status == 'reverted')
+    else:
+        query = query.join(AirFreightRateJobMapping, on=(AirFreightRateJobMapping.job_id == AirFreightRateJob.id)).where(AirFreightRateJobMapping.status != 'reverted')
+    return query
+
+def apply_is_visible_filter(query):
+    query = query.where(AirFreightRateJob.is_visible == True)
+    return query
+
+def add_pagination_data(
+    response, page, page_limit, final_data, pagination_data_required, total_count
+):
+    if pagination_data_required:
+        response["page"] = page
+        response["total"] = math.ceil(total_count / page_limit)
+        response["total_count"] = total_count
+        response["page_limit"] = page_limit
+    response["success"] = True
+    response["list"] = final_data
+    return response
+
+def get_reverted_count(mappings_data):
+    if mappings_data.shipment_id:
+        result = AirFreightRateJobMapping.select(AirFreightRateJobMapping.id).where(
+                    (AirFreightRateJobMapping.shipment_id == mappings_data.shipment_id) &
+                    (AirFreightRateJobMapping.status == 'reverted')
+                ).count()
+        return result
+    return None

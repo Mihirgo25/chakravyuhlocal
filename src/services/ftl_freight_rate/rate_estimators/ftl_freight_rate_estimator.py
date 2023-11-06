@@ -19,7 +19,7 @@ class FtlFreightEstimator:
 
     def estimate(self):
         if not self.is_land_route_possible():
-            raise HTTPException(status_code=400, detail="route not possible")
+            return {'list':[]}
         path_data = self.get_path_from_valhala()
         location_data = path_data['location_details']
         is_location_data_from_valhala = path_data['is_valhala']
@@ -97,7 +97,6 @@ class FtlFreightEstimator:
     def is_land_route_possible(self):
         input = {"origin_location_id": self.origin_location_id, "destination_location_id": self.destination_location_id}
         data = maps.get_is_land_service_possible(input)
-        if not data["route_status"]:
-            return False
-        return True
-
+        if isinstance(data, dict) and data.get('route_status'):
+            return True
+        return False

@@ -340,6 +340,8 @@ def build_line_item_object(
         return 0
     line_item_copy = {}
     for key in ["code", "unit", "price", "currency", "remarks"]:
+        if key == 'remarks' and not line_item.get(key):
+            line_item[key] = []
         line_item_copy[key] = line_item[key]
 
     line_item = line_item_copy
