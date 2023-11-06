@@ -2,10 +2,6 @@ from micro_services.client import schedule_client
 
 
 def create_sailing_schedules_port_pair_coverages(request):
-    is_nvocc = request.get("shipping_line", {}).get("is_nvocc", False)
-    if is_nvocc:
-        return
-
     origin_port = request["origin_port"]
     destination_port = request["destination_port"]
 
