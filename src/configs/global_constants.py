@@ -191,7 +191,9 @@ CONFIRMED_INVENTORY = {
     'tag': "confirmed_inventory"
 }
 
-POSSIBLE_SOURCES_IN_JOB_MAPPINGS = ['expiring_rates','critical_ports', 'cancelled_shipments', 'spot_search', 'rate_request', 'rate_feedback']
+POSSIBLE_SOURCES_IN_JOB_MAPPINGS = ['expiring_rates','critical_ports', 'cancelled_shipments', 'spot_search', 'rate_request', 'rate_feedback', 'live_booking']
+
+POSSIBLE_CLOSING_REMARKS_FOR_JOBS = ['not_serviceable', 'rate_not_available', 'no_change_in_rate']
 
 
 

@@ -31,6 +31,9 @@ def fcl_freight_rates_to_cogo_assured_helper():
         row["started_at"] = datetime.utcnow()
         worker = WorkerLog.create(**row)
     else:
+        if worker.status == 'started':
+            return True
+        
         last_updated_at = worker.last_updated_at
         worker.started_at = start_time
         worker.ended_at = None

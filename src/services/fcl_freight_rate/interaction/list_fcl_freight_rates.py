@@ -118,9 +118,6 @@ def get_data(query, expired_rates_required,is_line_items_required):
       
         result['is_rate_not_available'] = (validities.count == 0)
 
-      result.pop('origin_local', None)
-      result.pop('destination_local', None)
-
     data.append(result)
   return data
 

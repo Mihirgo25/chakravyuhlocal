@@ -9,6 +9,8 @@ from celery_worker import send_air_freight_rate_feedback_notification_in_delay,g
 from micro_services.client import *
 from services.air_freight_rate.constants.air_freight_rate_constants import CARGOAI_ACTIVE_ON_DISLIKE_RATE
 from libs.get_multiple_service_objects import get_multiple_service_objects
+from services.air_freight_rate.interactions.create_air_freight_rate_job import create_air_freight_rate_job
+
 
 def create_audit(request,feedback_id):
     AirServiceAudit.create(
@@ -84,7 +86,10 @@ def execute_transaction_code(request):
         airports = get_locations(rate)
         if airports:
             send_air_freight_rate_feedback_notification_in_delay.apply_async(kwargs={'object':feedback,'air_freight_rate':rate,'airports':airports},queue='communication')
-
+    
+    request['source_id'] = feedback.id
+    create_air_freight_rate_job(request, "rate_feedback")   
+    
     return {'id': request['rate_id']}
 
 def update_likes_dislike_count(rate,request):

@@ -3,6 +3,9 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
 from libs.get_multiple_service_objects import get_multiple_service_objects
+from services.fcl_cfs_rate.interaction.delete_fcl_cfs_rate_job import delete_fcl_cfs_rate_job
+
+
 
 def delete_fcl_cfs_rate_request(request):
     with db.atomic():
@@ -30,6 +33,8 @@ def execute_transaction_code(request):
         get_multiple_service_objects(obj)
 
     send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='low')
+
+    delete_fcl_cfs_rate_job(request)
 
     return {'fcl_cfs_rate_request_ids' : request['fcl_cfs_rate_request_ids']}
 

@@ -10,6 +10,7 @@ from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from datetime import datetime, timedelta
 from configs.fcl_freight_rate_constants import EXPECTED_TAT_RATE_FEEDBACK_REVERT, RATE_FEEDBACK_RELEVANT_ROLE_ID
 from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import convert_date_format
+from services.ftl_freight_rate.interactions.create_ftl_freight_rate_job import create_ftl_freight_rate_job
 
 
 
@@ -54,6 +55,10 @@ def execute_transaction_code(request):
     create_audit(request, request_object.id)
 
     update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
+    
+    request['source_id'] = request_object.id
+
+    create_ftl_freight_rate_job(request, "rate_request")
 
     return {
         'id': str(request_object.id)
