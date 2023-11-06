@@ -1,30 +1,48 @@
-from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from micro_services.client import schedule_client
-
+from configs.fcl_freight_rate_constants import TOP_SHIPPING_LINES_FOR_PREDICTION
 
 def get_serviceable_shipping_lines(request):
-    data = {'origin_port_id': request['origin_port_id'],'destination_port_id': request['destination_port_id']}
+    data = {
+        "origin_port_id": request["origin_port_id"],
+        "destination_port_id": request["destination_port_id"],
+    }
     resp = schedule_client.get_sailing_schedule_port_pair_serviceability(data)
-    return resp
+    serviceable_shipping_lines = update_shipping_lines_hash(resp)
+    return serviceable_shipping_lines
 
-def get_shipping_lines_for_prediction(origin_location_ids, destination_location_ids, container_size, container_type):
 
-    query =  FclFreightRateEstimation.select(
-        FclFreightRateEstimation.shipping_line_id
-        ).where(
-            FclFreightRateEstimation.origin_location_id << origin_location_ids,
-            FclFreightRateEstimation.destination_location_id << destination_location_ids,
-            FclFreightRateEstimation.container_size == container_size,
-            FclFreightRateEstimation.container_type == container_type
-        ).limit(10)
-    
-    estimations = list(query.dicts())
+def get_top_shipping_lines_for_prediction(shipping_lines):
+    filtered_shipping_lines = [
+        line for line in shipping_lines if line in TOP_SHIPPING_LINES_FOR_PREDICTION
+    ][:10]
 
-    shipping_line_ids = []
+    if len(filtered_shipping_lines) < 10 and len(shipping_lines) >= 10:
+        non_top_lines = [
+            line
+            for line in shipping_lines
+            if line not in TOP_SHIPPING_LINES_FOR_PREDICTION
+        ]
+        filtered_shipping_lines.extend(
+            non_top_lines[: 10 - len(filtered_shipping_lines)]
+        )
 
-    for estimation in  estimations:
-        sl_id = estimation['shipping_line_id']
-        if sl_id:
-            shipping_line_ids.append(str(sl_id))
-    
-    return shipping_line_ids
+    return filtered_shipping_lines
+
+
+def update_shipping_lines_hash(serviceable_shipping_lines):
+    used_shipping_lines = set()
+    all_shipping_lines = []
+    for sl_hash in serviceable_shipping_lines:
+        all_shipping_lines.extend(sl_hash.get("shipping_lines", []))
+
+    top_shipping_lines = get_top_shipping_lines_for_prediction(all_shipping_lines)
+
+    for sl_hash in serviceable_shipping_lines:
+        shipping_lines = []
+        for line in sl_hash.get("shipping_lines", []):
+            if not line in used_shipping_lines and line in top_shipping_lines:
+                shipping_lines.append(line)
+                used_shipping_lines.add(line)
+        sl_hash["shipping_lines"] = shipping_lines
+
+    return serviceable_shipping_lines
