@@ -52,5 +52,6 @@ def get_fcl_customs_rate_data(request):
             FclCustomsRate.commodity == request.get('commodity'),
             FclCustomsRate.service_provider_id == request.get('service_provider_id'),
             FclCustomsRate.rate_type == DEFAULT_RATE_TYPE,
+            ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True))),
             ~FclCustomsRate.rate_not_available_entry).first()
     return fcl_customs_rate_data

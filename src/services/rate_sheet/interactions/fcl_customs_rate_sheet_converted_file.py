@@ -7,7 +7,7 @@ from services.rate_sheet.interactions.upload_file import upload_media_file
 
 
 def process_fcl_customs_customs(params, converted_file, update):
-    valid_headers = ['location', 'trade_type', 'container_size', 'container_type', 'commodity', 'line_item_type', 'code', 'unit', 'price', 'market_price', 'currency', 'remark1', 'remark2', 'remark3']
+    valid_headers = ['location', 'trade_type', 'container_size', 'container_type', 'commodity', 'cargo_handling_type', 'line_item_type', 'rate_type', 'code', 'unit', 'price', 'market_price', 'currency', 'remark1', 'remark2', 'remark3']
     total_lines = 0
     original_path = get_original_file_path(converted_file)
     invalidated = False
@@ -93,7 +93,7 @@ def process_fcl_customs_customs(params, converted_file, update):
 
 def create_fcl_customs_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row):
     from celery_worker import create_fcl_customs_rate_delay
-    keys_to_extract = ['trade_type', 'container_size', 'container_type', 'commodity','rate_type']
+    keys_to_extract = ['trade_type', 'container_size', 'container_type', 'commodity', 'cargo_handling_type', 'rate_type']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['location_id'] = get_port_id(rows[0]['location'])
     object['customs_line_items'] = []
