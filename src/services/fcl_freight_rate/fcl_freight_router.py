@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
-from pydantic import Json
 
 
 from libs.update_charges_yml import update_charges_yml
