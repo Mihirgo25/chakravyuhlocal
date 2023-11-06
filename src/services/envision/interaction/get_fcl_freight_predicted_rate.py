@@ -1,5 +1,5 @@
 from configs.definitions import ROOT_DIR
-from configs.fcl_freight_rate_constants import SHIPPING_LINES_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID, TOP_SHIPPING_LINES_FOR_PREDICTION
+from configs.fcl_freight_rate_constants import  DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID
 from configs.global_constants import HAZ_CLASSES
 import pickle, joblib, os
 from datetime import datetime, timedelta
@@ -7,7 +7,6 @@ import pandas as pd, numpy as np, concurrent.futures
 from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
 from libs.get_distance import get_distance
-from services.chakravyuh.interaction.get_shipping_lines_for_prediction import get_shipping_lines_for_prediction
 from configs.yml_definitions import FCL_PREDICTION_MODEL
     
 def insert_rates_to_rms(create_params):
@@ -20,28 +19,7 @@ def insert_rates_to_rms(create_params):
         create_param['creation_id'] = rate_card_id
         create_param['predicted_price'] = final_bas_price_to_rms
 
-    return create_params
-
-def relevant_shipping_lines(request):
-    origin_location_ids = [request['origin_port_id'], request['origin_country_id']]
-    destination_location_ids = [request['destination_port_id'], request['destination_country_id']]
-    container_size = request['container_size']
-    container_type = request['container_type']
-    sl_ids = get_shipping_lines_for_prediction(origin_location_ids, destination_location_ids, container_size, container_type)
-
-    if len(sl_ids):
-        return sl_ids
-    return SHIPPING_LINES_FOR_PREDICTION
-
-def get_top_shipping_lines_for_prediction(shipping_lines):
-    filtered_shipping_lines = [line for line in shipping_lines if line in TOP_SHIPPING_LINES_FOR_PREDICTION][:10]
-    
-    if len(filtered_shipping_lines) < 10 and len(shipping_lines) >= 10:
-        non_top_lines = [line for line in shipping_lines if line not in TOP_SHIPPING_LINES_FOR_PREDICTION]
-        filtered_shipping_lines.extend(non_top_lines[:10 - len(filtered_shipping_lines)])
-    
-    return filtered_shipping_lines
-        
+    return create_params  
 
 
 def get_fcl_freight_predicted_rate(request, serviceable_shipping_lines):
@@ -61,7 +39,7 @@ def get_fcl_freight_predicted_rate(request, serviceable_shipping_lines):
         if request.get('shipping_line_id') and request['shipping_line_id'] in hash['shipping_lines']:
             all_shipping_lines = [request['shipping_line_id']]
         else:
-            all_shipping_lines = get_top_shipping_lines_for_prediction(hash['shipping_lines'])
+            all_shipping_lines = hash['shipping_lines']
         
         ports_distance = maps.get_sea_route({'origin_port_id': origin_port_id, 'destination_port_id': destination_port_id, 'includes':['length']})
         if ports_distance and isinstance(ports_distance, dict):
