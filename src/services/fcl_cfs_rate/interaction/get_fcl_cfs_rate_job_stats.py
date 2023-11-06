@@ -9,6 +9,7 @@ from libs.json_encoder import json_encoder
 from datetime import datetime, timedelta
 from peewee import fn
 from playhouse.postgres_ext import SQL
+from functools import reduce
 
 
 possible_direct_filters = [
@@ -61,11 +62,11 @@ def get_fcl_cfs_rate_job_stats(
     query = apply_filters(query, filters)
     # getting daily_stats
     if filters.get("daily_stats"):
-        statistics = build_daily_details(query, statistics)
+        statistics = build_daily_details(query, statistics, filters)
 
     # getting weekly_stats
     if filters.get("weekly_stats"):
-        statistics = build_weekly_details(query, statistics)
+        statistics = build_weekly_details(query, statistics, filters)
 
     # remaining filters
     dynamic_statistics = get_statistics(
@@ -98,7 +99,12 @@ def apply_updated_at_filter(query, filters):
 
 
 def apply_source_filter(query, filters):
-    query = query.where(FclCfsRateJob.sources.contains(filters["source"]))
+    if filters.get('source'):
+        if not isinstance(filters.get('source'), list):
+            filters['source'] = [filters.get('source')]
+        conditions = [FclCfsRateJob.sources.contains(tag) for tag in filters["source"]]
+        combined_condition = reduce(lambda a, b: a | b, conditions)
+        query = query.where(combined_condition)
     return query
 
 
@@ -108,7 +114,7 @@ def apply_start_date_filter(query, filters):
         start_date = datetime.strptime(start_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
-        query = query.where(FclCfsRateJob.created_at.cast("date") >= start_date.date())
+        query = query.where(FclCfsRateJob.updated_at.cast("date") >= start_date.date())
     return query
 
 
@@ -138,7 +144,7 @@ def apply_end_date_filter(query, filters):
         end_date = datetime.strptime(end_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
-        query = query.where(FclCfsRateJob.created_at.cast("date") <= end_date.date())
+        query = query.where(FclCfsRateJob.updated_at.cast("date") <= end_date.date())
     return query
 
 
@@ -148,6 +154,11 @@ def get_statistics(filters, dynamic_statistics):
     ).alias("elements")
     subquery = apply_filters(subquery, filters)
     subquery = apply_extra_filters(subquery, filters)
+    
+    if (not(filters.get("start_date") or filters.get("end_date"))) and "completed" in filters.get("status"):
+        subquery = subquery.where(
+            FclCfsRateJob.updated_at.cast("date") == datetime.now().date()
+        )
     stats_query = (
         FclCfsRateJob.select(
             subquery.c.element, fn.COUNT(subquery.c.element).alias("count")
@@ -163,34 +174,57 @@ def get_statistics(filters, dynamic_statistics):
     return dynamic_statistics
 
 
-def build_daily_details(query, statistics):
-    # query = query.where(
-    #     FclCfsRateJob.created_at.cast("date") == datetime.now().date()
-    # )
-    daily_stats_query = query.select(
+def build_daily_details(query, statistics, filters):
+    
+    query, pending_count = apply_date_filter_and_get_pending_count(query, filters)
+    statistics['pending'] = pending_count
+    
+    query = query.select(
         FclCfsRateJob.status, fn.COUNT(FclCfsRateJob.id).alias("count")
-    ).group_by(FclCfsRateJob.status)
+    ).where(FclCfsRateJob.status != 'pending').group_by(FclCfsRateJob.status)
 
     total_daily_count = 0
-    daily_results = json_encoder(list(daily_stats_query.dicts()))
+    total_completed = 0
+    daily_results = json_encoder(list(query.dicts()))
     for data in daily_results:
         total_daily_count += data["count"]
-        statistics[data["status"]] = data["count"]
-    statistics["completed"] = statistics["completed"] + statistics["aborted"]
-    statistics["total"] = total_daily_count
-    if total_daily_count != 0:
+        if data['status'] in ["completed", "aborted"]:
+            total_completed += data["count"]
+    
+    statistics['completed'] = total_completed
+    statistics["total"] = total_daily_count + pending_count
+    
+    if statistics["total"] != 0:
         statistics["completed_percentage"] = round(
-            ((statistics["completed"]) / total_daily_count) * 100, 2
+            (total_completed / statistics["total"] ) * 100, 2
         )
+    else:
+        statistics["completed_percentage"] = 100
+        
     return statistics
 
+def apply_date_filter_and_get_pending_count(query, filters):
+    
+    query = apply_start_date_filter(query, filters)
+    query = apply_end_date_filter(query, filters)
 
-def build_weekly_details(query, statistics):
+    pending_count = query.where(FclCfsRateJob.status == 'pending').count()
+    
+    if not(filters.get("start_date") or filters.get("end_date")):
+        query = query.where(
+            FclCfsRateJob.updated_at.cast("date") == datetime.now().date()
+        )
+        
+    return query, pending_count
+
+
+def build_weekly_details(query, statistics, filters):
     query = query.where(
         FclCfsRateJob.created_at.cast("date")
         >= datetime.now().date() - timedelta(days=6)
     )
 
+    query = apply_source_filter(query, filters)
     weekly_stats_query = query.select(
         FclCfsRateJob.status,
         fn.COUNT(FclCfsRateJob.id).alias("count"),
@@ -264,11 +298,10 @@ def apply_extra_filters(query, filters):
     for key in uncommon_filters:
         if filters.get(key):
             applicable_filters[key] = filters[key]
-            
 
     query = get_filters(applicable_filters, query, FclCfsRateJob)
-    # query = apply_start_date_filter(query, filters)
-    # query = apply_end_date_filter(query, filters)
+    query = apply_start_date_filter(query, filters)
+    query = apply_end_date_filter(query, filters)
     return query
 
 def get_all_backlogs(filters):
