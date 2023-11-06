@@ -16,7 +16,6 @@ SQL = pw.SQL
 
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
     """Write your migrations here."""
-    migrator.add_fields(FtlFreightRateFeedback, reverted_rate_id = UUIDField(null=True))
     migrator.add_fields(FtlFreightRateFeedback, reverted_rate = BinaryJSONField(null=True))
 
 def rollback(migrator: Migrator, database, fake=False, **kwargs):

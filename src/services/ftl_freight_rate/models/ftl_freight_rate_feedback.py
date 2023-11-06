@@ -45,7 +45,6 @@ class FtlFreightRateFeedback(BaseModel):
     destination_location_id = UUIDField(index=True,null=True)
     destination_country_id = UUIDField(null=True)
     service_provider_id= UUIDField(null=True)
-    reverted_rate_id = UUIDField(null=True)
     reverted_rate = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):

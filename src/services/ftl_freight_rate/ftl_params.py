@@ -243,7 +243,6 @@ class DeleteFtlFreightRateFeedback(BaseModel):
     ftl_freight_rate_feedback_ids: List[str]
     closing_remarks: List[str] = []
     performed_by_id: str = None
-    reverted_rate_id: str = None
     reverted_rate: RevertedRateParams = None
 
 class DeleteRate(BaseModel):
