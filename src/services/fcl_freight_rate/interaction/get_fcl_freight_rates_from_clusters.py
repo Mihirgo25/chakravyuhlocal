@@ -13,12 +13,12 @@ from database.rails_db import get_ff_mlo
 from joblib import Parallel, delayed
 import dateutil.parser as parser
 
-def get_fcl_freight_rates_from_clusters(request, servicable_shipping_lines):
+def get_fcl_freight_rates_from_clusters(request, serviceable_shipping_lines):
     ff_mlo = get_ff_mlo()
         
     create_params = []
     
-    for hash in servicable_shipping_lines:
+    for hash in serviceable_shipping_lines:
         if not hash.get('shipping_lines'):
             continue
         

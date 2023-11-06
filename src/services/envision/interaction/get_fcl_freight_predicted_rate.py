@@ -44,14 +44,14 @@ def get_top_shipping_lines_for_prediction(shipping_lines):
         
 
 
-def get_fcl_freight_predicted_rate(request, servicable_shipping_lines):
+def get_fcl_freight_predicted_rate(request, serviceable_shipping_lines):
     from celery_worker import create_fcl_freight_rate_feedback_for_prediction
     if type(request) != dict:
         request = request.__dict__
 
     data_for_feedback = []
 
-    for hash in servicable_shipping_lines:
+    for hash in serviceable_shipping_lines:
         if not hash.get('shipping_lines'):
             continue
         

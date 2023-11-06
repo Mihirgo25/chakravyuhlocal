@@ -722,9 +722,9 @@ def post_discard_noneligible_rates(freight_rates, requirements):
     # freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
     return freight_rates
 
-def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, servicable_shipping_lines = []):
+def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, serviceable_shipping_lines = []):
     try:
-        get_fcl_freight_rates_from_clusters(requirements, servicable_shipping_lines)
+        get_fcl_freight_rates_from_clusters(requirements, serviceable_shipping_lines)
     except:
         pass
     initial_query = initialize_freight_query(requirements)
@@ -735,7 +735,7 @@ def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, se
         freight_rates = cluster_freight_rates
     
     if len(freight_rates) == 0:
-        get_fcl_freight_predicted_rate(requirements, servicable_shipping_lines)
+        get_fcl_freight_predicted_rate(requirements, serviceable_shipping_lines)
         initial_query = initialize_freight_query(requirements, True)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
         freight_rates = discard_noneligible_shipping_lines(freight_rates, {})
@@ -905,11 +905,11 @@ def get_fcl_freight_rate_cards(requirements):
             future_serviceable_shipping_lines = executor.submit(get_serviceable_shipping_lines, requirements)
 
         freight_rates = future_freight_rates.result()
-        servicable_shipping_lines = future_serviceable_shipping_lines.result()
+        serviceable_shipping_lines = future_serviceable_shipping_lines.result()
         
         cogo_assured_rates, supply_rates = break_rates(freight_rates)
         
-        supply_rates, is_predicted = get_freight_rates(supply_rates, requirements, servicable_shipping_lines)
+        supply_rates, is_predicted = get_freight_rates(supply_rates, requirements, serviceable_shipping_lines)
         
         freight_rates = supply_rates + cogo_assured_rates
         
@@ -954,7 +954,7 @@ def get_all_rates(requirements):
     return freight_rates
 
       
-def get_freight_rates(supply_rates, requirements, servicable_shipping_lines):
+def get_freight_rates(supply_rates, requirements, serviceable_shipping_lines):
     freight_rates = pre_discard_noneligible_rates(supply_rates, requirements)
     is_predicted = False
     
@@ -964,7 +964,7 @@ def get_freight_rates(supply_rates, requirements, servicable_shipping_lines):
 
     are_all_rates_predicted = all_rates_predicted(freight_rates)
     if len(freight_rates) == 0 or are_all_rates_predicted:
-        freight_rates, is_predicted = get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, servicable_shipping_lines)
+        freight_rates, is_predicted = get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, serviceable_shipping_lines)
         
     freight_rates, is_predicted = filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted)
     
