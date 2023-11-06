@@ -223,17 +223,17 @@ SPECIFICITY_TYPE_HIERARCHY = {
 
 REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}
 
-FCL_COVERAGE_USERS = {
-    1: "6addea60-a3de-4067-b08d-ece04be594ab",
-    2: "0b404055-05de-4c2f-836c-86f591183d71",
-    3: "3a1599fa-35af-49be-93f9-7784617e088b",
-    4: "d7f62f2d-2b41-41ae-a9f0-200255de4d8f",
-    5: "2b2b8241-8900-418d-b90d-e755e92f3911",
-    6: "d46a98e6-7848-4862-bb21-c8e727588039",
-    7: "dc100acc-a416-4ff2-8a61-cb265b018fb1",
-    8: "51641e0e-a5da-452a-81fc-ccb8fe6df343"
-    
-}
+FCL_IMPORT_COVERAGE_USERS = [
+  'f47788fe-85e8-4f86-a9d7-7c7902ea864a',
+  '51641e0e-a5da-452a-81fc-ccb8fe6df343',
+  '922b367f-0f3e-4872-91d0-68413fc7f955'
+]
+
+FCL_EXPORT_COVERAGE_USERS = [
+  '6addea60-a3de-4067-b08d-ece04be594ab',
+  'd7f62f2d-2b41-41ae-a9f0-200255de4d8f',
+  '329fb317-f2f9-4c41-aabd-4a9befc53721'
+]
 
 CRITICAL_PORTS_INDIA_VIETNAM = [
     'eb187b38-51b2-4a5e-9f3c-978033ca1ddf',
@@ -248,15 +248,3 @@ MIN_ALLOWED_PERCENTAGE_CHANGE = -3
 MAX_ALLOWED_PERCENTAGE_CHANGE = 15
 MIN_ALLOWED_MARKUP = -50
 MAX_ALLOWED_MARKUP = 100
-
-REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}
-
-FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES = [
-    {
-        'departure_offset_days': 7,
-        'transit_time': 11,
-        'number_of_stops': 0,
-        'schedule_type': 'direct'
-    }
-]
-
