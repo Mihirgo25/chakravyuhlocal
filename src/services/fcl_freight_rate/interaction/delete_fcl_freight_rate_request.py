@@ -5,6 +5,7 @@ from database.db_session import db
 from database.rails_db import (
     get_organization_partner,
 )
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def delete_fcl_freight_rate_request(request):
     with db.atomic():
@@ -34,6 +35,7 @@ def execute_transaction_code(request):
 
         id = str(obj.performed_by_org_id)
         org_users = get_organization_partner(id)
+        get_multiple_service_objects(obj)
 
         if obj.performed_by_type == 'user' and org_users and  obj.source != 'checkout':
             send_closed_notifications_to_user_request.apply_async(kwargs={'object':obj},queue='critical')
