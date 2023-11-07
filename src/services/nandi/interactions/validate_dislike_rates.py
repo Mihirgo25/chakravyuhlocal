@@ -5,6 +5,7 @@ from micro_services.client import common
 from datetime import datetime, timedelta
 import asyncio
 
+
 def validate_freight_rate_feedback(request):
     if 'unpreferred_operator' in request.get('feedbacks'):
         response = eval("validate_{}_unpreferred_operator_function(request)".format(request.get('service_type')))
@@ -23,8 +24,17 @@ def validate_air_freight_unpreferred_operator_function(request):
         "destination_airport_id": request.get('destination_airport_id')
         }
     serviceable_airline_ids = common.get_saas_schedules_airport_pair_coverages(airport_id)
-    if not (all(x in serviceable_airline_ids for x in request.get('preferred_airline_ids'))):
-        return {'message': 'Rates for all Shipping lines that are serviceable on this port pair are present'}
+    serviceable_airlines =0
+    unserviceable_airlines = 0
+    for preferred_airline in request.get('preferred_airline_ids'):
+        if preferred_airline in serviceable_airline_ids:
+            serviceable_airlines = serviceable_airlines+1
+        else:
+            unserviceable_airlines = unserviceable_airlines +1
+    
+    if serviceable_airlines ==0 and unserviceable_airlines!=0:
+        return {'message': 'Rates for all  Airlines that are serviceable on this Airport pair are present'}
+    
     return {}
     
 def validate_air_customs_unsatisfactory_rate_function(request):
