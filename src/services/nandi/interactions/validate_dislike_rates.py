@@ -3,6 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from micro_services.client import common
 from datetime import datetime, timedelta
+import asyncio
 
 def validate_freight_rate_feedback(request):
     if 'unpreferred_operator' in request.get('feedbacks'):
@@ -85,13 +86,13 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
             ### create job
             return {}
 
-    fcl_freight_rate = FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.rate_type, FclFreightRate.mode, FclFreightRate.updated_at).where(FclFreightRate.id == request['rate_id']).first()
+    fcl_freight_rate = FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.shipping_line_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.rate_type, FclFreightRate.mode, FclFreightRate.updated_at).where(FclFreightRate.id == request['rate_id']).first()
 
     if not fcl_freight_rate:
         raise HTTPException(status_code=404, detail='Fcl Freight Rate Not Found')
     
-    rate_type = fcl_freight_rate.get('rate_type')
-    mode = fcl_freight_rate.get('mode')
+    rate_type = fcl_freight_rate.rate_type
+    mode = fcl_freight_rate.mode
 
     if rate_type == 'promotional':
         return {'message': 'This is a Promotional Rate'}
@@ -101,20 +102,50 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
         return {}
     
     elif mode == 'flash_booking':
-        if fcl_freight_rate.get('updated_at') > datetime.now() - timedelta(hours=4):
+        if fcl_freight_rate.updated_at > datetime.now() - timedelta(hours=4):
             return {'message': 'Best available rate for this port pair'}
         else:
             ### create job
             return {}
     
     elif mode in ['rms_upload', 'forcasted_rfq']:
-        avg_price = 100 ## take from statistics (from spot ans supply rates)
-        sigma = 20 ## take from statistics later
+        from services.bramhastra.interactions.list_fcl_freight_rate_statistics import list_fcl_freight_rate_statistics
+
+        filters = {
+            "group_by":[
+                "origin_port_id",
+                "destination_port_id",
+                "origin_main_port_id",
+                "destination_main_port_id",
+                "shipping_line_id",
+                "container_size",
+                "container_type",
+                "commodity"
+            ],
+            "origin_port_id": fcl_freight_rate.origin_port_id,
+            "destination_port_id": fcl_freight_rate.destination_port_id,
+            "origin_main_port_id": fcl_freight_rate.origin_main_port_id,
+            "destination_main_port_id": fcl_freight_rate.destination_main_port_id,
+            "shipping_line_id": fcl_freight_rate.shipping_line_id,
+            "container_size": fcl_freight_rate.container_size,
+            "container_type": fcl_freight_rate.container_type,
+            "commodity": fcl_freight_rate.commodity,
+            "query_type": "average_price",
+            "validity_end_less_than": str(datetime.now().date()),
+            "validity_end_greater_than": str(datetime.now().date() - timedelta(months=3))
+        }
+        fcl_freight_rates = asyncio.run(list_fcl_freight_rate_statistics(filters = filters, page_limit = 10, page = 1, is_service_object_required = False))
+
+        if not len(fcl_freight_rates.get('list') or []):
+            return {}
+        
+        avg_price = fcl_freight_rates['list'][0]['average_standard_price']
+        sigma = fcl_freight_rates['list'][0]['bas_standard_price_deviation'] 
 
         lower_bound = avg_price - 0.1 * sigma
         upper_bound = avg_price + 0.1 * sigma
 
-        bas_standard_price = request.get('check later')
+        bas_standard_price = request.get('bas_standard_price') ## later
 
         if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
             return {'message': 'Best available rate for this port pair'}
@@ -134,13 +165,13 @@ def validate_air_freight_unsatisfactory_rate_function(request):
             ### create job
             return {}
 
-    air_freight_rate = AirFreightRate.select(AirFreightRate.id, AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id, AirFreightRate.rate_type, AirFreightRate.source, AirFreightRate.updated_at).where(AirFreightRate.id == request['rate_id']).first()
+    air_freight_rate = AirFreightRate.select(AirFreightRate.id, AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id, AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id, AirFreightRate.airline_id, AirFreightRate.commodity, AirFreightRate.commodity_type, AirFreightRate.rate_type, AirFreightRate.source, AirFreightRate.updated_at).where(AirFreightRate.id == request['rate_id']).first()
 
     if not air_freight_rate:
         raise HTTPException(status_code=404, detail='Air Freight Rate Not Found')
     
-    rate_type = air_freight_rate.get('rate_type')
-    source = air_freight_rate.get('source')
+    rate_type = air_freight_rate.rate_type
+    source = air_freight_rate.source
 
     if rate_type == 'promotional':
         return {'message': 'This is a Promotional Rate'}
@@ -149,23 +180,53 @@ def validate_air_freight_unsatisfactory_rate_function(request):
         ### create job
         return {}
     
-    elif rate_type == 'flash_booking':
-        if air_freight_rate.get('updated_at') > datetime.now() - timedelta(hours=4):
+    elif source == 'flash_booking':
+        if air_freight_rate.updated_at > datetime.now() - timedelta(hours=4):
             return {'message': 'Best available rate for this port pair'}
         else:
             ### create job
             return {}
-        
-    avg_price = 100 ## take from statistics (from spot and supply rates)
-    sigma = 20 ## take from statistics later
-
-    lower_bound = avg_price - 0.1 * sigma
-    upper_bound = avg_price + 0.1 * sigma
-
-    bas_standard_price = request.get('check later')
-
-    if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
-        return {'message': 'Best available rate for this port pair'}
+    
     else:
-        ### create job
-        return {}
+        from services.bramhastra.interactions.list_air_freight_rate_statistics import list_air_freight_rate_statistics
+        filters = {
+            "group_by":[
+                "origin_airport_id",
+                "destination_airport_id",
+                "airline_id"
+            ],
+            "select":[
+                "origin_airport_id",
+                "destination_airport_id",
+                "airline_id"
+            ],
+            "origin_airport_id": air_freight_rate.origin_airport_id,
+            "destination_airport_id": air_freight_rate.destination_airport_id,
+            "airline_id": air_freight_rate.airline_id,
+            "rate_type": rate_type,
+            "commodity": air_freight_rate.commodity,
+            "commodity_type": air_freight_rate.commodity_type,
+            "chargeable_weight": request.get("chargeable_weight"),
+            "query_type": "aggregate",
+            "validity_end_less_than": str(datetime.now().date()),
+            "validity_end_greater_than": str(datetime.now().date() - timedelta(months=3))
+        }
+
+        air_freight_rates = asyncio.run(list_air_freight_rate_statistics(filters = filters, page_limit = 10, page = 1, is_service_object_required = False,pagination_data_required=False))
+
+        if not len(air_freight_rates.get('list') or []):
+            return {}
+        
+        avg_price = air_freight_rates['list'][0]['standard_price']
+        sigma = air_freight_rates['list'][0]['standard_price_deviation']
+
+        lower_bound = avg_price - 0.1 * sigma
+        upper_bound = avg_price + 0.1 * sigma
+
+        bas_standard_price = request.get('standard_price')
+
+        if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
+            return {'message': 'Best available rate for this port pair'}
+        else:
+            ### create job
+            return {}

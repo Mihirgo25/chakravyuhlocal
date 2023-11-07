@@ -33,6 +33,7 @@ POSSIBLE_DIRECT_FILTERS = {
 POSSIBLE_INDIRECT_FILTERS = {
     "stale_rate",
     "weight_slabs",
+    "chargeable_weight",
     "rate_updated_at_less_than",
     "validity_end_greater_than",
     "validity_end_less_than",
@@ -87,6 +88,8 @@ def get_stale_rates_filter(where):
 def get_weight_slabs_filter(where):
     where.append("lower_limit >= %(lower_limit)s AND upper_limit <= %(upper_limit)s")
 
+def get_chargeable_weight_filter(where):
+    where.append("lower_limit <= %(chargeable_weight)s AND upper_limit >= %(chargeable_weight)s")
 
 def get_rate_updated_at_less_than_filter(where):
     where.append("rate_updated_at < %(rate_updated_at_less_than)s")
