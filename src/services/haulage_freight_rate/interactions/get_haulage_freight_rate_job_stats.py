@@ -17,7 +17,6 @@ possible_direct_filters = [
     "destination_location_id",
     "shipping_line_id",
     "commodity",
-    "user_id",
     "transport_modes_keyword",
     "user_id",
     "cogo_entity_id",
