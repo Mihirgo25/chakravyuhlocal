@@ -17,6 +17,7 @@ class ScheduleApiClient:
         return self.client.request('GET','get_sailing_schedule_port_pair_coverages', data)
 
     def get_sailing_schedule_port_pair_serviceability(self, data={}):
+        data['is_authorization_required'] = False
         return self.client.request('GET','get_sailing_schedule_port_pair_serviceability', data)
 
     def create_sailing_schedule_port_pair_coverage(self, data={}):
