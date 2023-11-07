@@ -86,13 +86,12 @@ def validate_lcl_freight_unsatisfactory_rate_function(request):
     return {}
     
 def validate_fcl_freight_unsatisfactory_rate_function(request):
-    print(request)
     from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 
     feedback = FclFreightRateFeedback.select(FclFreightRateFeedback.status,FclFreightRateFeedback.reverted_validities,FclFreightRateFeedback.updated_at).where(FclFreightRateFeedback.fcl_freight_rate_id == request['rate_id'], FclFreightRateFeedback.feedback_type == 'disliked').order_by(FclFreightRateFeedback.updated_at.desc()).first()
 
     if feedback:
-        if feedback.reverted_validities and feedback.updated_at >= datetime.now().date():
+        if feedback.reverted_validities and feedback.updated_at.date() == datetime.now().date():
             return {'message': 'Best available rate for this port pair'}
         elif feedback.status == 'active':
             ### create job
@@ -171,7 +170,7 @@ def validate_air_freight_unsatisfactory_rate_function(request):
     feedback = AirFreightRateFeedback.select(AirFreightRateFeedback.reverted_rate,AirFreightRateFeedback.updated_at,AirFreightRateFeedback.status).where(AirFreightRateFeedback.air_freight_rate_id == request['rate_id'], AirFreightRateFeedback.feedback_type == 'disliked').order_by(AirFreightRateFeedback.updated_at.desc()).first()
 
     if feedback:
-        if feedback.reverted_rate and feedback.updated_at >= datetime.now().date():
+        if feedback.reverted_rate and feedback.updated_at.date() == datetime.now().date():
             return {'message': 'Best available rate for this port pair'}
         elif feedback.status == 'active':
             ### create job
