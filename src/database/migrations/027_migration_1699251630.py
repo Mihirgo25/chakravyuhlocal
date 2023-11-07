@@ -29,6 +29,7 @@ from services.air_freight_rate.models.air_freight_rate_request import AirFreight
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from services.ftl_freight_rate.models.ftl_freight_rate_request import FtlFreightRateRequest
 from services.haulage_freight_rate.models.haulage_freight_rate_request import HaulageFreightRateRequest
+from services.ftl_freight_rate.models.ftl_freight_rate_feedback import FtlFreightRateFeedback
 
 
 from playhouse.postgres_ext import BinaryJSONField
@@ -46,6 +47,8 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.add_fields(FclFreightRateRequest, reverted_rates = BinaryJSONField(null= True))
     migrator.add_fields(FtlFreightRateRequest, reverted_rates = BinaryJSONField(null= True))
     migrator.add_fields(HaulageFreightRateRequest, reverted_rates = BinaryJSONField(null= True))
+    migrator.add_fields(FtlFreightRateFeedback, reverted_rate = BinaryJSONField(null=True))
+
 
     """Write your migrations here."""
 
