@@ -5,16 +5,13 @@ from micro_services.client import common
 from datetime import datetime, timedelta
 
 def validate_freight_rate_feedback(request):
-    rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id,AirFreightRate.source).where(AirFreightRate.id==request['rate_id']).first()
-    if not rate:
-        raise HTTPException(status_code=404, detail='Rate Not Found')
     if 'unpreferred_operator' in request.get('feedbacks'):
-        response = eval("validate_{}_unpreferred_operator_function".format(request.get('service_type')))
+        response = eval("validate_{}_unpreferred_operator_function(request)".format(request.get('service_type')))
         
         
     if 'unsatisfactory_rate' in request.get('feedbacks'):
-        if rate.source in ['predicted','rate_extension']:
-            return {}
+        response = eval("validate_{}_unsatisfactory_rate_function(request)".format(request.get('service_type')))
+
 
 def validate_fcl_freight_unpreferred_operator_function():
     return {}
@@ -76,6 +73,7 @@ def validate_lcl_freight_unsatisfactory_rate_function(request):
     return {}
     
 def validate_fcl_freight_unsatisfactory_rate_function(request):
+    print(request)
     from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 
     feedback = FclFreightRateFeedback.select().where(FclFreightRateFeedback.fcl_freight_rate_id == request['rate_id'], FclFreightRateFeedback.feedback_type == 'disliked').order_by(FclFreightRateFeedback.updated_at.desc()).first()
