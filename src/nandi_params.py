@@ -120,3 +120,11 @@ class UpdateDraftFclFreightRateLocal(BaseModel):
   invoice_url : str = None
   invoice_date : datetime = None
   shipment_serial_id : str = None
+
+class ValidateFreightRateFeedback(BaseModel):
+  service_type: str
+  feedbacks: list[str] = []
+  rate_id: str
+  preferred_shipping_line_ids: list[str] = None
+  preferred_airline_ids: list[str] = None
+  chargeable_weight: int = None
