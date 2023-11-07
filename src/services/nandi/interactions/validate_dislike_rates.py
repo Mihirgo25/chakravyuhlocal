@@ -19,14 +19,16 @@ def validate_fcl_freight_unpreferred_operator_function():
     return {}
 
 def validate_air_freight_unpreferred_operator_function(request):
+    air_freight_rate = AirFreightRate.select(AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id).where(AirFreightRate.id == request.get("rate_id")).first()
+ 
     airport_id = {
-        "origin_airport_id": request.get('origin_airport_id'),
-        "destination_airport_id": request.get('destination_airport_id')
+        "origin_airport_id": str(air_freight_rate.origin_airport_id),
+        "destination_airport_id": str(air_freight_rate.destination_airport_id)
         }
     serviceable_airline_ids = common.get_saas_schedules_airport_pair_coverages(airport_id)
     serviceable_airlines =0
     unserviceable_airlines = 0
-    for preferred_airline in request.get('preferred_airline_ids'):
+    for preferred_airline in request.get('preferred_operator_ids'):
         if preferred_airline in serviceable_airline_ids:
             serviceable_airlines = serviceable_airlines+1
         else:
