@@ -12,6 +12,7 @@ from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
 from libs.get_multiple_service_objects import get_multiple_service_objects
+from playhouse.shortcuts import model_to_dict
 import sentry_sdk
 
 def add_rate_properties(request,freight_id):
@@ -76,7 +77,7 @@ def create_fcl_freight_rate_data(request):
 
 def create_fcl_freight_rate(request):
     from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay, update_fcl_freight_rate_feedback_in_delay
-    from services.fcl_freight_rate.fcl_celery_worker import update_fcl_freight_rate_job_on_rate_addition_delay
+    from services.fcl_freight_rate.fcl_celery_worker import update_fcl_freight_rate_job_on_rate_addition_delay, create_sailing_schedule_port_pair_coverage_delay
 
     action = 'update'
     request = { key: value for key, value in request.items() if value }
@@ -225,7 +226,8 @@ def create_fcl_freight_rate(request):
 
     if row["mode"]  not in ["predicted", "cluster_extension"] and row['rate_type'] == "market_place" and request.get('tag') != 'trend_GRI':
         update_fcl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
-
+        create_sailing_schedule_port_pair_coverage_delay.apply_async(kwargs = {'request': jsonable_encoder(model_to_dict(freight))},queue = 'low')
+    
     return {"id": freight.id}
 
 def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validities, is_rate_extended_via_bo):

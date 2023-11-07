@@ -12,7 +12,7 @@ def get_instance_url(service_name=None):
     service_port = COMMON_SERVICE_PORT
     if service_name in ['organization', 'user', 'lead', 'partner']:
         service_port = AUTH_SERVICE_PORT
-    if service_name == 'location':
+    if service_name in ['location', 'sailing_schedule']:
         service_port = COGOMAPS_SERVICE_PORT
     if service_name == 'spot_search':
         service_port = SPOT_SEARCH_PORT
