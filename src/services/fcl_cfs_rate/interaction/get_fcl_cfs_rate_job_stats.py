@@ -14,7 +14,6 @@ from functools import reduce
 
 possible_direct_filters = [
     "location_id",
-    "importer_exporter_id",
     "service_provider_id",
     "commodity",
     "user_id",
