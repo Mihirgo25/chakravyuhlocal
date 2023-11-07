@@ -2,13 +2,16 @@ from micro_services.client import schedule_client
 from configs.fcl_freight_rate_constants import TOP_SHIPPING_LINES_FOR_PREDICTION
 
 def get_serviceable_shipping_lines(request):
-    data = {
-        "origin_port_id": request["origin_port_id"],
-        "destination_port_id": request["destination_port_id"],
-    }
-    resp = schedule_client.get_sailing_schedule_port_pair_serviceability(data)
-    serviceable_shipping_lines = update_shipping_lines_hash(resp)
-    return serviceable_shipping_lines
+    try:
+        data = {
+            "origin_port_id": request["origin_port_id"],
+            "destination_port_id": request["destination_port_id"],
+        }
+        resp = schedule_client.get_sailing_schedule_port_pair_serviceability(data)
+        serviceable_shipping_lines = update_shipping_lines_hash(resp)
+        return serviceable_shipping_lines 
+    except:
+        return []
 
 
 def get_top_shipping_lines_for_prediction(shipping_lines):
