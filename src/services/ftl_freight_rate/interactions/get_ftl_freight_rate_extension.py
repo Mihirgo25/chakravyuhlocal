@@ -82,16 +82,16 @@ def get_calculated_line_items(final_line_items, new_line_items, count_by_code):
                     continue
                 total_price = float(required_line_item.get("price",0))
                 total_price = (total_price * float(line_item.get("price",0))/100)
-        # convert currencies to INR
+        # convert currencies to Base Currency
         if line_item["currency"] != CURRENCY_CODE:
-            total_price = convert_to_inr(total_price, line_item["currency"])
+            total_price = convert_currency(total_price, line_item["currency"])
         # summation of prices by code
         for final_item in final_line_items:
             if final_item['code'] == line_item['code']:
                 final_item['price'] = final_item.get("price") + total_price
     return final_line_items
 
-def convert_to_inr(price, currency):
+def convert_currency(price, currency):
     price = common.get_money_exchange_for_fcl(
         {
             "price": price,
