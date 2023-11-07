@@ -89,12 +89,12 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
     print(request)
     from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 
-    feedback = FclFreightRateFeedback.select().where(FclFreightRateFeedback.fcl_freight_rate_id == request['rate_id'], FclFreightRateFeedback.feedback_type == 'disliked').order_by(FclFreightRateFeedback.updated_at.desc()).first()
+    feedback = FclFreightRateFeedback.select(FclFreightRateFeedback.status,FclFreightRateFeedback.reverted_validities,FclFreightRateFeedback.updated_at).where(FclFreightRateFeedback.fcl_freight_rate_id == request['rate_id'], FclFreightRateFeedback.feedback_type == 'disliked').order_by(FclFreightRateFeedback.updated_at.desc()).first()
 
     if feedback:
-        if feedback.get('reverted_validities') and feedback.get('updated_at') > datetime.now() - timedelta(days=4):
+        if feedback.reverted_validities and feedback.updated_at >= datetime.now().date():
             return {'message': 'Best available rate for this port pair'}
-        else:
+        elif feedback.status == 'active':
             ### create job
             return {}
 
@@ -134,11 +134,11 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
                 "container_type",
                 "commodity"
             ],
-            "origin_port_id": fcl_freight_rate.origin_port_id,
-            "destination_port_id": fcl_freight_rate.destination_port_id,
-            "origin_main_port_id": fcl_freight_rate.origin_main_port_id,
-            "destination_main_port_id": fcl_freight_rate.destination_main_port_id,
-            "shipping_line_id": fcl_freight_rate.shipping_line_id,
+            "origin_port_id": str(fcl_freight_rate.origin_port_id),
+            "destination_port_id": str(fcl_freight_rate.destination_port_id),
+            "origin_main_port_id": str(fcl_freight_rate.origin_main_port_id),
+            "destination_main_port_id": str(fcl_freight_rate.destination_main_port_id),
+            "shipping_line_id": str(fcl_freight_rate.shipping_line_id),
             "container_size": fcl_freight_rate.container_size,
             "container_type": fcl_freight_rate.container_type,
             "commodity": fcl_freight_rate.commodity,
@@ -168,16 +168,16 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
 def validate_air_freight_unsatisfactory_rate_function(request):
     from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 
-    feedback = AirFreightRateFeedback.select().where(AirFreightRateFeedback.air_freight_rate_id == request['rate_id'], AirFreightRateFeedback.feedback_type == 'disliked').order_by(AirFreightRateFeedback.updated_at.desc()).first()
+    feedback = AirFreightRateFeedback.select(AirFreightRateFeedback.reverted_rate,AirFreightRateFeedback.updated_at,AirFreightRateFeedback.status).where(AirFreightRateFeedback.air_freight_rate_id == request['rate_id'], AirFreightRateFeedback.feedback_type == 'disliked').order_by(AirFreightRateFeedback.updated_at.desc()).first()
 
     if feedback:
-        if feedback.get('status') == 'inactive' and feedback.get('updated_at') > datetime.now() - timedelta(days=4):
+        if feedback.reverted_rate and feedback.updated_at >= datetime.now().date():
             return {'message': 'Best available rate for this port pair'}
-        else:
+        elif feedback.status == 'active':
             ### create job
             return {}
 
-    air_freight_rate = AirFreightRate.select(AirFreightRate.id, AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id, AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id, AirFreightRate.airline_id, AirFreightRate.commodity, AirFreightRate.commodity_type, AirFreightRate.rate_type, AirFreightRate.source, AirFreightRate.updated_at).where(AirFreightRate.id == request['rate_id']).first()
+    air_freight_rate = AirFreightRate.select(AirFreightRate.id, AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id, AirFreightRate.airline_id, AirFreightRate.commodity, AirFreightRate.commodity_type, AirFreightRate.rate_type, AirFreightRate.source, AirFreightRate.updated_at).where(AirFreightRate.id == request['rate_id']).first()
 
     if not air_freight_rate:
         raise HTTPException(status_code=404, detail='Air Freight Rate Not Found')
@@ -212,9 +212,9 @@ def validate_air_freight_unsatisfactory_rate_function(request):
                 "destination_airport_id",
                 "airline_id"
             ],
-            "origin_airport_id": air_freight_rate.origin_airport_id,
-            "destination_airport_id": air_freight_rate.destination_airport_id,
-            "airline_id": air_freight_rate.airline_id,
+            "origin_airport_id": str(air_freight_rate.origin_airport_id),
+            "destination_airport_id": str(air_freight_rate.destination_airport_id),
+            "airline_id": str(air_freight_rate.airline_id),
             "rate_type": rate_type,
             "commodity": air_freight_rate.commodity,
             "commodity_type": air_freight_rate.commodity_type,
