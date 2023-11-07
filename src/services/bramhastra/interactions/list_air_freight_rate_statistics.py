@@ -19,7 +19,10 @@ DEFAULT_INCUDE_PARAMS = {
     "rate_type",
 }
 
-DEFAULT_AGGREGATE_PARAMS = {"standard_price": "AVG(standard_price)"}
+DEFAULT_AGGREGATE_PARAMS = {
+    "standard_price": "AVG(standard_price)",
+    "standard_price_deviation": "stddevPop(standard_price)"
+}
 
 DEFAULT_SELECT_KEYS = {
     "origin_airport_id",
