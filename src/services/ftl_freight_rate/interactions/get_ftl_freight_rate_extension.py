@@ -4,6 +4,8 @@ from datetime import datetime,timedelta
 from micro_services.client import common
 import statistics
 
+CURRENCY_CODE = ""
+
 def get_ftl_freight_rate_extension(ftl_rates_extended, request):
     new_list = []
 
@@ -11,8 +13,9 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
         min_chargeable_weights_list = []
         transit_time_list = []
         count_by_code = {}
+        CURRENCY_CODE = request.get("currency_code")
 
-        final_line_items = [{"code": "BAS", "unit": "per_truck", "price": 0, "remarks": [], "currency": "INR"}, {"code": "FSC", "unit": "per_truck", "price": 0, "remarks": [], "currency": "INR"}]
+        final_line_items = [{"code": "BAS", "unit": "per_truck", "price": 0, "remarks": [], "currency": CURRENCY_CODE}, {"code": "FSC", "unit": "per_truck", "price": 0, "remarks": [], "currency": CURRENCY_CODE}]
         for ftl_rate in ftl_rates_extended:
             truck_body_type = ftl_rate.get('truck_body_type')
             unit = ftl_rate.get('unit')
@@ -80,7 +83,7 @@ def get_calculated_line_items(final_line_items, new_line_items, count_by_code):
                 total_price = float(required_line_item.get("price",0))
                 total_price = (total_price * float(line_item.get("price",0))/100)
         # convert currencies to INR
-        if line_item["currency"] != 'INR':
+        if line_item["currency"] != CURRENCY_CODE:
             total_price = convert_to_inr(total_price, line_item["currency"])
         # summation of prices by code
         for final_item in final_line_items:
@@ -93,7 +96,7 @@ def convert_to_inr(price, currency):
         {
             "price": price,
             "from_currency": currency,
-            "to_currency": "INR"
+            "to_currency": CURRENCY_CODE
         }
     )["price"]
     return price

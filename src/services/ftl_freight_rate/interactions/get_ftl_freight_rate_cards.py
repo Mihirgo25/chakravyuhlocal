@@ -197,6 +197,8 @@ def set_callback_for_request(request):
         location_ids = [
             request.get("origin_location_id"),
             request.get("destination_location_id"),
+            request.get("origin_country_id"),
+            request.get("destination_country_id")
         ]
 
         if not request.get("origin_city_id") or not request.get('destination_city_id'):
@@ -208,6 +210,16 @@ def set_callback_for_request(request):
             request["destination_city_id"] = location_mapping.get(
                 request.get("destination_location_id")
             ).get("city_id")
+
+            currency_code = location_mapping.get(
+                request.get("origin_country_id")
+            ).get("currency_code")
+
+            if not currency_code:
+                currency_code = location_mapping.get(
+                    request.get("destination_country_id")
+                ).get("currency_code")
+            request["currency_code"] = currency_code
     if (
         request.get("break_point_location_ids")
         and not isinstance(request.get("break_point_location_ids"), list)
@@ -230,7 +242,7 @@ def set_callback_for_request(request):
 def get_location_mapping(location_ids):
     location_data = maps.list_locations({
         "filters": {"id": location_ids,"status":"active"},
-        'includes': {'id': True, 'name': True, 'city_id':True}
+        'includes': {'id': True, 'name': True, 'city_id':True, 'currency_code':True}
         })["list"]
     location_mapping = {}
     for data in location_data:
