@@ -3,6 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from micro_services.client import common
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import asyncio
 
 
@@ -97,7 +98,7 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
             ### create job
             return {}
 
-    fcl_freight_rate = FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.shipping_line_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.rate_type, FclFreightRate.mode, FclFreightRate.updated_at).where(FclFreightRate.id == request['rate_id']).first()
+    fcl_freight_rate = FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.shipping_line_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.rate_type, FclFreightRate.mode, FclFreightRate.updated_at).where(FclFreightRate.id == request['rate_id']).first()
 
     if not fcl_freight_rate:
         raise HTTPException(status_code=404, detail='Fcl Freight Rate Not Found')
@@ -135,15 +136,13 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
             ],
             "origin_port_id": str(fcl_freight_rate.origin_port_id),
             "destination_port_id": str(fcl_freight_rate.destination_port_id),
-            "origin_main_port_id": str(fcl_freight_rate.origin_main_port_id),
-            "destination_main_port_id": str(fcl_freight_rate.destination_main_port_id),
             "shipping_line_id": str(fcl_freight_rate.shipping_line_id),
             "container_size": fcl_freight_rate.container_size,
             "container_type": fcl_freight_rate.container_type,
             "commodity": fcl_freight_rate.commodity,
             "query_type": "average_price",
             "validity_end_less_than": str(datetime.now().date()),
-            "validity_end_greater_than": str(datetime.now().date() - timedelta(months=3))
+            "validity_end_greater_than": str(datetime.now().date() - relativedelta(months=3))
         }
         fcl_freight_rates = asyncio.run(list_fcl_freight_rate_statistics(filters = filters, page_limit = 10, page = 1, is_service_object_required = False))
 
@@ -156,7 +155,7 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
         lower_bound = avg_price - 0.1 * sigma
         upper_bound = avg_price + 0.1 * sigma
 
-        bas_standard_price = request.get('bas_standard_price') ## later
+        bas_standard_price = request.get('standard_price')
 
         if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
             return {'message': 'Best available rate for this port pair'}
@@ -220,7 +219,7 @@ def validate_air_freight_unsatisfactory_rate_function(request):
             "chargeable_weight": request.get("chargeable_weight"),
             "query_type": "aggregate",
             "validity_end_less_than": str(datetime.now().date()),
-            "validity_end_greater_than": str(datetime.now().date() - timedelta(months=3))
+            "validity_end_greater_than": str(datetime.now().date() - relativedelta(months=3))
         }
 
         air_freight_rates = asyncio.run(list_air_freight_rate_statistics(filters = filters, page_limit = 10, page = 1, is_service_object_required = False,pagination_data_required=False))

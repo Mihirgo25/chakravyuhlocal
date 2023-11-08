@@ -128,3 +128,4 @@ class ValidateFreightRateFeedback(BaseModel):
   preferred_shipping_line_ids: list[str] = None
   preferred_airline_ids: list[str] = None
   chargeable_weight: int = None
+  standard_price: int = None
