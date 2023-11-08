@@ -548,3 +548,10 @@ MCC:
   tags: ['additional_service']
   condition: true
   sac_code: ''
+COMSUR:
+  name: "Commercial Surcharge"
+  units: ['per_kg']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996763'
