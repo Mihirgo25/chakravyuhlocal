@@ -22,7 +22,7 @@ def insert_rates_to_rms(create_params):
     return create_params  
 
 
-def get_fcl_freight_predicted_rate(request, serviceable_shipping_lines):
+def get_fcl_freight_predicted_rate(request, serviceable_shipping_lines=[]):
     from celery_worker import create_fcl_freight_rate_feedback_for_prediction
     if type(request) != dict:
         request = request.__dict__
@@ -64,7 +64,7 @@ def get_fcl_freight_predicted_rate(request, serviceable_shipping_lines):
 
 def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request, ports_distance):
     validity_start = datetime.now().date().isoformat()
-    validity_end = (datetime.now() + timedelta(days = 7)).date().isoformat()
+    validity_end = (datetime.now() + timedelta(days = 3)).date().isoformat()
 
     shipping_line_dict = pickle.load(open(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models","shipping_line.pkl"), 'rb'))
     if request['origin_country_id'] == request['destination_country_id']:

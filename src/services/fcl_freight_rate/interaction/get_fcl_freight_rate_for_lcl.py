@@ -1,6 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from operator import attrgetter
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
+from services.chakravyuh.interaction.get_serviceable_shipping_lines import get_serviceable_shipping_lines
 import datetime
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
@@ -18,7 +19,8 @@ def get_fcl_freight_rate_for_lcl(request):
     
     if not details:
         request['is_source_lcl'] = True
-        details  = get_fcl_freight_predicted_rate(request)
+        serviceable_shipping_lines = get_serviceable_shipping_lines(request)
+        details  = get_fcl_freight_predicted_rate(request, serviceable_shipping_lines)
         for detail in details:
             detail['freight'] = {'validities':[]}
             detail['freight']['validities'].append(
