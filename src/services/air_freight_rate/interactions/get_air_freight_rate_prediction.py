@@ -65,7 +65,7 @@ def get_air_freight_rate_prediction(request):
     for result in results:
         predicted_price = result.get('predicted_price')
         if currency != 'USD':
-            predicted_price = get_money_exchange_for_fcl_fallback('USD', currency, predicted_price)['price']
+            predicted_price = get_money_exchange_for_fcl_fallback({'from_currency':'USD', 'to_currency':currency,'price': predicted_price})['price']
 
         if currency == 'INR' and predicted_price < 100:
             predicted_price = predicted_price + 100
@@ -82,7 +82,7 @@ def get_air_freight_rate_prediction(request):
             slab_number = slab_number - 1
 
         try:
-            min_price = round(get_money_exchange_for_fcl_fallback('USD', currency, result['predicted_price'])['price'], 2)
+            min_price = round(get_money_exchange_for_fcl_fallback({'from_currency':'USD', 'to_currency':currency,'price': result['predicted_price']})['price'], 2)
             create_air_freight_rate_data({
                 'origin_airport_id' : request['origin_airport_id'],
                 'destination_airport_id' : request['destination_airport_id'],

@@ -9,6 +9,7 @@ from micro_services.partner_client import PartnerApiClient
 from micro_services.shipment_client import ShipmentApiClient
 from micro_services.maps_client import MapsApiClient
 from micro_services.loki_client import LokiApiClient
+from micro_services.schedule_client import ScheduleApiClient
 
 
 class DevelopmentApiClient(
@@ -19,7 +20,8 @@ class DevelopmentApiClient(
     PartnerApiClient,
     ShipmentApiClient,
     MapsApiClient,
-    LokiApiClient
+    LokiApiClient,
+    ScheduleApiClient
 ):
     def __init__(self, context):
         self.client = GlobalClient(

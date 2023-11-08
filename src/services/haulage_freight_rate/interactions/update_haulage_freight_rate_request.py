@@ -23,14 +23,17 @@ def execute_transaction_code(request):
                 else 1
             )
             object.reverted_by_user_ids = (
-                object.reverted_by_user_ids.append(UUID(request.get("performed_by_id")))
+                object.reverted_by_user_ids + [(UUID(request.get("performed_by_id")))]
                 if object.reverted_by_user_ids is not None
                 else [UUID(request.get("performed_by_id"))]
             )
+            existing_reverted_rates = object.reverted_rates or []
+            new_reverted_rates = existing_reverted_rates + (request.get("reverted_rates") or [])
+            object.reverted_rates = new_reverted_rates
         object.closing_remarks = (
-            object.closing_remarks.append(request.get("closing_remarks"))
+            object.closing_remarks + request.get("closing_remarks")
             if object.closing_remarks is not None
-            else [request.get("closing_remarks")]
+            else request.get("closing_remarks")
         )
 
     try:

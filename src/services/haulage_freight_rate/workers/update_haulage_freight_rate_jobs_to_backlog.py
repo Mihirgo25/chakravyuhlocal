@@ -20,8 +20,7 @@ def update_haulage_freight_rate_jobs_to_backlog():
 
     while True:
         haulage_conditions = (
-            HaulageFreightRateJob.created_at
-            < datetime.today().date() - timedelta(days=1),
+            HaulageFreightRateJob.created_at <= datetime.today().date(),
             HaulageFreightRateJob.status == "pending",
             ~(HaulageFreightRateJob.sources.contains('live_booking') | HaulageFreightRateJob.sources.contains('rate_feedback') | HaulageFreightRateJob.sources.contains('rate_request'))
         )
