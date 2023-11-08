@@ -22,7 +22,7 @@ def insert_rates_to_rms(create_params):
     return create_params  
 
 
-def get_fcl_freight_predicted_rate(request, serviceable_shipping_lines):
+def get_fcl_freight_predicted_rate(request, serviceable_shipping_lines=[]):
     from celery_worker import create_fcl_freight_rate_feedback_for_prediction
     if type(request) != dict:
         request = request.__dict__
