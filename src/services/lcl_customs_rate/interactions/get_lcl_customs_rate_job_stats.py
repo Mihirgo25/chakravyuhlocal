@@ -13,8 +13,7 @@ from functools import reduce
 
 
 possible_direct_filters = [
-    "origin_port_id",
-    "destination_port_id",
+    "location_id",
     "commodity",
     "user_id",
     "cogo_entity_id",

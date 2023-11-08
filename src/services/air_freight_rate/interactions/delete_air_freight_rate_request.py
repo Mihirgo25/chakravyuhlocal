@@ -13,6 +13,7 @@ from database.rails_db import (
     get_organization_partner,
 )
 from services.air_freight_rate.interactions.delete_air_freight_rate_job import delete_air_freight_rate_job
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def delete_air_freight_rate_request(request):
     object_type = "Air_Freight_Rate_Request"
@@ -76,7 +77,8 @@ def execute_transaction_code(request):
         id = str(request_object.performed_by_org_id)
         org_users = get_organization_partner(id)
 
-        
+        get_multiple_service_objects(request_object)
+
         if request_object.performed_by_type == 'user' and org_users and request_object.source != 'checkout':
           send_closed_notifications_to_user_request.apply_async(
             kwargs={"object": request_object}, queue="critical"

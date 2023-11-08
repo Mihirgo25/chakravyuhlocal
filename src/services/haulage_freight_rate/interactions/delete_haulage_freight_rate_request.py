@@ -5,6 +5,8 @@ from database.db_session import db
 from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_job import (
     delete_haulage_freight_rate_job,
 )
+from libs.get_multiple_service_objects import get_multiple_service_objects
+
 def delete_haulage_freight_rate_request(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -33,7 +35,7 @@ def execute_transaction_code(request):
             obj.save()
         except:
             raise HTTPException(status_code=400, detail="Freight rate request deletion failed")
-
+        get_multiple_service_objects(obj)
         create_audit(request, obj.id, obj.transport_mode)
 
     send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='low')
