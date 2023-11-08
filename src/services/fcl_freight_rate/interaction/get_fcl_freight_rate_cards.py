@@ -738,7 +738,8 @@ def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, se
         get_fcl_freight_predicted_rate(requirements, serviceable_shipping_lines)
         initial_query = initialize_freight_query(requirements, True)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
-        freight_rates = discard_noneligible_shipping_lines(freight_rates, {})
+        if len(freight_rates) > 0:
+            freight_rates = discard_noneligible_shipping_lines(freight_rates, {})
         is_predicted = True
         
     return freight_rates, is_predicted

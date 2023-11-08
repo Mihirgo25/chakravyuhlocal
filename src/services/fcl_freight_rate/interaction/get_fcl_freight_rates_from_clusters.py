@@ -1,16 +1,13 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_location_cluster import FclFreightLocationCluster
 from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
-from services.fcl_freight_rate.models.fcl_freight_location_cluster_factor import FclFreightLocationClusterFactor
 from fastapi.encoders import jsonable_encoder
-from micro_services.client import maps
-from datetime import datetime
+from datetime import datetime, timedelta
 import concurrent.futures
 from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from database.rails_db import get_ff_mlo
-from joblib import Parallel, delayed
 import dateutil.parser as parser
 
 def get_fcl_freight_rates_from_clusters(request, serviceable_shipping_lines):
@@ -95,6 +92,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
             'sourced_by_id': DEFAULT_USER_ID,
             'source': 'rate_extension',
             'mode': 'cluster_extension',
+            'accuracy': 80,
             'extended_from_object_id': rate["id"]
         }
         
@@ -106,17 +104,13 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
             
         for validity in rate["validities"]:
             param["validity_start"] = datetime.strptime(datetime.now().date().isoformat(),'%Y-%m-%d')
-            param["validity_end"] = convert_date_format(validity["validity_end"])
+            param["validity_end"] = datetime.strptime((datetime.now() + timedelta(days = 3)).date().isoformat(),'%Y-%m-%d')
             param["schedule_type"] = validity["schedule_type"]
             param["payment_term"] = validity["payment_term"]
             param["line_items"] = validity["line_items"]
             create_params.append(param)
             
     return create_params
-
-def convert_date_format(date):
-    parsed_date = parser.parse(date, dayfirst=True)
-    return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
         
             
             
