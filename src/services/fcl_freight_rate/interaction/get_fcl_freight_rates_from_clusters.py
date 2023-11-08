@@ -92,6 +92,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
             'sourced_by_id': DEFAULT_USER_ID,
             'source': 'rate_extension',
             'mode': 'cluster_extension',
+            'accuracy': 80,
             'extended_from_object_id': rate["id"]
         }
         
