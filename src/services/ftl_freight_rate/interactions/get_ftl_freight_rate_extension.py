@@ -13,6 +13,7 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
         min_chargeable_weights_list = []
         transit_time_list = []
         count_by_code = {}
+        global CURRENCY_CODE
         CURRENCY_CODE = request.get("currency_code")
 
         final_line_items = [{"code": "BAS", "unit": "per_truck", "price": 0, "remarks": [], "currency": CURRENCY_CODE}, {"code": "FSC", "unit": "per_truck", "price": 0, "remarks": [], "currency": CURRENCY_CODE}]
