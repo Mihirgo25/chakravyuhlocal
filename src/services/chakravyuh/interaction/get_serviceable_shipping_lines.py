@@ -1,5 +1,6 @@
 from micro_services.client import schedule_client
 from configs.fcl_freight_rate_constants import TOP_SHIPPING_LINES_FOR_PREDICTION
+from libs.flatten_unique_list import flatten_unique_list
 
 def get_serviceable_shipping_lines(request):
     try:
@@ -8,6 +9,11 @@ def get_serviceable_shipping_lines(request):
             "destination_port_id": request["destination_port_id"],
         }
         resp = schedule_client.get_sailing_schedule_port_pair_serviceability(data)
+        for sl_hash in resp:
+            sl = sl_hash.get("shipping_lines", [])
+            sl = flatten_unique_list(sl)
+            sl_hash["shipping_lines"] = sl
+        
         serviceable_shipping_lines = update_shipping_lines_hash(resp)
         return serviceable_shipping_lines 
     except:
