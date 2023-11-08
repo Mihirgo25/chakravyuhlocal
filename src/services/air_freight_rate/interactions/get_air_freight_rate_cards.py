@@ -63,16 +63,20 @@ def initialize_freight_query(requirements,prediction_required=False):
         freight_query.commodity_sub_type == requirements.get('commodity_subtype_code')
 
     freight_query = freight_query.where(AirFreightRate.last_rate_available_date >= requirements['validity_start'])
-    if not prediction_required:
-        freight_query  = freight_query.where(AirFreightRate.source != 'predicted')
+    if  prediction_required:
+        freight_query  = freight_query.where(AirFreightRate.source == 'predicted')
 
     return freight_query
 
 
 def build_response_object(freight_rate,requirements,apply_density_matching):
     source = 'spot_rates'
+    rate_type = freight_rate.get('rate_type')
     if freight_rate['source'] == 'predicted':
         source = 'predicted'
+    if rate_type == 'non_tariff_rate':
+        rate_type = 'market_place'
+        source = 'non_tariff_rate'
 
     response_object = {
         'airline_id': freight_rate['airline_id'],
@@ -92,7 +96,7 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
         'rate_id': freight_rate['id'],
         'importer_exporter_id': freight_rate['importer_exporter_id'],
         'cogo_entity_id': freight_rate['cogo_entity_id'],
-        'rate_type': freight_rate.get('rate_type')
+        'rate_type': rate_type
     }
     
     freight_object = add_freight_objects(freight_rate,response_object,requirements)

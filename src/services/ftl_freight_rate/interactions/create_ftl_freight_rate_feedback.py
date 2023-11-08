@@ -50,9 +50,9 @@ def execute_transaction_code(request):
 
     create_audit(request, feedback)
     
-    request['source_id'] = feedback.id
-    
-    create_ftl_freight_rate_job(request, "rate_feedback")
+    if feedback.feedback_type == 'disliked':
+        request['source_id'] = feedback.id
+        create_ftl_freight_rate_job(request, "rate_feedback")
 
     return {'id': request['rate_id']}
 

@@ -20,8 +20,9 @@ possible_direct_filters = [
     "serial_id",
     "status",
     "cogo_entity_id",
+    "service_provider_id",
 ]
-possible_indirect_filters = ["updated_at", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
 
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
@@ -153,7 +154,7 @@ def apply_start_date_filter(query, filters):
         start_date = datetime.strptime(start_date, STRING_FORMAT) + timedelta(
             hours=5, minutes=30
         )
-    query = query.where(LclFreightRateJob.created_at.cast("date") >= start_date.date())
+    query = query.where(LclFreightRateJob.updated_at.cast("date") >= start_date.date())
     return query
 
 
@@ -184,7 +185,7 @@ def apply_end_date_filter(query, filters):
             hours=5, minutes=30
         )
         query = query.where(
-            LclFreightRateJob.created_at.cast("date") <= end_date.date()
+            LclFreightRateJob.updated_at.cast("date") <= end_date.date()
         )
     return query
 
