@@ -1,13 +1,15 @@
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from playhouse.postgres_ext import ServerSide
 from fastapi.encoders import jsonable_encoder
+import datetime
 
 
 def haulage_migration():
     haulage_freight = HaulageFreightRate.select().where(
         HaulageFreightRate.source == 'predicted',
         HaulageFreightRate.transport_modes_keyword == 'trailer',
-        ~HaulageFreightRate.rate_not_available_entry
+        ~HaulageFreightRate.rate_not_available_entry,
+        HaulageFreightRate.validity_end >= datetime.datetime.now().date()
     )
     for freight in ServerSide(haulage_freight):
         line_items = jsonable_encoder(freight.line_items)

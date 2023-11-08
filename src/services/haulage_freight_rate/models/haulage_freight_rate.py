@@ -78,9 +78,9 @@ class HaulageFreightRate(BaseModel):
     class Meta:
         table_name = 'haulage_freight_rates'
 
-    def save(self, *args, **kwargs):
-        self.updated_at = datetime.datetime.now()
-        return super(HaulageFreightRate, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.updated_at = datetime.datetime.now()
+    #     return super(HaulageFreightRate, self).save(*args, **kwargs)
     
     def set_locations(self):
         if not is_valid_uuid(self.origin_location_id):
