@@ -77,11 +77,5 @@ XRAY:
   condition: true
   tags: ['additional_service']
   sac_code: '996713'
-CS:
-  name: "Commercial Surcharge"
-  units: ['per_kg']
-  trade_types: ['export', 'import']
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996763'
+
 
