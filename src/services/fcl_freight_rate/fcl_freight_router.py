@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
+from pydantic import Json
+
 
 
 from libs.update_charges_yml import update_charges_yml
@@ -100,7 +102,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_job_stats import
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_jobs import list_fcl_freight_rate_jobs
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_job import delete_fcl_freight_rate_job
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
-
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards_schedules import get_fcl_freight_rate_cards_schedules
 from services.ltl_freight_rate.ltl_params import CreateLtlFreightRateJob, DeleteLtlFreightRateJob, UpdateLtlFreightRateJobOnRateAddition
 
 from services.ltl_freight_rate.interactions.create_ltl_freight_rate_job import (
@@ -2503,5 +2505,24 @@ def update_ltl_freight_rate_job_on_rate_addition_api(
         data = update_ltl_freight_rate_job_on_rate_addition(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.get('/get_fcl_freight_rate_cards_schedules')
+def get_fcl_freight_rate_cards_schedules_data(
+    spot_negotiation_rates: Json = Query(None),
+    fcl_freight_rate_cards_params: Json = Query(None),
+    sailing_schedules_required: bool = False,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        resp = get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rate_cards_params, sailing_schedules_required)
+        return JSONResponse(status_code=200, content=json_encoder(resp))
+    except HTTPException as e:
+        raise
+    except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
