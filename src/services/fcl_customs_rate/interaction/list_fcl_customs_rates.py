@@ -8,9 +8,9 @@ from micro_services.client import common
 from configs.fcl_freight_rate_constants import RATE_TYPES
 from libs.get_normalized_line_items import get_normalized_line_items
 
-possible_direct_filters = ['id', 'location_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'service_provider_id', 'importer_exporter_id', 'container_type', 'container_size', 'cargo_handling_type', 'is_customs_line_items_info_messages_present', 'is_customs_line_items_error_messages_present', 'is_cfs_line_items_info_messages_present', 'is_cfs_line_items_error_messages_present', 'procured_by_id', 'rate_type']
+possible_direct_filters = ['id', 'location_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'service_provider_id', 'importer_exporter_id', 'container_type', 'container_size', 'is_customs_line_items_info_messages_present', 'is_customs_line_items_error_messages_present', 'is_cfs_line_items_info_messages_present', 'is_cfs_line_items_error_messages_present', 'procured_by_id', 'rate_type']
 
-possible_indirect_filters = ['location_ids', 'importer_exporter_present', 'is_rate_available', 'commodity']
+possible_indirect_filters = ['location_ids', 'importer_exporter_present', 'is_rate_available', 'commodity','cargo_handling_type']
 
 def list_fcl_customs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, pagination_data_required = False):
     query = get_query(sort_by, sort_type, page, page_limit)
@@ -118,10 +118,14 @@ def apply_is_rate_available_filter(query, filters):
 
 def apply_commodity_filter(query, filters):
     commodity = filters['commodity']
-    if filters['commodity'] == 'all_commodity':
+    if filters['commodity'] in ['all_commodity','']:
         commodity = None
     query = query.where(FclCustomsRate.commodity == commodity)
-    return query 
+    return query
+
+def apply_cargo_handling_type_filter(query, filters):
+    query = query.where((FclCustomsRate.cargo_handling_type == filters['cargo_handling_type']) | (FclCustomsRate.cargo_handling_type.is_null(True)))
+    return query
 
 def get_total_price(line_items, total_price_currency):
     total_price = 0
