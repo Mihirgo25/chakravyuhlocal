@@ -1015,6 +1015,7 @@ class FclFreightRateValidity(BaseModel):
     platform_price: float = None
     currency: str
     schedule_type: str = None
+    schedule_id: str = None
     payment_term: str = None
     id: str
     likes_count: int = None
