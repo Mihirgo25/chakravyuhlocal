@@ -12,16 +12,13 @@ from libs.common_validations import handle_empty_ids
 REQUIRED_SCHEDULE_KEYS = [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type","reliability_score","terminal_cutoff", "source" ,"id"]
 INDIA_COUNTRY_CURRENCY = "INR"
 
-def create_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_hash):
+def create_sailing_schedules_hash(sailing_schedules,sailing_schedules_hash):
 
     """
     Create a hash of sailing schedules and update the existing sailing schedules.
     Returns:
         dict: Updated sailing schedules hash.
     """
-    for executor in executors:
-        results = executor.result()
-        sailing_schedules.extend(results)
 
     for sailing_schedule in sailing_schedules:
         key = ":".join(
@@ -433,8 +430,12 @@ def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rat
                 executor.submit(get_sailing_schedules_data, port_pair, shipping_line,validity_start)
                 for port_pair, shipping_line in port_pairs.items()
             ]
+        
+        for executor in executors:
+            results = executor.result()
+            sailing_schedules.extend(results)
 
-        sailing_schedules_hash=create_sailing_schedules_hash(executors,sailing_schedules,sailing_schedules_hash)  
+        sailing_schedules_hash=create_sailing_schedules_hash(sailing_schedules,sailing_schedules_hash)  
 
         rates = []
         data = {
