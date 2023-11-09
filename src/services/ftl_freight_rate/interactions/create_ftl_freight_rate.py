@@ -29,7 +29,7 @@ def create_ftl_freight_rate(request):
       return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    from services.ftl_freight_rate.ftl_celery_worker import adding_multiple_service_objects, update_ftl_freight_rate_request_delay, send_missing_or_dislike_rate_notifications_to_kam, send_missing_or_dislike_rate_notifications_to_platform
+    from services.ftl_freight_rate.ftl_celery_worker import adding_multiple_service_objects, update_ftl_freight_rate_request_delay, send_missing_or_dislike_rate_notifications_to_kam, send_missing_or_dislike_rate_notifications_to_platform, update_ftl_freight_rate_job_on_rate_addition_delay
 
     params = {
       'rate_sheet_id':request.get('rate_sheet_id'),
@@ -105,6 +105,9 @@ def execute_transaction_code(request):
     adding_multiple_service_objects.apply_async(kwargs={'ftl_object':ftl_freight_rate,'request':request},queue='low')
 
     if request.get('ftl_freight_rate_request_id'):
-      update_ftl_freight_rate_request_delay.apply_async(kwargs={'request':{'ftl_freight_rate_request_id': request.get('ftl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')
+      update_ftl_freight_rate_request_delay.apply_async(kwargs={'request':{'ftl_freight_rate_request_id': request.get('ftl_freight_rate_request_id'), 'reverted_rates': [{"id": str(ftl_freight_rate.id), "line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id'),'closing_remarks':['rate_added']}},queue='critical')
+    
+    if params["source"]  != "predicted" and params['rate_type'] == "market_place":
+        update_ftl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": ftl_freight_rate.id},queue='fcl_freight_rate')
 
     return {"id": ftl_freight_rate.id}

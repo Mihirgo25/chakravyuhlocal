@@ -19,7 +19,7 @@ def get_fcl_customs_rate_cards(request):
         rate_cards = build_response_list(request, customs_rates)
 
         return {'list':rate_cards}
-       
+
     except Exception as e:
         traceback.print_exc()
         sentry_sdk.capture_exception(e)
@@ -27,7 +27,7 @@ def get_fcl_customs_rate_cards(request):
         return {
             "list": []
         }
- 
+
 def initialize_customs_query(request):
     location_ids = list(filter(None, [request.get('port_id'), request.get('country_id')]))
     query = FclCustomsRate.select(
@@ -47,11 +47,13 @@ def initialize_customs_query(request):
       FclCustomsRate.rate_not_available_entry == False,
       FclCustomsRate.location_id << location_ids,
       ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True))),
+      ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True)))
     )
 
     if request.get('country_id'):
-        query = query.where(FclCustomsRate.country_id == request.get('country_id')) 
+        query = query.where(FclCustomsRate.country_id == request.get('country_id'))
 
+    query = query.order_by(FclCustomsRate.cargo_handling_type.desc(nulls='LAST'))
     return query
 
 
@@ -80,7 +82,7 @@ def build_response_list(request, customs_rates):
         list.append(response_object) 
     return list
 
-    
+
 def build_response_object(result, request):
     source = 'spot_rates'
     if result.get('mode') == 'predicted':
@@ -112,12 +114,12 @@ def add_customs_clearance(result, response_object, request):
       custom_line_item = build_line_item_object(line_item, request)
 
       if custom_line_item:
-        response_object['line_items'].append(custom_line_item) 
-    
+        response_object['line_items'].append(custom_line_item)
+
     return True
 
 def build_line_item_object(line_item, request):
-    custom_code_config = FCL_CUSTOMS_CHARGES.get(line_item.get('code'),'')
+    custom_code_config = FCL_CUSTOMS_CHARGES.get().get(line_item.get('code'),'')
     is_additional_service = True if 'additional_service' in custom_code_config.get('tags',[]) else False
 
     if is_additional_service and line_item.get('code') not in request.get('additional_services'):

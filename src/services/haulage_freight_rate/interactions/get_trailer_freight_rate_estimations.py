@@ -55,7 +55,7 @@ def get_trailer_freight_rate_estimation(request):
           "code": 'FSC',
           "unit": 'per_trailer',
           "price": 10,
-          "currency": 'INR',
+          "currency": data['currency'],
           "remarks": [],
           "slabs": []
         }

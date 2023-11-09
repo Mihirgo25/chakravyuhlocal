@@ -7,11 +7,12 @@ from database.db_session import db
 from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
-from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
+from libs.get_normalized_line_items import get_normalized_line_items
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE, EXTENSION_ENABLED_MODES, DEFAULT_VALUE_PROPS
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
 from libs.get_multiple_service_objects import get_multiple_service_objects
+from playhouse.shortcuts import model_to_dict
 import sentry_sdk
 
 def add_rate_properties(request,freight_id):
@@ -76,7 +77,7 @@ def create_fcl_freight_rate_data(request):
 
 def create_fcl_freight_rate(request):
     from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay, update_fcl_freight_rate_feedback_in_delay
-    from services.fcl_freight_rate.fcl_celery_worker import update_fcl_freight_rate_job_on_rate_addition_delay
+    from services.fcl_freight_rate.fcl_celery_worker import update_fcl_freight_rate_job_on_rate_addition_delay, create_sailing_schedule_port_pair_coverage_delay
 
     action = 'update'
     request = { key: value for key, value in request.items() if value }
@@ -225,16 +226,17 @@ def create_fcl_freight_rate(request):
     adjust_dynamic_pricing(request, row, freight, current_validities, is_rate_extended_via_bo)
 
     if request.get('fcl_freight_rate_request_id'):
-        update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
+        update_fcl_freight_rate_request_in_delay.apply_async(kwargs={'request':{'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'reverted_rates': [{"id": str(freight.id), "line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id'),'closing_remarks':['rate_added']}},queue='critical')
 
     if request.get('fcl_freight_rate_feedback_id'):
-        update_fcl_freight_rate_feedback_in_delay.apply_async(kwargs={'request':{'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')}},queue='critical')
+        update_fcl_freight_rate_feedback_in_delay.apply_async(kwargs={'request':{'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"id": str(freight.id),"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')}},queue='critical')
         
     send_stats(action,request,freight,port_to_region_id_mapping)
 
-    if row["mode"]  not in ["predicted", "cluster_extension"] and row['rate_type'] == "market_place":
+    if row["mode"]  not in ["predicted", "cluster_extension"] and row['rate_type'] == "market_place" and request.get('tag') != 'trend_GRI':
         update_fcl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": freight.id},queue='fcl_freight_rate')
-
+        create_sailing_schedule_port_pair_coverage_delay.apply_async(kwargs = {'request': jsonable_encoder(model_to_dict(freight))},queue = 'low')
+    
     return {"id": freight.id}
 
 def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validities, is_rate_extended_via_bo):
@@ -250,6 +252,11 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'service_provider_id': freight.service_provider_id,
         'extend_rates_for_existing_system_rates': True
     }
+    if 'fcl_freight_rate_request_id' in rate_obj:
+        rate_obj.pop('fcl_freight_rate_request_id')
+    if 'fcl_freight_rate_feedback_id' in rate_obj:
+        rate_obj.pop('fcl_freight_rate_feedback_id')
+        
     if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
     

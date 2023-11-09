@@ -6,4 +6,15 @@ def validate_shipping_line(model):
             model.shipping_line = shipping_line_data[0]
             return True
         return False
+    
+def handle_empty_ids(hash):
+    for key, value in hash.items():
+        if key.endswith('_id') or key == 'id':
+            if isinstance(value, list):
+                hash[key] = [id or None for id in value]
+            else:
+                hash[key] = value or None
+    return hash
+
+
 

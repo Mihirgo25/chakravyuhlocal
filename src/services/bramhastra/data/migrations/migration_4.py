@@ -7,8 +7,6 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
 from services.bramhastra.constants import INDIAN_LOCATION_ID
-from datetime import datetime
-from services.bramhastra.enums import BrahmastraTrackModuleTypes, BrahmastraTrackStatus
 from services.bramhastra.database.dictionaries.country_rate_count import (
     CountryRateCount,
 )
@@ -37,33 +35,45 @@ from services.bramhastra.models.air_freight_rate_statistic import (
     AirFreightRateStatistic,
 )
 from services.bramhastra.models.fcl_freight_action import FclFreightAction
+from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
+    ShipmentFclFreightRateStatistic,
+)
+from services.bramhastra.models.fcl_freight_rate_request_statistics import (
+    FclFreightRateRequestStatistic,
+)
+from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
+    FeedbackFclFreightRateStatistic,
+)
 from database.create_clicks import Clicks
+from database.db_session import db
 
 
 def main():
     print("running migration")
-    
-    
-    db.execute_sql(f'TRUNCATE TABLE {FclFreightAction._meta.table_name} RESTART IDENTITY;')
-
     try:
-        db.create_tables(
-            [
-                FclFreightAction,
-                FclFreightRateAuditStatistic,
-                AirFreightRateStatistic,
-                FclFreightRateRequestStatistic,
-                FclFreightRateStatistic,
-                FeedbackFclFreightRateStatistic,
-                SpotSearchFclFreightRateStatistic,
-                CheckoutFclFreightRateStatistic,
-                ShipmentFclFreightRateStatistic,
-                DataMigration,
-                FclFreightAction,
-            ]
-        )
-    except Exception:
+        db.execute_sql(f"DROP TABLE {FclFreightAction._meta.table_name}")
+    except:
         pass
+    try:
+        db.execute_sql(f"DROP TABLE {ShipmentFclFreightRateStatistic._meta.table_name}")
+    except:
+        pass
+    try:
+        db.execute_sql(f"DROP TABLE {FeedbackFclFreightRateStatistic._meta.table_name}")
+    except:
+        pass
+    try:
+        db.execute_sql(f"DROP TABLE {FclFreightRateRequestStatistic._meta.table_name}")
+    except:
+        pass
+    db.create_tables(
+        [
+            FclFreightAction,
+            ShipmentFclFreightRateStatistic,
+            FeedbackFclFreightRateStatistic,
+            FclFreightRateRequestStatistic,
+        ]
+    )
 
     click = ClickHouse()
 
@@ -94,16 +104,13 @@ def main():
     print("started inserting air")
 
     execute_air(click)
-    
-    
-    # db.execute_sql(f'ALTER TABLE fcl_freight_actions REPLICA IDENTITY FULL;')
-    # db.execute_sql(f'ALTER TABLE fcl_freight_rate_request_statistics REPLICA IDENTITY FULL;')
-    # db.execute_sql(f'ALTER TABLE fcl_freight_rate_statistics_temp REPLICA IDENTITY FULL;')
-    # db.execute_sql(f'ALTER TABLE feedback_fcl_freight_rate_statistics REPLICA IDENTITY FULL;')
+
+    db.execute_sql(f"ALTER TABLE fcl_freight_actions REPLICA IDENTITY FULL;")
+    db.execute_sql(f'ALTER TABLE fcl_freight_rate_request_statistics REPLICA IDENTITY FULL;')
+    db.execute_sql(f'ALTER TABLE feedback_fcl_freight_rate_statistics REPLICA IDENTITY FULL;')
 
 
 def execute_fcl(click):
-    started_at = datetime.utcnow()
     init_query = f"""INSERT 
     INTO 
     brahmastra.{FclFreightRateStatistic._meta.table_name} 
@@ -123,19 +130,8 @@ def execute_fcl(click):
     )
     print("done cogo assured non origin india")
 
-    params = {
-        "name": "brahmastra",
-        "module_name": FclFreightRateStatistic._meta.table_name,
-        "module_type": BrahmastraTrackModuleTypes.table.value,
-        "last_updated_at": started_at,
-        "started_at": started_at,
-        "status": BrahmastraTrackStatus.completed.value,
-        "ended_at": datetime.utcnow(),
-    }
-
 
 def execute_air(click):
-    started_at = datetime.utcnow()
     columns = [field for field in AirFreightRateStatistic._meta.fields.keys()]
     fields = ",".join(columns)
     for source in ["manual", "predicted", "rate_extension", "rate_sheet"]:
@@ -144,16 +140,6 @@ def execute_air(click):
             {"source": source},
         )
         print("done with source: ", source)
-
-    params = {
-        "name": "brahmastra",
-        "module_name": AirFreightRateStatistic._meta.table_name,
-        "module_type": BrahmastraTrackModuleTypes.table.value,
-        "last_updated_at": started_at,
-        "started_at": started_at,
-        "status": BrahmastraTrackStatus.completed.value,
-        "ended_at": datetime.utcnow(),
-    }
 
 
 if __name__ == "__main__":

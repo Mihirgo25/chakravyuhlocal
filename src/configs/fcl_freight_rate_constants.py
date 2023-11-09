@@ -186,9 +186,22 @@ DEFAULT_LOCAL_AGENT_IDS = {
 }
 
 
-SHIPPING_LINES_FOR_PREDICTION = ['b2f92d49-6180-43bd-93a5-4d64f5819a9b','fb1aa2f1-d136-4f26-ad8f-2e1545cc772a', 'a2a447b4-0ce5-4d3c-afa9-2f81b313aecd','9ee49704-f5a7-4f17-9e25-c5c3b5ec3d1d']
-#Maersk, cma, hapag, msc, oocl
-# maersk = 'c3649537-0c4b-4614-b313-98540cffcf40'
+TOP_SHIPPING_LINES_FOR_PREDICTION = [
+  'c3649537-0c4b-4614-b313-98540cffcf40', #'Maersk'
+  'a2a447b4-0ce5-4d3c-afa9-2f81b313aecd', #'MSC'
+  'fb1aa2f1-d136-4f26-ad8f-2e1545cc772a', #'Hapag Lloyd'
+  '2d477bb2-8956-4dbe-bd8b-71144b60374c', #'ONE Line'
+  'b2f92d49-6180-43bd-93a5-4d64f5819a9b', #'CMA CGM'
+  '256c0d0c-e0f1-439b-8c3b-70edfe27278e', #'Evergreen'
+  '3c5d996c-4d4e-4a2b-bce7-1024b46f7300', #'Cosco'
+  '83af97eb-09a7-4a17-a3ca-561f0bbc0b6f', #'Emirates'
+  '3b786382-f751-43b0-a0a6-2ff1a6128be4', #'Hyundai'
+  '9ee49704-f5a7-4f17-9e25-c5c3b5ec3d1d', #'OOCL'
+  'bfd2a958-b70c-4f2e-ae9b-f66f5a211535', #'Wan Hai'
+  'be57f277-0c81-47b4-9322-bf06ccc5314c', #'Zim'
+  '2df9777e-01e9-4f86-83b8-28b36ddf1be1', #'PIL'
+  '25c0df76-5e1a-4f14-9c85-e7f794d8e8b9'  #'ANL'
+]
 
 EXTENSION_ENABLED_MODES = ['manual', 'flash_booking', 'missing_rate', 'disliked_rate', 'spot_negotation', 'rate_sheet']
 
@@ -223,17 +236,17 @@ SPECIFICITY_TYPE_HIERARCHY = {
 
 REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}
 
-FCL_COVERAGE_USERS = {
-    1: "6addea60-a3de-4067-b08d-ece04be594ab",
-    2: "0b404055-05de-4c2f-836c-86f591183d71",
-    3: "3a1599fa-35af-49be-93f9-7784617e088b",
-    4: "d7f62f2d-2b41-41ae-a9f0-200255de4d8f",
-    5: "2b2b8241-8900-418d-b90d-e755e92f3911",
-    6: "d46a98e6-7848-4862-bb21-c8e727588039",
-    7: "dc100acc-a416-4ff2-8a61-cb265b018fb1",
-    8: "51641e0e-a5da-452a-81fc-ccb8fe6df343"
-    
-}
+FCL_IMPORT_COVERAGE_USERS = [
+  'f47788fe-85e8-4f86-a9d7-7c7902ea864a',
+  '51641e0e-a5da-452a-81fc-ccb8fe6df343',
+  '922b367f-0f3e-4872-91d0-68413fc7f955'
+]
+
+FCL_EXPORT_COVERAGE_USERS = [
+  '6addea60-a3de-4067-b08d-ece04be594ab',
+  'd7f62f2d-2b41-41ae-a9f0-200255de4d8f',
+  '329fb317-f2f9-4c41-aabd-4a9befc53721'
+]
 
 CRITICAL_PORTS_INDIA_VIETNAM = [
     'eb187b38-51b2-4a5e-9f3c-978033ca1ddf',

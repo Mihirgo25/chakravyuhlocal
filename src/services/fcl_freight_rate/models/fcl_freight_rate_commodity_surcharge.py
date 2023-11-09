@@ -110,7 +110,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
       return False
     
     def validate_currency(self):
-        fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
+        fcl_freight_currencies = FCL_FREIGHT_CURRENCIES.get()
 
         currencies = [currency for currency in fcl_freight_currencies]
         if self.currency and self.currency in currencies:

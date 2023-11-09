@@ -1003,7 +1003,72 @@ class DeleteFclFreightRateJob(BaseModel):
     id: str = None
     closing_remarks: str = None
     data: dict = {}
+    source_id: str = None
+    shipment_id: str = None
+    service_id: str = None
     rate_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
 
+class CreateFclFreightRateJob(BaseModel):
+    source: str = None
+    source_id: str = None
+    shipment_id: str = None
+    shipment_serial_id: int = None
+    service_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    origin_port_id: str = None
+    origin_main_port_id: str = None
+    destination_port_id: str = None
+    destination_main_port_id: str = None
+    shipping_line_id: str = None
+    service_provider_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    is_visible: bool = True
+    rate_type: str = None
+
+
+class CreateFclFreightRateLocalJob(BaseModel):
+    source: str = None
+    source_id: str = None
+    shipment_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    port_id: str = None
+    terminal_id: str = None
+    main_port_id: str = None
+    shipping_line_id: str = None
+    service_provider_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    trade_type: str = None
+    is_visible: bool = True
+    rate_type: str = None
+
+
+class DeleteFclFreightRateLocalJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    source_id: str = None
+    shipment_id: str = None
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    
+class UpdateFclFreightRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
+    
+class UpdateFclFreightRateLocalJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
+    

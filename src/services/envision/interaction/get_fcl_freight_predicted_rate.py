@@ -1,5 +1,5 @@
 from configs.definitions import ROOT_DIR
-from configs.fcl_freight_rate_constants import SHIPPING_LINES_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID
+from configs.fcl_freight_rate_constants import  DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID
 from configs.global_constants import HAZ_CLASSES
 import pickle, joblib, os
 from datetime import datetime, timedelta
@@ -7,8 +7,7 @@ import pandas as pd, numpy as np, concurrent.futures
 from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
 from libs.get_distance import get_distance
-from services.chakravyuh.interaction.get_shipping_lines_for_prediction import get_shipping_lines_for_prediction
-from configs.definitions import FCL_PREDICTION_MODEL
+from configs.yml_definitions import FCL_PREDICTION_MODEL
     
 def insert_rates_to_rms(create_params):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data    
@@ -20,68 +19,37 @@ def insert_rates_to_rms(create_params):
         create_param['creation_id'] = rate_card_id
         create_param['predicted_price'] = final_bas_price_to_rms
 
-    return create_params
-
-def relevant_shipping_lines(request):
-    origin_location_ids = [request['origin_port_id'], request['origin_country_id']]
-    destination_location_ids = [request['destination_port_id'], request['destination_country_id']]
-    container_size = request['container_size']
-    container_type = request['container_type']
-    sl_ids = get_shipping_lines_for_prediction(origin_location_ids, destination_location_ids, container_size, container_type)
-
-    if len(sl_ids):
-        return sl_ids
-    return SHIPPING_LINES_FOR_PREDICTION
+    return create_params  
 
 
-def get_fcl_freight_predicted_rate(request):
+def get_fcl_freight_predicted_rate(request, serviceable_shipping_lines=[]):
     from celery_worker import create_fcl_freight_rate_feedback_for_prediction
-    if type(request) == dict:
-        request = request
-    else:
+    if type(request) != dict:
         request = request.__dict__
-    
-    location_data = maps.list_locations_mapping({'location_id':[request['origin_port_id'],request['destination_port_id']],'type':['main_ports']})
-    if location_data and isinstance(location_data, dict):
-        location_data = location_data['list']
-    else:
-        location_data = []
-
-    origin_main_port_ids = []
-    destination_main_port_ids = []
-
-    for loc in location_data:
-        if loc['icd_port_id'] == request['origin_port_id']:
-            origin_main_port_ids.append(loc['id'])
-        elif loc['icd_port_id'] == request['destination_port_id']:
-            destination_main_port_ids.append(loc['id'])
-
-    if len(origin_main_port_ids) == 0:
-        origin_main_port_ids.append(request['origin_port_id'])
-    elif len(origin_main_port_ids) > 2:
-        origin_main_port_ids = origin_main_port_ids[:2]
-        
-    if len(destination_main_port_ids) == 0:
-        destination_main_port_ids.append(request['destination_port_id'])
-    elif len(destination_main_port_ids) > 2:
-        destination_main_port_ids = destination_main_port_ids[:2]
-
-    all_shipping_lines = relevant_shipping_lines(request)
-    if request.get('shipping_line_id'):
-        all_shipping_lines = [request.get('shipping_line_id')]
 
     data_for_feedback = []
-    for origin_port_id in origin_main_port_ids:
-        for destination_port_id in destination_main_port_ids:
-            ports_distance = maps.get_sea_route({'origin_port_id':origin_port_id, 'destination_port_id':destination_port_id, 'includes':['length']})
-            if ports_distance and isinstance(ports_distance, dict):
-                ports_distance = ports_distance['length']['length']
-            else:
-                port_dict = joblib.load(open(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "seaports_dict.pkl") , "rb"))
-                ports_distance = get_distance(port_dict.get(request['origin_port_id']), port_dict.get(request['destination_port_id']))
-            with concurrent.futures.ThreadPoolExecutor(max_workers = len(all_shipping_lines)) as executor:
-                futures = [executor.submit(predict_rates, origin_port_id, destination_port_id, shipping_line_id, request, ports_distance) for shipping_line_id in all_shipping_lines]
-            data_for_feedback.extend(futures)
+
+    for hash in serviceable_shipping_lines:
+        if not hash.get('shipping_lines'):
+            continue
+        
+        origin_port_id = hash.get('origin_main_port_id') or hash.get('origin_port_id')
+        destination_port_id = hash.get('destination_main_port_id') or hash.get('destination_port_id')
+        
+        if request.get('shipping_line_id') and request['shipping_line_id'] in hash['shipping_lines']:
+            all_shipping_lines = [request['shipping_line_id']]
+        else:
+            all_shipping_lines = hash['shipping_lines']
+        
+        ports_distance = maps.get_sea_route({'origin_port_id': origin_port_id, 'destination_port_id': destination_port_id, 'includes':['length']})
+        if ports_distance and isinstance(ports_distance, dict):
+            ports_distance = ports_distance['length']['length']
+        else:
+            port_dict = joblib.load(open(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "seaports_dict.pkl") , "rb"))
+            ports_distance = get_distance(port_dict.get(request['origin_port_id']), port_dict.get(request['destination_port_id']))
+        with concurrent.futures.ThreadPoolExecutor(max_workers = len(all_shipping_lines)) as executor:
+            futures = [executor.submit(predict_rates, origin_port_id, destination_port_id, shipping_line_id, request, ports_distance) for shipping_line_id in all_shipping_lines]
+        data_for_feedback.extend(futures)
 
     for i in range(len(data_for_feedback)):
         data_for_feedback[i] = data_for_feedback[i].result()
@@ -96,7 +64,7 @@ def get_fcl_freight_predicted_rate(request):
 
 def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request, ports_distance):
     validity_start = datetime.now().date().isoformat()
-    validity_end = (datetime.now() + timedelta(days = 7)).date().isoformat()
+    validity_end = (datetime.now() + timedelta(days = 3)).date().isoformat()
 
     shipping_line_dict = pickle.load(open(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models","shipping_line.pkl"), 'rb'))
     if request['origin_country_id'] == request['destination_country_id']:

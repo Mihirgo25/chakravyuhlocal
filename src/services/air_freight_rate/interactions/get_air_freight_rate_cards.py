@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from datetime import datetime
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
-from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES, COGOXPRESS,SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS,DEFAULT_NOT_APPLICABLE_LINE_ITEMS
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES, COGOXPRESS, SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING, DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL, BREAK_EVEN_POINT_MAPPING
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_operators
 from database.rails_db import get_eligible_orgs
@@ -14,7 +14,7 @@ import sentry_sdk
 import traceback
 from services.air_freight_rate.interactions.get_air_freight_rates_from_clusters import get_air_freight_rates_from_clusters
 from rms_utils.filter_predicted_or_extension_rates import filter_predicted_or_extension_rates
-from services.air_freight_rate.air_celery_worker import create_jobs_for_predicted_air_freight_rate_delay
+# from services.air_freight_rate.air_celery_worker import create_jobs_for_predicted_air_freight_rate_delay
 
 def initialize_freight_query(requirements,prediction_required=False):
     freight_query = AirFreightRate.select(
@@ -63,16 +63,20 @@ def initialize_freight_query(requirements,prediction_required=False):
         freight_query.commodity_sub_type == requirements.get('commodity_subtype_code')
 
     freight_query = freight_query.where(AirFreightRate.last_rate_available_date >= requirements['validity_start'])
-    if not prediction_required:
-        freight_query  = freight_query.where(AirFreightRate.source != 'predicted')
+    if  prediction_required:
+        freight_query  = freight_query.where(AirFreightRate.source == 'predicted')
 
     return freight_query
 
 
 def build_response_object(freight_rate,requirements,apply_density_matching):
     source = 'spot_rates'
+    rate_type = freight_rate.get('rate_type')
     if freight_rate['source'] == 'predicted':
         source = 'predicted'
+    if rate_type == 'non_tariff_rate':
+        rate_type = 'market_place'
+        source = 'non_tariff_rate'
 
     response_object = {
         'airline_id': freight_rate['airline_id'],
@@ -92,7 +96,7 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
         'rate_id': freight_rate['id'],
         'importer_exporter_id': freight_rate['importer_exporter_id'],
         'cogo_entity_id': freight_rate['cogo_entity_id'],
-        'rate_type': freight_rate.get('rate_type')
+        'rate_type': rate_type
     }
     
     freight_object = add_freight_objects(freight_rate,response_object,requirements)
@@ -128,12 +132,13 @@ def add_surcharge_object(freight_rate,response_object,requirements,chargeable_we
     return True
 
 def build_surcharge_line_item_object(line_item,requirements,chargeable_weight,freight_rate):
-    surcharge_charges = AIR_FREIGHT_SURCHARGES.get(line_item['code'])
-    not_required_charges = DEFAULT_NOT_APPLICABLE_LINE_ITEMS
-    
-    if requirements['origin_airport_id'] in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS and freight_rate['airline_id'] in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS.get(requirements['origin_airport_id'])['airlines']:
-        not_required_charges = SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS[requirements['origin_airport_id']]['not_eligible_line_items']
-    if not surcharge_charges or line_item['code'] in not_required_charges:
+    surcharge_charges = AIR_FREIGHT_SURCHARGES.get().get(line_item['code'])
+
+    required_charges = DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL
+
+    if freight_rate['airline_id'] in SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING:
+        required_charges = SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING[freight_rate['airline_id']]['eligible_line_items']
+    if not surcharge_charges or line_item['code'] not in required_charges:
         return
 
     line_item = {key:val for key,val in line_item.items() if key in ['code','price','min_price','currency','remarks','unit']}
@@ -193,13 +198,13 @@ def add_freight_objects(freight_query_result, response_object, requirements):
     freight_validities = freight_query_result['validities']
     required_weight = get_chargeable_weight(requirements)
     for freight_validity in freight_validities:
-        freight_object = build_freight_object(freight_validity,required_weight,requirements)
+        freight_object = build_freight_object(freight_validity,required_weight,requirements,response_object)
         if not freight_object:
             continue
         response_object['freights'].append(freight_object)
     return len(response_object['freights'])>0
 
-def build_freight_object(freight_validity,required_weight,requirements):
+def build_freight_object(freight_validity,required_weight,requirements,response_object):
     validity_start = datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date()
     validity_end = datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date()
     if validity_start > requirements.get('validity_end').date() or validity_end < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < validity_start or requirements.get('cargo_clearance_date') > validity_end:
@@ -240,7 +245,7 @@ def build_freight_object(freight_validity,required_weight,requirements):
     if not required_slab:
         return None
 
-    if required_weight <= 500:
+    if required_weight <= 500 and not (response_object['airline_id'] in (BREAK_EVEN_POINT_MAPPING.get(response_object['origin_airport_id']) or [])):
         required_next_slab = None
         for weight_slab in weight_slabs:
             if int(weight_slab['lower_limit'])<=required_slab['upper_limit']+1 and weight_slab['upper_limit'] > (required_slab['upper_limit']+1):
@@ -262,7 +267,7 @@ def build_freight_object(freight_validity,required_weight,requirements):
     line_item = { 'code': 'BAS', 'unit': 'per_kg', 'price': price, 'currency': currency, 'min_price': min_price, 'remarks': [] }
     #  code name from charges but not required as there only one line item
 
-    code_config = AIR_FREIGHT_CHARGES.get(line_item['code'])
+    code_config = AIR_FREIGHT_CHARGES.get().get(line_item['code'])
     if not code_config:
         return
     if line_item.get('unit') == 'per_package':
@@ -374,30 +379,6 @@ def pre_discard_noneligible_rates(freight_rates):
         freight_rates = discard_noneligible_airlines(freight_rates)
     return freight_rates
 
-def remove_cogoxpress_service_provider(freight_rates):
-    service_providers_hash = {}
-    for freight_rate in freight_rates:
-        key =':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or "",freight_rate['rate_type'] or "",freight_rate['source'] or ""])
-        if key in service_providers_hash.keys():
-            service_providers_hash[freight_rate['id']].append(freight_rate)
-        else:
-            service_providers_hash[freight_rate['id']] = [freight_rate]
-
-    
-    new_list = []
-    for key, rate_list in service_providers_hash.items():
-        service_providers = set()
-        for rate in rate_list:
-            service_providers.add(rate['service_provider_id'])
-        service_providers = list(service_providers)  
-        is_other_lsps_present = len(service_providers) > 1
-        for new_rate in rate_list:
-            if is_other_lsps_present and new_rate['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
-                continue
-            new_list.append(new_rate)
-    
-    return new_list
-
 def sort_items(item):
     return datetime.fromisoformat(item['updated_at'])
 
@@ -446,26 +427,25 @@ def post_discard_less_relevant_rates(freight_rates):
     return all_freight_rates
 
 def get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted):
+    try:
+        get_air_freight_rates_from_clusters(requirements)
+    except:
+        pass
+    cluster_query = initialize_freight_query(requirements)
+    cluster_rates = jsonable_encoder(list(cluster_query.dicts()))
+    cluster_rates = pre_discard_noneligible_rates(cluster_rates)
+    if cluster_rates:
+        freight_rates = cluster_rates
+        freight_rates = valid_weight_slabs(freight_rates,requirements)
+
+
     if len(freight_rates) == 0:
-        try:
-            get_air_freight_rates_from_clusters(requirements)
-        except:
-            pass
-        
-        cluster_query = initialize_freight_query(requirements)
-        cluster_rates = jsonable_encoder(list(cluster_query.dicts()))
-        if cluster_rates:
-            freight_rates = cluster_rates
-            freight_rates = pre_discard_noneligible_rates(freight_rates)
-            freight_rates = remove_cogoxpress_service_provider(freight_rates)
-            freight_rates = valid_weight_slabs(freight_rates,requirements)
-
-
-    if len(freight_rates) ==0:
         get_air_freight_rate_prediction(requirements)
         is_predicted = True
         freight_rates = initialize_freight_query(requirements,True)
         freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+        freight_rates = pre_discard_noneligible_rates(freight_rates)
+
     return freight_rates,is_predicted
 
 def valid_weight_slabs(freight_rates, requirements):
@@ -492,6 +472,37 @@ def valid_weight_slabs(freight_rates, requirements):
             valid_rates.append(freight_rate)
     return valid_rates
 
+def all_rates_predicted(freight_rates):
+    freight_rates_length = len(freight_rates)
+    predicted_rates_length = 0
+    for rate in freight_rates:
+        if rate["source"] == "predicted":
+            predicted_rates_length += 1
+            
+    if predicted_rates_length == freight_rates_length != 0:
+        return True
+    else:
+        return False
+    
+def filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted):
+    freight_rates_length = len(freight_rates)
+    if freight_rates_length != 0 and not is_predicted:
+        
+        if not are_all_rates_predicted:
+            freight_rates = list(filter(lambda item: item['source'] != 'predicted', freight_rates))
+            new_freight_rates_length = len(freight_rates)
+            cogoxpress_freight_rates_length = 0
+            for val in freight_rates:
+                if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
+                    cogoxpress_freight_rates_length += 1
+            
+            if cogoxpress_freight_rates_length != 0 and cogoxpress_freight_rates_length != new_freight_rates_length:
+                freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+        else:
+                is_predicted = True
+                
+    return freight_rates, is_predicted
+
 
 def get_air_freight_rate_cards(requirements):
     try:
@@ -507,14 +518,16 @@ def get_air_freight_rate_cards(requirements):
         freight_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(freight_query.dicts()))
         freight_rates = pre_discard_noneligible_rates(freight_rates)
-        freight_rates = remove_cogoxpress_service_provider(freight_rates)
 
         freight_rates = valid_weight_slabs(freight_rates,requirements)
-        freight_rates = filter_predicted_or_extension_rates(freight_rates)
 
         is_predicted = False
-        
-        freight_rates,is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
+        are_all_rates_predicted = all_rates_predicted(freight_rates)
+        if len(freight_rates) == 0 or are_all_rates_predicted:
+            freight_rates, is_predicted = get_cluster_or_predicted_rates(requirements,freight_rates,is_predicted)
+            
+        freight_rates, is_predicted = filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted)
+            
         freight_rates = post_discard_less_relevant_rates(freight_rates)
         missing_surcharge = get_missing_surcharges(freight_rates)
         surcharges = get_surcharges(requirements,missing_surcharge)
@@ -524,7 +537,7 @@ def get_air_freight_rate_cards(requirements):
 
         freight_rates = build_response_list(freight_rates,requirements, apply_density_matching)
         
-        create_jobs_for_predicted_air_freight_rate_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements}, queue='critical')
+        # create_jobs_for_predicted_air_freight_rate_delay.apply_async(kwargs = {'is_predicted':is_predicted, 'requirements': requirements}, queue='critical')
         return {
             'list': freight_rates
         }

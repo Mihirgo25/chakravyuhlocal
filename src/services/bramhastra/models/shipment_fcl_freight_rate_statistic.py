@@ -4,6 +4,7 @@ from peewee import (
     CharField,
     IntegerField,
     FloatField,
+    BigAutoField,
     BigIntegerField,
     TextField,
 )
@@ -19,26 +20,26 @@ class BaseModel(Model):
 
 
 class ShipmentFclFreightRateStatistic(BaseModel):
-    id = BigIntegerField(sequence="shipment_fcl_freight_rate_services_statistics_seq")
-    fcl_freight_rate_statistic_id = BigIntegerField()
+    id = BigAutoField()
+    fcl_freight_rate_statistic_id = BigIntegerField(null = True)
     rate_id = UUIDField(null=True)
     validity_id = UUIDField(
         null=True
     )  # this rate and validity id is different from what fcl_freight_rate_statistic table implies
     shipment_id = UUIDField(null=True, index=True)
     shipment_serial_id = BigIntegerField(null = True)
-    shipment_source = CharField()
-    containers_count = IntegerField()
-    cargo_weight_per_container = FloatField()
+    shipment_source = CharField(null = True)
+    containers_count = IntegerField(null = True)
+    cargo_weight_per_container = FloatField(null = True)
     shipment_state = TextField(null=True)
     shipment_service_id = UUIDField(null=True)
-    shipment_cancelled = IntegerField(default=0)
+    shipment_cancelled = IntegerField(default=0,null = True)
     shipment_cancellation_reason = TextField(default="None", index=True)
-    shipment_completed = IntegerField(default=0)
-    shipment_aborted = IntegerField(default=0)
-    shipment_in_progress = IntegerField(default=0)
-    shipment_confirmed_by_importer_exporter = IntegerField(default=0)
-    shipment_recieved = IntegerField(default=0)
+    shipment_completed = IntegerField(default=0,null = True)
+    shipment_aborted = IntegerField(default=0,null = True)
+    shipment_in_progress = IntegerField(default=0,null = True)
+    shipment_confirmed_by_importer_exporter = IntegerField(default=0,null = True)
+    shipment_recieved = IntegerField(default=0,null = True)
     shipment_source_id = UUIDField(null=True)
     shipment_created_at = DateTimeTZField(null=True)
     shipment_updated_at = DateTimeTZField(null=True)

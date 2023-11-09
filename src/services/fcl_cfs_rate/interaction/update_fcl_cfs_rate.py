@@ -24,6 +24,7 @@ def update_fcl_cfs_rate(request):
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):
+    from services.fcl_cfs_rate.fcl_cfs_celery_worker import update_fcl_cfs_rate_job_on_rate_addition_delay
     cfs_object = find_cfs_object(request)
 
     if not cfs_object:
@@ -52,6 +53,9 @@ def execute_transaction_code(request):
         cfs_object.save()
     except Exception as e:
         print("Exception in updating rate", e)
+        
+    if request.get('rate_type') == "market_place":
+        update_fcl_cfs_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": cfs_object.id},queue='fcl_freight_rate')
 
     return {'id': cfs_object.id}
 

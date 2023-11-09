@@ -4,6 +4,7 @@ from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from libs.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_normalized_line_items import get_normalized_line_items
 
 def create_fcl_customs_rate(request):
     with db.atomic():
@@ -11,6 +12,7 @@ def create_fcl_customs_rate(request):
 
 def execute_transaction_code(request):
   from celery_worker import fcl_customs_functions_delay
+  from services.fcl_customs_rate.fcl_customs_celery_worker import update_fcl_customs_rate_job_on_rate_addition_delay
   request = {key: value for key, value in request.items() if value is not None}
   params = get_create_object_params(request)
   customs_rate = FclCustomsRate.select().where(
@@ -21,8 +23,10 @@ def execute_transaction_code(request):
         FclCustomsRate.commodity == request.get('commodity'),
         FclCustomsRate.service_provider_id==request.get('service_provider_id'),
         FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id'),
-        FclCustomsRate.rate_type == request.get('rate_type')).first()
-      
+        FclCustomsRate.rate_type == request.get('rate_type'),
+        ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True)))
+        ).order_by(FclCustomsRate.cargo_handling_type.desc(nulls='LAST')).first()
+
   if not customs_rate:
     customs_rate = FclCustomsRate(**params)
     customs_rate.set_location()
@@ -31,7 +35,7 @@ def execute_transaction_code(request):
 
   customs_rate.sourced_by_id = request.get("sourced_by_id")
   customs_rate.procured_by_id = request.get("procured_by_id")
-  customs_rate.customs_line_items = request.get('customs_line_items')
+  customs_rate.customs_line_items = get_normalized_line_items(request.get('customs_line_items'))
   customs_rate.cfs_line_items = request.get('cfs_line_items')
 
   customs_rate.set_platform_price()
@@ -39,7 +43,7 @@ def execute_transaction_code(request):
 
   customs_rate.validate_before_save()
   customs_rate.update_customs_line_item_messages()
-  
+
   try:
      customs_rate.save()
   except Exception as e:
@@ -54,6 +58,9 @@ def execute_transaction_code(request):
   fcl_customs_functions_delay.apply_async(kwargs={'fcl_customs_object':customs_rate, 'request':request},queue = 'low')
   get_multiple_service_objects(customs_rate)
 
+  if params['rate_type'] == "market_place":
+        update_fcl_customs_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": customs_rate.id},queue='fcl_freight_rate')
+
   return {'id': customs_rate.id}
 
 def get_create_object_params(request):
@@ -67,7 +74,8 @@ def get_create_object_params(request):
       'importer_exporter_id' : request.get('importer_exporter_id'),
       'accuracy': request.get('accuracy', 100),
       'mode' : request.get('mode','manual'),
-      "rate_type" : request.get('rate_type', DEFAULT_RATE_TYPE)
+      "rate_type" : request.get('rate_type', DEFAULT_RATE_TYPE),
+      "cargo_handling_type":request.get('cargo_handling_type')
     }
 
 def create_audit(request, customs_rate_id):

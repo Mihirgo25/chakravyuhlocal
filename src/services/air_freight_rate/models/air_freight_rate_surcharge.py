@@ -6,7 +6,7 @@ from services.air_freight_rate.air_freight_rate_params import LineItem
 from fastapi import HTTPException
 from configs.definitions import AIR_FREIGHT_SURCHARGES
 from micro_services.client import maps
-from services.air_freight_rate.constants.air_freight_rate_constants import *
+from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL,SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING,COMMODITY,COMMODITY_TYPE,AIR_OPERATION_TYPES
 from database.rails_db import get_operators,get_eligible_orgs
 
 class UnknownField(object):
@@ -61,14 +61,13 @@ class AirFreightRateSurcharge(BaseModel):
         table_name = 'air_freight_rate_surcharges'
 
     def detail(self):
-        air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES
+        air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES.get()
         new_line_items = []
-        not_required_charges = DEFAULT_NOT_APPLICABLE_LINE_ITEMS
-        origin_airport_id = str(self.origin_airport_id)
-        if origin_airport_id in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS and str(self.airline_id) in SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS.get(origin_airport_id)['airlines']:
-            not_required_charges = SURCHARGE_NOT_ELIGIBLE_LINE_ITEM_MAPPINGS[origin_airport_id]['not_eligible_line_items']
+        required_charges = DEFAULT_APPLICABLE_LINE_ITEMS_MANUAL
+        if str(self.airline_id) in SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING:
+            required_charges = SURCHARGE_ELIGIBLE_LINE_ITEMS_MAPPING[str(self.airline_id)]['eligible_line_items']
         for line_item in self.line_items:
-            if line_item['code'] in not_required_charges:
+            if line_item['code'] not in required_charges:
                 continue
             code_config = air_freight_surcharges_dict.get(line_item['code'])
             if not code_config:
@@ -95,7 +94,7 @@ class AirFreightRateSurcharge(BaseModel):
         is_line_items_info_messages_present = False
 
         commodity = self.commodity
-        air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES
+        air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES.get()
         grouped_charge_codes = {}
         for line_item in self.line_items:
             grouped_charge_codes[line_item.get('code')] = line_item
@@ -186,7 +185,7 @@ class AirFreightRateSurcharge(BaseModel):
     def possible_charge_codes(self):
         commodity = self.commodity
         commodity_type = self.commodity_type
-        air_freight_surcharges = AIR_FREIGHT_SURCHARGES
+        air_freight_surcharges = AIR_FREIGHT_SURCHARGES.get()
 
 
         charge_codes = {}

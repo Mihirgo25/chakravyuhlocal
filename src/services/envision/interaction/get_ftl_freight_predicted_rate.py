@@ -4,7 +4,7 @@ import os
 import joblib
 from configs.ftl_freight_rate_constants import *
 from micro_services.client import maps
-from configs.definitions import FTL_PREDICTION_MODEL
+from configs.yml_definitions import FTL_PREDICTION_MODEL
 
 def predict_ftl_freight_rate(request):
     if type(request) == dict:
