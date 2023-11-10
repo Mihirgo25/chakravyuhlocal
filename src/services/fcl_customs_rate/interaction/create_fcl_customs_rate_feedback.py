@@ -52,8 +52,10 @@ def execute_transaction_code(request):
     create_audit(request, customs_feedback)
     get_multiple_service_objects(customs_feedback)
 
-    request['source_id'] = customs_feedback.id
-    create_fcl_customs_rate_job(request, "rate_feedback")
+    if customs_feedback.feedback_type == 'disliked':
+        request['source_id'] = customs_feedback.id
+        create_fcl_customs_rate_job(request, "rate_feedback")
+        
     return {
       'id': request.get('rate_id')
     }
@@ -72,7 +74,8 @@ def get_create_params(request):
         'trade_type':request.get('trade_type'),
         'trade_id':request.get('trade_id'),
         'commodity': request.get('commodity'),
-        'service_provider_id': request.get('service_provider_id')
+        'service_provider_id': request.get('service_provider_id'),
+        'cargo_handling_type' : request.get('cargo_handling_type')
     }
 
 def create_audit(request, customs_feedback):
