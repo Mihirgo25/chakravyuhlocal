@@ -965,3 +965,13 @@ def create_job_for_critical_port_pairs_delay(self):
             pass
         else:
             raise self.retry(exc=exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def send_notifications_to_supply_agents_local_feedback(self, object):
+    try:
+        object.send_notifications_to_supply_agents()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
