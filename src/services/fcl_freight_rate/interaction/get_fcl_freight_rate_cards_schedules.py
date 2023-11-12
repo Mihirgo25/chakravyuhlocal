@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
-from micro_services.client import maps, common
+from micro_services.client import maps, common, schedule_client
 from configs.fcl_freight_rate_constants import (
     FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES,
     DEFAULT_SCHEDULE_TYPES,
@@ -38,7 +38,7 @@ def create_sailing_schedules_hash(sailing_schedules,sailing_schedules_hash):
     return sailing_schedules_hash  
 
 
-def get_relavant_schedules(data,origin_port,destination_port,origin_port_id,destination_port_id,sailing_schedules_hash):
+def get_relevant_schedules(data,origin_port,destination_port,origin_port_id,destination_port_id,sailing_schedules_hash):
     """Retrieve data_schedules based on provided data and the sailing schedules hash.
     Returns:
         list: List of relevant schedules for the given data.
@@ -86,23 +86,23 @@ def update_grouping(data,currency,locals_price,sailing_schedules_required,detent
 
         if sailing_schedules_required and data["source"] != "cogo_assured_rate":
             key_elements = [
-                data["shipping_line_id"],
+                data.get("shipping_line_id"),
                 str(freight["departure"] or ""),
                 str(freight["arrival"] or "") ,
                 str(freight["number_of_stops"] or "") ,
-                data["origin_main_port_id"] or "",
-                data["destination_main_port_id"] or "",
+                data.get("origin_main_port_id") or "",
+                data.get("destination_main_port_id") or "",
                 str(detention_free_limit) or "",
                 data["source"],
             ]
         else:
             key_elements = [
-                data["shipping_line_id"],
+                data.get("shipping_line_id"),
                 str(freight["validity_start"] or "") ,
                 str(freight["validity_end"] or "") ,
                 str(freight["number_of_stops"] or "") ,
-                data["origin_main_port_id"] or "",
-                data["destination_main_port_id"] or "",
+                data.get("origin_main_port_id") or "",
+                data.get("destination_main_port_id") or "",
                 str(detention_free_limit) or "",
                 data["source"],
             ]
@@ -304,7 +304,7 @@ def get_sailing_schedules_data(port_pair, shipping_line,validity_start):
         "request_source":"spot_search"
     }
 
-    response = maps.get_sailing_schedules(data)
+    response = schedule_client.get_sailing_schedules(data)
     schedules = response.get('list',[])
 
     for schedule in schedules:
@@ -447,13 +447,13 @@ def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rat
                 "destination_country_id": destination_country_id
             }
 
-        response = maps.get_fake_sailing_schedules(data)
+        response = schedule_client.get_fake_sailing_schedules(data)
         fake_schedules = response['list']
 
     grouping = {}
 
     for data in all_rates:
-        data_schedules = get_relavant_schedules(
+        data_schedules = get_relevant_schedules(
             data,
             origin_port,
             destination_port,
