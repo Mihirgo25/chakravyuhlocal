@@ -44,7 +44,8 @@ def initialize_query(request):
         FclCfsRate.free_days,
         FclCfsRate.location_type,
         FclCfsRate.mode,
-        FclCfsRate.rate_type
+        FclCfsRate.rate_type,
+        FclCfsRate.id
     ).where(
         FclCfsRate.location_id << location_ids,
         FclCfsRate.container_size == request.get('container_size'),
@@ -113,7 +114,8 @@ def build_response_object(result, request):
         "line_items": [],
         "free_days": [free_day | {"unit": "per_day"} for free_day in result.get("free_days",[])],
         "source": source,
-        "tags": []
+        "tags": [],
+        "rate_id":result.get('id')
     }
 
     if result.get("service_provider_id") in CONFIRMED_INVENTORY["service_provider_ids"]:

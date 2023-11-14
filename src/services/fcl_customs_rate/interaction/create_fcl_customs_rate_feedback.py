@@ -43,7 +43,15 @@ def execute_transaction_code(request):
     
     customs_feedback.set_location()
     customs_feedback.set_spot_search()
-
+    if customs_feedback.feedbacks:
+        customs_feedback.feedbacks = customs_feedback.feedbacks + request.get('feedbacks')
+    else:
+        customs_feedback.feedbacks = request.get('feedbacks')
+    
+    if customs_feedback.remarks:
+        customs_feedback.remarks = customs_feedback.remarks + request.get('remarks')
+    else:
+        customs_feedback.remarks = request.get('remarks')
     try:
         customs_feedback.save()
     except:
@@ -62,8 +70,8 @@ def execute_transaction_code(request):
 
 def get_create_params(request):
     return {
-        'feedbacks': request.get('feedbacks'),
-        'remarks': request.get('remarks'),
+        # 'feedbacks': request.get('feedbacks'),
+        # 'remarks': request.get('remarks'),
         'preferred_customs_rate': request.get('preferred_customs_rate'),
         'preferred_customs_rate_currency': request.get('preferred_customs_rate_currency'),
         'feedback_type': request.get('feedback_type'),

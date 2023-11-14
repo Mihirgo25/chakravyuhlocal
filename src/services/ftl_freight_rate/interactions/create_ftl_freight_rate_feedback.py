@@ -43,6 +43,15 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
     for attr, value in create_params.items():
         setattr(feedback, attr, value)
+    if feedback.feedbacks:
+        feedback.feedbacks = feedback.feedbacks + request.get('feedbacks')
+    else:
+        feedback.feedbacks = request.get('feedbacks')
+    
+    if feedback.remarks:
+        feedback.remarks = feedback.remarks + request.get('remarks')
+    else:
+        feedback.remarks = request.get('remarks')
     try:
         feedback.save()
     except:
@@ -58,8 +67,8 @@ def execute_transaction_code(request):
 
 def get_create_params(request):
     params =  {
-        'feedbacks': request.get('feedbacks'),
-        'remarks': request.get('remarks'),
+        # 'feedbacks': request.get('feedbacks'),
+        # 'remarks': request.get('remarks'),
         'preferred_freight_rate': request.get('preferred_freight_rate'),
         'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'feedback_type': request.get('feedback_type'),

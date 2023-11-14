@@ -69,6 +69,15 @@ def execute_transaction_code(request):
             setattr(feedback,attr,ids)
         else: 
             setattr(feedback,attr,value)
+    if feedback.feedbacks:
+        feedback.feedbacks = feedback.feedbacks + request.get('feedbacks')
+    else:
+        feedback.feedbacks = request.get('feedbacks')
+    
+    if feedback.remarks:
+        feedback.remarks = feedback.remarks + request.get('remarks')
+    else:
+        feedback.remarks = request.get('remarks')
     feedback.validate_before_save()
     try:
         feedback.save()
@@ -108,8 +117,8 @@ def update_likes_dislike_count(rate,request):
     
 def get_create_params(request,rate):
     params={ 
-        'feedbacks': request.get('feedbacks'),
-        'remarks': request.get('remarks'),
+        # 'feedbacks': request.get('feedbacks'),
+        # 'remarks': request.get('remarks'),
         'preferred_freight_rate': request.get('preferred_freight_rate'),
         'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'preferred_storage_free_days': request.get('preferred_storage_free_days'),
