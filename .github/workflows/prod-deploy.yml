@@ -78,44 +78,44 @@ jobs:
           
       ###### Ocean Rms ######
       
-      # - name: Downloading Ocean Rms Task Definition
-      #   run: |
-      #     aws ecs describe-task-definition --task-definition ${{ env.OCEAN_RMS_ECS_TASK_DEFINITION }} --query taskDefinition > task-definition.json
+      - name: Downloading Ocean Rms Task Definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.OCEAN_RMS_ECS_TASK_DEFINITION }} --query taskDefinition > task-definition.json
 
-      # - name: Fill in the new image ID in the Amazon ECS task definition
-      #   id: rms-task-def
-      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
-      #   with:
-      #     task-definition: task-definition.json
-      #     container-name: ${{ env.OCEAN_RMS_CONTAINER_NAME }}
-      #     image: ${{ env.OCEAN_RMS_REPO_URL }}:${{ steps.image_name.outputs.sha_short }}
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: rms-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.OCEAN_RMS_CONTAINER_NAME }}
+          image: ${{ env.OCEAN_RMS_REPO_URL }}:${{ steps.image_tag.outputs.sha_short }}
 
-      # - name: Deploying Ocean Rms ECS service
-      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      #   with:
-      #     task-definition: ${{ steps.rms-task-def.outputs.task-definition }}
-      #     service: ${{ env.OCEAN_RMS_ECS_SERVICE }}
-      #     cluster: ${{ env.ECS_CLUSTER }}
-      #     wait-for-service-stability: false
+      - name: Deploying Ocean Rms ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.rms-task-def.outputs.task-definition }}
+          service: ${{ env.OCEAN_RMS_ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: false
 
       # ######  Ocean Celery ######
       
-      # - name: Downloading Ocean Celery Task Definition
-      #   run: |
-      #     aws ecs describe-task-definition --task-definition ${{ env.OCEAN_CELERY_ECS_TASK_DEFINITION }} --query taskDefinition > task-definition.json
+      - name: Downloading Ocean Celery Task Definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.OCEAN_CELERY_ECS_TASK_DEFINITION }} --query taskDefinition > task-definition.json
 
-      # - name: Fill in the new image ID in the Amazon ECS task definition
-      #   id: celery-task-def
-      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
-      #   with:
-      #     task-definition: task-definition.json
-      #     container-name: ${{ env.OCEAN_CELERY_CONTAINER_NAME }}
-      #     image: ${{ env.OCEAN_CELERY_REPO_URL }}:${{ steps.image_name.outputs.sha_short }}
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: celery-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.OCEAN_CELERY_CONTAINER_NAME }}
+          image: ${{ env.OCEAN_CELERY_REPO_URL }}:${{ steps.image_tag.outputs.sha_short }}
 
-      # - name: Deploying Ocean Celery ECS service
-      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      #   with:
-      #     task-definition: ${{ steps.celery-task-def.outputs.task-definition }}
-      #     service: ${{ env.OCEAN_CELERY_ECS_SERVICE }}
-      #     cluster: ${{ env.ECS_CLUSTER }}
-      #     wait-for-service-stability: false
+      - name: Deploying Ocean Celery ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.celery-task-def.outputs.task-definition }}
+          service: ${{ env.OCEAN_CELERY_ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: false
