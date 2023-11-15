@@ -39,51 +39,92 @@ def validate_air_freight_unpreferred_operator_function(request):
         return {'message': 'Rates for all  Airlines that are serviceable on this Airport pair are present'}
     
     return {}
-    
+
+def validate_air_locals_unsatisfactory_rate_function(request):
+    from services.air_freight_rate.models.air_freight_rate_local_feedback import AirFreightRateLocalFeedback
+    air_locals_rate = AirFreightRateLocalFeedback.select(AirFreightRateLocalFeedback.id,AirFreightRateLocalFeedback.updated_at).where(
+        AirFreightRateLocalFeedback.id == request.get('rate_id')
+    ).first()
+
+    if air_locals_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
+    return {}
+
+def validate_fcl_locals_unsatisfactory_rate_function(request):
+    from services.fcl_freight_rate.models.fcl_freight_rate_local_feedback import FclFreightRateLocalFeedback
+    fcl_locals_rate = FclFreightRateLocalFeedback.select(FclFreightRateLocalFeedback.id,FclFreightRateLocalFeedback.updated_at).where(
+        FclFreightRateLocalFeedback.id == request.get('rate_id')
+    ).first()
+
+    if fcl_locals_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
+    return {}
+  
 def validate_air_customs_unsatisfactory_rate_function(request):
     from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
     air_customs_rate = AirCustomsRate.select(AirCustomsRate.id,AirCustomsRate.updated_at).where(
         AirCustomsRate.id == request.get('rate_id')
-    ).order_by(AirCustomsRate.updated_at.desc()).first()
+    ).first()
 
-    if air_customs_rate.updated_at.date() < (datetime.now().date() - timedelta(days=30)):
-        return {}
+    if air_customs_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_fcl_customs_unsatisfactory_rate_function(request):
     from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
     fcl_customs_rate = FclCustomsRate.select(FclCustomsRate.id,FclCustomsRate.updated_at).where(
         FclCustomsRate.id == request.get('rate_id')
-    ).order_by(FclCustomsRate.updated_at.desc()).first()
+    ).first()
 
-    if fcl_customs_rate.updated_at.date() < (datetime.now().date() - timedelta(days=30)):
-        return {}
+    if fcl_customs_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_ltl_freight_unsatisfactory_rate_function(request):
+    from micro_services.client import common
+    ltl_freight_rates = common.list_ltl_freight_rates({'filters': {'id': request.get('rate_id')}})
+    if ltl_freight_rates.get('list') and len(ltl_freight_rates['list']) > 0:
+        ltl_freight_rate = ltl_freight_rates['list'][0]
+        if ltl_freight_rate['updated_at'].date() > (datetime.now().date() - timedelta(days=30)):
+            return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_fcl_cfs_unsatisfactory_rate_function(request):
     from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
     fcl_cfs_rate = FclCfsRate.select(FclCfsRate.id,FclCfsRate.updated_at).where(
         FclCfsRate.id == request.get('rate_id')
-    ).order_by(FclCfsRate.updated_at.desc()).first()
+    ).first()
 
-    if fcl_cfs_rate.updated_at.date() < (datetime.now().date() - timedelta(days=30)):
-        return {}
+    if fcl_cfs_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_ftl_freight_unsatisfactory_rate_function(request):
     from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
     ftl_freight_rate = FtlFreightRate.select(FtlFreightRate.id,FtlFreightRate.updated_at).where(
         FtlFreightRate.id == request.get('rate_id')
-    ).order_by(FtlFreightRate.updated_at.desc()).first()
+    ).first()
 
-    if ftl_freight_rate.updated_at.date() < (datetime.now().date() - timedelta(days=30)):
-        return {}
+    if ftl_freight_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_lcl_freight_unsatisfactory_rate_function(request):
+    from micro_services.client import common
+    lcl_freight_rates = common.list_lcl_freight_rates({'filters': {'id': request.get('rate_id')}})
+    if lcl_freight_rates.get('list') and len(lcl_freight_rates['list']) > 0:
+        lcl_freight_rate = lcl_freight_rates['list'][0]
+        if lcl_freight_rate['updated_at'].date() > (datetime.now().date() - timedelta(days=30)):
+            return {'message': 'Best available rate for this port pair'}
+    return {}
+
+def validate_lcl_customs_unsatisfactory_rate_function(request):
+    from micro_services.client import common
+    lcl_customs_rates = common.list_lcl_customs_rates({'filters': {'id': request.get('rate_id')}})
+    if lcl_customs_rates.get('list') and len(lcl_customs_rates['list']) > 0:
+        lcl_customs_rate = lcl_customs_rates['list'][0]
+        if lcl_customs_rate['updated_at'].date() > (datetime.now().date() - timedelta(days=30)):
+            return {'message': 'Best available rate for this port pair'}
     return {}
     
 def validate_fcl_freight_unsatisfactory_rate_function(request):
