@@ -47,7 +47,9 @@ def update_fcl_cfs_rate_job_on_rate_addition_delay(self, request, id):
         if type(exc).__name__ == "HTTPException":
             pass
         else:
-            raise self.retry(exc=exc)from services.fcl_cfs_rate.helpers.update_organization_fcl_cfs import update_organization_fcl_cfs
+            raise self.retry(exc=exc)
+
+from services.fcl_cfs_rate.helpers.update_organization_fcl_cfs import update_organization_fcl_cfs
 from celery_worker import celery
 from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices import update_fcl_cfs_rate_platform_prices
 

@@ -1062,4 +1062,41 @@ class UpdateFclFreightRateLocalJob(BaseModel):
     user_id: str
     performed_by_id: str = None
     performed_by_type: str = None
-    
+
+class DeleteFclFreightRateLocalFeedback(BaseModel):
+    fcl_freight_rate_local_feedback_ids: List[str]
+    closing_remarks: List[str] = []
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+
+class CreateFclFreightRateLocalFeedback(BaseModel):
+    source: str
+    source_id: str
+    performed_by_id: str = None
+    performed_by_org_id: str
+    performed_by_type: str = None
+    rate_id: str
+    validity_id: str
+    likes_count: int
+    dislikes_count: int
+    feedbacks: list[str] = []
+    remarks: list[str] = []
+    preferred_freight_rate: float = None
+    preferred_freight_rate_currency: str = None
+    preferred_detention_free_days: int = None
+    preferred_shipping_line_ids: list[str] = []
+    feedback_type: str
+    booking_params: dict = {}
+    cogo_entity_id: str = None
+    port_id: str = None
+    trade_id: str = None
+    country_id: str = None
+    continent_id: str = None
+    commodity: str = None
+    container_size: str = None
+    container_type: str = None
+    service_provider_id: str = None
+    attachment_file_urls: List[str] = []
+    commodity_description: str = None
+    rate_type: str = None

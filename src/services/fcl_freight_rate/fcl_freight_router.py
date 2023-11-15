@@ -19,6 +19,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_task import c
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_request import create_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_request import create_fcl_freight_rate_local_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_feedback import create_fcl_freight_rate_feedback
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_feedback import create_fcl_freight_rate_local_feedback
 from services.fcl_freight_rate.interaction.create_fcl_weight_slabs_configuration import create_fcl_weight_slabs_configuration
 from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster import get_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
@@ -38,6 +39,7 @@ from services.fcl_freight_rate.interaction.list_dashboard_fcl_freight_rates impo
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_requests import list_fcl_freight_rate_requests
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_local_requests import list_fcl_freight_rate_local_requests
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_feedbacks import list_fcl_freight_rate_feedbacks
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_local_feedbacks import list_fcl_freight_rate_local_feedbacks
 from services.fcl_freight_rate.interaction.list_fcl_freight_commodity_clusters import list_fcl_freight_commodity_clusters
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_commodity_surcharges import list_fcl_freight_rate_commodity_surcharges
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_weight_limits import list_fcl_freight_rate_weight_limits
@@ -71,6 +73,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operatio
 from services.fcl_freight_rate.interaction.create_critical_port_trend_index import create_critical_port_trend_index
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_feedback import delete_fcl_freight_rate_feedback
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local_feedback import delete_fcl_freight_rate_local_feedback
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local_request import delete_fcl_freight_rate_local_request
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_free_day_request import delete_fcl_freight_rate_free_day_request
@@ -2503,5 +2506,59 @@ def update_ltl_freight_rate_job_on_rate_addition_api(
         data = update_ltl_freight_rate_job_on_rate_addition(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.post("/create_fcl_freight_rate_local_feedback")
+def create_fcl_freight_rate_local_feedback_data(request: CreateFclFreightRateLocalFeedback, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        rate_id = create_fcl_freight_rate_local_feedback(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(rate_id))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.post("/delete_fcl_freight_rate_local_feedback")
+def delete_fcl_freight_rates_local_feedback(request: DeleteFclFreightRateLocalFeedback, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        delete_rate = delete_fcl_freight_rate_local_feedback(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.get("/list_fcl_freight_rate_local_feedbacks")
+def list_fcl_freight_rate_local_feedbacks_data(
+    filters: str = None,
+    spot_search_details_required: bool = False,
+    page_limit: int = 10,
+    page: int = 1,
+    performed_by_id: str = None,
+    is_stats_required: bool = True,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_fcl_freight_rate_local_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

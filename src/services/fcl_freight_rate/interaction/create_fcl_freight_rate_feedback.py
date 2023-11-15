@@ -51,6 +51,8 @@ def execute_transaction_code(request):
     if not feedback:
         action = 'create'
         feedback = FclFreightRateFeedback(**row)
+        next_sequence_value = db.execute_sql('SELECT nextval(\'fcl_freight_rate_feedback_serial_id_seq\'::regclass)').fetchone()[0]
+        setattr(feedback,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
 
