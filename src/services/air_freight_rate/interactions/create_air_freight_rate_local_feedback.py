@@ -1,7 +1,7 @@
 from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_local_feedback import AirFreightRateLocalFeedback
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from celery_worker import send_notifications_to_supply_agents_local_feedback
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
@@ -41,7 +41,17 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
 
     for key, value in create_params.items(): 
-        setattr(locals_feedback, key, value) 
+        setattr(locals_feedback, key, value)
+    
+    if locals_feedback.feedbacks:
+        locals_feedback.feedbacks = locals_feedback.feedbacks + request.get('feedbacks')
+    else:
+        locals_feedback.feedbacks = request.get('feedbacks')
+    
+    if locals_feedback.remarks:
+        locals_feedback.remarks = locals_feedback.remarks + request.get('remarks')
+    else:
+        locals_feedback.remarks = request.get('remarks')
 
     try:
         locals_feedback.save()
@@ -59,13 +69,13 @@ def execute_transaction_code(request):
     }
 
 def get_create_params(request):
-    return {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id']} | ({'status': 'active'})
+    return {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks']} | ({'status': 'active'})
 
 def create_audit(request, local_request_id, action_name):
     if request.get('preferred_airline_ids'):
         request['preferred_airline_ids'] = [str(str_id) for str_id in request['preferred_airline_ids']]
 
-    AirFreightRateAudit.create(
+    AirServiceAudit.create(
         action_name = action_name,
         performed_by_id = request.get('performed_by_id'),
         data = {key:value for key,value in request.items() if key != 'performed_by_id'},

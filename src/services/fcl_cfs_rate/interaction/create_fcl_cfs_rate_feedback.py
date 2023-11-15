@@ -40,6 +40,15 @@ def execute_transaction_code(request):
     for attr, value in create_params.items():
         setattr(cfs_feedback, attr, value)
     
+    if cfs_feedback.feedbacks:
+        cfs_feedback.feedbacks = cfs_feedback.feedbacks + request.get('feedbacks')
+    else:
+        cfs_feedback.feedbacks = request.get('feedbacks')
+    
+    if cfs_feedback.remarks:
+        cfs_feedback.remarks = cfs_feedback.remarks + request.get('remarks')
+    else:
+        cfs_feedback.remarks = request.get('remarks')
     cfs_feedback.set_port()
     cfs_feedback.set_spot_search()
 
@@ -59,8 +68,6 @@ def execute_transaction_code(request):
 
 def get_create_params(request):
     return {
-        'feedbacks': request.get('feedbacks'),
-        'remarks': request.get('remarks'),
         'preferred_rate': request.get('preferred_rate'),
         'preferred_rate_currency': request.get('preferred_rate_currency'),
         'feedback_type': request.get('feedback_type'),

@@ -41,7 +41,17 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
 
     for key, value in create_params.items(): 
-        setattr(locals_feedback, key, value) 
+        setattr(locals_feedback, key, value)
+    
+    if locals_feedback.feedbacks:
+        locals_feedback.feedbacks = locals_feedback.feedbacks + request.get('feedbacks')
+    else:
+        locals_feedback.feedbacks = request.get('feedbacks')
+    
+    if locals_feedback.remarks:
+        locals_feedback.remarks = locals_feedback.remarks + request.get('remarks')
+    else:
+        locals_feedback.remarks = request.get('remarks')
 
     try:
         locals_feedback.save()
@@ -59,7 +69,7 @@ def execute_transaction_code(request):
     }
 
 def get_create_params(request):
-    return {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id']} | ({'status': 'active'})
+    return {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks']} | ({'status': 'active'})
 
 def create_audit(request, local_request_id, action_name):
     if request.get('cargo_readiness_date'):
