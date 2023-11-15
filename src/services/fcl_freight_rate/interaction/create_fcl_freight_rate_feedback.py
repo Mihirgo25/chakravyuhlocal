@@ -114,7 +114,7 @@ def get_create_params(request):
         # 'remarks': request.get('remarks'),
         'preferred_freight_rate': request.get('preferred_freight_rate'),
         'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
-        'preferred_detention_free_days': request.get('preferred_detention_free_days'),
+        'preferred_free_days': request.get('preferred_free_days'),
         'preferred_shipping_line_ids': request.get('preferred_shipping_line_ids'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
