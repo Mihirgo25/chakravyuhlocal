@@ -54,7 +54,8 @@ def execute_transaction_code(request):
     send_notifications_to_supply_agents_local_feedback.apply_async(kwargs={'object':locals_feedback},queue='communication')
 
     return {
-    'id': locals_feedback.id
+        'id': locals_feedback.id,
+        'serial_id':locals_feedback.serial_id
     }
 
 def get_create_params(request):

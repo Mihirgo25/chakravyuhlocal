@@ -65,7 +65,8 @@ def execute_transaction_code(request):
         create_fcl_customs_rate_job(request, "rate_feedback")
         
     return {
-      'id': request.get('rate_id')
+      'id': customs_feedback.id,
+      'serial_id':customs_feedback.serial_id
     }
 
 def get_create_params(request):

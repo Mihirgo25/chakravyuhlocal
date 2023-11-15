@@ -53,7 +53,8 @@ def execute_transaction_code(request):
     send_notifications_to_supply_agents_cfs_feedback_delay.apply_async(kwargs = {'object':cfs_feedback, 'request':request}, queue = 'low')
 
     return {
-      'id': request.get('rate_id')
+      'id': cfs_feedback.id,
+      'serial_id':cfs_feedback.serial_id
     }
 
 def get_create_params(request):

@@ -89,7 +89,7 @@ def execute_transaction_code(request):
         
     send_feedback_statistics_in_delay.apply_async(kwargs = {'action': action,'feedback': feedback, 'request': request},queue = 'statistics')
 
-    return {'id': request['rate_id']}
+    return {'id': feedback.id, 'serial_id':feedback.serial_id}
 
 def update_likes_dislikes_count(rate, request):
     validities = rate.validities

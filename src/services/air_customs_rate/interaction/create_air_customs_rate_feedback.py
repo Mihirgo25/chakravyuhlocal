@@ -68,7 +68,8 @@ def execute_transaction_code(request):
         create_air_customs_rate_job(request, "rate_feedback")
 
     return {
-      'id': request.get('rate_id')
+      'id': air_customs_feedback.id,
+      'serial_id':air_customs_feedback.serial_id
     }
 
 def get_create_params(request):

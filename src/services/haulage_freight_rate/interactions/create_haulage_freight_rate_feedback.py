@@ -77,7 +77,7 @@ def execute_transaction_code(request):
         request['source_id'] = feedback.id    
         create_haulage_freight_rate_job(request, "rate_feedback")
         
-    return {'id': feedback.id}
+    return {'id': feedback.id, 'serial_id':feedback.serial_id}
 
  
 def get_create_params(request):
