@@ -126,6 +126,34 @@ class UpdateFclCfsRatePlatformPrice(BaseModel):
   importer_exporter_id: str = None
   is_line_items_error_messages_present: bool = False
 
+class CreateFclCfsRateFeedback(BaseModel):
+  source: str
+  source_id: str
+  performed_by_id: str = None
+  performed_by_org_id: str
+  performed_by_type: str = None
+  rate_id: str
+  likes_count: int
+  dislikes_count: int
+  feedbacks: list[str] = []
+  remarks: list[str] = []
+  preferred_rate: float = None
+  preferred_rate_currency: str = None
+  feedback_type: str
+  booking_params: dict ={}
+  port_id: str = None
+  country_id: str = None
+  trade_type: str = None
+  trade_id: str = None
+  commodity: str = None
+  service_provider_id: str = None
+
+class DeleteFclCfsRateFeedback(BaseModel):
+  fcl_cfs_rate_feedback_ids: list[str]
+  closing_remarks: list[str] = []
+  performed_by_id: str = None
+  performed_by_type: str  = None
+
 class DeleteFclCfsRateJob(BaseModel):
     id: str = None
     closing_remarks: str = None

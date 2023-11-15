@@ -11,7 +11,6 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
-from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
@@ -29,7 +28,6 @@ from services.fcl_freight_rate.interaction.update_cogo_assured_fcl_freight_rate_
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
 from services.chakravyuh.interaction.get_air_invoice_estimation_prediction import invoice_rates_updation
 from services.fcl_customs_rate.interaction.update_fcl_customs_rate_platform_prices import update_fcl_customs_rate_platform_prices
-from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices import update_fcl_cfs_rate_platform_prices 
 from services.extensions.interactions.create_freight_look_rates import create_air_freight_rate_api
 from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 from database.rails_db import get_past_cost_booking_data
@@ -216,6 +214,7 @@ celery.autodiscover_tasks(['services.fcl_customs_rate.fcl_customs_celery_worker'
 celery.autodiscover_tasks(['services.ltl_freight_rate.ltl_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.lcl_freight_rate.lcl_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.lcl_customs_rate.lcl_customs_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.fcl_cfs_rate.fcl_cfs_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.fcl_cfs_rate.fcl_cfs_celery_worker'], force=True)
 
 
@@ -680,32 +679,11 @@ def create_fcl_customs_rate_delay(self, request):
             pass
         else:
             raise self.retry(exc= e)
-        
-@celery.task(bind = True, retry_backoff=True, max_retries=5)
-def create_fcl_cfs_rate_delay(self, request):
-    from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate import create_fcl_cfs_rate
-    try:
-        return create_fcl_cfs_rate(request)
-    except Exception as e:
-        if type(e).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= e)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def update_fcl_customs_rate_platform_prices_delay(self, request):
     try:
         update_fcl_customs_rate_platform_prices(request)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def update_fcl_cfs_rate_platform_prices_delay(self, request):
-    try:
-        update_fcl_cfs_rate_platform_prices(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -723,29 +701,9 @@ def fcl_customs_functions_delay(self,fcl_customs_object,request):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def fcl_cfs_functions_delay(self,fcl_cfs_object,request):
-    try:
-        update_organization_fcl_cfs(request)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
 def bulk_operation_perform_action_functions_fcl_customs_cfs_delay(self, action_name, object, sourced_by_id, procured_by_id):
     try:
         eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')")
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def send_notifications_to_supply_agents_cfs_request_delay(self, object):
-    try:
-        object.send_notifications_to_supply_agents()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -965,3 +923,13 @@ def create_job_for_critical_port_pairs_delay(self):
             pass
         else:
             raise self.retry(exc=exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def send_notifications_to_supply_agents_local_feedback(self, object):
+    try:
+        object.send_notifications_to_supply_agents()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
