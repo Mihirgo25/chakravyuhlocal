@@ -46,8 +46,8 @@ def validate_air_locals_unsatisfactory_rate_function(request):
         AirFreightRateLocalFeedback.id == request.get('rate_id')
     ).first()
 
-    if air_locals_rate.updated_at.date() < (datetime.now().date() - timedelta(days=30)):
-        return {}
+    if air_locals_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_fcl_locals_unsatisfactory_rate_function(request):
@@ -56,8 +56,8 @@ def validate_fcl_locals_unsatisfactory_rate_function(request):
         FclFreightRateLocalFeedback.id == request.get('rate_id')
     ).first()
 
-    if fcl_locals_rate.updated_at.date() < (datetime.now().date() - timedelta(days=30)):
-        return {}
+    if fcl_locals_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
     return {}
   
 def validate_air_customs_unsatisfactory_rate_function(request):
@@ -66,8 +66,8 @@ def validate_air_customs_unsatisfactory_rate_function(request):
         AirCustomsRate.id == request.get('rate_id')
     ).first()
 
-    if air_customs_rate.updated_at.date() < (datetime.now().date() - timedelta(days=30)):
-        return {}
+    if air_customs_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_fcl_customs_unsatisfactory_rate_function(request):
@@ -76,8 +76,8 @@ def validate_fcl_customs_unsatisfactory_rate_function(request):
         FclCustomsRate.id == request.get('rate_id')
     ).first()
 
-    if fcl_customs_rate.updated_at.date() < (datetime.now().date() - timedelta(days=30)):
-        return {}
+    if fcl_customs_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_ltl_freight_unsatisfactory_rate_function(request):
@@ -85,8 +85,8 @@ def validate_ltl_freight_unsatisfactory_rate_function(request):
     ltl_freight_rates = common.list_ltl_freight_rates({'filters': {'id': request.get('rate_id')}})
     if ltl_freight_rates.get('list') and len(ltl_freight_rates['list']) > 0:
         ltl_freight_rate = ltl_freight_rates['list'][0]
-        if ltl_freight_rate['updated_at'].date() < (datetime.now().date() - timedelta(days=30)):
-            return {}
+        if ltl_freight_rate['updated_at'].date() > (datetime.now().date() - timedelta(days=30)):
+            return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_fcl_cfs_unsatisfactory_rate_function(request):
@@ -95,8 +95,8 @@ def validate_fcl_cfs_unsatisfactory_rate_function(request):
         FclCfsRate.id == request.get('rate_id')
     ).first()
 
-    if fcl_cfs_rate.updated_at.date() < (datetime.now().date() - timedelta(days=30)):
-        return {}
+    if fcl_cfs_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_ftl_freight_unsatisfactory_rate_function(request):
@@ -105,8 +105,8 @@ def validate_ftl_freight_unsatisfactory_rate_function(request):
         FtlFreightRate.id == request.get('rate_id')
     ).first()
 
-    if ftl_freight_rate.updated_at.date() < (datetime.now().date() - timedelta(days=30)):
-        return {}
+    if ftl_freight_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
+        return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_lcl_freight_unsatisfactory_rate_function(request):
@@ -114,8 +114,8 @@ def validate_lcl_freight_unsatisfactory_rate_function(request):
     lcl_freight_rates = common.list_lcl_freight_rates({'filters': {'id': request.get('rate_id')}})
     if lcl_freight_rates.get('list') and len(lcl_freight_rates['list']) > 0:
         lcl_freight_rate = lcl_freight_rates['list'][0]
-        if lcl_freight_rate['updated_at'].date() < (datetime.now().date() - timedelta(days=30)):
-            return {}
+        if lcl_freight_rate['updated_at'].date() > (datetime.now().date() - timedelta(days=30)):
+            return {'message': 'Best available rate for this port pair'}
     return {}
 
 def validate_lcl_customs_unsatisfactory_rate_function(request):
@@ -123,8 +123,8 @@ def validate_lcl_customs_unsatisfactory_rate_function(request):
     lcl_customs_rates = common.list_lcl_customs_rates({'filters': {'id': request.get('rate_id')}})
     if lcl_customs_rates.get('list') and len(lcl_customs_rates['list']) > 0:
         lcl_customs_rate = lcl_customs_rates['list'][0]
-        if lcl_customs_rate['updated_at'].date() < (datetime.now().date() - timedelta(days=30)):
-            return {}
+        if lcl_customs_rate['updated_at'].date() > (datetime.now().date() - timedelta(days=30)):
+            return {'message': 'Best available rate for this port pair'}
     return {}
     
 def validate_fcl_freight_unsatisfactory_rate_function(request):
