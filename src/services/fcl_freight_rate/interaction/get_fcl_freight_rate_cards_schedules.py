@@ -38,7 +38,7 @@ def create_sailing_schedules_hash(sailing_schedules,sailing_schedules_hash):
     return sailing_schedules_hash  
 
 
-def get_relavant_schedules(data,origin_port,destination_port,origin_port_id,destination_port_id,sailing_schedules_hash):
+def get_relevant_schedules(data,origin_port,destination_port,origin_port_id,destination_port_id,sailing_schedules_hash):
     """Retrieve data_schedules based on provided data and the sailing schedules hash.
     Returns:
         list: List of relevant schedules for the given data.
@@ -453,7 +453,7 @@ def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rat
     grouping = {}
 
     for data in all_rates:
-        data_schedules = get_relavant_schedules(
+        data_schedules = get_relevant_schedules(
             data,
             origin_port,
             destination_port,
