@@ -14,7 +14,7 @@ def execute_transaction_code(request):
     rate = FclCfsRate.select(FclCfsRate.id).where(FclCfsRate.id == request.get('rate_id')).first()
 
     if not rate:
-        raise HTTPException(status_code=404, detail='Rate not found')
+        raise HTTPException(status_code=404, detail='CFS Rate not found')
 
     params = {
         'fcl_cfs_rate_id': request.get('rate_id'),

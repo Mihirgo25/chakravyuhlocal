@@ -10,7 +10,7 @@ def delete_fcl_cfs_rate_feedback(request):
 
 def execute_transaction_code(request):
     from services.fcl_cfs_rate.fcl_cfs_celery_worker import send_notifications_to_sales_agent_fcl_cfs_feedback_delay
-    objects = find_objects(request)
+    objects = find_feedback_objects(request)
 
     if not objects:
       raise HTTPException(status_code=400, detail="Cfs rate feedback is not found")
@@ -18,9 +18,8 @@ def execute_transaction_code(request):
     for obj in objects:
         obj.status = 'inactive'
         obj.closed_by_id = request.get('performed_by_id')
-
-        if request.get('closing_remarks'):
-            obj.closing_remarks = request.get('closing_remarks')
+        obj.closing_remarks = request.get('closing_remarks')
+        obj.reverted_rate = request.get('reverted_rate')
 
         try:
             obj.save()
@@ -32,8 +31,10 @@ def execute_transaction_code(request):
 
     return {'fcl_cfs_rate_feedback_ids' : request['fcl_cfs_rate_feedback_ids']}
 
-def find_objects(request):
-    query = FclCfsRateFeedback.select().where(FclCfsRateFeedback.id << request['fcl_cfs_rate_feedback_ids'] & (FclCfsRateFeedback.status == 'active')).execute()
+def find_feedback_objects(request):
+    query = FclCfsRateFeedback.select().where(
+        FclCfsRateFeedback.id << request['fcl_cfs_rate_feedback_ids'],
+        FclCfsRateFeedback.status == 'active').execute()
     return query
     
 def create_audit(request, cfs_rate_feedback_id):
