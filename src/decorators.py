@@ -59,6 +59,8 @@ def cached(maxsize=2):
                 return add_to_cache(key, result, hits, process_time)
 
         def add_to_cache(key, result, hits, process_time):
+            if not isinstance(result, dict) or not result:
+                return result
             if rd.zcard(cache_sorted_keys) == maxsize:
                 least_score_tuple = rd.zrange(cache_sorted_keys, 0, 0, withscores=True)[
                     0
