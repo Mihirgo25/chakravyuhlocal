@@ -53,8 +53,7 @@ class HaulageFreightRateFeedback(BaseModel):
     haulage_type = TextField(null=True)
     trip_type = TextField(null=True)
     transport_mode = TextField(index=True)
-
-
+    spot_search_serial_id = BigIntegerField(null = True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

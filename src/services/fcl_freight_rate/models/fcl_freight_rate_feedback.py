@@ -65,6 +65,7 @@ class FclFreightRateFeedback(BaseModel):
     relevant_supply_agent_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     reverted_validities = BinaryJSONField(null=True)
     rate_type = CharField(null=True, index=True)
+    spot_search_serial_id = BigIntegerField(null = True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

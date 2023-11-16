@@ -57,6 +57,7 @@ class FclFreightRateLocalFeedback(BaseModel):
     trade_type = CharField(index=True, null=True)
     service_provider_id= UUIDField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
+    spot_search_serial_id = BigIntegerField(null = True)
 
     class Meta:
         table_name = "fcl_freight_rate_local_feedbacks"
