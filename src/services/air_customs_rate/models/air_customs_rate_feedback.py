@@ -45,6 +45,7 @@ class AirCustomsRateFeedback(BaseModel):
     continent_id = UUIDField(null=True)
     city_id = UUIDField(null=True)
     reverted_rate = BinaryJSONField(null = True)
+    spot_search_serial_id = BigIntegerField(null = True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

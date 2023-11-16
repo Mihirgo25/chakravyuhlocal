@@ -59,6 +59,7 @@ class AirFreightRateLocalFeedback(BaseModel):
     commodity = TextField(null=True,index=True)
     operation_type = TextField(null=True,index=True)
     airline_id=UUIDField(null=True,index=True)
+    spot_search_serial_id = BigIntegerField(null = True)
 
     class Meta:
         table_name = "air_freight_rate_local_feedbacks"
