@@ -40,7 +40,10 @@ class AirFreightRateJob(BaseModel):
     operation_type = CharField(null=True)
     stacking_type = CharField(null=True)
     price_type = CharField(null=True)
+    is_visible = BooleanField(default=True)
+    cogo_entity_id = UUIDField(null=True, index=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_freight_rate_jobs_serial_id_seq')")],)
+    search_source = TextField(null=True, index=True)
 
     class Meta:
         table_name = 'air_freight_rate_jobs'
@@ -53,7 +56,7 @@ class AirFreightRateJob(BaseModel):
 
       ids = [str(self.origin_airport_id), str(self.destination_airport_id)]
 
-      obj = {'filters':{"id": ids, "type":'airport'}}
+      obj = {'filters':{"id": ids, "type":'airport'}, 'includes': {"id": True, "type": True, "name": True, "display_name": True, "is_icd": True, "port_code": True, "country_id": True, "continent_id": True, "trade_id": True, "country_code": True, "display_name": True, "country": True, "default_params_required": True}}
       locations_response = maps.list_locations(obj)
       locations = []
       if 'list' in locations_response:
@@ -76,6 +79,8 @@ class AirFreightRateJob(BaseModel):
           "country_id": location["country_id"],
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
-          "country_code": location["country_code"]
+          "country_code": location["country_code"],
+          "display_name": location["display_name"],
+          "country": location["country"]
         }
         return loc_data

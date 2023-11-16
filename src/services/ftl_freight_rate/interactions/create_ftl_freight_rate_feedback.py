@@ -6,6 +6,7 @@ from datetime import datetime
 from playhouse.postgres_ext import *
 from fastapi import HTTPException
 from micro_services.client import *
+from services.ftl_freight_rate.interactions.create_ftl_freight_rate_job import create_ftl_freight_rate_job
 
 
 
@@ -48,6 +49,10 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=500, detail='Feedback could not be saved')
 
     create_audit(request, feedback)
+    
+    if feedback.feedback_type == 'disliked':
+        request['source_id'] = feedback.id
+        create_ftl_freight_rate_job(request, "rate_feedback")
 
     return {'id': request['rate_id']}
 

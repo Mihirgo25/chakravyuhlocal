@@ -4,6 +4,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate_audit import Haul
 from configs.haulage_freight_rate_constants import DEFAULT_RATE_TYPE
 from fastapi.encoders import jsonable_encoder
 from libs.get_multiple_service_objects import get_multiple_service_objects
+from playhouse.shortcuts import model_to_dict
 
 
 def create_audit(request, freight_id):
@@ -44,7 +45,7 @@ def create_haulage_freight_rate(request):
     """
 
     from services.haulage_freight_rate.haulage_celery_worker import delay_haulage_functions, update_haulage_freight_rate_request_delay
-
+    from services.haulage_freight_rate.haulage_celery_worker import update_haulage_freight_rate_job_on_rate_addition_delay, create_sailing_schedule_port_pair_coverage_delay
 
     transport_modes = request.get('transport_modes',[])
     transport_modes = list(set(transport_modes))
@@ -119,6 +120,10 @@ def create_haulage_freight_rate(request):
     delay_haulage_functions.apply_async(kwargs={'request':request},queue='low')
     get_multiple_service_objects(haulage_freight_rate)
     if request.get('haulage_freight_rate_request_id'):
-        update_haulage_freight_rate_request_delay.apply_async(kwargs={'request':{'haulage_freight_rate_request_id': request.get('haulage_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')
+        update_haulage_freight_rate_request_delay.apply_async(kwargs={'request':{'haulage_freight_rate_request_id': request.get('haulage_freight_rate_request_id'), 'reverted_rates': [{"id": str(haulage_freight_rate.id), "line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id'),'closing_remarks':['rate_added']}},queue='critical')
+    
+    if params["source"]  != "predicted" and params['rate_type'] == "market_place":
+        update_haulage_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": haulage_freight_rate.id},queue='haulage_freight_rate')
+        create_sailing_schedule_port_pair_coverage_delay.apply_async(kwargs = {'request': jsonable_encoder(model_to_dict(haulage_freight_rate))},queue = 'low')
     
     return {"id": haulage_freight_rate.id}

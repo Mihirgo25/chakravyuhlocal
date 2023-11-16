@@ -32,7 +32,7 @@ def find_object(request):
                                                          AirFreightRateSurcharge.airline_id==request.get('airline_id'),
                                                          AirFreightRateSurcharge.operation_type==request.get('operation_type'),
                                                          AirFreightRateSurcharge.service_provider_id==request.get('service_provider_id'),
-                                                         ~(AirFreightRateSurcharge.rate_not_available_entry)
+                                                         ~(AirFreightRateSurcharge.rate_not_available_entry),
                                                         ((AirFreightRateSurcharge.importer_exporter_id == request.get('importer_exporter_id')) | (AirFreightRateSurcharge.importer_exporter_id.is_null(True)))).first()
 
     except:

@@ -7,12 +7,14 @@ from services.fcl_freight_rate.workers.update_fcl_freight_rate_job_on_rate_addit
     update_fcl_freight_rate_job_on_rate_addition,
 )
 from services.fcl_freight_rate.workers.create_jobs_for_predicted_fcl_freight_rate import create_jobs_for_predicted_fcl_freight_rate
+from services.fcl_freight_rate.workers.create_sailing_schedule_port_pair_coverage import create_sailing_schedules_port_pair_coverages
 from celery.schedules import crontab
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import update_live_booking_visiblity_for_fcl_freight_rate_job
 
 tasks = {
     'update_fcl_freight_jobs_status_to_backlogs': {
         'task': 'services.fcl_freight_rate.fcl_celery_worker.update_fcl_freight_rate_jobs_to_backlog_delay',
-        'schedule': crontab(hour=23, minute=0),
+        'schedule': crontab(hour=22, minute=5),
         'options': {'queue': 'fcl_freight_rate'}
     },
 }
@@ -50,6 +52,25 @@ def update_fcl_freight_rate_jobs_to_backlog_delay(self):
             pass
         else:
             raise self.retry(exc=exc)
-
         
-
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_live_booking_visiblity_for_fcl_freight_rate_job_delay(self, job_id):
+    try:
+        return update_live_booking_visiblity_for_fcl_freight_rate_job(job_id)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+   
+     
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def create_sailing_schedule_port_pair_coverage_delay (self,request):
+    try:
+        return create_sailing_schedules_port_pair_coverages(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)

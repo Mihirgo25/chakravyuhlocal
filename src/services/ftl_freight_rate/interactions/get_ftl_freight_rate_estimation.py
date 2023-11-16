@@ -57,7 +57,7 @@ def get_ftl_freight_rate_estimation(request):
         'detention_free_time': detention_free_time,
         'validity_start': validity_start,
         'validity_end': validity_end,
-        'minimum_chargeable_weight': 0 if truck_type is None else weight,
+        'minimum_chargeable_weight': 0 if truck_type else weight,
         'unit': 'per_truck' if truck_type else 'per_ton',
         'source':'predicted'
     }

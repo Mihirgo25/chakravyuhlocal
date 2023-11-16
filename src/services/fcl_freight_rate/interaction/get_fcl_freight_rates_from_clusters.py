@@ -1,48 +1,30 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_location_cluster import FclFreightLocationCluster
 from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
-from services.fcl_freight_rate.models.fcl_freight_location_cluster_factor import FclFreightLocationClusterFactor
 from fastapi.encoders import jsonable_encoder
-from micro_services.client import maps
-from datetime import datetime
+from datetime import datetime, timedelta
 import concurrent.futures
 from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from database.rails_db import get_ff_mlo
-from joblib import Parallel, delayed
 import dateutil.parser as parser
 
-def get_fcl_freight_rates_from_clusters(request):
+def get_fcl_freight_rates_from_clusters(request, serviceable_shipping_lines):
     ff_mlo = get_ff_mlo()
-    location_data = maps.list_locations_mapping({'location_id':[request['origin_port_id'],request['destination_port_id']],'type':['main_ports']})
-    if location_data and isinstance(location_data, dict):
-        location_data = location_data['list']
-    else:
-        location_data = []
-
-    origin_main_port_ids = []
-    destination_main_port_ids = []
-
-    for loc in location_data:
-        if loc['icd_port_id'] == request['origin_port_id']:
-            origin_main_port_ids.append(loc['id'])
-        elif loc['icd_port_id'] == request['destination_port_id']:
-            destination_main_port_ids.append(loc['id'])
-            
-    if len(origin_main_port_ids) == 0:
-        origin_main_port_ids.append(request['origin_port_id'])
-        
-    if len(destination_main_port_ids) == 0:
-        destination_main_port_ids.append(request['destination_port_id'])
         
     create_params = []
     
-    for origin_port_id in origin_main_port_ids:
-        for destination_port_id in destination_main_port_ids:
-            with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
-                futures = [executor.submit(get_create_params, origin_port_id, destination_port_id, request, ff_mlo)]
-            create_params.extend(futures)
+    for hash in serviceable_shipping_lines:
+        if not hash.get('shipping_lines'):
+            continue
+        
+        origin_port_id = hash.get('origin_main_port_id') or hash.get('origin_port_id')
+        destination_port_id = hash.get('destination_main_port_id') or hash.get('destination_port_id')
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+            futures = [executor.submit(get_create_params, origin_port_id, destination_port_id, request, ff_mlo, hash['shipping_lines'])]
+        create_params.extend(futures)
 
     for i in range(len(create_params)):
         create_params[i] = create_params[i].result()
@@ -52,7 +34,7 @@ def get_fcl_freight_rates_from_clusters(request):
     with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
         futures = [executor.submit(create_fcl_freight_rate_data, param) for param in create_params]
 
-def get_create_params(origin_port_id, destination_port_id, request, ff_mlo):
+def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, shipping_lines):
     is_origin_base_port = FclFreightLocationCluster.select().where(FclFreightLocationCluster.base_port_id == origin_port_id).exists()
     is_destination_base_port = FclFreightLocationCluster.select().where(FclFreightLocationCluster.base_port_id == destination_port_id).exists()
     
@@ -84,7 +66,8 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo):
         FclFreightRate.service_provider_id.in_(ff_mlo),
         ~FclFreightRate.rate_not_available_entry,
         FclFreightRate.rate_type == "market_place",
-        FclFreightRate.last_rate_available_date >= request['validity_start']
+        FclFreightRate.last_rate_available_date >= request['validity_start'],
+        FclFreightRate.shipping_line_id.in_(shipping_lines)
     )
     
     
@@ -109,6 +92,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo):
             'sourced_by_id': DEFAULT_USER_ID,
             'source': 'rate_extension',
             'mode': 'cluster_extension',
+            'accuracy': 80,
             'extended_from_object_id': rate["id"]
         }
         
@@ -120,17 +104,13 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo):
             
         for validity in rate["validities"]:
             param["validity_start"] = datetime.strptime(datetime.now().date().isoformat(),'%Y-%m-%d')
-            param["validity_end"] = convert_date_format(validity["validity_end"])
+            param["validity_end"] = datetime.strptime((datetime.now() + timedelta(days = 3)).date().isoformat(),'%Y-%m-%d')
             param["schedule_type"] = validity["schedule_type"]
             param["payment_term"] = validity["payment_term"]
             param["line_items"] = validity["line_items"]
             create_params.append(param)
             
     return create_params
-
-def convert_date_format(date):
-    parsed_date = parser.parse(date, dayfirst=True)
-    return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
         
             
             

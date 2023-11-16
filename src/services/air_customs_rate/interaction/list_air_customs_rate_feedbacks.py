@@ -10,9 +10,9 @@ from peewee import fn
 from micro_services.client import spot_search
 from database.rails_db import get_organization
 
-possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'status', 'closed_by_id', 'country_id', 'trade_type', 'service_provider_id', 'airport_id']
+possible_direct_filters = ['id', 'feedback_type', 'performed_by_org_id', 'performed_by_id', 'status', 'closed_by_id', 'country_id', 'trade_type', 'service_provider_id', 'airport_id', 'serial_id']
 
-possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id']
+possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'q']
 
 def list_air_customs_rate_feedbacks(filters = {}, spot_search_details_required=False, customer_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=False):
     query = AirCustomsRateFeedback.select()
@@ -60,6 +60,11 @@ def apply_validity_start_greater_than_filter(query, filters):
 
 def apply_validity_end_less_than_filter(query, filters):
     query = query.where(AirCustomsRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than'].split('T')[0]).date())
+    return query
+
+def apply_q_filter(query, filters):
+    q = str(filters.get('q', ''))
+    query = query.where(AirCustomsRateFeedback.serial_id.cast("text") ** (q + "%"))
     return query
 
 def apply_similar_id_filter(query, filters):

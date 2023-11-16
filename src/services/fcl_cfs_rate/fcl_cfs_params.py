@@ -125,3 +125,40 @@ class UpdateFclCfsRatePlatformPrice(BaseModel):
   performed_by_type: str
   importer_exporter_id: str = None
   is_line_items_error_messages_present: bool = False
+
+class DeleteFclCfsRateJob(BaseModel):
+    id: str = None
+    closing_remarks: str = None
+    data: dict = {}
+    source_id: str = None
+    service_id: str = None
+    shipment_id: str = None
+    rate_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+
+class CreateFclCfsRateJob(BaseModel):
+    source: str = None
+    source_id: str = None
+    shipment_id: str = None
+    shipment_serial_id: int = None
+    service_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    location_id: str = None
+    service_provider_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    cargo_handling_type: str = None
+    trade_type: str = None
+    is_visible: bool = True
+    rate_type: str = None
+    port_id: str = None
+    
+class UpdateFclCfsRateJob(BaseModel):
+    id: str
+    user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None

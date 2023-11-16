@@ -3,6 +3,10 @@ from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRa
 from database.db_session import db
 from fastapi import HTTPException
 from libs.get_multiple_service_objects import get_multiple_service_objects
+from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_job import (
+    delete_fcl_customs_rate_job
+)
+
 
 def delete_fcl_customs_rate_feedback(request):
   with db.atomic():
@@ -27,7 +31,7 @@ def execute_transaction_code(request):
     
     create_audit_for_customs_feedback(request, object, data)
     get_multiple_service_objects(object)
-
+    delete_fcl_customs_rate_job(request)
   return {'fcl_customs_rate_feedback_ids' : request.get('fcl_customs_rate_feedback_ids')}
 
 

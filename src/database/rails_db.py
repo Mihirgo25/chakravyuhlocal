@@ -22,17 +22,17 @@ def get_operators(id=None, short_name=None,iata_code = None, operator_type='ship
         with newconnection:
             with newconnection.cursor() as cur:
                 if short_name:
-                    sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.short_name = %s and operators.status = %s and operators.operator_type = %s'
+                    sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status, operators.is_nvocc from operators where operators.short_name = %s and operators.status = %s and operators.operator_type = %s'
                     cur.execute(sql, (short_name,'active',operator_type,))
                 elif iata_code:
-                    sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.iata_code = %s and operators.status = %s and operators.operator_type = %s'
+                    sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status, operators.is_nvocc from operators where operators.iata_code = %s and operators.status = %s and operators.operator_type = %s'
                     cur.execute(sql, (iata_code,'active',operator_type,))
                 else :
                     if not isinstance(id, list):
                         id = (id,)
                     else:
                         id = tuple(id)
-                    sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.id in %s'
+                    sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status, operators.is_nvocc from operators where operators.id in %s'
                     cur.execute(sql, (id,))
                 result = cur.fetchall()
                 for res in result:
@@ -43,7 +43,8 @@ def get_operators(id=None, short_name=None,iata_code = None, operator_type='ship
                             "short_name": res[2],
                             "logo_url": res[3],
                             "operator_type": res[4],
-                            "status": res[5]
+                            "status": res[5],
+                            "is_nvocc": res[6]
                         }
                     )
                 cur.close()
@@ -650,4 +651,3 @@ def get_organization_partner(id):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
-

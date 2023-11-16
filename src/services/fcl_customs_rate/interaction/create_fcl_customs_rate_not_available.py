@@ -14,7 +14,8 @@ def create_fcl_customs_rate_not_available(request):
       FclCustomsRate.container_type == request.get('container_type'),
       FclCustomsRate.commodity == request.get('commodity'),
       FclCustomsRate.rate_type == DEFAULT_RATE_TYPE,
-      FclCustomsRate.importer_exporter_id == None
+      FclCustomsRate.importer_exporter_id == None,
+      ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True)))
     ).dicts()
 
     present_service_provider_ids = []
