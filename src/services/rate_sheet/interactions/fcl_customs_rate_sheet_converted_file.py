@@ -108,7 +108,6 @@ def create_fcl_customs_rate(params, converted_file, rows, created_by_id, procure
             'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []
         }
-        line_item['location_id'] = get_port_id(t.get('location'))
         if t['line_item_type'] == 'customs_clearance':
             object['customs_line_items'].append(line_item)
         else:
