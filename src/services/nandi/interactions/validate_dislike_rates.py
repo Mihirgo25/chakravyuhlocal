@@ -1,44 +1,47 @@
-from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
-from micro_services.client import common
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import asyncio
 
 
 def validate_freight_rate_feedback(request):
-    if 'unpreferred_operator' in request.get('feedbacks'):
-        response = eval("validate_{}_unpreferred_operator_function(request)".format(request.get('service_type')))
-        
+    response = {}
+    # if 'unpreferred_operator' in request.get('feedbacks'):
+    #     message = eval("validate_{}_unpreferred_operator_function(request)".format(request.get('service_type')))
+    #     if message:
+    #         response['unpreferred_operator'] = message
         
     if 'unsatisfactory_rate' in request.get('feedbacks'):
-        response = eval("validate_{}_unsatisfactory_rate_function(request)".format(request.get('service_type')))
-
-
-def validate_fcl_freight_unpreferred_operator_function():
-    return {}
-
-def validate_air_freight_unpreferred_operator_function(request):
-    air_freight_rate = AirFreightRate.select(AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id).where(AirFreightRate.id == request.get("rate_id")).first()
- 
-    airport_id = {
-        "origin_airport_id": str(air_freight_rate.origin_airport_id),
-        "destination_airport_id": str(air_freight_rate.destination_airport_id)
-        }
-    serviceable_airline_ids = common.get_saas_schedules_airport_pair_coverages(airport_id)
-    serviceable_airlines =0
-    unserviceable_airlines = 0
-    for preferred_airline in request.get('preferred_operator_ids'):
-        if preferred_airline in serviceable_airline_ids:
-            serviceable_airlines = serviceable_airlines+1
-        else:
-            unserviceable_airlines = unserviceable_airlines +1
+        message = eval("validate_{}_unsatisfactory_rate_function(request)".format(request.get('service_type')))
+        if message:
+            response['unsatisfactory_rate'] = message
     
-    if serviceable_airlines ==0 and unserviceable_airlines!=0:
-        return {'message': 'Rates for all  Airlines that are serviceable on this Airport pair are present'}
-    
-    return {}
+    return response
+
+# def validate_fcl_freight_unpreferred_operator_function():
+#     return {}
+
+# def validate_air_freight_unpreferred_operator_function(request):
+#     from micro_services.client import common
+#     air_freight_rate = AirFreightRate.select(AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id).where(AirFreightRate.id == request.get("rate_id")).first()
+
+#     airport_id = {
+#         "origin_airport_id": str(air_freight_rate.origin_airport_id),
+#         "destination_airport_id": str(air_freight_rate.destination_airport_id)
+#         }
+#     serviceable_airline_ids = common.get_saas_schedules_airport_pair_coverages(airport_id)
+#     serviceable_airlines =0
+#     unserviceable_airlines = 0
+#     for preferred_airline in request.get('preferred_operator_ids'):
+#         if preferred_airline in serviceable_airline_ids:
+#             serviceable_airlines = serviceable_airlines+1
+#         else:
+#             unserviceable_airlines = unserviceable_airlines +1
+
+#     if serviceable_airlines ==0 and unserviceable_airlines!=0:
+#         return {'message': 'Rates for all  Airlines that are serviceable on this Airport pair are present'}
+
+#     return {}
 
 def validate_air_locals_unsatisfactory_rate_function(request):
     from services.air_freight_rate.models.air_freight_rate_local_feedback import AirFreightRateLocalFeedback
@@ -139,6 +142,8 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
             ### create job
             return {}
 
+    from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+
     fcl_freight_rate = FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.shipping_line_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.rate_type, FclFreightRate.mode, FclFreightRate.updated_at).where(FclFreightRate.id == request['rate_id']).first()
 
     if not fcl_freight_rate:
@@ -215,6 +220,8 @@ def validate_air_freight_unsatisfactory_rate_function(request):
         elif feedback.status == 'active':
             ### create job
             return {}
+
+    from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 
     air_freight_rate = AirFreightRate.select(AirFreightRate.id, AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id, AirFreightRate.airline_id, AirFreightRate.commodity, AirFreightRate.commodity_type, AirFreightRate.rate_type, AirFreightRate.source, AirFreightRate.updated_at).where(AirFreightRate.id == request['rate_id']).first()
 
