@@ -86,7 +86,7 @@ class GlobalClient:
                     response = self.client.put(**kwargs)
                 case _:
                     raise httpx.UnsupportedProtocol(f"Unsupported HTTP method: {method}")
-            if APP_ENV == AppEnv.development or ENVIRONMENT_TYPE == Environment.cli:
+            if APP_ENV != AppEnv.production or ENVIRONMENT_TYPE == Environment.cli:
                 logger.info(
                     f"Execution Time: {response.elapsed.total_seconds()*1000}ms"
                 )
