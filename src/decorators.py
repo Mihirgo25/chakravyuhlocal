@@ -6,6 +6,9 @@ from functools import wraps
 from fastapi.encoders import jsonable_encoder
 from configs.global_constants import REFRESH_TIME
 from database.db_session import rd
+from configs.env import APP_ENV
+import json
+from enums.global_enums import AppEnv
 
 
 def cached(maxsize=2):
@@ -27,7 +30,12 @@ def cached(maxsize=2):
         @wraps(func)
         def wrapper(*args, **kwargs):
             key_args = tuple(
-                str(arg) if isinstance(arg, uuid.UUID) else arg for arg in args
+                str(arg)
+                if isinstance(arg, uuid.UUID)
+                else json.dumps(arg)
+                if APP_ENV == AppEnv.production.value
+                else arg
+                for arg in args[1:]
             )
             key_kwargs = {
                 k: str(v) if isinstance(v, uuid.UUID) else v for k, v in kwargs.items()
