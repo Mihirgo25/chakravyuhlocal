@@ -23,7 +23,6 @@ class FclFreightRateLocalFeedback(BaseModel):
     feedbacks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     booking_params = BinaryJSONField(index=True, null=True)
     cogo_entity_id = UUIDField(index=True,null=True)
-    cargo_readiness_date = DateField(null=True)
     closed_by_id = UUIDField(index=True, null=True)
     closed_by = BinaryJSONField(null=True)
     closing_remarks = ArrayField(field_class=CharField, null=True)
@@ -42,14 +41,11 @@ class FclFreightRateLocalFeedback(BaseModel):
     performed_by_type = CharField(null=True)
     port_id = UUIDField(index=True, null=True)
     port = BinaryJSONField(null=True)
-    preferred_rate = DoubleField(null=True)
-    preferred_rate_currency = CharField(null=True)
-    # preferred_shipping_line_ids = ArrayField(field_class=UUIDField, null=True)
-    # preferred_shipping_lines = BinaryJSONField(null=True)
+    preferred_freight_rate = DoubleField(null=True)
+    preferred_freight_rate_currency = CharField(null=True)
     remarks = ArrayField(field_class=CharField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_local_feedback_serial_id_seq'::regclass)")])
     shipping_line_id = UUIDField(null=True)
-    shipping_line_detail = BinaryJSONField(null=True)
     source = CharField(null=True)
     source_id = UUIDField(index=True, null=True)
     status = CharField(index=True, null=True)
@@ -58,6 +54,7 @@ class FclFreightRateLocalFeedback(BaseModel):
     service_provider_id= UUIDField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     spot_search_serial_id = BigIntegerField(null = True)
+    attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
 
     class Meta:
         table_name = "fcl_freight_rate_local_feedbacks"

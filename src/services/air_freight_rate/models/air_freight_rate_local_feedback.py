@@ -32,8 +32,6 @@ class AirFreightRateLocalFeedback(BaseModel):
     performed_by_org_id = UUIDField(null=True,index=True)
     performed_by_org = BinaryJSONField(null=True)
     performed_by_type = CharField(null=True)
-    # preferred_airline_ids = ArrayField(field_class=UUIDField, null=True)
-    # preferred_airlines = BinaryJSONField(null=True)
     preferred_rate = DoubleField(null=True)
     preferred_rate_currency = CharField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
@@ -49,7 +47,7 @@ class AirFreightRateLocalFeedback(BaseModel):
     trade_type = CharField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     closed_by = BinaryJSONField(null=True)
-    reverted_rate= BinaryJSONField(null=True)
+    reverted_rate = BinaryJSONField(null=True)
     airport_id = UUIDField(null=True, index=True)
     country_id = UUIDField(null=True, index=True)
     continent_id = UUIDField(null=True, index=True)
@@ -60,6 +58,7 @@ class AirFreightRateLocalFeedback(BaseModel):
     operation_type = TextField(null=True,index=True)
     airline_id=UUIDField(null=True,index=True)
     spot_search_serial_id = BigIntegerField(null = True)
+    attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
 
     class Meta:
         table_name = "air_freight_rate_local_feedbacks"

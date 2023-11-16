@@ -38,7 +38,6 @@ class FclCfsRateFeedback(BaseModel):
     port = BinaryJSONField(null=True)
     closed_by = BinaryJSONField(null=True)
     # organization = BinaryJSONField(null=True)
-    # spot_search = BinaryJSONField(null=True)
     service_provider = BinaryJSONField(null=True)
     port_id = UUIDField(null=True)
     country_id = UUIDField(null=True)

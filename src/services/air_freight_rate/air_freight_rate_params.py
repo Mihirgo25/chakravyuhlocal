@@ -629,8 +629,8 @@ class CreateAirFreightRateLocalFeedbackParams(BaseModel):
     dislikes_count: int
     feedbacks: list[str] = []
     remarks: list[str] = []
-    preferred_freight_rate: float = None
-    preferred_freight_rate_currency: str = None
+    preferred_rate: float = None
+    preferred_rate_currency: str = None
     preferred_storage_free_days: int = None
     feedback_type: str
     booking_params: dict = {}
@@ -645,6 +645,7 @@ class CreateAirFreightRateLocalFeedbackParams(BaseModel):
     airline_id: str = None
     commodity: str = None
     spot_search_serial_id: int = None
+    attachment_file_urls: List[str] = []
 
 class DeleteAirFreightRateLocalFeedbackParams(BaseModel):
     air_freight_rate_local_feedback_ids: List[str]
