@@ -79,7 +79,9 @@ def get_create_params(request):
         'destination_country_id': request.get('destination_country_id'),
         'service_provider_id': request.get('service_provider_id'),
         'origin_location': request.get('origin_location'),
-        'destination_location': request.get('destination_location')
+        'destination_location': request.get('destination_location'),
+        'spot_search_serial_id':request.get('spot_search_serial_id')
+
     }
     return params
 

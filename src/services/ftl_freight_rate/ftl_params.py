@@ -234,6 +234,7 @@ class CreateFtlFreightRateFeedback(BaseModel):
     service_provider_id: str = None
     origin_location: dict = None
     destination_location: dict = None
+    spot_search_serial_id:str = None
 
 class RevertedRateParams(BaseModel):
     id: str = None

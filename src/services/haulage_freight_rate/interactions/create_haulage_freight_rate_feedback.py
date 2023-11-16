@@ -103,7 +103,9 @@ def get_create_params(request):
         'trailer_type': request.get('trailer_type'),
         'haulage_type': request.get('haulage_type'),
         'trip_type': request.get('trip_type'),
-        'transport_mode': request.get('transport_mode')
+        'transport_mode': request.get('transport_mode'),
+        'spot_search_serial_id':request.get('spot_search_serial_id')
+
     }
     loc_ids = []
 

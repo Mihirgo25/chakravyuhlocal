@@ -267,6 +267,7 @@ class CreateAirFreightRateFeedbackParams(BaseModel):
     operation_type: str = None
     airline_id: str = None
     commodity: str = None
+    spot_search_serial_id: str = None
 
 
 class CreateAirFreightRateRequestParams(BaseModel):
@@ -643,6 +644,7 @@ class CreateAirFreightRateLocalFeedbackParams(BaseModel):
     operation_type: str = None
     airline_id: str = None
     commodity: str = None
+    spot_search_serial_id = None
 
 class DeleteAirFreightRateLocalFeedbackParams(BaseModel):
     air_freight_rate_local_feedback_ids: List[str]

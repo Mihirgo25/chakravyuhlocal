@@ -78,7 +78,9 @@ def get_create_params(request):
         'trade_type':request.get('trade_type'),
         'trade_id':request.get('trade_id'),
         'commodity': request.get('commodity'),
-        'service_provider_id': request.get('service_provider_id')
+        'service_provider_id': request.get('service_provider_id'),
+        'spot_search_serial_id':request.get('spot_search_serial_id')
+
     }
 
 def create_audit(request, cfs_feedback):

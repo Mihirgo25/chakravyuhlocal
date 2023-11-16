@@ -48,6 +48,7 @@ class CreateAirCustomsRateFeedback(BaseModel):
   service_provider_id: str = None
   city_id: str = None
   continent_id: str = None
+  spot_search_serial_id: str = None
 
 class CreateAirCustomsRateNotAvailable(BaseModel):
   airport_id: str

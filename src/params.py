@@ -399,6 +399,8 @@ class CreateFclFreightRateFeedback(BaseModel):
     attachment_file_urls: List[str] = []
     commodity_description: str = None
     rate_type: str = None
+    spot_search_serial_id: str = None
+
 
 
 class CreateFclFreightRateNotAvailable(BaseModel):
@@ -1099,3 +1101,4 @@ class CreateFclFreightRateLocalFeedback(BaseModel):
     rate_type: str = 'market_place'
     trade_type: str = None
     shipping_line_id: str = None
+    spot_search_serial_id: str = None

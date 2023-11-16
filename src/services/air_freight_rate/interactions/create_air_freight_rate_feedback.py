@@ -142,7 +142,9 @@ def get_create_params(request,rate):
         'service_provider_id':request.get('service_provider_id'),
         'operation_type':request.get('operation_type'),
         'status': 'active',
-        'airline_id':request.get('airline_id')
+        'airline_id':request.get('airline_id'),
+        'spot_search_serial_id':request.get('spot_search_serial_id')
+
       }
     return params
 

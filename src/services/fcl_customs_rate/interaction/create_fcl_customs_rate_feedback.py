@@ -84,7 +84,9 @@ def get_create_params(request):
         'trade_id':request.get('trade_id'),
         'commodity': request.get('commodity'),
         'service_provider_id': request.get('service_provider_id'),
-        'cargo_handling_type' : request.get('cargo_handling_type')
+        'cargo_handling_type' : request.get('cargo_handling_type'),
+        'spot_search_serial_id':request.get('spot_search_serial_id')
+
     }
 
 def create_audit(request, customs_feedback):
