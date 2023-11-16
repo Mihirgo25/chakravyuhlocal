@@ -7,6 +7,9 @@ from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
 
 def create_air_freight_rate_local_feedback(request):
+    object_type = 'AirFreightRateLocalFeedback'
+    query = "create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
+    db.execute_sql(query)
     with db.atomic():
         return execute_transaction_code(request)
 

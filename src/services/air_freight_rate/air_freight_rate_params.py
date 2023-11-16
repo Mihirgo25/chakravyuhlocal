@@ -648,4 +648,5 @@ class DeleteAirFreightRateLocalFeedbackParams(BaseModel):
     air_freight_rate_local_feedback_ids: List[str]
     closing_remarks: List[str] = []
     performed_by_id: str = None
+    performed_by_type: str = None
     reverted_rate: RevertedRateParams = None

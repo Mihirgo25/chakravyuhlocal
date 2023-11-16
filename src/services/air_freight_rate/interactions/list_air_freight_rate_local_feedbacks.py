@@ -1,5 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate_local_feedback import AirFreightRateLocalFeedback
-from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
 from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
@@ -15,7 +15,7 @@ from services.air_freight_rate.constants.air_freight_rate_constants import IMPOR
 possible_direct_filters = ['id', 'feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status','trade_type','airport_id', 'trade_id', 'country_id', 'service_provider_id', 'cogo_entity_id','airline_id', 'serial_id']
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'freight_force_importer_exporter', 'except_freight_force_importer_exporter', 'q']
 
-def list_air_freight_rate_local_feedbacks(filters = {}, spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
+def list_air_freight_rate_local_feedbacks(filters = {}, spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
     query = AirFreightRateLocalFeedback.select()
     if filters:
         if type(filters) != dict:
@@ -30,7 +30,7 @@ def list_air_freight_rate_local_feedbacks(filters = {}, spot_search_details_requ
     pagination_data = get_pagination_data(query, page, page_limit)
 
     query = get_page(query, page, page_limit)
-    data = get_data(query,spot_search_details_required,booking_details_required) 
+    data = get_data(query,spot_search_details_required)
 
     return {'list': json_encoder(data) } | (pagination_data) | (stats)
 
@@ -80,7 +80,7 @@ def apply_similar_id_filter(query, filters):
         query = query.where(AirFreightRateLocalFeedback.airport_id == local_feedback_data.airport_id, AirFreightRateLocalFeedback.operation_type == local_feedback_data.operation_type, AirFreightRateLocalFeedback.commodity == local_feedback_data.commodity)
     return query
 
-def get_data(query, spot_search_details_required, booking_details_required):
+def get_data(query, spot_search_details_required):
     data = json_encoder(list(query.dicts()))
     air_freight_rate_local_ids = []
     for rate in data:
@@ -88,22 +88,15 @@ def get_data(query, spot_search_details_required, booking_details_required):
             air_freight_rate_local_ids.append((rate['air_freight_rate_local_id']))
         if rate.get('reverted_rate_id'):
             air_freight_rate_local_ids.append((rate['reverted_rate_id']))
-    air_freight_rates = AirFreightRate.select(AirFreightRate.id,
-                                            AirFreightRate.validities,
-                                            AirFreightRate.origin_airport,
-                                            AirFreightRate.destination_airport,
-                                            AirFreightRate.commodity,
-                                            AirFreightRate.commodity_type,
-                                            AirFreightRate.commodity_sub_type,
-                                            AirFreightRate.stacking_type,
-                                            AirFreightRate.shipment_type,
-                                            AirFreightRate.price_type,
-                                            AirFreightRate.airline,
-                                            AirFreightRate.operation_type,
-                                            AirFreightRate.service_provider
-                                        ).where(AirFreightRate.id.in_(air_freight_rate_local_ids))
-    
-    air_freight_local_rates = json_encoder(list(air_freight_rates.dicts()))
+    air_freight_rate_locals = AirFreightRateLocal.select(AirFreightRateLocal.id,
+                                            AirFreightRateLocal.airport,
+                                            AirFreightRateLocal.commodity,
+                                            AirFreightRateLocal.commodity_type,
+                                            AirFreightRateLocal.airline,
+                                            AirFreightRateLocal.service_provider
+                                        ).where(AirFreightRateLocal.id.in_(air_freight_rate_local_ids))
+
+    air_freight_local_rates = json_encoder(list(air_freight_rate_locals.dicts()))
     air_freight_rate_local_mappings = {k['id']: k for k in air_freight_local_rates}
     spot_search_hash = {}
     new_data = []
@@ -118,11 +111,6 @@ def get_data(query, spot_search_details_required, booking_details_required):
         object['airport'] = rate['airport']
         object['commodity'] = rate['commodity']
         object['commodity_type'] = rate['commodity_type']
-        object['commodity_sub_type'] = rate['commodity_sub_type']
-        object['operation_type'] = rate['operation_type']
-        object['stacking_type'] = rate['stacking_type']
-        object['shipment_type'] = rate['shipment_type']
-        object['price_type'] = rate['price_type']
         object['airline'] = rate['airline']
         object['price'] = None
         object['currency'] = None
@@ -137,11 +125,6 @@ def get_data(query, spot_search_details_required, booking_details_required):
             object['reverted_rate_data']={}
             object['reverted_rate_data']['commodity'] = reverted_rate['commodity']
             object['reverted_rate_data']['commodity_type'] = reverted_rate['commodity_type']
-            object['reverted_rate_data']['commodity_sub_type'] = reverted_rate['commodity_sub_type']
-            object['reverted_rate_data']['operation_type'] = reverted_rate['operation_type']
-            object['reverted_rate_data']['stacking_type'] = reverted_rate['stacking_type']
-            object['reverted_rate_data']['shipment_type'] = reverted_rate['shipment_type']
-            object['reverted_rate_data']['price_type'] = reverted_rate.get('price_type')
 
             object['chargeable_weight'] = get_chargeable_weight(object['weight'], object['volume'])
         if str(object['performed_by_org_id']) in IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE:
