@@ -3,8 +3,7 @@ from micro_services.global_client import GlobalClient
 from micro_services.discover_client import get_instance_url
 from configs.env import APP_ENV
 import json
-from database.db_session import rd
-from decorators import redis_timed_cache
+from decorators import cached
 
 class MapsApiClient:
     def __init__(self):
@@ -16,7 +15,7 @@ class MapsApiClient:
             "Accept": "application/json",
         })
 
-    @redis_timed_cache(maxsize=5000, conn=rd)
+    @cached(maxsize=2)
     def list_locations(self, data={}):
         if APP_ENV == "production":
             keys = ['filters', 'includes']
