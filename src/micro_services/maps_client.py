@@ -15,7 +15,7 @@ class MapsApiClient:
             "Accept": "application/json",
         })
 
-    @cached(maxsize=2)
+    @cached(maxsize=2000)
     def list_locations(self, data={}):
         if APP_ENV == "production":
             keys = ['filters', 'includes']
