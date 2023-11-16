@@ -33,7 +33,7 @@ def cached(maxsize=2):
                 str(arg)
                 if isinstance(arg, uuid.UUID)
                 else json.dumps(arg)
-                if APP_ENV == AppEnv.production.value
+                if APP_ENV == AppEnv.production
                 else arg
                 for arg in args[1:]
             )
