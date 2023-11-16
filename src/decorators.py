@@ -76,7 +76,7 @@ def cached(maxsize=2):
             }
             rd.zadd(
                 cache_sorted_keys,
-                {"timed_cache:" + str(key): hits * float(process_time)},
+                {"timed_cache:" + str(key): float(process_time)},
             )
             rd.hset(cache, "timed_cache:" + str(key), json.dumps(cached_data))
             rd.setex("timed_cache:" + str(key), REFRESH_TIME, f"{hits},{process_time}")
