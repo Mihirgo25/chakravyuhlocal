@@ -44,21 +44,18 @@ def cached(maxsize=2):
             cached_result = rd.hget(cache, "timed_cache:" + str(key))
             if cached_result:
                 cached_data = json.loads(cached_result)
-                result, hits, process_time = (
+                result, process_time = (
                     cached_data["result"],
-                    int(cached_data["hits"]),
                     cached_data["process_time"],
                 )
-                hits += 1
-                return add_to_cache(key, result, hits, process_time)
+                return add_to_cache(key, result, process_time)
             else:
                 start_time = time.time()
                 result = func(*args, **kwargs)
                 process_time = time.time() - start_time
-                hits = 1
-                return add_to_cache(key, result, hits, process_time)
+                return add_to_cache(key, result, process_time)
 
-        def add_to_cache(key, result, hits, process_time):
+        def add_to_cache(key, result, process_time):
             if not isinstance(result, dict) or not result:
                 return result
             if rd.zcard(cache_sorted_keys) == maxsize:
@@ -71,7 +68,6 @@ def cached(maxsize=2):
                     return result
             cached_data = {
                 "result": jsonable_encoder(result),
-                "hits": hits,
                 "process_time": process_time,
             }
             rd.zadd(
@@ -79,7 +75,7 @@ def cached(maxsize=2):
                 {"timed_cache:" + str(key): float(process_time)},
             )
             rd.hset(cache, "timed_cache:" + str(key), json.dumps(cached_data))
-            rd.setex("timed_cache:" + str(key), REFRESH_TIME, f"{hits},{process_time}")
+            rd.setex("timed_cache:" + str(key), REFRESH_TIME, f"{process_time}")
             return result
 
         def remove_from_cache(key):
