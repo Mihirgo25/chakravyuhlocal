@@ -1077,15 +1077,13 @@ class CreateFclFreightRateLocalFeedback(BaseModel):
     performed_by_org_id: str
     performed_by_type: str = None
     rate_id: str
-    validity_id: str
     likes_count: int
     dislikes_count: int
     feedbacks: list[str] = []
     remarks: list[str] = []
     preferred_freight_rate: float = None
     preferred_freight_rate_currency: str = None
-    preferred_detention_free_days: int = None
-    preferred_shipping_line_ids: list[str] = []
+    preferred_free_days: dict = {}
     feedback_type: str
     booking_params: dict = {}
     cogo_entity_id: str = None
@@ -1098,5 +1096,6 @@ class CreateFclFreightRateLocalFeedback(BaseModel):
     container_type: str = None
     service_provider_id: str = None
     attachment_file_urls: List[str] = []
-    commodity_description: str = None
-    rate_type: str = None
+    rate_type: str = 'market_place'
+    trade_type: str = None
+    shipping_line_id: str = None

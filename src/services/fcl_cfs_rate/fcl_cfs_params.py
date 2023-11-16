@@ -147,6 +147,8 @@ class CreateFclCfsRateFeedback(BaseModel):
   trade_id: str = None
   commodity: str = None
   service_provider_id: str = None
+  attachment_file_urls: List[str] = []
+  rate_type: str = 'market_place'
 
 class DeleteFclCfsRateFeedback(BaseModel):
   fcl_cfs_rate_feedback_ids: list[str]
