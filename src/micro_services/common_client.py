@@ -101,3 +101,6 @@ class CommonApiClient:
     
     def list_lcl_customs_rates(self, data = {}):
         return self.client.request('GET','lcl_customs_rate/list_lcl_customs_rates',data)
+    
+    def list_lcl_freight_rate_locals(self, data = {}):
+        return self.client.request('GET', 'lcl_freight_rate/list_lcl_freight_rate_locals',data)

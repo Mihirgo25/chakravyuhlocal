@@ -3,19 +3,16 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import asyncio
 
-
-def validate_freight_rate_feedback(request):
+def validate_rate_feedback(request):
     response = {}
-    # if 'unpreferred_operator' in request.get('feedbacks'):
-    #     message = eval("validate_{}_unpreferred_operator_function(request)".format(request.get('service_type')))
-    #     if message:
-    #         response['unpreferred_operator'] = message
-        
+
+    if request.get('service_type') in ['haulage_freight','trailer_freight']:
+        return response
+
     if 'unsatisfactory_rate' in request.get('feedbacks'):
         message = eval("validate_{}_unsatisfactory_rate_function(request)".format(request.get('service_type')))
         if message:
             response['unsatisfactory_rate'] = message
-    
     return response
 
 # def validate_fcl_freight_unpreferred_operator_function():
@@ -43,7 +40,7 @@ def validate_freight_rate_feedback(request):
 
 #     return {}
 
-def validate_air_locals_unsatisfactory_rate_function(request):
+def validate_air_freight_rate_local_unsatisfactory_rate_function(request):
     from services.air_freight_rate.models.air_freight_rate_local_feedback import AirFreightRateLocalFeedback
     air_locals_rate = AirFreightRateLocalFeedback.select(AirFreightRateLocalFeedback.id,AirFreightRateLocalFeedback.updated_at).where(
         AirFreightRateLocalFeedback.id == request.get('rate_id')
@@ -53,7 +50,7 @@ def validate_air_locals_unsatisfactory_rate_function(request):
         return {'message': 'Best available rate for this port pair'}
     return {}
 
-def validate_fcl_locals_unsatisfactory_rate_function(request):
+def validate_fcl_freight_rate_local_unsatisfactory_rate_function(request):
     from services.fcl_freight_rate.models.fcl_freight_rate_local_feedback import FclFreightRateLocalFeedback
     fcl_locals_rate = FclFreightRateLocalFeedback.select(FclFreightRateLocalFeedback.id,FclFreightRateLocalFeedback.updated_at).where(
         FclFreightRateLocalFeedback.id == request.get('rate_id')
@@ -62,7 +59,7 @@ def validate_fcl_locals_unsatisfactory_rate_function(request):
     if fcl_locals_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
         return {'message': 'Best available rate for this port pair'}
     return {}
-  
+
 def validate_air_customs_unsatisfactory_rate_function(request):
     from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
     air_customs_rate = AirCustomsRate.select(AirCustomsRate.id,AirCustomsRate.updated_at).where(
@@ -121,6 +118,15 @@ def validate_lcl_freight_unsatisfactory_rate_function(request):
             return {'message': 'Best available rate for this port pair'}
     return {}
 
+def validate_lcl_freight_rate_local_unsatisfactory_rate_function(request):
+    from micro_services.client import common
+    lcl_freight_local_rates = common.list_lcl_freight_rate_locals({'filters': {'id': request.get('rate_id')}})
+    if lcl_freight_local_rates.get('list') and len(lcl_freight_local_rates['list']) > 0:
+        lcl_freight_local_rate = lcl_freight_local_rates['list'][0]
+        if lcl_freight_local_rate['updated_at'].date() > (datetime.now().date() - timedelta(days=30)):
+            return {'message': 'Best available rate for this port pair'}
+    return {}
+
 def validate_lcl_customs_unsatisfactory_rate_function(request):
     from micro_services.client import common
     lcl_customs_rates = common.list_lcl_customs_rates({'filters': {'id': request.get('rate_id')}})
@@ -129,7 +135,7 @@ def validate_lcl_customs_unsatisfactory_rate_function(request):
         if lcl_customs_rate['updated_at'].date() > (datetime.now().date() - timedelta(days=30)):
             return {'message': 'Best available rate for this port pair'}
     return {}
-    
+
 def validate_fcl_freight_unsatisfactory_rate_function(request):
     from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 
@@ -139,7 +145,6 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
         if feedback.reverted_validities and feedback.updated_at.date() == datetime.now().date():
             return {'message': 'Best available rate for this port pair'}
         elif feedback.status == 'active':
-            ### create job
             return {}
 
     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
@@ -156,17 +161,15 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
         return {'message': 'This is a Promotional Rate'}
 
     elif mode in ['predicted', 'rate_extension', 'cluster_extension']:
-        ### create job
         return {}
-    
+
     elif mode == 'flash_booking':
         if fcl_freight_rate.updated_at > datetime.now() - timedelta(hours=4):
             return {'message': 'Best available rate for this port pair'}
         else:
-            ### create job
             return {}
-    
-    elif mode in ['rms_upload', 'forcasted_rfq']:
+
+    elif mode in ['rms_upload', 'forcasted_rfq','rate_sheet','disliked_rate','missing_rate']:
         from services.bramhastra.interactions.list_fcl_freight_rate_statistics import list_fcl_freight_rate_statistics
 
         filters = {
@@ -206,8 +209,9 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
         if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
             return {'message': 'Best available rate for this port pair'}
         else:
-            ### create job
             return {}
+    else:
+        return {}
 
 def validate_air_freight_unsatisfactory_rate_function(request):
     from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
@@ -218,7 +222,6 @@ def validate_air_freight_unsatisfactory_rate_function(request):
         if feedback.reverted_rate and feedback.updated_at.date() == datetime.now().date():
             return {'message': 'Best available rate for this port pair'}
         elif feedback.status == 'active':
-            ### create job
             return {}
 
     from services.air_freight_rate.models.air_freight_rate import AirFreightRate
@@ -227,7 +230,7 @@ def validate_air_freight_unsatisfactory_rate_function(request):
 
     if not air_freight_rate:
         raise HTTPException(status_code=404, detail='Air Freight Rate Not Found')
-    
+
     rate_type = air_freight_rate.rate_type
     source = air_freight_rate.source
 
@@ -235,16 +238,14 @@ def validate_air_freight_unsatisfactory_rate_function(request):
         return {'message': 'This is a Promotional Rate'}
 
     elif source in ['predicted', 'rate_extension']:
-        ### create job
         return {}
-    
+
     elif source == 'flash_booking':
         if air_freight_rate.updated_at > datetime.now() - timedelta(hours=4):
             return {'message': 'Best available rate for this port pair'}
         else:
-            ### create job
             return {}
-    
+
     else:
         from services.bramhastra.interactions.list_air_freight_rate_statistics import list_air_freight_rate_statistics
         filters = {
@@ -286,5 +287,4 @@ def validate_air_freight_unsatisfactory_rate_function(request):
         if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
             return {'message': 'Best available rate for this port pair'}
         else:
-            ### create job
             return {}
