@@ -124,7 +124,7 @@ class CreateHaulageFreightRateFeedback(BaseModel):
   created_at: datetime = None
   updated_at: datetime = None
   transport_mode: str = None
-  spot_search_serial_id:str = None
+  spot_search_serial_id: int = None
 
 class RevertedRateParams(BaseModel):
     id: str = None

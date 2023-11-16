@@ -103,7 +103,7 @@ class CreateFclCustomsRateFeedback(BaseModel):
   commodity: str = None
   service_provider_id: str = None
   cargo_handling_type: str = None
-  spot_search_serial_id:str = None
+  spot_search_serial_id: int = None
 
 
 class UpdateFclCustomsRatePlatformPrices(BaseModel):

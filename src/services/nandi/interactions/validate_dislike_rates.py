@@ -246,7 +246,7 @@ def validate_air_freight_unsatisfactory_rate_function(request):
         else:
             return {}
 
-    else:
+    elif source in ['rate_sheet', 'manual']:
         from services.bramhastra.interactions.list_air_freight_rate_statistics import list_air_freight_rate_statistics
         filters = {
             "group_by":[
@@ -288,3 +288,5 @@ def validate_air_freight_unsatisfactory_rate_function(request):
             return {'message': 'Best available rate for this port pair'}
         else:
             return {}
+    else:
+        return {}
