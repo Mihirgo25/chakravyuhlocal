@@ -149,7 +149,7 @@ class CreateFclCfsRateFeedback(BaseModel):
   service_provider_id: str = None
   attachment_file_urls: List[str] = []
   rate_type: str = 'market_place'
-  spot_search_serial_id:str = None
+  spot_search_serial_id: int = None
 
 class DeleteFclCfsRateFeedback(BaseModel):
   fcl_cfs_rate_feedback_ids: list[str]
