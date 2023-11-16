@@ -77,12 +77,11 @@ def cached(maxsize=2):
             rd.hdel(cache, key)
             rd.delete(key)
 
-        def cleanup_all():
-            rd.delete(cache_sorted_keys, cache)
-            for key in rd.scan_iter("timed_cache:"):
-                rd.delete(key)
-
-        wrapper.cleanup_all = cleanup_all
         return wrapper
 
     return decorator
+
+
+def clean_cache():
+    for key in rd.keys("timed_cache:*"):
+        rd.delete(key)
