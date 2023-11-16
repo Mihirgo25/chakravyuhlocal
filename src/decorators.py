@@ -82,6 +82,6 @@ def cached(maxsize=2):
     return decorator
 
 
-def clean_cache():
+def clean_cached():
     for key in rd.keys("timed_cache:*"):
         rd.delete(key)
