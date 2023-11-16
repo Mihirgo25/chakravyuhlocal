@@ -18,7 +18,7 @@ def cached(maxsize=2):
 
         def clean():
             rand = [1, 0][random.random() > 0.6]
-            if rand == 1:
+            if rand:
                 all_keys = rd.zrange(cache_sorted_keys, 0, -1)
                 for key in all_keys:
                     if not rd.exists(key):
