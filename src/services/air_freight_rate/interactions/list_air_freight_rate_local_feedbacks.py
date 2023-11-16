@@ -86,8 +86,8 @@ def get_data(query, spot_search_details_required):
     for rate in data:
         if rate['air_freight_rate_local_id']:
             air_freight_rate_local_ids.append((rate['air_freight_rate_local_id']))
-        if rate.get('reverted_rate_id'):
-            air_freight_rate_local_ids.append((rate['reverted_rate_id']))
+        if rate.get('reverted_rate'):
+            air_freight_rate_local_ids.append((rate['reverted_rate'].get('id')))
     air_freight_rate_locals = AirFreightRateLocal.select(AirFreightRateLocal.id,
                                             AirFreightRateLocal.airport,
                                             AirFreightRateLocal.commodity,
@@ -119,9 +119,9 @@ def get_data(query, spot_search_details_required):
 
         if spot_search_details_required:
             object['spot_search'] = spot_search_hash.get((object['source_id']), {})
-        
-        if object.get('reverted_rate_id'):
-            reverted_rate = air_freight_rate_local_mappings[(object['reverted_rate_id'])]
+
+        if object.get('reverted_rate'):
+            reverted_rate = air_freight_rate_local_mappings[(object['reverted_rate'].get('id'))]
             object['reverted_rate_data']={}
             object['reverted_rate_data']['commodity'] = reverted_rate['commodity']
             object['reverted_rate_data']['commodity_type'] = reverted_rate['commodity_type']
