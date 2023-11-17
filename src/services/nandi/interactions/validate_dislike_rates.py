@@ -42,9 +42,9 @@ def validate_rate_feedback(request):
 #     return {}
 
 def validate_air_freight_local_unsatisfactory_rate_function(request):
-    from services.air_freight_rate.models.air_freight_rate_local_feedback import AirFreightRateLocalFeedback
-    air_locals_rate = AirFreightRateLocalFeedback.select(AirFreightRateLocalFeedback.id,AirFreightRateLocalFeedback.updated_at).where(
-        AirFreightRateLocalFeedback.id == request.get('rate_id')
+    from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
+    air_locals_rate = AirFreightRateLocal.select(AirFreightRateLocal.id,AirFreightRateLocal.updated_at).where(
+        AirFreightRateLocal.id == request.get('rate_id')
     ).first()
 
     if air_locals_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
@@ -52,9 +52,9 @@ def validate_air_freight_local_unsatisfactory_rate_function(request):
     return {}
 
 def validate_fcl_freight_local_unsatisfactory_rate_function(request):
-    from services.fcl_freight_rate.models.fcl_freight_rate_local_feedback import FclFreightRateLocalFeedback
-    fcl_locals_rate = FclFreightRateLocalFeedback.select(FclFreightRateLocalFeedback.id,FclFreightRateLocalFeedback.updated_at).where(
-        FclFreightRateLocalFeedback.id == request.get('rate_id')
+    from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+    fcl_locals_rate = FclFreightRateLocal.select(FclFreightRateLocal.id,FclFreightRateLocal.updated_at).where(
+        FclFreightRateLocal.id == request.get('rate_id')
     ).first()
 
     if fcl_locals_rate.updated_at.date() > (datetime.now().date() - timedelta(days=30)):
