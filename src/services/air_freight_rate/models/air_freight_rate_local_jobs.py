@@ -34,11 +34,9 @@ class AirFreightRateLocalJob(BaseModel):
     closed_by_id = UUIDField(null=True, index=True)
     closed_by = BinaryJSONField(null=True)
     closing_remarks = TextField(null=True)
-    shipment_type = CharField(null=True)
     rate_type = TextField(null=True)
     init_key = TextField(index=True, null=True)
     is_visible = BooleanField(default=True)
-    operation_type = CharField(null=True)
     price_type = CharField(null=True)
     cogo_entity_id = UUIDField(null=True, index=True)
     serial_id = BigIntegerField(

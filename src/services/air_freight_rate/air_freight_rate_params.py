@@ -600,9 +600,6 @@ class CreateAirFreightRateLocalJob(BaseModel):
     commodity: str = None
     commodity_type: str = None
     rate_type: str = None
-    operation_type: str = None
-    shipment_type: str = None
-    stacking_type: str = None
     is_visible: bool = True
     price_type: str = None
     
