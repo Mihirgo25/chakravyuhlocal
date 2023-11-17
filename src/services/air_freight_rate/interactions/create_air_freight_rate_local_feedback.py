@@ -82,9 +82,6 @@ def get_create_params(request):
     return {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks']} | ({'status': 'active'})
 
 def create_audit(request, local_request_id, action_name):
-    if request.get('preferred_airline_ids'):
-        request['preferred_airline_ids'] = [str(str_id) for str_id in request['preferred_airline_ids']]
-
     AirServiceAudit.create(
         action_name = action_name,
         performed_by_id = request.get('performed_by_id'),

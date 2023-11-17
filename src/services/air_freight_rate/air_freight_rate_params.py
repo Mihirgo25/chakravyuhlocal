@@ -622,14 +622,12 @@ class CreateAirFreightRateLocalFeedbackParams(BaseModel):
     performed_by_org_id: str
     performed_by_type: str
     rate_id: str
-    validity_id: str
     likes_count: int
     dislikes_count: int
     feedbacks: list[str] = []
     remarks: list[str] = []
     preferred_rate: float = None
     preferred_rate_currency: str = None
-    preferred_storage_free_days: int = None
     feedback_type: str
     booking_params: dict = {}
     trade_type: str = None
@@ -639,7 +637,6 @@ class CreateAirFreightRateLocalFeedbackParams(BaseModel):
     trade_id: str = None
     service_provider_id: str = None
     cogo_entity_id: str = None
-    operation_type: str = None
     airline_id: str = None
     commodity: str = None
     spot_search_serial_id: int = None

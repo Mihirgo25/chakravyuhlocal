@@ -146,6 +146,10 @@ class CreateFclCfsRateFeedback(BaseModel):
   trade_type: str = None
   trade_id: str = None
   commodity: str = None
+  continent_id: str = None
+  container_size: str = None
+  container_type: str = None
+  cargo_handling_type: str = None
   service_provider_id: str = None
   attachment_file_urls: List[str] = []
   rate_type: str = 'market_place'
