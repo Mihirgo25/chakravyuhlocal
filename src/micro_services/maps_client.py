@@ -3,6 +3,8 @@ from micro_services.global_client import GlobalClient
 from micro_services.discover_client import get_instance_url
 from configs.env import APP_ENV
 import json
+from decorators import cached
+
 class MapsApiClient:
     def __init__(self):
         self.client=GlobalClient(url = str(get_instance_url('location')),headers={
@@ -13,6 +15,7 @@ class MapsApiClient:
             "Accept": "application/json",
         })
 
+    @cached(maxsize=2000)
     def list_locations(self, data={}):
         if APP_ENV == "production":
             keys = ['filters', 'includes']

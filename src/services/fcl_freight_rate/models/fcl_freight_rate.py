@@ -21,6 +21,8 @@ from micro_services.client import *
 from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import is_price_in_range
 from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM, DEFAULT_RATE_TYPE
 from copy import deepcopy
+from playhouse.shortcuts import ThreadSafeDatabaseMetadata
+
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -28,6 +30,7 @@ class BaseModel(Model):
     class Meta:
         database = db
         only_save_dirty = True
+        model_metadata_class = ThreadSafeDatabaseMetadata
 
 class FclFreightRate(BaseModel):
     commodity = CharField(null=True, index=True)
