@@ -9,12 +9,14 @@ from database.rails_db import *
 from micro_services.client import maps
 from libs.common_validations import validate_shipping_line
 from datetime import timedelta,datetime
+from playhouse.shortcuts import ThreadSafeDatabaseMetadata
 
 
 class BaseModel(Model):
     class Meta:
         database = db
         only_save_dirty = True
+        model_metadata_class = ThreadSafeDatabaseMetadata
 
 class FclFreightRateFreeDay(BaseModel):
     container_size = CharField(index=True, null=True)
