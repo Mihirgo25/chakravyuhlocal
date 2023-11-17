@@ -77,20 +77,6 @@ class MapsApiClient:
         return self.client.request('GET', 'get_air_route', data)
     
     
-    def get_sailing_schedules(self, data= {}):
-        if 'filters' in data:
-            data['filters'] = json.dumps(data['filters'])
-        return self.client.request('GET', 'get_sailing_schedules', data, timeout=3000)
-
-    def get_fake_sailing_schedules(self, data= {}):
-        if 'filters' in data:
-            data['filters'] = json.dumps(data['filters'])
-        return self.client.request('GET', 'get_fake_sailing_schedules', data)
-
-    def get_predicted_transit_time(self, data= {}):
-        if 'filters' in data:
-            data['filters'] = json.dumps(data['filters'])
-        return self.client.request('GET', 'get_predicted_transit_time', data)
 
 
     
