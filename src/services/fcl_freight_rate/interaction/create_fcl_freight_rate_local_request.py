@@ -54,6 +54,7 @@ def execute_transaction_code(request):
 
     send_notifications_to_supply_agents_local_request.apply_async(kwargs={'object':local_request},queue='communication')
 
+    request['source_id'] = local_request.id
     create_fcl_freight_rate_local_job(request, "rate_request")
 
     return {

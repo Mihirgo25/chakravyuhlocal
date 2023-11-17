@@ -7,6 +7,7 @@ from libs.get_multiple_service_objects import get_multiple_service_objects
 from database.rails_db import (
     get_organization_partner,
 )
+from services.air_freight_rate.interactions.delete_air_freight_rate_local_job import delete_air_freight_rate_local_job
 
 def delete_air_freight_rate_local_feedback(request):
     with db.atomic():
@@ -38,6 +39,9 @@ def execute_transaction_code(request):
             send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue="critical")
         else:
             send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')
+
+        delete_air_freight_rate_local_job(request)
+
     return {"id":request['air_freight_rate_local_feedback_ids']}
 
 def create_audit(request,id):

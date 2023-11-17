@@ -5,6 +5,7 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from celery_worker import send_notifications_to_supply_agents_local_feedback
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_job import create_fcl_freight_rate_local_job
 
 def create_fcl_freight_rate_local_feedback(request):
     object_type = 'FclFreightRateLocalFeedback'
@@ -67,6 +68,10 @@ def execute_transaction_code(request):
     get_multiple_service_objects(locals_feedback)
 
     send_notifications_to_supply_agents_local_feedback.apply_async(kwargs={'object':locals_feedback},queue='communication')
+
+    if locals_feedback.feedback_type == 'disliked':
+        request['source_id'] = locals_feedback.id
+        create_fcl_freight_rate_local_job(request, "rate_feedback")
 
     return {
         'id': locals_feedback.id,

@@ -5,6 +5,7 @@ from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from celery_worker import send_notifications_to_supply_agents_local_feedback
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
+from services.air_freight_rate.interactions.create_air_freight_rate_local_job import create_air_freight_rate_local_job
 
 def create_air_freight_rate_local_feedback(request):
     object_type = 'AirFreightRateLocalFeedback'
@@ -65,6 +66,10 @@ def execute_transaction_code(request):
     get_multiple_service_objects(locals_feedback)
 
     send_notifications_to_supply_agents_local_feedback.apply_async(kwargs={'object':locals_feedback},queue='communication')
+
+    if locals_feedback.feedback_type == 'disliked':
+        request['source_id'] = locals_feedback.id
+        create_air_freight_rate_local_job(request, "rate_feedback")
 
     return {
         'id': locals_feedback.id,

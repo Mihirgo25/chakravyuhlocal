@@ -5,6 +5,7 @@ from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
 from database.db_migration import db
 from services.fcl_cfs_rate.fcl_cfs_celery_worker import send_notifications_to_supply_agents_cfs_feedback_delay
+from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_job import create_fcl_cfs_rate_job
 
 def create_fcl_cfs_rate_feedback(request):
     with db.atomic():
@@ -62,6 +63,10 @@ def execute_transaction_code(request):
     create_audit(request, cfs_feedback)
     get_multiple_service_objects(cfs_feedback)
     send_notifications_to_supply_agents_cfs_feedback_delay.apply_async(kwargs = {'object':cfs_feedback, 'request':request}, queue = 'low')
+
+    if cfs_feedback.feedback_type == 'disliked':
+        request['source_id'] = cfs_feedback.id
+        create_fcl_cfs_rate_job(request, "rate_feedback")
 
     return {
       'id': cfs_feedback.id,
