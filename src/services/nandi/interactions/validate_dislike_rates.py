@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import asyncio
+from micro_services.client import common
 
 def validate_rate_feedback(request):
     response = {}
@@ -204,7 +205,10 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
         lower_bound = avg_price - 0.1 * sigma
         upper_bound = avg_price + 0.1 * sigma
 
-        bas_standard_price = request.get('standard_price')
+        bas_standard_price = request.get('price')
+
+        if request.get('currency') != 'USD':
+            bas_standard_price = common.get_money_exchange_for_fcl({"price": bas_standard_price,"from_currency": request.get('currency'),"to_currency": "USD",})["price"]
 
         if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
             return {'message': 'Best available rate for this port pair'}
@@ -282,7 +286,10 @@ def validate_air_freight_unsatisfactory_rate_function(request):
         lower_bound = avg_price - 0.1 * sigma
         upper_bound = avg_price + 0.1 * sigma
 
-        bas_standard_price = request.get('standard_price')
+        bas_standard_price = request.get('price')
+
+        if request.get('currency') != 'USD':
+            bas_standard_price = common.get_money_exchange_for_fcl({"price": bas_standard_price,"from_currency": request.get('currency'),"to_currency": "USD",})["price"]
 
         if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
             return {'message': 'Best available rate for this port pair'}
