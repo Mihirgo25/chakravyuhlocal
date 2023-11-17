@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
-from micro_services.client import maps, common,schedule_client
+from micro_services.client import maps, common, schedule_client
 from configs.fcl_freight_rate_constants import (
     FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES,
     DEFAULT_SCHEDULE_TYPES,
