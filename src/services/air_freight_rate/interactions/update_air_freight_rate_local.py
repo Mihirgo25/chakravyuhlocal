@@ -3,6 +3,7 @@ from services.air_freight_rate.models.air_freight_rate_local import AirFreightRa
 from fastapi import HTTPException
 from datetime import *
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
+from services.air_freight_rate.air_local_celery_worker import update_air_freight_rate_local_job_on_rate_addition_delay
 # import sel,up
 
 def update_air_freight_rate_local(request):
@@ -30,6 +31,8 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=500, detail="Local rate not updated")
 
     create_audit(request)
+
+    update_air_freight_rate_local_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": air_freight_rate_local.id},queue='fcl_freight_rate')
 
     return {'id':str(air_freight_rate_local.id)}
 

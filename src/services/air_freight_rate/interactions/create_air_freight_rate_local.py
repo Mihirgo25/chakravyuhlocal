@@ -12,6 +12,7 @@ def create_air_freight_rate_local(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
+    from services.air_freight_rate.air_local_celery_worker import update_air_freight_rate_local_job_on_rate_addition_delay
     row={
         'airport_id':request.get('airport_id'),
         'airline_id':request.get('airline_id'),
@@ -67,6 +68,9 @@ def execute_transaction_code(request):
     air_freight_local.update_foreign_references()
 
     get_multiple_service_objects(air_freight_local)
+
+    update_air_freight_rate_local_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": air_freight_local.id},queue='fcl_freight_rate')
+
     return {
       'id': str(air_freight_local.id)
     }

@@ -580,6 +580,7 @@ class DeleteAirFreightRateLocalJob(BaseModel):
     closing_remarks: str = None
     data: dict = {}
     source_id: str = None
+    service_id: str = None
     shipment_id: str = None
     rate_id: str = None
     performed_by_id: str = None

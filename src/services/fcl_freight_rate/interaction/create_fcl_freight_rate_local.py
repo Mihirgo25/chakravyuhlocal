@@ -51,6 +51,7 @@ def validate_request(request):
 
 def execute_transaction_code(request):
     from celery_worker import fcl_freight_local_data_updation, create_country_wise_locals_in_delay
+    from services.fcl_freight_rate.fcl_local_celery_worker import update_fcl_freight_rate_local_job_on_rate_addition_delay
     if not request.get('source'):
         request['source'] = 'rms_upload'
 
@@ -129,6 +130,8 @@ def execute_transaction_code(request):
     get_multiple_service_objects(fcl_freight_local)
 
     fcl_freight_local_data_updation.apply_async(kwargs={"request":request},queue='low')
+
+    update_fcl_freight_rate_local_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": fcl_freight_local.id},queue='fcl_freight_rate')
 
     return {"id": fcl_freight_local.id }
 

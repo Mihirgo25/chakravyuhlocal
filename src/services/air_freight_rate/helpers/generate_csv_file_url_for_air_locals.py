@@ -29,9 +29,9 @@ def generate_csv_file_url_for_air_locals(query):
 
 def get_air_freight_local_coverage_required_data(coverage_data):
     required_data = {}
-    required_data["airport"] = coverage_data["origin_airport"]["name"]
+    required_data["airport"] = coverage_data["airport"]["name"]
     required_data["commodity"] = coverage_data["commodity"]
-    required_data["commodity_sub_type"] = coverage_data["commodity_sub_type"]
+    required_data["commodity_type"] = coverage_data["commodity_type"]
     required_data["trade_type"] = coverage_data["trade_type"]
     required_data["airline"] = (
         coverage_data["airline"]["short_name"] if coverage_data.get("airline") else None

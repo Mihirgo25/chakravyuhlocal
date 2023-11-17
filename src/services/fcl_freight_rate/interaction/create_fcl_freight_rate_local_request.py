@@ -4,6 +4,8 @@ import uuid
 from database.db_session import db
 from celery_worker import send_notifications_to_supply_agents_local_request
 from libs.get_multiple_service_objects import get_multiple_service_objects
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_job import create_fcl_freight_rate_local_job
+
 
 def create_fcl_freight_rate_local_request(request):
     object_type = 'Fcl_Freight_Rate_Local_Request' 
@@ -52,7 +54,8 @@ def execute_transaction_code(request):
 
     send_notifications_to_supply_agents_local_request.apply_async(kwargs={'object':local_request},queue='communication')
 
-    
+    create_fcl_freight_rate_local_job(request, "rate_request")
+
     return {
     'id': local_request.id
     }
