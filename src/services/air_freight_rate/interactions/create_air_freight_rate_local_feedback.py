@@ -41,6 +41,8 @@ def execute_transaction_code(request):
             'performed_by_org_id': request.get('performed_by_org_id')
         }
         locals_feedback = AirFreightRateLocalFeedback(**unique_object_params)
+        next_sequence_value = db.execute_sql("SELECT nextval('air_freight_rate_local_feedback_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(locals_feedback,'serial_id',next_sequence_value)
     
     create_params = get_create_params(request)
 
