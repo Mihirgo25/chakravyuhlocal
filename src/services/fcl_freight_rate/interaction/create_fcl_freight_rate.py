@@ -67,12 +67,21 @@ def create_fcl_freight_rate_data(request):
     # origin_port_id = str(request.get("origin_port_id"))
     # query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
     # db.execute_sql(query)
-    with db.atomic() as transaction:
+    with db.manual_commit():
+        db.begin()  # Have to begin transaction explicitly.
         try:
-            return create_fcl_freight_rate(request)
+            data = create_fcl_freight_rate(request)
         except:
-            transaction.rollback()
+            db.rollback()  # Rollback! An error occurred.
             raise
+        else:
+            try:
+                db.commit()  # Commit changes.
+            except:
+                db.rollback()
+                raise
+        return data
+
   
 
 def create_fcl_freight_rate(request):
