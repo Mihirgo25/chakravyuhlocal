@@ -195,5 +195,5 @@ POSSIBLE_SOURCES_IN_JOB_MAPPINGS = ['expiring_rates','critical_ports', 'cancelle
 
 POSSIBLE_CLOSING_REMARKS_FOR_JOBS = ['not_serviceable', 'rate_not_available', 'no_change_in_rate']
 
-
+REFRESH_TIME = 10800
 
