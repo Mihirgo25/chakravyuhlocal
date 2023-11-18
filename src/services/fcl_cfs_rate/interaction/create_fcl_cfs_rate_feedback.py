@@ -86,8 +86,8 @@ def get_create_params(request):
         'trade_id':request.get('trade_id'),
         'commodity': request.get('commodity'),
         'service_provider_id': request.get('service_provider_id'),
-        'spot_search_serial_id':request.get('spot_search_serial_id')
-
+        'spot_search_serial_id':request.get('spot_search_serial_id'),
+        'cogo_entity_id':request.get('cogo_entity_id')
     }
 
 def create_audit(request, cfs_feedback):
