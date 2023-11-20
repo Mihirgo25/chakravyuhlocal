@@ -84,13 +84,13 @@ def get_current_median(request,origin_port_id,destination_port_id,destination_ba
 
     unique_shipping_line_ids = list(set(shipping_line_ids))
 
-    query = FclFreightRateEstimationRatios.select().where(
-                FclFreightRateEstimationRatios.commodity == request['commodity'],
-                FclFreightRateEstimationRatios.container_type == request['container_type'],
-                FclFreightRateEstimationRatios.container_size == request['container_size'],
-                FclFreightRateEstimationRatios.destination_port_id == destination_base_port_id,
-                FclFreightRateEstimationRatios.origin_port_id == origin_base_port_id,
-                FclFreightRateEstimationRatios.shipping_line_id << unique_shipping_line_ids,
+    query = FclFreightRateEstimationRatio.select().where(
+                FclFreightRateEstimationRatio.commodity == request['commodity'],
+                FclFreightRateEstimationRatio.container_type == request['container_type'],
+                FclFreightRateEstimationRatio.container_size == request['container_size'],
+                FclFreightRateEstimationRatio.destination_port_id == destination_base_port_id,
+                FclFreightRateEstimationRatio.origin_port_id == origin_base_port_id,
+                FclFreightRateEstimationRatio.shipping_line_id << unique_shipping_line_ids,
             )
 
     sl_ratio_mapping = {}
