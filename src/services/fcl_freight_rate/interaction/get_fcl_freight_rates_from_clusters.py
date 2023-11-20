@@ -119,7 +119,7 @@ def get_current_median(request,origin_port_id,destination_port_id,destination_ba
         
     return normalized_median
 
-def get_fcl_freight_rates_from_clusters(request,serviceable_shipping_lines, available_shipping_lines):
+def get_fcl_freight_rates_from_clusters(request,serviceable_shipping_lines):
     ff_mlo = get_ff_mlo()    
         
     create_params = []
@@ -130,7 +130,7 @@ def get_fcl_freight_rates_from_clusters(request,serviceable_shipping_lines, avai
         destination_port_id = hash.get('destination_main_port_id') or hash.get('destination_port_id')
         shipping_line_ids = hash.get('shipping_lines')
         with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
-            futures = [executor.submit(get_create_params, origin_port_id, destination_port_id, request, ff_mlo, shipping_line_ids, available_shipping_lines)]
+            futures = [executor.submit(get_create_params, origin_port_id, destination_port_id, request, ff_mlo, shipping_line_ids)]
         create_params.extend(futures)
 
     for i in range(len(create_params)):
@@ -141,7 +141,7 @@ def get_fcl_freight_rates_from_clusters(request,serviceable_shipping_lines, avai
     with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
         futures = [executor.submit(create_fcl_freight_rate_data, param) for param in create_params]
 
-def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, shipping_line_ids, available_shipping_lines):
+def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, shipping_line_ids):
     """Generate parameters for creating freight rate entries based on various criteria.
 
     Args:
@@ -186,7 +186,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
         ~FclFreightRate.rate_not_available_entry,
         FclFreightRate.rate_type == "market_place",
         FclFreightRate.last_rate_available_date >= request['validity_start'],
-        FclFreightRate.shipping_line_id.in_(available_shipping_lines)
+        FclFreightRate.shipping_line_id.in_(shipping_line_ids)
     )
          
     critical_freight_rates = jsonable_encoder(list(critical_freight_rates_query.dicts()))
@@ -219,7 +219,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
             'procured_by_id': DEFAULT_USER_ID,
             'sourced_by_id': DEFAULT_USER_ID,
             'source': 'rate_extension',
-            'mode': 'cluster_extension'
+            'mode': 'rate_manufactured'
         }
         
         if origin_port_id != request['origin_port_id']:
@@ -230,7 +230,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
             
         for validity in critical_freight_rates[0]["validities"]:
             param["validity_start"] = datetime.strptime(datetime.now().date().isoformat(),'%Y-%m-%d')
-            param["validity_end"] = datetime.strptime((datetime.now() + timedelta(days=7)).date().isoformat(),'%Y-%m-%d')
+            param["validity_end"] = datetime.strptime((datetime.now() + timedelta(days=3)).date().isoformat(),'%Y-%m-%d')
             param["schedule_type"] = validity["schedule_type"]
             param["payment_term"] = validity["payment_term"]
             line_items = validity["line_items"]
