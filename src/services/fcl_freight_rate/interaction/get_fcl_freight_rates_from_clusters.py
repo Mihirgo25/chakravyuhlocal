@@ -3,7 +3,6 @@ from services.fcl_freight_rate.models.fcl_freight_location_cluster import FclFre
 from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
 
 from fastapi.encoders import jsonable_encoder
-from micro_services.client import maps,common
 from datetime import datetime, timedelta
 import concurrent.futures
 from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
@@ -187,7 +186,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
         ~FclFreightRate.rate_not_available_entry,
         FclFreightRate.rate_type == "market_place",
         FclFreightRate.last_rate_available_date >= request['validity_start'],
-        FclFreightRate.shipping_line_id.in_(shipping_line_ids + available_shipping_lines)
+        FclFreightRate.shipping_line_id.in_(available_shipping_lines)
     )
          
     critical_freight_rates = jsonable_encoder(list(critical_freight_rates_query.dicts()))
@@ -201,7 +200,10 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
     shipping_line_mapping = get_shipping_line_mapping(critical_freight_rates)
     nornamlized_median= get_current_median(request,origin_port_id,destination_port_id,destination_base_port_id,origin_base_port_id,shipping_line_mapping,shipping_line_ids + available_shipping_lines)
     
-    for shipping_line_id, obj in shipping_line_mapping.items():        
+    for shipping_line_id, obj in shipping_line_mapping.items():
+        if obj['sl_ratio'] != None:
+            continue    
+            
         param = {
             'origin_port_id': request['origin_port_id'],
             'destination_port_id': request['destination_port_id'],
