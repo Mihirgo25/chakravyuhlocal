@@ -19,7 +19,7 @@ def update_fcl_freight_rate_local_job_on_rate_addition(request, id):
     }
 
     params = {
-        "port_id": request.get("origin_port_id"),
+        "port_id": request.get("port_id"),
         "main_port_id": request.get("main_port_id"),
         "container_size": request.get("container_size"),
         "container_type": request.get("container_type"),
