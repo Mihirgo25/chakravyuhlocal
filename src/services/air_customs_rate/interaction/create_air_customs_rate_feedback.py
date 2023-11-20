@@ -49,12 +49,14 @@ def execute_transaction_code(request):
     air_customs_feedback.set_airport()
     air_customs_feedback.set_spot_search()
     if air_customs_feedback.feedbacks:
-        air_customs_feedback.feedbacks = air_customs_feedback.feedbacks + request.get('feedbacks')
+        feedback = air_customs_feedback.feedbacks + request.get('feedbacks')
+        air_customs_feedback.feedbacks = list(set(feedback))
     else:
         air_customs_feedback.feedbacks = request.get('feedbacks')
     
     if air_customs_feedback.remarks:
-        air_customs_feedback.remarks = air_customs_feedback.remarks + request.get('remarks')
+        remarks = air_customs_feedback.remarks + request.get('remarks')
+        air_customs_feedback.remarks = list(set(remarks))
     else:
         air_customs_feedback.remarks = request.get('remarks')
     try:

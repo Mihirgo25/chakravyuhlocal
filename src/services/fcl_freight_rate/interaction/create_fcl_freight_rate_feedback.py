@@ -65,12 +65,14 @@ def execute_transaction_code(request):
         else:
             setattr(feedback, attr, value)
     if feedback.feedbacks:
-        feedback.feedbacks = feedback.feedbacks + request.get('feedbacks')
+        feedbacks = feedback.feedbacks + request.get('feedbacks')
+        feedback.feedbacks = list(set(feedbacks))
     else:
         feedback.feedbacks = request.get('feedbacks')
     
     if feedback.remarks:
-        feedback.remarks = feedback.remarks + request.get('remarks')
+        remarks = feedback.remarks + request.get('remarks')
+        feedback.remarks = list(set(remarks))
     else:
         feedback.remarks = request.get('remarks')
 
@@ -116,6 +118,7 @@ def get_create_params(request):
         'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'preferred_free_days': request.get('preferred_free_days'),
         'preferred_shipping_line_ids': request.get('preferred_shipping_line_ids'),
+        'preferred_detention_free_days': request.get('preferred_detention_free_days'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'status': 'active',

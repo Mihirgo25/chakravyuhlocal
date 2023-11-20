@@ -24,7 +24,7 @@ Some examples (model - class or model name)::
 import peewee as pw
 from peewee_migrate import Migrator
 from decimal import ROUND_HALF_EVEN
-from playhouse.postgres_ext import BigIntegerField
+from playhouse.postgres_ext import BigIntegerField, BinaryJSONField
 from services.air_customs_rate.models.air_customs_rate_feedback import AirCustomsRateFeedback
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.fcl_cfs_rate.models.fcl_cfs_rate_feedback import FclCfsRateFeedback
@@ -50,7 +50,9 @@ def migrate(migrator: Migrator, database: pw.Database, fake=False, **kwargs):
     migrator.add_fields(FclFreightRateFeedback, spot_search_serial_id = BigIntegerField(null = True))
     migrator.add_fields(FtlFreightRateFeedback, spot_search_serial_id = BigIntegerField(null = True))
     migrator.add_fields(HaulageFreightRateFeedback, spot_search_serial_id = BigIntegerField(null = True))
-    
+    migrator.add_fields(FclFreightRateFeedback, preferred_free_days = BinaryJSONField(null = True))
+
+
 
 
 def rollback(migrator: Migrator, database: pw.Database, fake=False, **kwargs):

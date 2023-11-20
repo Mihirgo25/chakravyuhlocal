@@ -379,6 +379,7 @@ class CreateFclFreightRateFeedback(BaseModel):
     remarks: list[str] = []
     preferred_freight_rate: float = None
     preferred_freight_rate_currency: str = None
+    preferred_detention_free_days: int = None
     preferred_free_days: dict = {}
     preferred_shipping_line_ids: list[str] = []
     feedback_type: str
@@ -1086,7 +1087,6 @@ class CreateFclFreightRateLocalFeedback(BaseModel):
     remarks: list[str] = []
     preferred_rate: float = None
     preferred_rate_currency: str = None
-    preferred_free_days: dict = {}
     feedback_type: str
     booking_params: dict = {}
     cogo_entity_id: str = None

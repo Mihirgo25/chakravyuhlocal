@@ -34,6 +34,7 @@ class FclFreightRateFeedback(BaseModel):
     performed_by_org_id = UUIDField(index=True, null=True)
     performed_by_org = BinaryJSONField(null=True)
     performed_by_type = CharField(index=True, null=True)
+    preferred_free_days = BinaryJSONField(null=True)
     preferred_detention_free_days = IntegerField(null=True)
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)

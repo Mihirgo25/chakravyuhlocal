@@ -44,12 +44,14 @@ def execute_transaction_code(request):
         setattr(cfs_feedback, attr, value)
     
     if cfs_feedback.feedbacks:
-        cfs_feedback.feedbacks = cfs_feedback.feedbacks + request.get('feedbacks')
+        feedback = cfs_feedback.feedbacks + request.get('feedbacks')
+        cfs_feedback.feedbacks = list(set(feedback))
     else:
         cfs_feedback.feedbacks = request.get('feedbacks')
     
     if cfs_feedback.remarks:
-        cfs_feedback.remarks = cfs_feedback.remarks + request.get('remarks')
+        remarks = cfs_feedback.remarks + request.get('remarks')
+        cfs_feedback.remarks = list(set(remarks))
     else:
         cfs_feedback.remarks = request.get('remarks')
     cfs_feedback.set_port()
