@@ -50,12 +50,14 @@ def execute_transaction_code(request):
         setattr(locals_feedback, key, value)
     
     if locals_feedback.feedbacks:
-        locals_feedback.feedbacks = locals_feedback.feedbacks + request.get('feedbacks')
+        feedbacks = locals_feedback.feedbacks + request.get('feedbacks')
+        locals_feedback.feedbacks = list(set(feedbacks))
     else:
         locals_feedback.feedbacks = request.get('feedbacks')
     
     if locals_feedback.remarks:
-        locals_feedback.remarks = locals_feedback.remarks + request.get('remarks')
+        remarks = locals_feedback.remarks + request.get('remarks')
+        locals_feedback.remarks = list(set(remarks))
     else:
         locals_feedback.remarks = request.get('remarks')
 

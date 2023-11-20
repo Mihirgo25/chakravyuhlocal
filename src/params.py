@@ -1084,8 +1084,8 @@ class CreateFclFreightRateLocalFeedback(BaseModel):
     dislikes_count: int
     feedbacks: list[str] = []
     remarks: list[str] = []
-    preferred_freight_rate: float = None
-    preferred_freight_rate_currency: str = None
+    preferred_rate: float = None
+    preferred_rate_currency: str = None
     preferred_free_days: dict = {}
     feedback_type: str
     booking_params: dict = {}
