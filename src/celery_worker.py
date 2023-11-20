@@ -85,6 +85,9 @@ from services.haulage_freight_rate.workers.haulage_freight_expiring_rates_schedu
     haulage_freight_expiring_rates_scheduler,
 )
 
+from services.fcl_freight_rate.interaction.calc_fcl_freight_rate_estimation_ratio import fcl_freight_rate_estimation_ratio
+from services.fcl_freight_rate.helpers.fcl_freight_rate_estimation_ratio_helper import fcl_freight_rate_estimation_ratio_helper
+
 CELERY_CONFIG = {
     "enable_utc": True,
     "task_serializer": "pickle",
@@ -202,6 +205,11 @@ celery.conf.beat_schedule = {
         "task": "celery_worker.create_job_for_critical_port_pairs_delay",
         'schedule': crontab(hour=1, minute=00),
         "options": {"queue": "fcl_freight_rate"},
+    },
+    'fcl_freight_rate_estimation_ratio_worker':{
+        'task': 'celery_worker.fcl_freight_rate_estimation_ratio_worker',
+        'schedule': crontab(hour='16', minute=00, day_of_week='sat'),
+        'options': {'queue': 'fcl_freight_rate'}
     },
 }
 
@@ -965,3 +973,13 @@ def create_job_for_critical_port_pairs_delay(self):
             pass
         else:
             raise self.retry(exc=exc)
+        
+@celery.task(bind = True,retry_backoff=True,max_retries=3)
+def fcl_freight_rate_estimation_ratio_worker(self):
+    try:
+        fcl_freight_rate_estimation_ratio_helper()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc) 
