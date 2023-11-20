@@ -722,9 +722,9 @@ def post_discard_noneligible_rates(freight_rates, requirements):
     # freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
     return freight_rates
 
-def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, serviceable_shipping_lines = []):
+def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, serviceable_shipping_lines = [], available_shipping_lines=[]):
     try:
-        get_fcl_freight_rates_from_clusters(requirements, serviceable_shipping_lines)
+        get_fcl_freight_rates_from_clusters(requirements, serviceable_shipping_lines,available_shipping_lines)
     except:
         pass
     initial_query = initialize_freight_query(requirements)
@@ -766,14 +766,17 @@ def filter_default_service_provider(freight_rates, are_all_rates_predicted, is_p
 def all_rates_predicted(freight_rates):
     freight_rates_length = len(freight_rates)
     predicted_rates_length = 0
+    available_shipping_lines = set()
     for rate in freight_rates:
+        available_shipping_lines.add(rate['shipping_line_id'])
         if rate["mode"] == "predicted":
             predicted_rates_length += 1
             
     if predicted_rates_length == freight_rates_length != 0:
-        return True
+        return True, list(available_shipping_lines)
     else:
-        return False
+        return False, list(available_shipping_lines)
+
 
 def get_fcl_freight_rate_cards(requirements):
     """
@@ -963,9 +966,9 @@ def get_freight_rates(supply_rates, requirements, serviceable_shipping_lines):
         freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
         return (freight_rates, is_predicted)
 
-    are_all_rates_predicted = all_rates_predicted(freight_rates)
+    are_all_rates_predicted, available_shipping_lines= all_rates_predicted(freight_rates)
     if len(freight_rates) == 0 or are_all_rates_predicted:
-        freight_rates, is_predicted = get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, serviceable_shipping_lines)
+        freight_rates, is_predicted = get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, serviceable_shipping_lines, available_shipping_lines)
         
     freight_rates, is_predicted = filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted)
     

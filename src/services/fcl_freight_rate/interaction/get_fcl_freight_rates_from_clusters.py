@@ -120,7 +120,7 @@ def get_current_median(request,origin_port_id,destination_port_id,destination_ba
         
     return nornamlized_median
 
-def get_fcl_freight_rates_from_clusters(request,servicable_shipping_lines):
+def get_fcl_freight_rates_from_clusters(request,servicable_shipping_lines, available_shipping_lines):
     ff_mlo = get_ff_mlo()    
         
     create_params = []
@@ -131,7 +131,7 @@ def get_fcl_freight_rates_from_clusters(request,servicable_shipping_lines):
         destination_port_id = hash.get('destination_main_port_id') or hash.get('destination_port_id')
         shipping_line_ids=hash.get('shippping_line')
         with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
-            futures = [executor.submit(get_create_params, origin_port_id, destination_port_id, request, ff_mlo, shipping_line_ids)]
+            futures = [executor.submit(get_create_params, origin_port_id, destination_port_id, request, ff_mlo, shipping_line_ids, available_shipping_lines)]
         create_params.extend(futures)
 
     for i in range(len(create_params)):
@@ -142,7 +142,7 @@ def get_fcl_freight_rates_from_clusters(request,servicable_shipping_lines):
     with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
         futures = [executor.submit(create_fcl_freight_rate_data, param) for param in create_params]
 
-def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, shipping_line_ids):
+def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, shipping_line_ids,available_shipping_lines):
     """Generate parameters for creating freight rate entries based on various criteria.
 
     Args:
@@ -187,7 +187,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
         ~FclFreightRate.rate_not_available_entry,
         FclFreightRate.rate_type == "market_place",
         FclFreightRate.last_rate_available_date >= request['validity_start'],
-        FclFreightRate.shipping_line_id.in_(shipping_line_ids)
+        FclFreightRate.shipping_line_id.in_(shipping_line_ids+available_shipping_lines)
     )
          
     critical_freight_rates = jsonable_encoder(list(critical_freight_rates_query.dicts()))
@@ -199,9 +199,9 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
         
     shipping_line_mapping = {}
     shipping_line_mapping=get_shipping_line_mapping(critical_freight_rates)
-    nornamlized_median= get_current_median(request,origin_port_id,destination_port_id,destination_base_port_id,origin_base_port_id,shipping_line_mapping,shipping_line_ids)
+    nornamlized_median= get_current_median(request,origin_port_id,destination_port_id,destination_base_port_id,origin_base_port_id,shipping_line_mapping,shipping_line_ids+available_shipping_lines)
     
-    for shipping_line_id, obj in shipping_line_mapping.items():
+    for shipping_line_id, obj in shipping_line_mapping.items():        
         param = {
             'origin_port_id': request['origin_port_id'],
             'destination_port_id': request['destination_port_id'],
