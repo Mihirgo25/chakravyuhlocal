@@ -46,12 +46,14 @@ def execute_transaction_code(request):
     customs_feedback.set_location()
     customs_feedback.set_spot_search()
     if customs_feedback.feedbacks:
-        customs_feedback.feedbacks = customs_feedback.feedbacks + request.get('feedbacks')
+        feedbacks = customs_feedback.feedbacks + request.get('feedbacks')
+        customs_feedback.feedbacks = list(set(feedbacks))
     else:
         customs_feedback.feedbacks = request.get('feedbacks')
     
     if customs_feedback.remarks:
-        customs_feedback.remarks = customs_feedback.remarks + request.get('remarks')
+        remarks = customs_feedback.remarks + request.get('remarks')
+        customs_feedback.remarks = list(set(remarks))
     else:
         customs_feedback.remarks = request.get('remarks')
     try:

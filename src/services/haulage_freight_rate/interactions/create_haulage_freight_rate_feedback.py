@@ -58,12 +58,14 @@ def execute_transaction_code(request):
     for attr, value in create_params.items():
         setattr(feedback, attr, value)
     if feedback.feedbacks:
-        feedback.feedbacks = feedback.feedbacks + request.get('feedbacks')
+        feedbacks = feedback.feedbacks + request.get('feedbacks')
+        feedback.feedbacks = list(set(feedbacks))
     else:
         feedback.feedbacks = request.get('feedbacks')
     
     if feedback.remarks:
-        feedback.remarks = feedback.remarks + request.get('remarks')
+        remarks = feedback.remarks + request.get('remarks')
+        feedback.remarks = list(set(remarks))
     else:
         feedback.remarks = request.get('remarks')
     feedback.validate_before_save()
