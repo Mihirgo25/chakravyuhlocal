@@ -16,6 +16,7 @@ class StandardLineItem(BaseModel):
   currency: str
   remarks: list[str] = []
   slabs: list[Slab] = []
+  market_price: float = None
 
 class FreeDaysType(BaseModel):
   free_days_type:str
