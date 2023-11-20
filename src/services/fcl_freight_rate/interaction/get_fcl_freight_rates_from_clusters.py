@@ -198,7 +198,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
         
     shipping_line_mapping = {}
     shipping_line_mapping = get_shipping_line_mapping(critical_freight_rates)
-    normalized_median= get_current_median(request,origin_port_id,destination_port_id,destination_base_port_id,origin_base_port_id,shipping_line_mapping,shipping_line_ids + available_shipping_lines)
+    normalized_median= get_current_median(request,origin_port_id,destination_port_id,destination_base_port_id,origin_base_port_id,shipping_line_mapping,shipping_line_ids)
     
     for shipping_line_id, obj in shipping_line_mapping.items():
         if obj['sl_ratio'] != None:
