@@ -100,7 +100,7 @@ def get_current_median(request,origin_port_id,destination_port_id,destination_ba
 
     sum = 0.0
     count = 0
-    nornamlized_median=0
+    normalized_median=0
 
     for shipping_line_id in unique_shipping_line_ids:
         sl_ratio_value = sl_ratio_mapping.get(shipping_line_id, 1)
@@ -115,9 +115,9 @@ def get_current_median(request,origin_port_id,destination_port_id,destination_ba
             count += 1
         
     if count > 0:
-        nornamlized_median=sum/count  
+        normalized_median=sum/count  
         
-    return nornamlized_median
+    return normalized_median
 
 def get_fcl_freight_rates_from_clusters(request,serviceable_shipping_lines, available_shipping_lines):
     ff_mlo = get_ff_mlo()    
@@ -198,7 +198,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
         
     shipping_line_mapping = {}
     shipping_line_mapping = get_shipping_line_mapping(critical_freight_rates)
-    nornamlized_median= get_current_median(request,origin_port_id,destination_port_id,destination_base_port_id,origin_base_port_id,shipping_line_mapping,shipping_line_ids + available_shipping_lines)
+    normalized_median= get_current_median(request,origin_port_id,destination_port_id,destination_base_port_id,origin_base_port_id,shipping_line_mapping,shipping_line_ids + available_shipping_lines)
     
     for shipping_line_id, obj in shipping_line_mapping.items():
         if obj['sl_ratio'] != None:
@@ -238,7 +238,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
             for line_item in line_items:
                 if line_item["code"] == "BAS":
                     sl_ratio=obj.get("sl_ratio")
-                    line_item["price"]=nornamlized_median*sl_ratio
+                    line_item["price"]=normalized_median*sl_ratio
             param["line_items"] = line_items
         
             
