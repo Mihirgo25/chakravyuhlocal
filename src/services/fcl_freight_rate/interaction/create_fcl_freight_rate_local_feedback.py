@@ -6,6 +6,7 @@ from celery_worker import send_notifications_to_supply_agents_local_feedback
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_job import create_fcl_freight_rate_local_job
+from micro_services.client import maps
 
 def create_fcl_freight_rate_local_feedback(request):
     object_type = 'FclFreightRateLocalFeedback'
@@ -81,7 +82,26 @@ def execute_transaction_code(request):
     }
 
 def get_create_params(request):
-    return {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks']} | ({'status': 'active'})
+    params = {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks']} | ({'status': 'active'})
+
+    loc_ids = []
+    if request.get('port_id'):
+        loc_ids.append(request.get('port_id'))
+    
+    if request.get('main_port_id'):
+        loc_ids.append(request.get('main_port_id'))
+    
+    obj = {'filters':{"id": loc_ids }}
+    locations = maps.list_locations(obj)['list']
+    locations_hash = {}
+    for loc in locations:
+        locations_hash[loc['id']] = loc
+    if request.get('port_id'):
+        params['port'] = locations_hash[request.get('port_id')]
+    if request.get('main_port_id'):
+        params['main_port'] = locations_hash[request.get('main_port_id')]
+    
+    return params
 
 def create_audit(request, local_request_id, action_name):
     FclServiceAudit.create(
