@@ -40,7 +40,7 @@ def execute_transaction_code(request):
 
         delete_fcl_freight_rate_local_job(request)
 
-    return request['fcl_freight_rate_local_feedback_ids']
+    return {"fcl_freight_rate_local_feedback_ids":request['fcl_freight_rate_local_feedback_ids']}
 
 def find_feedback_objects(request):
     objects = FclFreightRateLocalFeedback.select().where(

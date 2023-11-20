@@ -46,7 +46,7 @@ def execute_transaction_code(request):
 
         delete_fcl_freight_rate_job(request)
 
-    return request['fcl_freight_rate_feedback_ids']
+    return {"fcl_freight_rate_feedback_ids":request['fcl_freight_rate_feedback_ids']}
 
 
 def find_objects(request):
