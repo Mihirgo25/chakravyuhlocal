@@ -70,6 +70,8 @@ POSSIBLE_FEEDBACKS = [
     "unsatisfactory_rate",
     "unsatisfactory_destination_storage",
     "unpreferred_airlines",
+    "has_additional_line_items",
+    "has_missing_line_items"
 ]
 
 REQUEST_SOURCES = ["spot_search", "shipment"]

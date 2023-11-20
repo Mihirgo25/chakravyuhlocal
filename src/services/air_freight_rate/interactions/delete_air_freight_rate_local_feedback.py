@@ -42,7 +42,7 @@ def execute_transaction_code(request):
 
         delete_air_freight_rate_local_job(request)
 
-    return {"id":request['air_freight_rate_local_feedback_ids']}
+    return {"air_freight_rate_local_feedback_ids":request['air_freight_rate_local_feedback_ids']}
 
 def create_audit(request,id):
     AirServiceAudit.create(

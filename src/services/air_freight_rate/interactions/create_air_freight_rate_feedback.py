@@ -46,7 +46,7 @@ def execute_transaction_code(request):
       'performed_by_org_id': request['performed_by_org_id'],
     }
     feedback=AirFreightRateFeedback.select().where(
-        AirFreightRateFeedback.air_freight_rate_id==request.get('air_freight_rate_id'),
+        AirFreightRateFeedback.air_freight_rate_id==request.get('rate_id'),
         AirFreightRateFeedback.validity_id==request.get('validity_id'),
         AirFreightRateFeedback.source==request.get('source'),
         AirFreightRateFeedback.source_id==request.get('source_id'),
@@ -102,7 +102,7 @@ def execute_transaction_code(request):
         create_air_freight_rate_job(request, "rate_feedback")   
     
     return {
-        'id': feedback.id,
+        'id': str(feedback.id),
         'serial_id':feedback.serial_id
         }
 
