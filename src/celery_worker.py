@@ -82,6 +82,25 @@ from services.air_freight_rate.workers.air_freight_expiring_rates_scheduler impo
 from services.haulage_freight_rate.workers.haulage_freight_expiring_rates_scheduler import (
     haulage_freight_expiring_rates_scheduler,
 )
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_job import (
+    update_live_booking_visiblity_for_fcl_freight_rate_local_job
+)
+from services.fcl_freight_rate.workers.update_fcl_freight_rate_local_jobs_to_backlog import (
+    update_fcl_freight_rate_local_jobs_to_backlog
+)
+from services.fcl_freight_rate.workers.update_fcl_freight_rate_local_job_on_rate_addition import (
+    update_fcl_freight_rate_local_job_on_rate_addition,
+)
+from services.air_freight_rate.workers.update_air_freight_rate_local_jobs_to_backlog import (
+    update_air_freight_rate_local_jobs_to_backlog
+)
+from services.air_freight_rate.interactions.create_air_freight_rate_local_job import (
+    update_live_booking_visiblity_for_air_freight_rate_local_job
+)
+from services.air_freight_rate.workers.update_air_freight_rate_local_job_on_rate_addition import (
+    update_air_freight_rate_local_job_on_rate_addition,
+)
+
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -200,6 +219,16 @@ celery.conf.beat_schedule = {
         "task": "celery_worker.create_job_for_critical_port_pairs_delay",
         'schedule': crontab(hour=1, minute=00),
         "options": {"queue": "fcl_freight_rate"},
+    },
+    "update_fcl_freight_local_jobs_status_to_backlogs": {
+        "task": "services.fcl_freight_rate.fcl_celery_worker.update_fcl_freight_rate_local_jobs_to_backlog_delay",
+        "schedule": crontab(hour=22, minute=50),
+        "options": {"queue": "fcl_freight_rate"}
+    },
+    "update_air_freight_local_jobs_status_to_backlogs": {
+        "task": "services.air_freight_rate.air_celery_worker.update_air_freight_rate_local_jobs_to_backlog_delay",
+        "schedule": crontab(hour=22, minute=55),
+        "options": {"queue": "fcl_freight_rate"}
     },
 }
 
@@ -933,3 +962,63 @@ def send_notifications_to_supply_agents_local_feedback(self, object):
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_fcl_freight_rate_local_jobs_to_backlog_delay(self):
+    try:
+        return update_fcl_freight_rate_local_jobs_to_backlog()
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_live_booking_visiblity_for_fcl_freight_rate_local_job_delay(self, job_id):
+    try:
+        return update_live_booking_visiblity_for_fcl_freight_rate_local_job(job_id)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_fcl_freight_rate_local_job_on_rate_addition_delay(self, request, id):
+    try:
+        return update_fcl_freight_rate_local_job_on_rate_addition(request, id)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_air_freight_rate_local_jobs_to_backlog_delay(self):
+    try:
+        return update_air_freight_rate_local_jobs_to_backlog()
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_live_booking_visiblity_for_air_freight_rate_local_job_delay(self, job_id):
+    try:
+        return update_live_booking_visiblity_for_air_freight_rate_local_job(job_id)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_air_freight_rate_local_job_on_rate_addition_delay(self, request, id):
+    try:
+        return update_air_freight_rate_local_job_on_rate_addition(request, id)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)

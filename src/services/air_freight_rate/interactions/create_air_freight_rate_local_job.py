@@ -21,7 +21,7 @@ def create_air_freight_rate_local_job(request, source):
 
 
 def execute_transaction_code(request, source):
-    from services.air_freight_rate.air_local_celery_worker import update_live_booking_visiblity_for_air_freight_rate_local_job_delay
+    from celery_worker import update_live_booking_visiblity_for_air_freight_rate_local_job_delay
     request = jsonable_encoder(request)
     
     params = {
