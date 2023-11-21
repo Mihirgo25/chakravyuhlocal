@@ -401,8 +401,6 @@ class CreateFclFreightRateFeedback(BaseModel):
     rate_type: str = None
     spot_search_serial_id: int = None
 
-
-
 class CreateFclFreightRateNotAvailable(BaseModel):
     origin_port_id: str
     origin_country_id: str = None
