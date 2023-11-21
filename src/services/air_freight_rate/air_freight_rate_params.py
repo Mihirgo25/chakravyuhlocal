@@ -250,7 +250,6 @@ class CreateAirFreightRateFeedbackParams(BaseModel):
     preferred_freight_rate: float = None
     preferred_freight_rate_currency: str = None
     preferred_airline_ids: list[str] = []
-    preferred_storage_free_days: int = None
     feedback_type: str
     booking_params: dict = {}
     trade_type: str = None
@@ -268,7 +267,7 @@ class CreateAirFreightRateFeedbackParams(BaseModel):
     airline_id: str = None
     commodity: str = None
     spot_search_serial_id: int = None
-
+    attachment_file_urls: List[str] = []
 
 class CreateAirFreightRateRequestParams(BaseModel):
     source: str
@@ -591,6 +590,8 @@ class CreateAirFreightRateLocalJob(BaseModel):
     source: str = None
     source_id: str = None
     shipment_id: str = None
+    shipment_serial_id: int = None
+    service_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     airport_id: str = None

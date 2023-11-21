@@ -47,7 +47,8 @@ class FclCfsRateFeedback(BaseModel):
     service_provider_id = UUIDField(null=True)
     reverted_rate = BinaryJSONField(null = True)
     spot_search_serial_id = BigIntegerField(null = True)
-    cogo_entity_id = UUIDField(null=True) 
+    cogo_entity_id = UUIDField(null=True)
+    attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

@@ -3,6 +3,9 @@ from services.air_freight_rate.models.air_freight_rate_local_jobs import AirFrei
 from services.air_freight_rate.models.air_freight_rate_local_jobs_mapping import AirFreightRateLocalJobMapping
 from services.fcl_freight_rate.models.fcl_freight_rate_local_jobs import FclFreightRateLocalJob
 from services.fcl_freight_rate.models.fcl_freight_rate_local_job_mappings import FclFreightRateLocalJobMapping
+from services.fcl_freight_rate.models.fcl_freight_rate_local_feedback import FclFreightRateLocalFeedback
+from services.air_freight_rate.models.air_freight_rate_local_feedback import AirFreightRateLocalFeedback
+from services.fcl_cfs_rate.models.fcl_cfs_rate_feedback import FclCfsRateFeedback
 class Table:
     def __init__(self) -> None:
         pass
@@ -29,7 +32,10 @@ if __name__ == "__main__":
         AirFreightRateLocalJob,
         AirFreightRateLocalJobMapping,
         FclFreightRateLocalJob,
-        FclFreightRateLocalJobMapping
+        FclFreightRateLocalJobMapping,
+        FclFreightRateLocalFeedback,
+        AirFreightRateLocalFeedback,
+        FclCfsRateFeedback
     ]
 
     Table().create_tables(models)

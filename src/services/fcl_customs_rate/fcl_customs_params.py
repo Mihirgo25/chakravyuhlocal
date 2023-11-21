@@ -104,7 +104,7 @@ class CreateFclCustomsRateFeedback(BaseModel):
   service_provider_id: str = None
   cargo_handling_type: str = None
   spot_search_serial_id: int = None
-
+  attachment_file_urls: List[str] = []
 
 class UpdateFclCustomsRatePlatformPrices(BaseModel):
   location_id: str

@@ -2,11 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local_feedback import Fcl
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from database.rails_db import (
-    get_organization_partner,
-)
-from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
-from services.bramhastra.celery import send_feedback_delete_stats_in_delay
+from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local_job import delete_fcl_freight_rate_local_job
 
 def delete_fcl_freight_rate_local_feedback(request):
@@ -32,9 +28,6 @@ def execute_transaction_code(request):
 
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
-
-        id = str(obj.performed_by_org_id)
-        org_users = get_organization_partner(id)
 
         send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')
 

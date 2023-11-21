@@ -86,24 +86,6 @@ from services.air_freight_rate.interactions.update_air_freight_rate_local_job im
     update_air_freight_rate_local_job
 )
 
-
-from services.air_freight_rate.interactions.get_air_freight_rate_local_job_stats import (
-    get_air_freight_rate_local_job_stats,
-)
-from services.air_freight_rate.interactions.delete_air_freight_rate_local_job import (
-    delete_air_freight_rate_local_job,
-)
-from services.air_freight_rate.interactions.list_air_freight_rate_local_jobs import (
-    list_air_freight_rate_local_jobs,
-)
-from services.air_freight_rate.interactions.create_air_freight_rate_local_job import (
-    create_air_freight_rate_local_job,
-)
-from services.air_freight_rate.interactions.update_air_freight_rate_local_job import (
-    update_air_freight_rate_local_job
-)
-
-
 air_freight_router = APIRouter()
 
 
