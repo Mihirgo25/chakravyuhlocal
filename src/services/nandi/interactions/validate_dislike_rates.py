@@ -170,7 +170,7 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
         else:
             return {}
 
-    elif mode in ['rms_upload', 'forcasted_rfq','rate_sheet','disliked_rate','missing_rate']:
+    elif mode in ['rms_upload', 'forcasted_rfq','rate_sheet','disliked_rate','missing_rate','manual']:
         from services.bramhastra.interactions.list_fcl_freight_rate_statistics import list_fcl_freight_rate_statistics
 
         filters = {
@@ -210,7 +210,7 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
         if request.get('currency') != 'USD':
             bas_standard_price = common.get_money_exchange_for_fcl({"price": bas_standard_price,"from_currency": request.get('currency'),"to_currency": "USD",})["price"]
 
-        if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
+        if bas_standard_price >= lower_bound and bas_standard_price <= upper_bound:
             return {'message': 'Best available rate for this port pair'}
         else:
             return {}
