@@ -66,8 +66,8 @@ class FclFreightRateLocalJob(BaseModel):
             return
 
         location_ids = [str(self.terminal_id)]
-
-        terminals = maps.list_locations({"filters": {"id": location_ids}})["list"]
+        obj = {'filters':{"id": location_ids, "type":'seaport'}, 'includes': {"id": True, "name": True, "port_code": True, "country_id": True, "continent_id": True, "trade_id": True, "country_code": True, "display_name": True, "country": True, "default_params_required": True}}
+        terminals = maps.list_locations(obj)["list"]
         for terminal in terminals:
             if str(terminal.get("id")) == str(self.terminal_id):
                 self.terminal = self.get_required_location_data(terminal)
@@ -96,7 +96,6 @@ class FclFreightRateLocalJob(BaseModel):
             location_ids.append(str(self.main_port_id))
         obj = {'filters':{"id": location_ids, "type":'seaport'}, 'includes': {"id": True, "name": True, "port_code": True, "country_id": True, "continent_id": True, "trade_id": True, "country_code": True, "display_name": True, "country": True, "default_params_required": True}}
         ports = maps.list_locations(obj)["list"]
-        ports = maps.list_locations()["list"]
         for port in ports:
             if str(port.get('id')) == str(self.port_id):
                 self.country_id = port.get('country_id', None)
