@@ -1659,6 +1659,8 @@ class FclFreightRateBulkOperation(BaseModel):
                     'schedule_type': validity_object['schedule_type'],
                     'payment_term': validity_object['payment_term'],
                     'rate_type': freight['rate_type'],
+                    'sourced_by_id': sourced_by_id,
+                    'procured_by_id': procured_by_id,
                     'source': 'bulk_operation',
                     'mode': freight['mode'],
                     'schedule_id': validity_object['schedule_id']
