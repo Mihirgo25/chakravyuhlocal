@@ -7,7 +7,7 @@ from database.db_session import db
 from  configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from configs.env import DEFAULT_USER_ID
-from services.fcl_freight_rate.helpers.allocate_fcl_freight_rate_job import allocate_fcl_freight_rate_job
+from services.fcl_freight_rate.helpers.allocate_fcl_freight_rate_local_job import allocate_fcl_freight_rate_local_job
 
 
 
@@ -45,7 +45,7 @@ def execute_transaction_code(request, source):
 
     if not fcl_freight_rate_local_job:
         fcl_freight_rate_local_job = create_job_object(params)
-        user_id = allocate_fcl_freight_rate_job(source, params['service_provider_id'], request.get("trade_type"))
+        user_id = allocate_fcl_freight_rate_local_job(source, params['service_provider_id'], request.get("trade_type"))
         fcl_freight_rate_local_job.user_id = user_id
         fcl_freight_rate_local_job.assigned_to = get_user(user_id)[0]
         fcl_freight_rate_local_job.status = 'pending'
