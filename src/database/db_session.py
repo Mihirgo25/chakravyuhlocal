@@ -65,6 +65,8 @@ db_params = {
 class CustomDatabase(PooledPostgresqlExtDatabase):
     @timer
     def execute_sql(self, sql, params=None, commit=object()):
+        if db.is_closed():
+            db.connect(reuse_if_open = True)
         return super().execute_sql(sql, params, commit)
 
 
