@@ -3,7 +3,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 from fastapi import HTTPException
 from database.db_session import db
 from celery_worker import send_closed_notifications_to_sales_agent_local_request
-from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_job import delete_fcl_freight_rate_job
 
 def delete_fcl_freight_rate_local_request(request):
     with db.atomic():
@@ -28,8 +27,6 @@ def execute_transaction_code(request):
 
         create_audit(request, obj.id)
         send_closed_notifications_to_sales_agent_local_request.apply_async(kwargs={'object':obj},queue='low')
-
-        delete_fcl_freight_rate_job(request)
 
     return {'fcl_freight_rate_local_request_ids' : request['fcl_freight_rate_local_request_ids']}
 
