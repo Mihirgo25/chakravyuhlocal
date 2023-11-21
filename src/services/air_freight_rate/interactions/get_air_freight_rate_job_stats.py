@@ -286,8 +286,8 @@ def apply_filters(query, filters):
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
     
-    query = apply_is_visible_filter(query)
-
+    # query = apply_is_visible_filter(query)
+    print(query)
     return query
 
 
