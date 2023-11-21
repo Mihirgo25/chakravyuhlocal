@@ -25,7 +25,7 @@ from fastapi.encoders import jsonable_encoder
 from database.db_session import rd
 from libs.parse_numeric import parse_numeric
 from services.fcl_freight_rate.helpers.adjust_markup_price import adjusted_price_for_flash_booking
-
+from services.fcl_freight_rate.interaction.update_schedule_in_fcl_freight_rate import update_schedule_in_fcl_freight_rate
 
 
 ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate','add_local_conditions','delete_local_rate_line_item', 'add_sailing_schedules']
@@ -1610,6 +1610,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def perform_batch_add_sailing_schedules_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
+        
         validity_start = datetime.strptime(data['validity_start'], '%Y-%m-%d')
         validity_end = datetime.strptime(data['validity_end'], '%Y-%m-%d') 
 
@@ -1626,11 +1627,16 @@ class FclFreightRateBulkOperation(BaseModel):
             new_validities = []
 
             validities = [k for k in freight["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d').date() >= datetime.now().date()]
-
+            validity_id=None
             for validity_object in validities:
                 validity_object['validity_start'] = datetime.strptime(validity_object['validity_start'], '%Y-%m-%d')
                 validity_object['validity_end'] = datetime.strptime(validity_object['validity_end'], '%Y-%m-%d')
-
+                
+                if validity_object['validity_start'] >= validity_start and  validity_object['validity_end'] <= validity_end:
+                   validity_id = validity_object['id']
+                   break
+                     
+                
                 if data['schedule_type'] != validity_object['schedule_type'] or validity_object['validity_start'] > validity_end or validity_object['validity_end'] < validity_start:
                     continue
                 
@@ -1652,7 +1658,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     'service_provider_id': freight["service_provider_id"],
                     'cogo_entity_id': freight["cogo_entity_id"],
                     'bulk_operation_id': self.id,
-                    'performed_by_id': self.performed_by_id,
+                    'performed_by_id': self.performed_by_id ,#
                     'validity_start': validity_object['validity_start'],
                     'validity_end': validity_object['validity_end'],
                     'line_items': validity_object['line_items'],
@@ -1665,7 +1671,16 @@ class FclFreightRateBulkOperation(BaseModel):
                     'mode': freight['mode'],
                     'schedule_id': validity_object['schedule_id']
                 }
-
+                data={
+                    'validity_id':validity_id,
+                    'rate_id':freight['id'],
+                    'schedule_id':data['schedule_id'],
+                    'sourced_by_id':sourced_by_id,
+                    'procured_by_id':procured_by_id
+                }
+                update_schedule_in_fcl_freight_rate(data)
+        
+                 
                 create_fcl_freight_rate_data(freight_rate_object)
 
             total_affected_rates += 1
