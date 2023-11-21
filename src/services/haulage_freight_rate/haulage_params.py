@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime, timedelta, date
 from peewee import *
+from typing import List
 
 class HaulageFreightRateWeightSlab(BaseModel):
   lower_limit: float
@@ -125,6 +126,7 @@ class CreateHaulageFreightRateFeedback(BaseModel):
   updated_at: datetime = None
   transport_mode: str = None
   spot_search_serial_id: int = None
+  attachment_file_urls: List[str] = []
 
 class RevertedRateParams(BaseModel):
     id: str = None

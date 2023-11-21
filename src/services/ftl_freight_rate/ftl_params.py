@@ -235,6 +235,7 @@ class CreateFtlFreightRateFeedback(BaseModel):
     origin_location: dict = None
     destination_location: dict = None
     spot_search_serial_id: int = None
+    attachment_file_urls: List[str] = []
 
 class RevertedRateParams(BaseModel):
     id: str = None
@@ -244,6 +245,7 @@ class DeleteFtlFreightRateFeedback(BaseModel):
     ftl_freight_rate_feedback_ids: List[str]
     closing_remarks: List[str] = []
     performed_by_id: str = None
+    performed_by_type: str = None
     reverted_rate: RevertedRateParams = None
 
 class DeleteRate(BaseModel):

@@ -56,7 +56,7 @@ class AirFreightRateLocalFeedback(BaseModel):
     cogo_entity_id = UUIDField(null=True, index=True)
     service_provider_id = UUIDField(null=True, index=True)
     commodity = TextField(null=True,index=True)
-    operation_type = TextField(null=True,index=True)
+    commodity_type = TextField(null=True,index=True)
     airline_id=UUIDField(null=True,index=True)
     spot_search_serial_id = BigIntegerField(null = True)
     attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)

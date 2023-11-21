@@ -23,11 +23,9 @@ Some examples (model - class or model name)::
 
 import peewee as pw
 from peewee_migrate import Migrator
-from decimal import ROUND_HALF_EVEN
-from playhouse.postgres_ext import BigIntegerField, BinaryJSONField
+from playhouse.postgres_ext import *
 from services.air_customs_rate.models.air_customs_rate_feedback import AirCustomsRateFeedback
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
-from services.fcl_cfs_rate.models.fcl_cfs_rate_feedback import FclCfsRateFeedback
 from services.fcl_customs_rate.models.fcl_customs_rate_feedback import FclCustomsRateFeedback
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.ftl_freight_rate.models.ftl_freight_rate_feedback import FtlFreightRateFeedback
@@ -45,12 +43,19 @@ def migrate(migrator: Migrator, database: pw.Database, fake=False, **kwargs):
     """Write your migrations here."""
     migrator.add_fields(AirCustomsRateFeedback, spot_search_serial_id = BigIntegerField(null = True))
     migrator.add_fields(AirFreightRateFeedback, spot_search_serial_id = BigIntegerField(null = True))
-    migrator.add_fields(FclCfsRateFeedback, spot_search_serial_id = BigIntegerField(null = True))
     migrator.add_fields(FclCustomsRateFeedback, spot_search_serial_id = BigIntegerField(null = True))
     migrator.add_fields(FclFreightRateFeedback, spot_search_serial_id = BigIntegerField(null = True))
     migrator.add_fields(FtlFreightRateFeedback, spot_search_serial_id = BigIntegerField(null = True))
     migrator.add_fields(HaulageFreightRateFeedback, spot_search_serial_id = BigIntegerField(null = True))
     migrator.add_fields(FclFreightRateFeedback, preferred_free_days = BinaryJSONField(null = True))
+    migrator.add_fields(AirCustomsRateFeedback, attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True))
+    migrator.add_fields(AirFreightRateFeedback, attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True))
+    migrator.add_fields(FclCustomsRateFeedback, attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True))
+    migrator.add_fields(FtlFreightRateFeedback, attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True))
+    migrator.add_fields(HaulageFreightRateFeedback, attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True))
+    migrator.add_fields(FtlFreightRateFeedback, attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True))
+    migrator.sql('ALTER TABLE fcl_freight_rate_feedbacks DROP COLUMN preferred_detention_free_days;')
+    migrator.sql('ALTER TABLE air_freight_rate_feedbacks DROP COLUMN preferred_storage_free_days;')
 
 
 
