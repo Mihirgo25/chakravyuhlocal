@@ -24,12 +24,14 @@ class FtlFreightRate(BaseModel):
     origin_cluster_id = UUIDField(null=True, index=True)
     origin_country_id = UUIDField(null=True, index=True)
     origin_city_id = UUIDField(null=True, index=True)
+    origin_region_id = UUIDField(null=True, index=True)
     origin_location_type = CharField(null=True, index=True)
     origin_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
     destination_location_id = UUIDField(null=True, index=True)
     destination_cluster_id = UUIDField(null=True, index=True)
     destination_country_id = UUIDField(null=True, index=True)
     destination_city_id = UUIDField(null=True, index=True)
+    destination_region_id = UUIDField(null=True, index=True)
     destination_location_type = CharField(null=True, index=True)
     destination_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
     origin_destination_location_type = CharField(null=True, index=True)
@@ -70,6 +72,7 @@ class FtlFreightRate(BaseModel):
     rate_type = CharField(default='market_place', choices = RATE_TYPES, index=True)
     tags = BinaryJSONField(null=True)
     init_key = TextField(index=True, null=True, unique=True)
+    distance = FloatField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -80,7 +83,7 @@ class FtlFreightRate(BaseModel):
 
     def set_locations(self):
         ids = [str(self.origin_location_id), str(self.destination_location_id)]
-        locations_response = maps.list_locations({'filters':{"id": ids}, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True, 'display_name':True, 'postal_code':True}})
+        locations_response = maps.list_locations({'filters':{"id": ids}, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'region_id': True, 'country_id':True, 'country_code': True, 'display_name':True, 'postal_code':True}})
         locations = []
         if 'list' in locations_response:
             locations = locations_response["list"]
@@ -91,8 +94,10 @@ class FtlFreightRate(BaseModel):
                 self.destination_location = self.get_required_location_data(location)
         self.set_origin_location_ids()
         self.set_origin_location_type()
+        self.set_origin_region_id()
         self.set_destination_location_ids()
         self.set_destination_location_type()
+        self.set_destination_region_id()
         self.set_origin_destination_location_type()
 
     def get_required_location_data(self, location):
@@ -103,6 +108,7 @@ class FtlFreightRate(BaseModel):
           "type": location["type"],
           "cluster_id": location["cluster_id"],
           "city_id": location["city_id"],
+          "region_id": location["region_id"],
           "country_id": location["country_id"],
           "country_code": location["country_code"],
           "display_name": location["display_name"],
@@ -127,6 +133,9 @@ class FtlFreightRate(BaseModel):
     def set_origin_location_type(self):
         self.origin_location_type = self.origin_location.get('type')
 
+    def set_origin_region_id(self):
+        self.origin_region_id = self.origin_location.get('region_id')
+
     def set_destination_location_ids(self):
         self.destination_cluster_id = self.destination_location.get('cluster_id')
         self.destination_city_id = self.destination_location.get('city_id')
@@ -146,6 +155,9 @@ class FtlFreightRate(BaseModel):
 
     def set_origin_destination_location_type(self):
         self.origin_destination_location_type = ':'.join([str(self.origin_location_type),str(self.destination_location_type)])
+    
+    def set_destination_region_id(self):
+        self.destination_region_id = self.destination_location.get('region_id')
 
     def validate_validities(self, validity_start, validity_end):
 

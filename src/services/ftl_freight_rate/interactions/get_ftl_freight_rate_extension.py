@@ -3,6 +3,7 @@ from configs.ftl_freight_rate_constants import ENVISION_USER_ID, PREDICTED_PRICE
 from datetime import datetime,timedelta
 from micro_services.client import common
 import statistics
+from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import get_road_distance
 
 CURRENCY_CODE = ""
 
@@ -15,6 +16,10 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
         count_by_code = {}
         global CURRENCY_CODE
         CURRENCY_CODE = request.get("currency_code")
+        
+        requested_distance = get_road_distance(request.get('origin_location_id'), request.get('destination_location_id'))
+        if not requested_distance:
+            requested_distance = 1
 
         final_line_items = [{"code": "BAS", "unit": "per_truck", "price": 0, "remarks": [], "currency": CURRENCY_CODE}, {"code": "FSC", "unit": "per_truck", "price": 0, "remarks": [], "currency": CURRENCY_CODE}]
         for ftl_rate in ftl_rates_extended:
@@ -22,9 +27,10 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
             unit = ftl_rate.get('unit')
             min_chargeable_weights_list.append(ftl_rate.get('minimum_chargeable_weight'))
             transit_time_list.append(ftl_rate.get('transit_time'))
+            supple_rate_distance = ftl_rate.get('distance')
             # calculate sum of prices
-            final_line_items = get_calculated_line_items(final_line_items, ftl_rate.get("line_items", []), count_by_code)
-
+            final_line_items = get_calculated_line_items(final_line_items, ftl_rate.get("line_items", []), count_by_code, requested_distance, supple_rate_distance)
+        
         # divide by count for mean price
         for final_item in final_line_items:
             if count_by_code.get(final_item['code']):
@@ -67,7 +73,7 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
     return new_list
 
 
-def get_calculated_line_items(final_line_items, new_line_items, count_by_code):
+def get_calculated_line_items(final_line_items, new_line_items, count_by_code, requested_distance, supple_rate_distance):
     for line_item in new_line_items:
         total_price = line_item.get("price",0)
         code = line_item["code"]
@@ -89,7 +95,9 @@ def get_calculated_line_items(final_line_items, new_line_items, count_by_code):
         # summation of prices by code
         for final_item in final_line_items:
             if final_item['code'] == line_item['code']:
-                final_item['price'] = final_item.get("price") + total_price
+                final_price = final_item.get("price")
+                final_price = ((final_price/requested_distance) + (total_price/supple_rate_distance)) * requested_distance
+                final_item['price'] = final_price
     return final_line_items
 
 def convert_currency(price, currency):

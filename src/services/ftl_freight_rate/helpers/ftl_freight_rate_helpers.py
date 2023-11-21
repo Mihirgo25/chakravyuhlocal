@@ -69,3 +69,18 @@ def adding_multiple_service_object(ftl_object,request):
     if not query:
         organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
     get_multiple_service_objects(ftl_object)
+
+def create_ftl_freight_rate_distance(ftl_object,request):
+    distance = get_road_distance(request.get('origin_location_id'), request.get('destination_location_id'))
+    ftl_object.distance = distance
+    ftl_object.save()
+
+def get_road_distance(origin_location_id, destination_location_id):
+    params = {
+        'origin_location_id': origin_location_id,
+        'destination_location_id': destination_location_id
+    }
+    data = maps.get_distance_matrix_valhalla(params)
+    if isinstance(data, dict):
+        return data['distance']
+    return None

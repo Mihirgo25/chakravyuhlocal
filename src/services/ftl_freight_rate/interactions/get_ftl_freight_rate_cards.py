@@ -69,8 +69,13 @@ def get_ftl_freight_rate_cards(request):
 
     # Rate Extension
     if len(non_predicted_rates) == 0:
-        extension_query = initialize_query(selected_fields, request, extension = True)
+        # City wise extension
+        extension_query = initialize_query(selected_fields, request, extension = 'city')
         ftl_rates_extended = list(extension_query.dicts())
+        # State wise extension
+        if len(ftl_rates_extended) == 0:
+            extension_query = initialize_query(selected_fields, request, extension = 'state')
+            ftl_rates_extended = list(extension_query.dicts())
         if len(ftl_rates_extended) > 0:
             ftl_rates = get_ftl_freight_rate_extension(ftl_rates_extended,request)
     else:
@@ -88,7 +93,7 @@ def get_ftl_freight_rate_cards(request):
 
     return {"list": rate_list}
 
-def initialize_query(query, request, extension = False):
+def initialize_query(query, request, extension = ''):
     filters = {
         "commodity": request.get("commodity"),
         "trip_type": request.get("trip_type"),
@@ -111,33 +116,38 @@ def initialize_query(query, request, extension = False):
         query = query.where(
             (FtlFreightRate.unit == "per_truck") | (FtlFreightRate.unit.is_null(True))
         )
-    if not extension:
-        origin_location_ids = list(filter(None,[
+
+    if extension == 'city':
+        query = query.where(
+            FtlFreightRate.origin_city_id == request.get("origin_city_id"),
+            FtlFreightRate.destination_city_id == request.get("destination_city_id"),
+            FtlFreightRate.source == 'manual'
+        )
+    
+    elif extension == 'state':
+        query = query.where(
+            FtlFreightRate.origin_region_id == request.get("origin_region_id"),
+            FtlFreightRate.destination_region_id == request.get("destination_region_id"),
+            FtlFreightRate.source == 'manual'
+        )
+
+    else:
+        origin_location_ids = list(filter(None, [
             request.get("origin_location_id"),
             request.get("origin_city_id"),
-        ]))
-
+            ]))
+        
         destination_location_ids = list(filter(None, [
             request.get("destination_location_id"),
             request.get("destination_city_id"),
-        ]))
-
+            ]))
+        
         if origin_location_ids and destination_location_ids:
-            query = query.where(FtlFreightRate.origin_location_id << origin_location_ids,
-                                FtlFreightRate.destination_location_id << destination_location_ids)
-    else:
-        query = query.where(FtlFreightRate.origin_city_id == request.get("origin_city_id"),
-                            FtlFreightRate.destination_city_id == request.get("destination_city_id"),
-                            FtlFreightRate.source == 'manual')
+            query = query.where(
+                FtlFreightRate.origin_location_id << origin_location_ids,
+                FtlFreightRate.destination_location_id << destination_location_ids
+            )
 
-    # if request.get("origin_country_id"):
-    #     query = query.where(
-    #         FtlFreightRate.origin_country_id == request.get("origin_country_id")
-    #     )
-    # if request.get("destination_country_id"):
-    #     query = query.where(
-    #         FtlFreightRate.destination_country_id == request.get("destination_country_id")
-    #     )
     cargo_readiness_date = request.get("cargo_readiness_date")
     query = query.where(
         (FtlFreightRate.validity_start <= cargo_readiness_date)
@@ -168,7 +178,8 @@ def select_fields():
         FtlFreightRate.sourced_by,
         FtlFreightRate.updated_at,
         FtlFreightRate.created_at,
-        FtlFreightRate.source
+        FtlFreightRate.source,
+        FtlFreightRate.distance
     )
 
 
@@ -205,10 +216,16 @@ def set_callback_for_request(request):
         request["origin_city_id"] = location_mapping.get(
             request.get("origin_location_id")
         ).get("city_id")
+        request["origin_region_id"] = location_mapping.get(
+            request.get("origin_location_id")
+        ).get("region_id")
 
         request["destination_city_id"] = location_mapping.get(
             request.get("destination_location_id")
         ).get("city_id")
+        request["destination_region_id"] = location_mapping.get(
+            request.get("destination_location_id")
+        ).get("region_id")
 
         currency_code = location_mapping.get(
             request.get("origin_country_id")
@@ -241,7 +258,7 @@ def set_callback_for_request(request):
 def get_location_mapping(location_ids):
     location_data = maps.list_locations({
         "filters": {"id": location_ids,"status":"active"},
-        'includes': {'id': True, 'name': True, 'city_id':True, 'currency_code':True}
+        'includes': {'id': True, 'name': True, 'city_id':True, 'currency_code':True, 'region_id':True}
         })["list"]
     location_mapping = {}
     for data in location_data:
