@@ -732,7 +732,7 @@ def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, se
     cluster_freight_rates = pre_discard_noneligible_rates(cluster_freight_rates, requirements)
     
     if cluster_freight_rates:
-        freight_rates = cluster_freight_rates
+        freight_rates += cluster_freight_rates
     
     if len(freight_rates) == 0:
         get_fcl_freight_predicted_rate(requirements, serviceable_shipping_lines)
