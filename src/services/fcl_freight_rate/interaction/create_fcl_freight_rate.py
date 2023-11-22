@@ -217,7 +217,7 @@ def create_fcl_freight_rate(request):
         'comparison_charge_code':request.get('comparison_charge_code'),
         'rates_greater_than_price':request.get('rates_greater_than_price'),
         'rates_less_than_price':request.get('rates_less_than_price'),
-        'comparision_currency':request.get('comparison_currency')
+        'comparison_currency':request.get('comparison_currency')
         }
         
         freight.set_validities(
