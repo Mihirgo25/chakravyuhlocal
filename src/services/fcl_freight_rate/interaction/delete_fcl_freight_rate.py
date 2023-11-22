@@ -24,7 +24,7 @@ def execute_transaction_code(request):
         'comparison_charge_code':request.get('comparison_charge_code'),
         'rates_greater_than_price':request.get('rates_greater_than_price'),
         'rates_less_than_price':request.get('rates_less_than_price'),
-        'comparision_currency':request.get('comparison_currency')
+        'comparison_currency':request.get('comparison_currency')
     }
     object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,request['payment_term'],other_params)
     object.set_platform_prices(object.rate_type)
