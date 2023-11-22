@@ -1,12 +1,15 @@
 from services.fcl_customs_rate.models.fcl_customs_rate_feedback import FclCustomsRateFeedback
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from database.db_session import db
+from micro_services.client import spot_search
 from fastapi import HTTPException
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_job import (
     delete_fcl_customs_rate_job
 )
-
+from celery_worker import (
+   update_spot_search_delay
+)
 
 def delete_fcl_customs_rate_feedback(request):
   with db.atomic():
@@ -28,7 +31,15 @@ def execute_transaction_code(request):
         object.save()
     except Exception as e:
         print("Exception in deleting feedback", e)
-    
+
+    update_spot_search_delay.apply_async(
+       kwargs = {"data":{
+        "only_rates_update_required" : True,
+        "id" : object.source_id
+       }},
+       queue = "low"
+     )
+
     create_audit_for_customs_feedback(request, object, data)
     get_multiple_service_objects(object)
     delete_fcl_customs_rate_job(request)

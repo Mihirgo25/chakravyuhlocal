@@ -2,7 +2,7 @@ from celery import Celery
 from kombu.serialization import registry
 from configs.env import *
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
-from micro_services.client import organization, common
+from micro_services.client import organization, common, spot_search
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from services.rate_sheet.interactions.validate_and_process_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
@@ -1016,6 +1016,16 @@ def update_live_booking_visiblity_for_air_freight_rate_local_job_delay(self, job
 def update_air_freight_rate_local_job_on_rate_addition_delay(self, request, id):
     try:
         return update_air_freight_rate_local_job_on_rate_addition(request, id)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_spot_search_delay(self, data):
+    try:
+        return spot_search.update_spot_search(data)
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass

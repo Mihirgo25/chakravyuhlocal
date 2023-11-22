@@ -9,6 +9,9 @@ from database.db_session import db
 from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_job import (
     delete_haulage_freight_rate_job,
 )
+from celery_worker import (
+    update_spot_search_delay
+)
 
 def delete_haulage_freight_rate_feedback(request):
     with db.atomic():
@@ -45,6 +48,13 @@ def execute_transaction_code(request):
                 status_code=400, detail="Freight rate local deletion failed"
             )
 
+        update_spot_search_delay.apply_async(
+            kwargs = {"data":{
+                "only_rates_update_required" : True,
+                "id" : obj.source_id
+            }},
+            queue = "low"
+        )
         create_audit(request, obj.id, obj.transport_mode)
         get_multiple_service_objects(obj)
         delete_haulage_freight_rate_job(request)

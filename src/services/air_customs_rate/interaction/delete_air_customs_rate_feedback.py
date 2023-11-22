@@ -7,6 +7,9 @@ from services.air_customs_rate.air_customs_celery_worker import send_closed_noti
 from services.air_customs_rate.interaction.delete_air_customs_rate_job import (
     delete_air_customs_rate_job
 )
+from celery_worker import (
+   update_spot_search_delay
+)
 
 def delete_air_customs_rate_feedback(request):
   with db.atomic():
@@ -28,6 +31,14 @@ def execute_transaction_code(request):
         object.save()
     except Exception:
         raise HTTPException(status_code=500, detail = 'Error while deleting feedback')
+    
+    update_spot_search_delay.apply_async(
+       kwargs = {"data":{
+        "only_rates_update_required" : True,
+        "id" : object.source_id
+       }},
+       queue = "low"
+     )
 
     create_audit_for_customs_feedback(request, object.id, data)
     get_multiple_service_objects(object)

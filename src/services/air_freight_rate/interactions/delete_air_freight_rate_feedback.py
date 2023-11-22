@@ -8,7 +8,9 @@ from libs.get_multiple_service_objects import get_multiple_service_objects
 from database.rails_db import (
     get_organization_partner,
 )
-
+from celery_worker import (
+    update_spot_search_delay
+)
 from services.air_freight_rate.interactions.delete_air_freight_rate_job import delete_air_freight_rate_job
 
 def delete_air_freight_rate_feedback(request):
@@ -36,6 +38,13 @@ def execute_transaction_code(request):
         except:
             raise HTTPException(status_code=500, detail='deletion failed')
     
+        update_spot_search_delay.apply_async(
+            kwargs = {"data":{
+                "only_rates_update_required" : True,
+                "id" : obj.source_id
+            }},
+            queue = "low"
+        )
 
         create_audit(request,obj.id)
         get_multiple_service_objects(obj)

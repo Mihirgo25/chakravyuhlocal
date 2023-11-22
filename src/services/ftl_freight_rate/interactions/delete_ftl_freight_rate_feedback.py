@@ -3,6 +3,9 @@ from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRa
 from fastapi import HTTPException
 from database.db_session import db
 from services.ftl_freight_rate.interactions.delete_ftl_freight_rate_job import delete_ftl_freight_rate_job
+from celery_worker import (
+    update_spot_search_delay
+)
 
 def delete_ftl_freight_rate_feedback(request):
     with db.atomic():
@@ -27,6 +30,13 @@ def execute_transaction_code(request):
         except:
             raise HTTPException(status_code=500, detail="Ftl Freight rate Feedback deletion failed")
 
+        update_spot_search_delay.apply_async(
+            kwargs = {"data":{
+                "only_rates_update_required" : True,
+                "id" : obj.source_id
+            }},
+            queue = "low"
+        )
         create_audit(request, obj.id)
         
         delete_ftl_freight_rate_job(request)

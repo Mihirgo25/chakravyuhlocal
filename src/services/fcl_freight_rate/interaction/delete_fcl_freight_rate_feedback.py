@@ -5,7 +5,7 @@ from database.db_session import db
 from database.rails_db import (
     get_organization_partner,
 )
-from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
+from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback,update_spot_search_delay
 from services.bramhastra.celery import send_feedback_delete_stats_in_delay
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_job import delete_fcl_freight_rate_job
 
@@ -29,6 +29,14 @@ def execute_transaction_code(request):
             obj.save()
         except:
             raise HTTPException(status_code=500, detail="Freight rate local deletion failed")
+        
+        update_spot_search_delay.apply_async(
+            kwargs = {"data":{
+                "only_rates_update_required" : True,
+                "id" : obj.source_id
+            }},
+            queue = "low"
+        )
 
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')

@@ -4,6 +4,9 @@ from fastapi import HTTPException
 from database.db_session import db
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local_job import delete_fcl_freight_rate_local_job
+from celery_worker import (
+    update_spot_search_delay
+)
 
 def delete_fcl_freight_rate_local_feedback(request):
     with db.atomic():
@@ -26,6 +29,13 @@ def execute_transaction_code(request):
         except:
             raise HTTPException(status_code=500, detail="Freight rate local feedback deletion failed")
 
+        update_spot_search_delay.apply_async(
+            kwargs = {"data":{
+                "only_rates_update_required" : True,
+                "id" : obj.source_id
+            }},
+            queue = "low"
+        )
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
 

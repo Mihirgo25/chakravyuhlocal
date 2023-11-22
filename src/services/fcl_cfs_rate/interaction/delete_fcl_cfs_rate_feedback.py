@@ -4,6 +4,9 @@ from fastapi import HTTPException
 from database.db_session import db
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from services.fcl_cfs_rate.interaction.delete_fcl_cfs_rate_job import delete_fcl_cfs_rate_job
+from celery_worker import (
+    update_spot_search_delay
+)
 
 def delete_fcl_cfs_rate_feedback(request):
     with db.atomic():
@@ -26,6 +29,14 @@ def execute_transaction_code(request):
             obj.save()
         except:
             raise HTTPException(status_code=500, detail="Cfs rate feedback deletion failed")
+
+        update_spot_search_delay.apply_async(
+            kwargs = {"data":{
+                "only_rates_update_required" : True,
+                "id" : obj.source_id
+            }},
+            queue = "low"
+        )
         create_audit(request, obj.id)
         get_multiple_service_objects(obj)
         send_notifications_to_sales_agent_fcl_cfs_feedback_delay.apply_async(kwargs={'object':obj},queue='low')
