@@ -79,7 +79,8 @@ def execute_transaction_code(request):
     get_multiple_service_objects(feedback)
 
     if feedback.feedback_type == 'disliked':
-        request['source_id'] = feedback.id    
+        request['source_id'] = feedback.id
+        request['serial_id'] = feedback.serial_id  
         create_haulage_freight_rate_job(request, "rate_feedback")
         
     return {'id': feedback.id, 'serial_id':feedback.serial_id}

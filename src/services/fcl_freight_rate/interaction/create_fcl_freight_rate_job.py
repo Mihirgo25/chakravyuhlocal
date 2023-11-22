@@ -37,9 +37,10 @@ def execute_transaction_code(request, source):
         'rate_type' : request.get('rate_type'),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
-        'shipment_id': request.get('shipment_id')
+        'shipment_id': request.get('shipment_id'),
+        'source_id': request.get('source_id')
     }
-    init_key = f'{str(params.get("origin_port_id") or "")}:{str(params.get("origin_main_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("destination_main_port_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}'
+    init_key = f'{str(params.get("origin_port_id") or "")}:{str(params.get("origin_main_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("destination_main_port_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}:{str(params.get("source_id") or "")}'
     fcl_freight_rate_job = FclFreightRateJob.select().where(FclFreightRateJob.init_key == init_key, FclFreightRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
@@ -79,7 +80,7 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = FclFreightRateJobMapping.create(
         source_id=request.get("source_id"),
         shipment_id=request.get("shipment_id"),
-        shipment_serial_id = request.get("shipment_serial_id"),
+        source_serial_id = request.get("serial_id"),
         shipment_service_id = request.get("service_id"),
         job_id= jobs_id,
         source = source,

@@ -33,6 +33,8 @@ def update_fcl_freight_rate_job_on_rate_addition(request, id):
     ]
     conditions.append(FclFreightRateJob.status << ["pending", "backlog"])
     conditions.append(~(FclFreightRateJob.sources.contains('live_booking')))
+    conditions.append(~(FclFreightRateJob.sources.contains('rate_request')))
+    conditions.append(~(FclFreightRateJob.sources.contains('rate_feedback')))
     affected_ids = jsonable_encoder([
         job.id
         for job in FclFreightRateJob.select(FclFreightRateJob.id).where(*conditions)

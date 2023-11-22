@@ -30,9 +30,10 @@ def execute_transaction_code(request, source):
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
         'shipment_id': request.get('shipment_id'),
-        'cargo_handling_type': request.get('cargo_handling_type')
+        'cargo_handling_type': request.get('cargo_handling_type'),
+        'source_id': request.get('source_id')
     }
-    init_key = f'{str(params.get("location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}:{str(params.get("cargo_handling_type") or "")}'
+    init_key = f'{str(params.get("location_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}:{str(params.get("cargo_handling_type") or "")}:{str(params.get("source_id") or "")}'
     fcl_customs_rate_job = FclCustomsRateJob.select().where(FclCustomsRateJob.init_key == init_key, FclCustomsRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
@@ -69,7 +70,7 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = FclCustomsRateJobMapping.create(
         source_id=request.get("source_id"),
         shipment_id=request.get("shipment_id"),
-        shipment_serial_id = request.get("shipment_serial_id"),
+        source_serial_id = request.get("serial_id"),
         shipment_service_id = request.get("service_id"),
         job_id= jobs_id,
         source = source,

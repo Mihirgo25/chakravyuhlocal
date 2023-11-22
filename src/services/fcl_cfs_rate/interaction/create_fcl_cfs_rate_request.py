@@ -48,6 +48,7 @@ def execute_transaction_code(request):
     send_notifications_to_supply_agents_cfs_request_delay.apply_async(kwargs={'object':cfs_request}, queue = 'low')
 
     request["source_id"] = cfs_request.id
+    request['serial_id'] = cfs_request.serial_id
     create_fcl_cfs_rate_job(request, "rate_request")
 
     return {'id': cfs_request.id}

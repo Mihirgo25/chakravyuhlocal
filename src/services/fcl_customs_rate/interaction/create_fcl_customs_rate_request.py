@@ -48,6 +48,7 @@ def execute_transaction_code(request):
     get_multiple_service_objects(customs_request)
     send_notifications_to_supply_agents(request)
     request['source_id'] = customs_request.id
+    request['serial_id'] = customs_request.serial_id
     create_fcl_customs_rate_job(request, "rate_request")
     
     return {

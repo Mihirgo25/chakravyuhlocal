@@ -89,6 +89,7 @@ def execute_transaction_code(request):
                  request_object, airports
             )
     request["source_id"] = request_object.id
+    request['serial_id'] = request_object.serial_id
     create_air_freight_rate_job(request, "rate_request")
     return {"id": str(request_object.id)}
 

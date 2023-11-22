@@ -60,7 +60,7 @@ def execute_transaction_code(request):
         send_request_stats_in_delay.apply_async(kwargs = {'action':action,'object':request_object},queue = 'statistics')
 
         request['source_id'] = request_object.id
-
+        request['serial_id'] = request_object.serial_id
         create_fcl_freight_rate_job(request, "rate_request")
 
         return {

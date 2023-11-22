@@ -49,6 +49,7 @@ def execute_transaction_code(request):
     send_notifications_to_supply_agents(request)
     
     request['source_id'] = air_customs_request.id
+    request['serial_id'] = air_customs_request.serial_id
     create_air_customs_rate_job(request, "rate_request")
     
     return {

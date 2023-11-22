@@ -57,6 +57,8 @@ def execute_transaction_code(request):
     update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
     
     request['source_id'] = request_object.id
+    
+    request['serial_id'] = request_object.serial_id
 
     create_ftl_freight_rate_job(request, "rate_request")
 
