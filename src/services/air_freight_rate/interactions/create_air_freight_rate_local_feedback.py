@@ -27,7 +27,8 @@ def execute_transaction_code(request):
         AirFreightRateLocalFeedback.source_id == request.get('source_id'),
         AirFreightRateLocalFeedback.performed_by_id == request.get('performed_by_id'),
         AirFreightRateLocalFeedback.performed_by_type == request.get('performed_by_type'),
-        AirFreightRateLocalFeedback.performed_by_org_id == request.get('performed_by_org_id') 
+        AirFreightRateLocalFeedback.performed_by_org_id == request.get('performed_by_org_id'),
+        AirFreightRateLocalFeedback.status == 'active'
     ).first()
 
     if not locals_feedback:

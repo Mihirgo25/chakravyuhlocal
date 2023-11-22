@@ -32,7 +32,8 @@ def execute_transaction_code(request):
         FclCustomsRateFeedback.source_id == request.get('source_id'),
         FclCustomsRateFeedback.performed_by_id == request.get('performed_by_id'),
         FclCustomsRateFeedback.performed_by_type == request.get('performed_by_type'),
-        FclCustomsRateFeedback.performed_by_org_id == request.get('performed_by_org_id')).first()
+        FclCustomsRateFeedback.performed_by_org_id == request.get('performed_by_org_id'),
+        FclCustomsRateFeedback.status == 'active').first()
 
     if not customs_feedback:
         customs_feedback = FclCustomsRateFeedback(**params)

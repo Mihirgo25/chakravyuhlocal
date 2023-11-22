@@ -32,7 +32,8 @@ def execute_transaction_code(request):
         FclCfsRateFeedback.source_id == request.get('source_id'),
         FclCfsRateFeedback.performed_by_id == request.get('performed_by_id'),
         FclCfsRateFeedback.performed_by_type == request.get('performed_by_type'),
-        FclCfsRateFeedback.performed_by_org_id == request.get('performed_by_org_id')).first()
+        FclCfsRateFeedback.performed_by_org_id == request.get('performed_by_org_id'),
+        FclCfsRateFeedback.status == 'active').first()
 
     if not cfs_feedback:
         cfs_feedback = FclCfsRateFeedback(**params)

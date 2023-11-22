@@ -74,10 +74,10 @@ def apply_except_freight_force_importer_exporter_filter(query, filters):
     return query.where(AirFreightRateLocalFeedback.performed_by_org_id not in IMPORTER_EXPORTER_ID_FOR_FREIGHT_FORCE)
 
 def apply_similar_id_filter(query, filters):
-    local_feedback_data = (AirFreightRateLocalFeedback.select(AirFreightRateLocalFeedback.airport_id, AirFreightRateLocalFeedback.operation_type , AirFreightRateLocalFeedback.commodity).where(AirFreightRateLocalFeedback.id == filters['similar_id'])).first()
+    local_feedback_data = (AirFreightRateLocalFeedback.select(AirFreightRateLocalFeedback.airport_id, AirFreightRateLocalFeedback.commodity).where(AirFreightRateLocalFeedback.id == filters['similar_id'])).first()
     if local_feedback_data:
         query = query.where(AirFreightRateLocalFeedback.id != filters.get('similar_id'))
-        query = query.where(AirFreightRateLocalFeedback.airport_id == local_feedback_data.airport_id, AirFreightRateLocalFeedback.operation_type == local_feedback_data.operation_type, AirFreightRateLocalFeedback.commodity == local_feedback_data.commodity)
+        query = query.where(AirFreightRateLocalFeedback.airport_id == local_feedback_data.airport_id, AirFreightRateLocalFeedback.commodity == local_feedback_data.commodity)
     return query
 
 def get_data(query, spot_search_details_required):

@@ -52,7 +52,8 @@ def execute_transaction_code(request):
         AirFreightRateFeedback.source_id==request.get('source_id'),
         AirFreightRateFeedback.performed_by_id==request.get('performed_by_id'),
         AirFreightRateFeedback.performed_by_type==request.get('performed_by_type'),
-        AirFreightRateFeedback.performed_by_org_id==request.get('performed_by_org_id')
+        AirFreightRateFeedback.performed_by_org_id==request.get('performed_by_org_id'),
+        AirFreightRateFeedback.status == 'active'
     ).first()
 
 
