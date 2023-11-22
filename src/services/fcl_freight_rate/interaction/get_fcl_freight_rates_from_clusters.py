@@ -80,7 +80,7 @@ def get_current_median(request,origin_port_id,destination_port_id,destination_ba
     if destination_port_id != request['destination_port_id']:
         data['destination_main_port_id'] = destination_port_id
 
-    unique_shipping_line_ids = list(set(shipping_line_ids))
+    unique_shipping_line_ids = list(set(shipping_line_ids + list(shipping_line_mapping.keys())))
 
     query = FclFreightRateEstimationRatio.select().where(
                 FclFreightRateEstimationRatio.commodity == request['commodity'],
@@ -132,11 +132,12 @@ def get_fcl_freight_rates_from_clusters(request,serviceable_shipping_lines):
             futures = [executor.submit(get_create_params, origin_port_id, destination_port_id, request, ff_mlo, shipping_line_ids)]
         create_params.extend(futures)
 
+
+
     for i in range(len(create_params)):
         create_params[i] = create_params[i].result()
-    
-    create_params = [sublist for list in create_params for sublist in list if sublist]
 
+    create_params = [sublist for list in create_params for sublist in list if sublist]
     with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
         futures = [executor.submit(create_fcl_freight_rate_data, param) for param in create_params]
 
@@ -185,23 +186,20 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
         ~FclFreightRate.rate_not_available_entry,
         FclFreightRate.rate_type == "market_place",
         FclFreightRate.last_rate_available_date >= request['validity_start'],
-        FclFreightRate.shipping_line_id.in_(shipping_line_ids)
     )
          
     critical_freight_rates = jsonable_encoder(list(critical_freight_rates_query.dicts()))
-    
     create_params = []
-    
+
     if not critical_freight_rates:
         return create_params
         
     shipping_line_mapping = {}
     shipping_line_mapping = get_shipping_line_mapping(critical_freight_rates)
-    normalized_median= get_current_median(request,origin_port_id,destination_port_id,destination_base_port_id,origin_base_port_id,shipping_line_mapping,shipping_line_ids)
     
-    for shipping_line_id, obj in shipping_line_mapping.items():
-        if obj['sl_ratio'] != None:
-            continue    
+    normalized_median= get_current_median(request,origin_port_id,destination_port_id,destination_base_port_id,origin_base_port_id,shipping_line_mapping,shipping_line_ids)
+
+    for shipping_line_id in shipping_line_ids:    
             
         param = {
             'origin_port_id': request['origin_port_id'],
@@ -236,7 +234,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
             line_items=jsonable_encoder(line_items)
             for line_item in line_items:
                 if line_item["code"] == "BAS":
-                    sl_ratio=obj.get("sl_ratio")
+                    sl_ratio=shipping_line_mapping.get(shipping_line_id, {}).get('sl_ratio', 1)
                     line_item["price"]=normalized_median*sl_ratio
             param["line_items"] = line_items
         
