@@ -272,3 +272,4 @@ FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES = [
         'schedule_type': 'direct'
     }
 ]
+EXCLUDED_RATE_TYPES_FROM_RATE_CARDS=['spot_booking']

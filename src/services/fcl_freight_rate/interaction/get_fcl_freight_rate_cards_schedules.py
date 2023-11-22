@@ -4,11 +4,13 @@ from micro_services.client import maps, common, schedule_client
 from configs.fcl_freight_rate_constants import (
     FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES,
     DEFAULT_SCHEDULE_TYPES,
+    EXCLUDED_RATE_TYPES_FROM_RATE_CARDS
 )
 import json
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards import get_fcl_freight_rate_cards
 from libs.common_validations import handle_empty_ids
 from libs.convert_date_format import convert_date_format
+
 
 REQUIRED_SCHEDULE_KEYS = [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type","reliability_score","terminal_cutoff", "source" ,"id"]
 INDIA_COUNTRY_CURRENCY = "INR"
@@ -331,6 +333,7 @@ def get_location_data(origin_port_id, destination_port_id):
     return origin_port, destination_port
 
 def get_port_pairs_hash(origin_port,destination_port,all_rates,origin_port_id,destination_port_id):
+    
     updated_list = []
 
     for data in all_rates:
@@ -422,7 +425,8 @@ def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rat
 
     response = get_fcl_freight_rate_cards(fcl_freight_rate_cards_params)
     all_rates = spot_negotiation_rates + response['list']
-
+    all_rates=list(filter(None, all_rates))
+    all_rates = [t for t in all_rates if t['rate_type'] not in EXCLUDED_RATE_TYPES_FROM_RATE_CARDS]
     port_pairs = get_port_pairs_hash(origin_port,destination_port,all_rates,origin_port_id,destination_port_id)
 
     fake_schedules = []
