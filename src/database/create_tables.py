@@ -16,7 +16,13 @@ class Table:
                 """
               CREATE SEQUENCE IF NOT EXISTS air_freight_rate_local_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
               
-              CREATE SEQUENCE IF NOT EXISTS fcl_freight_rate_local_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"""
+              CREATE SEQUENCE IF NOT EXISTS fcl_freight_rate_local_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+
+              CREATE SEQUENCE IF NOT EXISTS fcl_cfs_rate_feedback_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              
+              CREATE SEQUENCE IF NOT EXISTS fcl_freight_rate_local_feedback_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              
+              CREATE SEQUENCE IF NOT EXISTS air_freight_rate_local_feedback_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"""
             )
 
             db.create_tables(models)

@@ -3,18 +3,23 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import asyncio
 from micro_services.client import common
+import sentry_sdk
 
 def validate_rate_feedback(request):
     response = {}
+    try:
+        if request.get('service_type') in ['haulage_freight','trailer_freight']:
+            return response
 
-    if request.get('service_type') in ['haulage_freight','trailer_freight']:
+        if 'unsatisfactory_rate' in request.get('feedbacks'):
+            message = eval("validate_{}_unsatisfactory_rate_function(request)".format(request.get('service_type')))
+            if message:
+                response['unsatisfactory_rate'] = message
         return response
 
-    if 'unsatisfactory_rate' in request.get('feedbacks'):
-        message = eval("validate_{}_unsatisfactory_rate_function(request)".format(request.get('service_type')))
-        if message:
-            response['unsatisfactory_rate'] = message
-    return response
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return {}
 
 # def validate_fcl_freight_unpreferred_operator_function():
 #     return {}
