@@ -170,15 +170,13 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
         else:
             return {}
 
-    elif mode in ['rms_upload', 'forcasted_rfq','rate_sheet','disliked_rate','missing_rate','manual']:
+    elif mode in ['rms_upload', 'forcasted_rfq','rate_sheet','disliked_rate','missing_rate', 'manual']:
         from services.bramhastra.interactions.list_fcl_freight_rate_statistics import list_fcl_freight_rate_statistics
 
         filters = {
             "group_by":[
                 "origin_port_id",
                 "destination_port_id",
-                "origin_main_port_id",
-                "destination_main_port_id",
                 "shipping_line_id",
                 "container_size",
                 "container_type",
