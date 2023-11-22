@@ -233,6 +233,7 @@ def process_container_size(
             ratios_for_each_shipping_line_id_list = []
 
             for cur_df in updated_previous_months_dfs:
+                cur_df = cur_df[cur_df['shipping_line_id'] != 'e6da6a42-cc37-4df2-880a-525d81251547']
                 df_avg = cur_df.groupby("shipping_line_id")["price"].mean()
                 df_avg = pd.DataFrame(df_avg)
 
