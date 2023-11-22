@@ -6,6 +6,8 @@ from configs.fcl_freight_rate_constants import (
     DEFAULT_SCHEDULE_TYPES,
 )
 import json
+import sentry_sdk
+import traceback
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards import (
     get_fcl_freight_rate_cards,
 )
@@ -646,5 +648,10 @@ def get_fcl_freight_rate_cards_schedules(
 
         return {"list": rates}
 
-    except:
-        pass
+    except Exception as e:
+        traceback.print_exc()
+        sentry_sdk.capture_exception(e)
+        print(e, 'Error In Fcl Freight Rate Cards Schedules')
+        return {
+            "list": []
+        }
