@@ -31,14 +31,13 @@ def execute_transaction_code(request, source):
         'commodity' : request.get('commodity'),
         'sources' : [source],
         'rate_type' : request.get('rate_type'),
-        'commodity_type': request.get('commodity_type'),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
         'trade_type': request.get('trade_type'),
         'shipment_id': request.get('shipment_id')
     }
     
-    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("airline_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("commodity_type") or "")}:{str(params.get("trade_type") or "")}'
+    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("airline_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}: {str(params.get("trade_type") or "")}'
     air_freight_rate_local_job = AirFreightRateLocalJob.select().where(AirFreightRateLocalJob.init_key == init_key, AirFreightRateLocalJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 

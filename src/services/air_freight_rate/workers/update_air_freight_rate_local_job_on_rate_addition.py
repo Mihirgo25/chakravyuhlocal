@@ -21,7 +21,6 @@ def update_air_freight_rate_local_job_on_rate_addition(request, id):
         "airport_id": request.get("airport_id"),
         "commodity": request.get("commodity"),
         "rate_type": request.get("rate_type"),
-        "commodity_type": request.get("commodity_type"),
         "trade_type": request.get("trade_type"),
     }
     conditions = [
