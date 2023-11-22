@@ -1624,15 +1624,13 @@ class FclFreightRateBulkOperation(BaseModel):
                 self.set_progress_percent(progress)
                 continue
 
-            new_validities = []
-
             validities = [k for k in freight["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d').date() >= datetime.now().date()]
             validity_id=None
             for validity_object in validities:
                 validity_object['validity_start'] = datetime.strptime(validity_object['validity_start'], '%Y-%m-%d')
                 validity_object['validity_end'] = datetime.strptime(validity_object['validity_end'], '%Y-%m-%d')
                 
-                if data['schedule_type'] != validity_object['schedule_type'] and validity_object['validity_start'] >= validity_start and  validity_object['validity_end'] <= validity_end:
+                if data['schedule_type'] == validity_object['schedule_type'] and validity_object['validity_start'] >= validity_start and  validity_object['validity_end'] <= validity_end:
                    validity_id = validity_object['id']
                    break
             
@@ -1668,19 +1666,6 @@ class FclFreightRateBulkOperation(BaseModel):
         includes = { 
                     'id': True,
                     'validities': True,
-                    'origin_port_id': True,
-                    'origin_main_port_id': True,
-                    'destination_port_id': True,
-                    'destination_main_port_id': True,
-                    'container_size': True,
-                    'container_type': True,
-                    'commodity': True,
-                    'shipping_line_id': True,
-                    'importer_exporter_id': True,
-                    'service_provider_id': True,
-                    'cogo_entity_id': True,
-                    'rate_type': True,
-                    'mode': True,
                 }
 
         query = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= None, includes=includes, sort_by="id")['list']
