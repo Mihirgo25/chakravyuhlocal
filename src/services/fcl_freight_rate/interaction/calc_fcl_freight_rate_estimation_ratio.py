@@ -155,7 +155,7 @@ def get_previous_months_data(
                 (FclFreightRateAudit.created_at <= end_time),
                 ~(
                     FclFreightRate.mode.in_(
-                        ["predicted", "cluster_extension", "cogolens", "rate_extension"]
+                        ["predicted", "cluster_extension", "cogolens", "rate_manufactured"]
                     )
                 ),
                 (FclFreightRate.rate_type == DEFAULT_RATE_TYPE),
