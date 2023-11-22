@@ -198,7 +198,10 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
             return {}
         
         avg_price = fcl_freight_rates['list'][0]['average_standard_price']
-        sigma = fcl_freight_rates['list'][0]['bas_standard_price_deviation'] 
+        sigma = fcl_freight_rates['list'][0]['bas_standard_price_deviation']
+
+        if not sigma:
+            return {}
 
         lower_bound = avg_price - 0.1 * sigma
         upper_bound = avg_price + 0.1 * sigma
@@ -254,12 +257,14 @@ def validate_air_freight_unsatisfactory_rate_function(request):
             "group_by":[
                 "origin_airport_id",
                 "destination_airport_id",
-                "airline_id"
+                "airline_id",
+                "commodity"
             ],
             "select":[
                 "origin_airport_id",
                 "destination_airport_id",
-                "airline_id"
+                "airline_id",
+                "commodity"
             ],
             "origin_airport_id": str(air_freight_rate.origin_airport_id),
             "destination_airport_id": str(air_freight_rate.destination_airport_id),
@@ -280,6 +285,9 @@ def validate_air_freight_unsatisfactory_rate_function(request):
         
         avg_price = air_freight_rates['list'][0]['standard_price']
         sigma = air_freight_rates['list'][0]['standard_price_deviation']
+
+        if not sigma:
+            return {}
 
         lower_bound = avg_price - 0.1 * sigma
         upper_bound = avg_price + 0.1 * sigma
