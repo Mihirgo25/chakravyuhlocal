@@ -651,7 +651,5 @@ def get_fcl_freight_rate_cards_schedules(
     except Exception as e:
         traceback.print_exc()
         sentry_sdk.capture_exception(e)
-        print(e, 'Error In Fcl Freight Rate Cards Schedules')
-        return {
-            "list": []
-        }
+        print(e, "Error In Fcl Freight Rate Cards Schedules")
+        return {"list": []}
