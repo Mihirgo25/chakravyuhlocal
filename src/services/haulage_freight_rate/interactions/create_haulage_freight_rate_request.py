@@ -58,6 +58,8 @@ def execute_transaction_code(request):
     send_notifications_to_supply_agents(request)
     
     request['source_id'] = request_object.id
+    
+    request['serial_id'] = request_object.serial_id
         
     create_haulage_freight_rate_job(request, "rate_request")
 

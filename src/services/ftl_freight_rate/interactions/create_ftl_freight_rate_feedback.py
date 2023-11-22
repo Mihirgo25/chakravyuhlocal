@@ -52,6 +52,7 @@ def execute_transaction_code(request):
     
     if feedback.feedback_type == 'disliked':
         request['source_id'] = feedback.id
+        request['serial_id'] = feedback.serial_id
         create_ftl_freight_rate_job(request, "rate_feedback")
 
     return {'id': request['rate_id']}

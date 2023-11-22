@@ -54,6 +54,7 @@ def execute_transaction_code(request):
 
     if customs_feedback.feedback_type == 'disliked':
         request['source_id'] = customs_feedback.id
+        request['serial_id'] = customs_feedback.serial_id
         create_fcl_customs_rate_job(request, "rate_feedback")
         
     return {

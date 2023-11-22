@@ -57,6 +57,7 @@ def execute_transaction_code(request):
     send_notifications_to_supply_agents(request)
     if air_customs_feedback.feedback_type == 'disliked':
         request['source_id'] = air_customs_feedback.id
+        request['serial_id'] = air_customs_feedback.serial_id
         create_air_customs_rate_job(request, "rate_feedback")
 
     return {

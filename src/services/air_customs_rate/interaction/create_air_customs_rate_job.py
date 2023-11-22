@@ -29,10 +29,11 @@ def execute_transaction_code(request, source):
         'trade_type': request.get('trade_type'),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
-        'shipment_id': request.get('shipment_id')
+        'shipment_id': request.get('shipment_id'),
+        'source_id': request.get('source_id')
     }
     
-    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("shipment_id") or "")}'
+    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("shipment_id") or "")}:{str(params.get("source_id") or "")}'
     air_customs_rate_job = AirCustomsRateJob.select().where(AirCustomsRateJob.init_key == init_key, AirCustomsRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
@@ -69,7 +70,7 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = AirCustomsRateJobMapping.create(
         source_id=request.get("source_id"),
         shipment_id=request.get("shipment_id"),
-        shipment_serial_id = request.get("shipment_serial_id"),
+        source_serial_id = request.get("source_serial_id"),
         shipment_service_id = request.get("service_id"),
         job_id= jobs_id,
         source = source,
