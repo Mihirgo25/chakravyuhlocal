@@ -72,14 +72,12 @@ def execute_transaction_code(request):
       ftl_freight_rate = FtlFreightRate(init_key = init_key)
       for key in list(params.keys()):
           setattr(ftl_freight_rate, key, params[key])
+      
+    set_params = get_set_params(request)
+    for key, value in set_params.items():
+        setattr(ftl_freight_rate, key, value)
 
     ftl_freight_rate.set_locations()
-    ftl_freight_rate.line_items = request.get('line_items')
-    ftl_freight_rate.validity_start = request.get('validity_start')
-    ftl_freight_rate.validity_end = request.get('validity_end')
-    ftl_freight_rate.procured_by_id = request.get('procured_by_id')
-    ftl_freight_rate.sourced_by_id = request.get('sourced_by_id')
-
     ftl_freight_rate.validate_validities(ftl_freight_rate.validity_start, ftl_freight_rate.validity_end)
     ftl_freight_rate.rate_not_available_entry = False
 
@@ -113,3 +111,13 @@ def execute_transaction_code(request):
         update_ftl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": ftl_freight_rate.id},queue='fcl_freight_rate')
 
     return {"id": ftl_freight_rate.id}
+
+def get_set_params(request):
+   return {
+      'line_items':request.get('line_items'),
+      'validity_start':request.get('validity_start'),
+      'validity_end':request.get('validity_end'),
+      'procured_by_id':request.get('procured_by_id'),
+      'sourced_by_id':request.get('sourced_by_id'),
+      'source': request.get('source', "manual")
+   }
