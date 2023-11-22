@@ -561,6 +561,7 @@ def build_freight_object(freight_validity, additional_weight_rate, additional_we
         'validity_id': freight_validity['id'],
         'likes_count': freight_validity['likes_count'],
         'dislikes_count': freight_validity['dislikes_count'],
+        'schedule_id': freight_validity.get('schedule_id'),
         'line_items': [],
         'created_at': freight_validity['created_at'],
         'updated_at': freight_validity['updated_at'],

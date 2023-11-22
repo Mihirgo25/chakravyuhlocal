@@ -8,6 +8,7 @@ from configs.fcl_freight_rate_constants import (
 import json
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards import get_fcl_freight_rate_cards
 from libs.common_validations import handle_empty_ids
+from libs.convert_date_format import convert_date_format
 
 REQUIRED_SCHEDULE_KEYS = [ "departure","arrival","number_of_stops","transit_time","legs","si_cutoff","vgm_cutoff","schedule_type","reliability_score","terminal_cutoff", "source" ,"id"]
 INDIA_COUNTRY_CURRENCY = "INR"
@@ -117,9 +118,26 @@ def update_grouping(data,currency,locals_price,sailing_schedules_required,detent
                 "data": {**data,'freights' : [freight]}  
             }
 
-    return grouping            
+    return grouping     
 
-def get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_port_id, destination_port_id):
+
+def get_transit_time(data_schedules):
+    transit_time = [
+        schedule["transit_time"]
+        or int(
+            (
+                convert_date_format(schedule["arrival"], dayfirst=False)
+                - convert_date_format(schedule["departure"], dayfirst=False)
+            ).days
+        )
+        for schedule in data_schedules
+    ]
+
+    return transit_time
+
+
+
+def get_freight_schedules(freight, data_schedules, selected_schedule_ids, predicted_transit_time):
     """
     Retrieve freight_schedules for the given freight data.
     Returns:
@@ -133,35 +151,27 @@ def get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_
     5. Return the list of schedules and whether a matching schedule was found.
     """
 
-    schedules = None
+    schedules = []
     schedule_found = False
 
     if freight.get('schedule_id'):
         schedules = [schedule for schedule in data_schedules if freight.get('schedule_id') == schedule.get('id')]
         if schedules:
             schedule_found = True
-            selected_schedule_ids.add(schedules[0]['id'])    
 
-    if not schedules: 
-        schedules = [
-            schedule
-            for schedule in data_schedules
-            if freight["validity_start"] <= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
+    if not schedule_found: 
+        for schedule in data_schedules:
+            if (freight["validity_start"] <= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
             and freight["validity_end"] >= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
-            and freight["schedule_type"] == schedule.get("schedule_type")
-        ]
+            and freight["schedule_type"] == schedule.get("schedule_type")):
+                if schedule.get('id') in selected_schedule_ids:
+                    schedule_found = True
+                    continue
+                schedules.append(schedule)
 
-    if not schedules:
-        transit_times = [schedule["transit_time"] for schedule in data_schedules]
+    if not schedule_found:
+        transit_times = get_transit_time(data_schedules)
         avg_transit_time = sum(transit_times) / len(transit_times) if transit_times else None
-
-        if avg_transit_time is None:
-            data = {
-                        "origin_port_id": origin_port_id,
-                        "destination_port_id": destination_port_id,
-                    }
-            predicted_transit_time = schedule_client.get_predicted_transit_time(data)
-
         fallback_schedules = FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES
 
         for fake_schedule in fallback_schedules:
@@ -191,10 +201,10 @@ def get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_
             schedule["arrival"] = schedule["departure"] + timedelta(days=schedule["transit_time"])
             schedules.append(schedule)   
 
-    return schedules, schedule_found       
+    return schedules       
 
 
-def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,destination_port_id):
+def get_freights(data,sailing_schedules_required,data_schedules,predicted_transit_time, selected_schedule_ids):
         """
         Structure freights based on provided data.
         Returns:
@@ -209,21 +219,16 @@ def get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,d
         freights = []
 
         if sailing_schedules_required and data["source"] != "cogo_assured_rate":
-            selected_schedule_ids = set()
-
             for freight in data["freights"]:
                 if freight["schedule_type"] in ["transhipment", "transshipment"]:
                     freight["schedule_type"] = "transshipment"
 
-                schedules, schedule_found = get_freight_schedules(freight, data_schedules, selected_schedule_ids,origin_port_id, destination_port_id)
-
+                schedules = get_freight_schedules(freight, data_schedules, selected_schedule_ids,predicted_transit_time)
                 for sailing_schedule in schedules:
                     freight_line_items = list(freight["line_items"])
 
                     for item in freight_line_items:
                         item['price'] = float(item['price'])
-                    if not schedule_found and sailing_schedule.get('id') in selected_schedule_ids:
-                        continue
 
                     freights.append(
                         {
@@ -450,7 +455,14 @@ def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rat
         response = schedule_client.get_fake_sailing_schedules(data)
         fake_schedules = response['list']
 
+    params = {
+        "origin_port_id": origin_port_id,
+        "destination_port_id": destination_port_id,
+    }
+    predicted_transit_time = schedule_client.get_predicted_transit_time(params)
+
     grouping = {}
+    selected_schedule_ids = set([freight.get('schedule_id') for data in all_rates for freight in data['freights'] if freight.get('schedule_id')])
 
     for data in all_rates:
         data_schedules = get_relevant_schedules(
@@ -461,11 +473,12 @@ def get_fcl_freight_rate_cards_schedules(spot_negotiation_rates, fcl_freight_rat
             destination_port_id,
             sailing_schedules_hash
         )
+
         if not data_schedules:
             data_schedules = fake_schedules
 
         data_schedules = list(data_schedules)
-        freights = get_freights(data,sailing_schedules_required,data_schedules,origin_port_id,destination_port_id)
+        freights = get_freights(data,sailing_schedules_required,data_schedules,predicted_transit_time,selected_schedule_ids)
 
         if not freights:
             continue
