@@ -134,7 +134,9 @@ def build_local_line_items(result, response_object, request):
     if result.get("data").get("line_items"):
         old_line_items = result.get("data").get("line_items")
         primary_service_object = {}
-        if request.get("primary_service_object"):
+        if request.get("primary_service_object") and isinstance(
+            request.get("primary_service_object"), dict
+        ):
             primary_service_object = json.loads(request.get("primary_service_object"))
 
         new_line_items = get_filtered_line_items(primary_service_object, old_line_items)
