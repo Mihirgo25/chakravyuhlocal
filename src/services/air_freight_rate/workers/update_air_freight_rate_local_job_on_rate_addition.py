@@ -6,6 +6,7 @@ from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
+from functools import reduce
 
 
 
@@ -27,7 +28,9 @@ def update_air_freight_rate_local_job_on_rate_addition(request, id):
         (getattr(AirFreightRateLocalJob, key) == value) for key, value in params.items()
     ]
     conditions.append(AirFreightRateLocalJob.status << ["pending", "backlog"])
-    conditions.append(~(AirFreightRateLocalJob.sources.contains('live_booking')))
+    exception_conditions = [(~AirFreightRateLocalJob.sources.contains(tag)) for tag in ['live_booking','rate_request','rate_feedback']]
+    combined_condition = reduce(lambda a, b: a & b, exception_conditions)
+    conditions.append(combined_condition)
     affected_ids = jsonable_encoder([
         job.id for job in AirFreightRateLocalJob.select(AirFreightRateLocalJob.id).where(*conditions)
     ])
