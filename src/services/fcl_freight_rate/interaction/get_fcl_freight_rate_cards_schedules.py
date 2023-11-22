@@ -4,7 +4,6 @@ from micro_services.client import maps, common, schedule_client
 from configs.fcl_freight_rate_constants import (
     FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES,
     DEFAULT_SCHEDULE_TYPES,
-    EXCLUDED_RATE_TYPES_FROM_RATE_CARDS,
 )
 import json
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards import (
@@ -526,11 +525,6 @@ def get_fcl_freight_rate_cards_schedules(
         response = get_fcl_freight_rate_cards(fcl_freight_rate_cards_params)
         all_rates = spot_negotiation_rates + response["list"]
         all_rates = list(filter(None, all_rates))
-        all_rates = [
-            t
-            for t in all_rates
-            if t["rate_type"] not in EXCLUDED_RATE_TYPES_FROM_RATE_CARDS
-        ]
         port_pairs = get_port_pairs_hash(
             origin_port,
             destination_port,
