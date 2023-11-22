@@ -11,50 +11,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_estimation_ratio import (
     create_fcl_freight_rate_estimation_ratio,
 )
-
-container_sizes = [
-    "20", 
-    "40", 
-    "40HC", 
-    "45HC"
-]
-
-container_types = [
-    "standard",
-    "refer",
-    "open_top",
-    "open_side",
-    "flat_rack",
-    "iso_tank",
-]
-
-commodities = [
-    "agro",
-    "chilled",
-    "corrosives-8",
-    "cotton_and_yarn",
-    "emit_flammable_gases_with_water-4.3",
-    "fabric_and_textiles",
-    "flammable_liquids-3",
-    "flammable_solids-4.1",
-    "flammable_solids_self_heat-4.2",
-    "frozen",
-    "gases-2.1",
-    "gases-2.2",
-    "gases-2.3",
-    "general",
-    "imo_classes-5.1",
-    "in_gauge_cargo",
-    "infectious_substances-6.2",
-    "miscellaneous_dangerous_goods-9",
-    "non_haz_solids",
-    "pharma",
-    "pta",
-    "radioactive_material-7",
-    "sugar_rice",
-    "toxic_substances-6.1",
-    "white_goods",
-]
+from configs.global_constants import CONTAINER_TYPES, ALL_COMMODITIES
 
 
 def apply_filter(df, container_type, commodity):
@@ -65,17 +22,28 @@ def apply_filter(df, container_type, commodity):
 
 
 def get_weighted_average(df, ln):
-    mult = 0
+    weighted_sum = 0
     total = 0
     for i in range(ln):
-        mult = mult + (df["freq_{}".format(i)] * df["ratio_{}".format(i)])
+        weighted_sum = weighted_sum + (
+            df["freq_{}".format(i)] * df["ratio_{}".format(i)]
+        )
         total = total + df["freq_{}".format(i)]
 
-    mult_by_total = mult / total
-    df["weighted_ratio"] = mult_by_total
+    weighted_ratio = weighted_sum / total
+    df["weighted_ratio"] = weighted_ratio
 
 
 def get_iqr_lower_upper_bound(df):
+    """
+    Calculates the lower and upper bounds for outliers using Interquartile Range (IQR).
+
+    Parameters:
+    - df: DataFrame
+
+    Returns:
+    - Tuple: (lower_bound, upper_bound)
+    """
     Q1 = df["price"].quantile(0.25)
     Q3 = df["price"].quantile(0.75)
     IQR = Q3 - Q1
@@ -103,6 +71,15 @@ def currency_exchange_to_usd(df):
 
 
 def data_cleaning(df):
+    """
+    Cleans the DataFrame by extracting price and currency information from line items.
+
+    Parameters:
+    - df: DataFrame
+
+    Returns:
+    - DataFrame: Cleaned DataFrame
+    """
     price = []
     currency = []
     for i in range(df.shape[0]):
@@ -119,7 +96,7 @@ def data_cleaning(df):
             if not flag:
                 price.append(None)
                 currency.append(None)
-                
+
         except Exception as e:
             print(f"Error processing line_items at index {i}: {e}")
             price.append(None)
@@ -137,6 +114,18 @@ def data_cleaning(df):
 def get_previous_months_data(
     origin_port_id, destination_port_id, container_size, current_time
 ):
+    """
+    Retrieves data for previous months based on specified parameters.
+
+    Parameters:
+    - origin_port_id: str
+    - destination_port_id: str
+    - container_size: str
+    - current_time: datetime
+
+    Returns:
+    - List: List of DataFrames for previous months
+    """
     previous_months_data = []
 
     for days in [30, 60, 90]:
@@ -164,9 +153,13 @@ def get_previous_months_data(
                 (FclFreightRateAudit.action_name.in_(["create", "update"])),
                 (FclFreightRateAudit.created_at >= start_time),
                 (FclFreightRateAudit.created_at <= end_time),
-                ~(FclFreightRate.mode.in_(["predicted", "cluster_extension", "cogolens"])),
+                ~(
+                    FclFreightRate.mode.in_(
+                        ["predicted", "cluster_extension", "cogolens", "rate_extension"]
+                    )
+                ),
                 (FclFreightRate.rate_type == DEFAULT_RATE_TYPE),
-                ~FclFreightRate.service_provider["category_types"].contains("nvocc")
+                ~FclFreightRate.service_provider["category_types"].contains("nvocc"),
             )
         )
 
@@ -198,6 +191,18 @@ def get_previous_months_data(
 def process_container_size(
     origin_port_id, destination_port_id, container_size, current_time
 ):
+    """
+    Calculating ratios for each shipping line per month, as we consider a span of 3 months (or 2 months) to compute the weighted ratio. The calculated ratios are then saved to the database.
+
+    Parameters:
+    - origin_port_id: str
+    - destination_port_id: str
+    - container_size: str
+    - current_time: datetime
+
+    Returns:
+    - None
+    """
     previous_months_data = get_previous_months_data(
         origin_port_id, destination_port_id, container_size, current_time
     )
@@ -205,19 +210,19 @@ def process_container_size(
     if len(previous_months_data) < 2:
         return
 
-    for commodity in commodities:
-        for container_type in container_types:
+    for commodity in ALL_COMMODITIES:
+        for container_type in CONTAINER_TYPES:
             updated_previous_months_dfs = []
             for temp_df in previous_months_data:
                 df = apply_filter(temp_df, container_type, commodity)
 
                 if len(df[df["currency"] == "INR"]) > 0:
                     df = currency_exchange_to_usd(df)
-                    
+
                 lower_bound, upper_bound = get_iqr_lower_upper_bound(df)
-                
+
                 if math.isnan(lower_bound) or math.isnan(upper_bound):
-                    print('nan value encountered while calculating IQR')
+                    print("nan value encountered while calculating IQR")
                     continue
 
                 new_df = df[(df["price"] >= lower_bound) & (df["price"] <= upper_bound)]
@@ -233,7 +238,9 @@ def process_container_size(
             ratios_for_each_shipping_line_id_list = []
 
             for cur_df in updated_previous_months_dfs:
-                cur_df = cur_df[cur_df['shipping_line_id'] != 'e6da6a42-cc37-4df2-880a-525d81251547']
+                cur_df = cur_df[
+                    cur_df["shipping_line_id"] != "e6da6a42-cc37-4df2-880a-525d81251547"
+                ]
                 df_avg = cur_df.groupby("shipping_line_id")["price"].mean()
                 df_avg = pd.DataFrame(df_avg)
 
@@ -255,7 +262,9 @@ def process_container_size(
                 for shipping_line_id in shipping_line_id_frequencies
             ]
 
-            all_unique_shipping_line_ids = set(flattened_shipping_line_id_frequencies_list)
+            all_unique_shipping_line_ids = set(
+                flattened_shipping_line_id_frequencies_list
+            )
 
             shipping_line_ids = []
             ratios = [[] for _ in range(3)]
@@ -279,7 +288,9 @@ def process_container_size(
                                 shipping_line_id
                             ]
                         )
-                        freqs[i].append(shipping_line_id_frequencies_list[i][shipping_line_id])
+                        freqs[i].append(
+                            shipping_line_id_frequencies_list[i][shipping_line_id]
+                        )
 
             new_df = pd.DataFrame()
             new_df["origin_port_id"] = [origin_port_id] * len(shipping_line_ids)
@@ -311,6 +322,15 @@ def process_container_size(
 
 
 def fcl_freight_rate_estimation_ratio():
+    """
+    Calculate the weighted ratio for shipping lines associated with specified origin and destination port pairs. This calculation will be utilized subsequently to estimate BAS prices for shipping lines lacking available data. This process is applicable for both China to India and India to China trade line. Utilizes concurrent execution with a ThreadPoolExecutor for efficient processing.
+
+    Parameters:
+    - None
+
+    Returns:
+    - None
+    """
     # india to china and china to india trade lines
     critical_origin_port_ids = [
         "eb187b38-51b2-4a5e-9f3c-978033ca1ddf",
