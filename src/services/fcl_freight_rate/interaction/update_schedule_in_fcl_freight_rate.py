@@ -5,10 +5,15 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 
 
 def create_audit(request):
+    request_data = {
+        "rate_id": request["rate_id"],
+        "validity_id": request["validity_id"],
+        "schedule_id": request["schedule_id"],
+    }
     FclFreightRateAudit.create(
         action_name="update",
         performed_by_id=request.get("performed_by_id"),
-        data=request,
+        data=request_data,
         object_type="ScheduleInFreightRate",
     )
 
@@ -22,8 +27,7 @@ def execute_transaction_code(request):
     rate_id = request["rate_id"]
     validity_id = request["validity_id"]
     schedule_id = request["schedule_id"]
-    sourced_by_id = request.get("sourced_by_id")
-    procured_by_id = request.get("procured_by_id")
+    sourced_by_id = request.get("performed_by_id")
 
     query = FclFreightRate.select().where(FclFreightRate.id == rate_id).first()
 
@@ -41,8 +45,6 @@ def execute_transaction_code(request):
             validity_object["schedule_id"] = schedule_id
             if sourced_by_id is not None:
                 query.sourced_by_id = sourced_by_id
-            if procured_by_id is not None:
-                query.procured_by_id = procured_by_id
 
         new_validities.append(validity_object)
 

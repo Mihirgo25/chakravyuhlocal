@@ -1077,7 +1077,5 @@ class UpdateScheduleInFclFreightRate(BaseModel):
     validity_id: str
     rate_id: str
     schedule_id: str
-    sourced_by_id: str=None
-    procured_by_id: str=None
     performed_by_id: str = None
     performed_by_type: str = None

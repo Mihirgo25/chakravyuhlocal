@@ -1674,9 +1674,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 data={
                     'validity_id':validity_id,
                     'rate_id':freight['id'],
-                    'schedule_id':data['schedule_id'],
-                    'sourced_by_id':sourced_by_id,
-                    'procured_by_id':procured_by_id
+                    'schedule_id':data['schedule_id']
                 }
                 update_schedule_in_fcl_freight_rate(data)
         
