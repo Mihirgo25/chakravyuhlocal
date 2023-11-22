@@ -1632,54 +1632,19 @@ class FclFreightRateBulkOperation(BaseModel):
                 validity_object['validity_start'] = datetime.strptime(validity_object['validity_start'], '%Y-%m-%d')
                 validity_object['validity_end'] = datetime.strptime(validity_object['validity_end'], '%Y-%m-%d')
                 
-                if validity_object['validity_start'] >= validity_start and  validity_object['validity_end'] <= validity_end:
+                if data['schedule_type'] != validity_object['schedule_type'] and validity_object['validity_start'] >= validity_start and  validity_object['validity_end'] <= validity_end:
                    validity_id = validity_object['id']
                    break
-                     
-                
-                if data['schedule_type'] != validity_object['schedule_type'] or validity_object['validity_start'] > validity_end or validity_object['validity_end'] < validity_start:
-                    continue
-                
-                validity_object['validity_start'] = max(validity_object['validity_start'], datetime.now())
-                validity_object['schedule_id'] = data['schedule_id']
-                new_validities.append(validity_object)
-
-            for validity_object in new_validities:
-                freight_rate_object = {
-                    'origin_port_id': freight["origin_port_id"],
-                    'origin_main_port_id': freight["origin_main_port_id"],
-                    'destination_port_id': freight["destination_port_id"],
-                    'destination_main_port_id': freight["destination_main_port_id"],
-                    'container_size': freight["container_size"],
-                    'container_type': freight["container_type"],
-                    'commodity': freight["commodity"],
-                    'shipping_line_id': freight["shipping_line_id"],
-                    'importer_exporter_id': freight["importer_exporter_id"],
-                    'service_provider_id': freight["service_provider_id"],
-                    'cogo_entity_id': freight["cogo_entity_id"],
-                    'bulk_operation_id': self.id,
-                    'performed_by_id': self.performed_by_id ,#
-                    'validity_start': validity_object['validity_start'],
-                    'validity_end': validity_object['validity_end'],
-                    'line_items': validity_object['line_items'],
-                    'schedule_type': validity_object['schedule_type'],
-                    'payment_term': validity_object['payment_term'],
-                    'rate_type': freight['rate_type'],
-                    'sourced_by_id': sourced_by_id,
-                    'procured_by_id': procured_by_id,
-                    'source': 'bulk_operation',
-                    'mode': freight['mode'],
-                    'schedule_id': validity_object['schedule_id']
-                }
+            
+            if validity_id:
                 data={
                     'validity_id':validity_id,
                     'rate_id':freight['id'],
                     'schedule_id':data['schedule_id']
                 }
                 update_schedule_in_fcl_freight_rate(data)
-        
-                 
-                create_fcl_freight_rate_data(freight_rate_object)
+            else:
+                continue
 
             total_affected_rates += 1
             progress = int((count * 100.0) / total_count)

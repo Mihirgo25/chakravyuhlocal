@@ -29,28 +29,27 @@ def execute_transaction_code(request):
     schedule_id = request["schedule_id"]
     sourced_by_id = request.get("performed_by_id")
 
-    query = FclFreightRate.select().where(FclFreightRate.id == rate_id).first()
+    freight = FclFreightRate.select().where(FclFreightRate.id == rate_id).first()
 
-    if not query:
+    if not freight:
         raise HTTPException(
-            status=404, detail="No FclFreightRate found with id: {rate_id}"
+            status=404, detail="No freight found with id: {rate_id}"
         )
 
-    validities = query.validities
+    validities = freight.validities
     new_validities = []
-    flag = 0
+    validity_found = False
     for validity_object in validities:
         if validity_object["id"] == validity_id:
-            flag = 1
+            validity_found = True
             validity_object["schedule_id"] = schedule_id
-            if sourced_by_id is not None:
-                query.sourced_by_id = sourced_by_id
-
+               
         new_validities.append(validity_object)
 
-    if flag:
-        query.validities = new_validities
-        query.save()
+    if validity_found:
+        freight.validities = new_validities
+        freight.sourced_by_id = sourced_by_id
+        freight.save()
 
         create_audit(request)
     else:
