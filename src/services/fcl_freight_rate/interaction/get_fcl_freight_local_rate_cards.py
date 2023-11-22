@@ -135,7 +135,7 @@ def build_local_line_items(result, response_object, request):
         old_line_items = result.get("data").get("line_items")
         primary_service_object = {}
         if request.get("primary_service_object") and isinstance(
-            request.get("primary_service_object"), dict
+            request.get("primary_service_object"), str
         ):
             primary_service_object = json.loads(request.get("primary_service_object"))
 
