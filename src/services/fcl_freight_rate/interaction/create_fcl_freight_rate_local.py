@@ -131,9 +131,7 @@ def execute_transaction_code(request):
 
     fcl_freight_local_data_updation.apply_async(kwargs={"request":request},queue='low')
 
-    # update_fcl_freight_rate_local_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": fcl_freight_local.id},queue='fcl_freight_rate')
-
-    update_fcl_freight_rate_local_job_on_rate_addition_delay(request, fcl_freight_local.id)
+    update_fcl_freight_rate_local_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": fcl_freight_local.id},queue='fcl_freight_rate')
 
     return {"id": fcl_freight_local.id }
 
