@@ -36,11 +36,10 @@ def fcl_freight_rate_estimation_ratio_helper():
 
     try:
         fcl_freight_rate_estimation_ratio()
-        worker.ended_at = datetime.utcnow()
         worker.status = 'completed'
-        worker.save()
-    except:
-        worker.ended_at = datetime.utcnow()
-        worker.status = 'failed'
-        worker.save()
         
+    except:
+        worker.status = 'failed'   
+             
+    worker.ended_at = datetime.utcnow()  
+    worker.save()
