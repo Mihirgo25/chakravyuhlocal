@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local_feedback import FclFreightRateLocalFeedback
-from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from fastapi import HTTPException
 from database.db_session import db
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback
@@ -42,7 +42,7 @@ def find_feedback_objects(request):
     return objects
 
 def create_audit(request, freight_rate_feedback_id):
-    FclFreightRateAudit.create(
+    FclServiceAudit.create(
         action_name = 'delete',
         performed_by_id = request['performed_by_id'],
         data = {'closing_remarks' : request['closing_remarks'], 'performed_by_id' : request['performed_by_id']},

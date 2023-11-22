@@ -3,18 +3,23 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import asyncio
 from micro_services.client import common
+import sentry_sdk
 
 def validate_rate_feedback(request):
     response = {}
+    try:
+        if request.get('service_type') in ['haulage_freight','trailer_freight']:
+            return response
 
-    if request.get('service_type') in ['haulage_freight','trailer_freight']:
+        if 'unsatisfactory_rate' in request.get('feedbacks'):
+            message = eval("validate_{}_unsatisfactory_rate_function(request)".format(request.get('service_type')))
+            if message:
+                response['unsatisfactory_rate'] = message
         return response
 
-    if 'unsatisfactory_rate' in request.get('feedbacks'):
-        message = eval("validate_{}_unsatisfactory_rate_function(request)".format(request.get('service_type')))
-        if message:
-            response['unsatisfactory_rate'] = message
-    return response
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return {}
 
 # def validate_fcl_freight_unpreferred_operator_function():
 #     return {}
@@ -170,15 +175,13 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
         else:
             return {}
 
-    elif mode in ['rms_upload', 'forcasted_rfq','rate_sheet','disliked_rate','missing_rate']:
+    elif mode in ['rms_upload', 'forcasted_rfq','rate_sheet','disliked_rate','missing_rate', 'manual']:
         from services.bramhastra.interactions.list_fcl_freight_rate_statistics import list_fcl_freight_rate_statistics
 
         filters = {
             "group_by":[
                 "origin_port_id",
                 "destination_port_id",
-                "origin_main_port_id",
-                "destination_main_port_id",
                 "shipping_line_id",
                 "container_size",
                 "container_type",
@@ -200,7 +203,10 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
             return {}
         
         avg_price = fcl_freight_rates['list'][0]['average_standard_price']
-        sigma = fcl_freight_rates['list'][0]['bas_standard_price_deviation'] 
+        sigma = fcl_freight_rates['list'][0]['bas_standard_price_deviation']
+
+        if not sigma:
+            return {}
 
         lower_bound = avg_price - 0.1 * sigma
         upper_bound = avg_price + 0.1 * sigma
@@ -210,7 +216,7 @@ def validate_fcl_freight_unsatisfactory_rate_function(request):
         if request.get('currency') != 'USD':
             bas_standard_price = common.get_money_exchange_for_fcl({"price": bas_standard_price,"from_currency": request.get('currency'),"to_currency": "USD",})["price"]
 
-        if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
+        if bas_standard_price >= lower_bound and bas_standard_price <= upper_bound:
             return {'message': 'Best available rate for this port pair'}
         else:
             return {}
@@ -256,12 +262,14 @@ def validate_air_freight_unsatisfactory_rate_function(request):
             "group_by":[
                 "origin_airport_id",
                 "destination_airport_id",
-                "airline_id"
+                "airline_id",
+                "commodity"
             ],
             "select":[
                 "origin_airport_id",
                 "destination_airport_id",
-                "airline_id"
+                "airline_id",
+                "commodity"
             ],
             "origin_airport_id": str(air_freight_rate.origin_airport_id),
             "destination_airport_id": str(air_freight_rate.destination_airport_id),
@@ -282,6 +290,9 @@ def validate_air_freight_unsatisfactory_rate_function(request):
         
         avg_price = air_freight_rates['list'][0]['standard_price']
         sigma = air_freight_rates['list'][0]['standard_price_deviation']
+
+        if not sigma:
+            return {}
 
         lower_bound = avg_price - 0.1 * sigma
         upper_bound = avg_price + 0.1 * sigma

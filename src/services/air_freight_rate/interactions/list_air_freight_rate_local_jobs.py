@@ -1,5 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate_local_jobs import AirFreightRateLocalJob
-from services.air_freight_rate.models.air_freight_rate_local_jobs_mapping import AirFreightRateLocalJobMapping
+from services.air_freight_rate.models.air_freight_rate_local_job_mappings import AirFreightRateLocalJobMapping
 from services.air_freight_rate.helpers.generate_csv_file_url_for_air_locals import (
     generate_csv_file_url_for_air_locals,
 )
@@ -23,7 +23,7 @@ possible_direct_filters = [
     "cogo_entity_id",
     "service_provider_id",
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted", "source_id", "source_serial_id"]
 
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -94,7 +94,7 @@ def list_air_freight_rate_local_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.shipment_service_id ,AirFreightRateLocalJobMapping.shipment_serial_id, AirFreightRateLocalJobMapping.source_id, AirFreightRateLocalJobMapping.shipment_id, AirFreightRateLocalJobMapping.status).where(AirFreightRateLocalJobMapping.job_id == d['id'])
+        mappings_query = AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.shipment_service_id ,AirFreightRateLocalJobMapping.source_serial_id, AirFreightRateLocalJobMapping.source_id, AirFreightRateLocalJobMapping.shipment_id, AirFreightRateLocalJobMapping.status).where(AirFreightRateLocalJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             if not isinstance(filters.get('source'), list):
                 filters['source'] = [filters.get('source')]
@@ -104,7 +104,7 @@ def get_data(query, filters):
             d['source_id'] = mappings_data.source_id
             d['shipment_id'] = mappings_data.shipment_id
             d['reverted_status'] = mappings_data.status
-            d['shipment_serial_id'] = mappings_data.shipment_serial_id
+            d['source_serial_id'] = mappings_data.source_serial_id
             d['shipment_service_id'] = mappings_data.shipment_service_id
             d['reverted_count'] = get_reverted_count(mappings_data)
     return data
@@ -172,10 +172,10 @@ def apply_source_id_filter(query, filters):
     query = query.where(AirFreightRateLocalJob.id << job_ids)
     return query
 
-def apply_shipment_serial_id_filter(query, filters):
-    if filters.get('shipment_serial_id') and not isinstance(filters.get('shipment_serial_id'), list):
-        filters['shipment_serial_id'] = [filters.get('shipment_serial_id')]
-    subquery = list(AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.job_id).where(AirFreightRateLocalJobMapping.shipment_serial_id << filters['shipment_serial_id']).dicts())
+def apply_source_serial_id_filter(query, filters):
+    if filters.get('source_serial_id') and not isinstance(filters.get('source_serial_id'), list):
+        filters['source_serial_id'] = [filters.get('source_serial_id')]
+    subquery = list(AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.job_id).where(AirFreightRateLocalJobMapping.source_serial_id << filters['source_serial_id']).dicts())
     job_ids = []
     for data in subquery:
         job_ids.append(data['job_id'])
@@ -202,7 +202,7 @@ def apply_filters(query, filters):
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
     
-    query = apply_is_visible_filter(query)
+    # query = apply_is_visible_filter(query)
 
     return query
 

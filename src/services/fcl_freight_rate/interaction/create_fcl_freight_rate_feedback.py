@@ -46,7 +46,8 @@ def execute_transaction_code(request):
         FclFreightRateFeedback.source_id == request['source_id'],
         FclFreightRateFeedback.performed_by_id == request['performed_by_id'],
         FclFreightRateFeedback.performed_by_type == request['performed_by_type'],
-        FclFreightRateFeedback.performed_by_org_id == request['performed_by_org_id']).first()
+        FclFreightRateFeedback.performed_by_org_id == request['performed_by_org_id'],
+        FclFreightRateFeedback.status == 'active').first()
 
     if not feedback:
         action = 'create'

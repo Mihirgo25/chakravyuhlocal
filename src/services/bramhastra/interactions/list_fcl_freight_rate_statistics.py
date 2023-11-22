@@ -135,7 +135,7 @@ async def use_average_price_filter(
     select = ",".join(grouping)
 
     queries = [
-        f"""SELECT {select},AVG(bas_standard_price) as average_standard_price FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE sign = 1 AND bas_standard_price > 0 AND is_deleted = False"""
+        f"""SELECT {select},AVG(bas_standard_price) as average_standard_price, stddevPop(bas_standard_price) as bas_standard_price_deviation FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE sign = 1 AND bas_standard_price > 0 AND is_deleted = False"""
     ]
 
     if where := get_direct_indirect_filters(filters):

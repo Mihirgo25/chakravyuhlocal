@@ -244,7 +244,6 @@ celery.autodiscover_tasks(['services.ltl_freight_rate.ltl_celery_worker'], force
 celery.autodiscover_tasks(['services.lcl_freight_rate.lcl_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.lcl_customs_rate.lcl_customs_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.fcl_cfs_rate.fcl_cfs_celery_worker'], force=True)
-celery.autodiscover_tasks(['services.fcl_cfs_rate.fcl_cfs_celery_worker'], force=True)
 
 
 

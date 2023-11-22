@@ -1,5 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate_local_jobs import AirFreightRateLocalJob
-from services.air_freight_rate.models.air_freight_rate_local_jobs_mapping import AirFreightRateLocalJobMapping
+from services.air_freight_rate.models.air_freight_rate_local_job_mappings import AirFreightRateLocalJobMapping
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_user
@@ -31,14 +31,14 @@ def execute_transaction_code(request, source):
         'commodity' : request.get('commodity'),
         'sources' : [source],
         'rate_type' : request.get('rate_type'),
-        'commodity_type': request.get('commodity_type'),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
         'trade_type': request.get('trade_type'),
-        'shipment_id': request.get('shipment_id')
+        'shipment_id': request.get('shipment_id'),
+        'source_id': request.get('source_id')
     }
     
-    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("airline_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("commodity_type") or "")}:{str(params.get("trade_type") or "")}'
+    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("airline_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("shipment_id") or "")}:{str(params.get("source_id") or "")}'
     air_freight_rate_local_job = AirFreightRateLocalJob.select().where(AirFreightRateLocalJob.init_key == init_key, AirFreightRateLocalJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
@@ -75,7 +75,7 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = AirFreightRateLocalJobMapping.create(
         source_id=request.get("source_id"),
         shipment_id = request.get('shipment_id'),
-        shipment_serial_id = request.get("shipment_serial_id"),
+        source_serial_id = request.get("serial_id"),
         shipment_service_id = request.get("service_id"),
         job_id= jobs_id,
         source = source,

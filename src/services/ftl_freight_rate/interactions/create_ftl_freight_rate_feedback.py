@@ -35,7 +35,8 @@ def execute_transaction_code(request):
         FtlFreightRateFeedback.source_id == request.get('source_id'),
         FtlFreightRateFeedback.performed_by_id == request.get('performed_by_id'),
         FtlFreightRateFeedback.performed_by_type == request.get('performed_by_type'),
-        FtlFreightRateFeedback.performed_by_org_id == request.get('performed_by_org_id')).first()
+        FtlFreightRateFeedback.performed_by_org_id == request.get('performed_by_org_id'),
+        FtlFreightRateFeedback.status == 'active').first()
 
     if not feedback:
         feedback = FtlFreightRateFeedback(**row)

@@ -1,6 +1,6 @@
 from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_local_jobs import AirFreightRateLocalJob
-from services.air_freight_rate.models.air_freight_rate_local_jobs_mapping import AirFreightRateLocalJobMapping
+from services.air_freight_rate.models.air_freight_rate_local_job_mappings import AirFreightRateLocalJobMapping
 from services.fcl_freight_rate.models.fcl_freight_rate_local_jobs import FclFreightRateLocalJob
 from services.fcl_freight_rate.models.fcl_freight_rate_local_job_mappings import FclFreightRateLocalJobMapping
 from services.fcl_freight_rate.models.fcl_freight_rate_local_feedback import FclFreightRateLocalFeedback
@@ -16,7 +16,13 @@ class Table:
                 """
               CREATE SEQUENCE IF NOT EXISTS air_freight_rate_local_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
               
-              CREATE SEQUENCE IF NOT EXISTS fcl_freight_rate_local_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"""
+              CREATE SEQUENCE IF NOT EXISTS fcl_freight_rate_local_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+
+              CREATE SEQUENCE IF NOT EXISTS fcl_cfs_rate_feedback_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              
+              CREATE SEQUENCE IF NOT EXISTS fcl_freight_rate_local_feedback_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
+              
+              CREATE SEQUENCE IF NOT EXISTS air_freight_rate_local_feedback_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;"""
             )
 
             db.create_tables(models)

@@ -32,7 +32,8 @@ def execute_transaction_code(request):
         FclCfsRateFeedback.source_id == request.get('source_id'),
         FclCfsRateFeedback.performed_by_id == request.get('performed_by_id'),
         FclCfsRateFeedback.performed_by_type == request.get('performed_by_type'),
-        FclCfsRateFeedback.performed_by_org_id == request.get('performed_by_org_id')).first()
+        FclCfsRateFeedback.performed_by_org_id == request.get('performed_by_org_id'),
+        FclCfsRateFeedback.status == 'active').first()
 
     if not cfs_feedback:
         cfs_feedback = FclCfsRateFeedback(**params)
@@ -68,6 +69,7 @@ def execute_transaction_code(request):
 
     if cfs_feedback.feedback_type == 'disliked':
         request['source_id'] = cfs_feedback.id
+        request['serial_id'] = cfs_feedback.serial_id
         create_fcl_cfs_rate_job(request, "rate_feedback")
 
     return {

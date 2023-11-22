@@ -590,7 +590,7 @@ class CreateAirFreightRateLocalJob(BaseModel):
     source: str = None
     source_id: str = None
     shipment_id: str = None
-    shipment_serial_id: int = None
+    serial_id: int = None
     service_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
@@ -599,7 +599,6 @@ class CreateAirFreightRateLocalJob(BaseModel):
     trade_type: str = None
     service_provider_id: str = None
     commodity: str = None
-    commodity_type: str = None
     rate_type: str = None
     is_visible: bool = True
     price_type: str = None

@@ -46,7 +46,8 @@ def execute_transaction_code(request):
         HaulageFreightRateFeedback.performed_by_id == request['performed_by_id'],
         HaulageFreightRateFeedback.performed_by_type == request['performed_by_type'],
         HaulageFreightRateFeedback.transport_mode == request['transport_mode'],
-        HaulageFreightRateFeedback.performed_by_org_id == request['performed_by_org_id']).first()
+        HaulageFreightRateFeedback.performed_by_org_id == request['performed_by_org_id'],
+        HaulageFreightRateFeedback.status == 'active').first()
     
     if not feedback:
         feedback = HaulageFreightRateFeedback(**row)

@@ -28,7 +28,8 @@ def execute_transaction_code(request):
         FclFreightRateLocalFeedback.source_id == request.get('source_id'),
         FclFreightRateLocalFeedback.performed_by_id == request.get('performed_by_id'),
         FclFreightRateLocalFeedback.performed_by_type == request.get('performed_by_type'),
-        FclFreightRateLocalFeedback.performed_by_org_id == request.get('performed_by_org_id') 
+        FclFreightRateLocalFeedback.performed_by_org_id == request.get('performed_by_org_id'),
+        FclFreightRateLocalFeedback.status == 'active'
     ).first()
 
     if not locals_feedback:
@@ -74,6 +75,7 @@ def execute_transaction_code(request):
 
     if locals_feedback.feedback_type == 'disliked':
         request['source_id'] = locals_feedback.id
+        request['serial_id'] = locals_feedback.serial_id
         create_fcl_freight_rate_local_job(request, "rate_feedback")
 
     return {

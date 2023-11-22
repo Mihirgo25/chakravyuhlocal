@@ -27,7 +27,8 @@ def execute_transaction_code(request):
         AirFreightRateLocalFeedback.source_id == request.get('source_id'),
         AirFreightRateLocalFeedback.performed_by_id == request.get('performed_by_id'),
         AirFreightRateLocalFeedback.performed_by_type == request.get('performed_by_type'),
-        AirFreightRateLocalFeedback.performed_by_org_id == request.get('performed_by_org_id') 
+        AirFreightRateLocalFeedback.performed_by_org_id == request.get('performed_by_org_id'),
+        AirFreightRateLocalFeedback.status == 'active'
     ).first()
 
     if not locals_feedback:
@@ -73,6 +74,7 @@ def execute_transaction_code(request):
 
     if locals_feedback.feedback_type == 'disliked':
         request['source_id'] = locals_feedback.id
+        request['serial_id'] = locals_feedback.serial_id
         create_air_freight_rate_local_job(request, "rate_feedback")
 
     return {

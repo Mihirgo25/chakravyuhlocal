@@ -1,5 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate_local_jobs import AirFreightRateLocalJob
-from services.air_freight_rate.models.air_freight_rate_local_jobs_mapping import AirFreightRateLocalJobMapping
+from services.air_freight_rate.models.air_freight_rate_local_job_mappings import AirFreightRateLocalJobMapping
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
@@ -18,7 +18,7 @@ possible_direct_filters = [
     "cogo_entity_id",
     "service_provider_id",
 ]
-possible_indirect_filters = ["updated_at", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
+possible_indirect_filters = ["updated_at", "is_flash_booking_reverted", "source_id", "source_serial_id"]
 
 uncommon_filters = ["serial_id", "status"]
 
@@ -121,10 +121,10 @@ def apply_source_id_filter(query, filters):
     query = query.where(AirFreightRateLocalJob.id << job_ids)
     return query
 
-def apply_shipment_serial_id_filter(query, filters):
-    if filters.get('shipment_serial_id') and not isinstance(filters.get('shipment_serial_id'), list):
-        filters['shipment_serial_id'] = [filters.get('shipment_serial_id')]
-    subquery = list(AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.job_id).where(AirFreightRateLocalJobMapping.shipment_serial_id << filters['shipment_serial_id']).dicts())
+def apply_source_serial_id_filter(query, filters):
+    if filters.get('source_serial_id') and not isinstance(filters.get('source_serial_id'), list):
+        filters['source_serial_id'] = [filters.get('source_serial_id')]
+    subquery = list(AirFreightRateLocalJobMapping.select(AirFreightRateLocalJobMapping.job_id).where(AirFreightRateLocalJobMapping.source_serial_id << filters['source_serial_id']).dicts())
     job_ids = []
     for data in subquery:
         job_ids.append(data['job_id'])
@@ -282,7 +282,7 @@ def apply_filters(query, filters):
     # applying indirect filters
     query = apply_indirect_filters(query, indirect_filters)
     
-    query = apply_is_visible_filter(query)
+    # query = apply_is_visible_filter(query)
 
     return query
 

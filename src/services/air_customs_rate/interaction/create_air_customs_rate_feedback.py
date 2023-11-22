@@ -35,7 +35,8 @@ def execute_transaction_code(request):
         AirCustomsRateFeedback.source_id == request.get('source_id'),
         AirCustomsRateFeedback.performed_by_id == request.get('performed_by_id'),
         AirCustomsRateFeedback.performed_by_type == request.get('performed_by_type'),
-        AirCustomsRateFeedback.performed_by_org_id == request.get('performed_by_org_id')).first()
+        AirCustomsRateFeedback.performed_by_org_id == request.get('performed_by_org_id'),
+        AirCustomsRateFeedback.status == 'active').first()
 
     if not air_customs_feedback:
         air_customs_feedback = AirCustomsRateFeedback(**params)

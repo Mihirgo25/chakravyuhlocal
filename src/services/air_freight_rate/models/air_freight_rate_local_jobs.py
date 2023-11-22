@@ -21,7 +21,6 @@ class AirFreightRateLocalJob(BaseModel):
     airline = BinaryJSONField(null=True)
     airline_id = UUIDField(null=True, index=True)
     commodity = CharField(null=True, index=True)
-    commodity_type = CharField(null=True, index=True)
     trade_type = CharField(null=True, index=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)

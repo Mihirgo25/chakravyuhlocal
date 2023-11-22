@@ -16,7 +16,7 @@ def delete_air_freight_rate_local_feedback(request):
 def execute_transaction_code(request):
     objects = find_feedback_objects(request)
     if not objects :
-        raise HTTPException(status_code=404, detail='Invalid Rate Feedback')
+        raise HTTPException(status_code=400, detail='Invalid Rate Feedback')
     
     for obj in objects:
         obj.status='inactive'
