@@ -177,7 +177,7 @@ def apply_source_id_filter(query, filters):
     query = query.where(FclFreightRateJob.id << job_ids)
     return query
 
-def apply_serial_id_filter(query, filters):
+def apply_source_serial_id_filter(query, filters):
     if filters.get('source_serial_id') and not isinstance(filters.get('source_serial_id'), list):
         filters['source_serial_id'] = [filters.get('source_serial_id')]
     subquery = list(FclFreightRateJobMapping.select(FclFreightRateJobMapping.job_id).where(FclFreightRateJobMapping.source_serial_id << filters['source_serial_id']).dicts())
