@@ -10,7 +10,6 @@ from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from database.rails_db import get_ff_mlo
 from services.fcl_freight_rate.models.fcl_freight_rate_estimation_ratio import FclFreightRateEstimationRatio
-import dateutil.parser as parser
 
 def get_shipping_line_mapping(critical_freight_rates):
     
@@ -247,7 +246,4 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo, ship
            
     return create_params
 
-def convert_date_format(date):
-    parsed_date = parser.parse(date, dayfirst=True)
-    return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
         
