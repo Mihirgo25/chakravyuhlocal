@@ -622,6 +622,8 @@ def build_response_object(freight_query_result, request):
     source = 'spot_rates'
     if freight_query_result['mode'] == 'predicted':
         source = 'predicted'
+    elif freight_query_result.get('mode') == 'disliked':
+        source = 'disliked'
     elif freight_query_result['rate_type'] != 'market_place':
         source = 'cogo_assured_rate' if freight_query_result['rate_type'] == 'cogo_assured' else  freight_query_result['rate_type'] 
 

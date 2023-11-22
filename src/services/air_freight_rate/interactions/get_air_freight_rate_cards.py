@@ -74,6 +74,8 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
     rate_type = freight_rate.get('rate_type')
     if freight_rate['source'] == 'predicted':
         source = 'predicted'
+    elif freight_rate['source'] == 'disliked':
+        source = 'disliked'
     if rate_type == 'non_tariff_rate':
         rate_type = 'market_place'
         source = 'non_tariff_rate'

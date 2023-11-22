@@ -182,6 +182,12 @@ def build_line_item_object(line_item, requirements):
 
 
 def build_response_object(result, requirements):
+    source = 'predicted'
+    if requirements["predicted_rate"]:
+        source = 'spot_rates'
+    elif result.get('source') == 'disliked':
+        source = 'disliked'
+
     response_object = {
         "id": result["id"],
         "origin_location_id": result["origin_location_id"],
@@ -193,7 +199,7 @@ def build_response_object(result, requirements):
         "haulage_type": result["haulage_type"],
         "transport_modes": result["transport_modes"],
         "line_items": [],
-        "source": "spot_rates" if requirements["predicted_rate"] else "predicted",
+        "source": source,
         "updated_at": result["updated_at"],
         "tags": [],
         "transit_time": result["transit_time"],
