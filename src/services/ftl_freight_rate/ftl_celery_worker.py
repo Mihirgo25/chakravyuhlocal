@@ -31,10 +31,9 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def adding_multiple_service_objects(self,ftl_object,request):
-    from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
+def delay_ftl_functions(self,request):
     try:
-       adding_multiple_service_object(ftl_object, request)
+       adding_multiple_service_object(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

@@ -93,7 +93,7 @@ def get_ftl_freight_rate_cards(request):
 
     return {"list": rate_list}
 
-def initialize_query(query, request, extension = ''):
+def initialize_query(query, request, extension = None):
     filters = {
         "commodity": request.get("commodity"),
         "trip_type": request.get("trip_type"),
