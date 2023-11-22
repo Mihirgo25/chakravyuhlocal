@@ -31,9 +31,10 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delay_ftl_functions(self,request):
+def delay_ftl_functions(self,ftl_object,request):
     try:
        adding_multiple_service_object(request)
+       create_ftl_freight_rate_distance(ftl_object,request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -105,16 +106,6 @@ def update_live_booking_visiblity_for_ftl_freight_rate_job_delay(self, job_id):
 def update_ftl_freight_rate_job_on_rate_addition_delay(self, request, id):
     try:
         return update_ftl_freight_rate_job_on_rate_addition(request, id)
-    except Exception as exc:
-        if type(exc).__name__ == "HTTPException":
-            pass
-        else:
-            raise self.retry(exc=exc)
-        
-@celery.task(bind=True, max_retries=1, retry_backoff=True)
-def create_ftl_freight_rate_distance_delay(self,ftl_object,request):
-    try:
-        return create_ftl_freight_rate_distance(ftl_object,request)
     except Exception as exc:
         if type(exc).__name__ == "HTTPException":
             pass

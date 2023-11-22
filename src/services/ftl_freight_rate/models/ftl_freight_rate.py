@@ -132,9 +132,6 @@ class FtlFreightRate(BaseModel):
     def set_origin_location_type(self):
         self.origin_location_type = self.origin_location.get('type')
 
-    def set_origin_region_id(self):
-        self.origin_region_id = self.origin_location.get('region_id')
-
     def set_destination_location_ids(self):
         self.destination_cluster_id = self.destination_location.get('cluster_id')
         self.destination_city_id = self.destination_location.get('city_id')
@@ -155,9 +152,6 @@ class FtlFreightRate(BaseModel):
 
     def set_origin_destination_location_type(self):
         self.origin_destination_location_type = ':'.join([str(self.origin_location_type),str(self.destination_location_type)])
-    
-    def set_destination_region_id(self):
-        self.destination_region_id = self.destination_location.get('region_id')
 
     def validate_validities(self, validity_start, validity_end):
 
