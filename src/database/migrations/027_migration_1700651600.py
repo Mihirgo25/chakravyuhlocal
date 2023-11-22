@@ -37,6 +37,15 @@ SQL = pw.SQL
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
     """Write your migrations here."""
     migrator.sql('ALTER TABLE fcl_freight_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;')
+    migrator.sql('ALTER TABLE air_freight_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;')
+    migrator.sql('ALTER TABLE haulage_freight_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;')
+    migrator.sql('ALTER TABLE fcl_customs_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;')
+    migrator.sql('ALTER TABLE air_customs_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;')
+    migrator.sql('ALTER TABLE fcl_cfs_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;')
+    migrator.sql('ALTER TABLE lcl_freight_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;')
+    migrator.sql('ALTER TABLE ftl_freight_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;')
+    migrator.sql('ALTER TABLE ltl_freight_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;')
+    migrator.sql('ALTER TABLE lcl_customs_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;')
 
 
 
