@@ -71,7 +71,7 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = FclCfsRateJobMapping.create(
         source_id=request.get("source_id"),
         shipment_id=request.get("shipment_id"),
-        source_serial_id = request.get("source_serial_id"),
+        source_serial_id = request.get("serial_id"),
         shipment_service_id = request.get("service_id"),
         job_id= jobs_id,
         source = source,
