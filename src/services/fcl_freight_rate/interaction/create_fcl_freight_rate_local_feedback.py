@@ -75,6 +75,7 @@ def execute_transaction_code(request):
 
     if locals_feedback.feedback_type == 'disliked':
         request['source_id'] = locals_feedback.id
+        request['serial_id'] = locals_feedback.serial_id
         create_fcl_freight_rate_local_job(request, "rate_feedback")
 
     return {

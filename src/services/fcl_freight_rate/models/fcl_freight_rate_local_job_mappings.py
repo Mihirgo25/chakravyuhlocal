@@ -2,11 +2,8 @@ from peewee import *
 import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
-from fastapi import HTTPException
-from params import Slab
 from micro_services.client import *
 from database.rails_db import *
-from micro_services.client import maps
 from services.fcl_freight_rate.models.fcl_freight_rate_local_jobs import FclFreightRateLocalJob
 
 
@@ -20,7 +17,7 @@ class FclFreightRateLocalJobMapping(BaseModel):
     source =  TextField(index=True)
     source_id = UUIDField(index=True, null=True)
     shipment_id = UUIDField(index=True, null=True)
-    shipment_serial_id = BigIntegerField(index=True, null=True)
+    source_serial_id = BigIntegerField(index=True, null=True)
     shipment_service_id = UUIDField(index=True, null=True)
     status =  TextField(index=True, null=True)
     job_id = ForeignKeyField(FclFreightRateLocalJob,to_field="id")
