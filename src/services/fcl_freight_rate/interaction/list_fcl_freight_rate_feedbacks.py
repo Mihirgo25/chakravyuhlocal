@@ -172,7 +172,6 @@ def get_data(query, spot_search_details_required, booking_details_required):
             FclFreightRateFeedback.performed_by_org_id,
             FclFreightRateFeedback.performed_by_org,
             FclFreightRateFeedback.performed_by_type,
-            FclFreightRateFeedback.preferred_detention_free_days,
             FclFreightRateFeedback.preferred_freight_rate,
             FclFreightRateFeedback.preferred_freight_rate_currency,
             FclFreightRateFeedback.preferred_shipping_line_ids,
@@ -197,7 +196,9 @@ def get_data(query, spot_search_details_required, booking_details_required):
             FclFreightRateFeedback.container_type,
             FclFreightRateFeedback.service_provider_id,
             FclFreightRateFeedback.origin_port,
-            FclFreightRateFeedback.destination_port
+            FclFreightRateFeedback.destination_port,
+            FclFreightRateFeedback.shipping_line_id,
+            FclFreightRateFeedback.shipping_line
         )
     data = list(query.dicts())
     # fcl_freight_rate_ids = [row['fcl_freight_rate_id'] for row in data]
