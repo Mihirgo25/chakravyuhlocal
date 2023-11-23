@@ -27,6 +27,20 @@ def apply_filter(df, container_type, commodity):
 
 
 def get_weighted_average(df, ln):
+    """
+    Weighted Ratio = 
+    Total Data Points for Three Months
+    ((1st Month Ratio × 1st Month Data Points) + 
+    (2nd Month Ratio × 2nd Month Data Points) + 
+    (3rd Month Ratio × 3rd Month Data Points)) / Total Data Points
+    
+    Parameters:
+    - df: DataFrame
+    - ln: Length
+
+    Returns:
+    - None
+    """
     weighted_sum = 0
     total = 0
     for i in range(ln):
@@ -60,12 +74,18 @@ def get_iqr_lower_upper_bound(df):
 
 
 def currency_exchange_to_usd(df):
-    data = {"from_currency": "INR", "to_currency": "USD", "price": "1"}
-    resp = common.get_money_exchange_for_fcl(data)
-    conversion_rate = resp.get("rate") or resp["price"] / float(data["price"])
-
+    unique_currencies = df['currency'].unique()
+    currency_rate_mappings = {}
+    for currency in unique_currencies:
+        if currency != 'USD':
+            data = {"from_currency": currency, "to_currency": "USD", "price": "1"}
+            resp = common.get_money_exchange_for_fcl(data)
+            conversion_rate = resp.get("rate") or resp["price"] / float(data["price"])
+            currency_rate_mappings['currency'] = conversion_rate
+            
     def convert_currency(row):
-        if row["currency"] == "INR":
+        if row["currency"] != "USD":
+            conversion_rate = currency_rate_mappings[row["currency"]]
             row["price"] *= conversion_rate
             row["currency"] = "USD"
         return row
@@ -227,7 +247,7 @@ def process_container_size(
             for temp_df in previous_months_data:
                 df = apply_filter(temp_df, container_type, commodity)
 
-                if len(df[df["currency"] == "INR"]) > 0:
+                if len(df[df["currency"] != "USD"]) > 0:
                     df = currency_exchange_to_usd(df)
 
                 lower_bound, upper_bound = get_iqr_lower_upper_bound(df)
@@ -359,14 +379,5 @@ def populate_fcl_freight_rate_estimation_ratio():
 
     current_time = datetime.now()
     for origin_port_id, destination_port_id in origin_destination_port_pairs:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [
-                executor.submit(
-                    process_container_size,
-                    origin_port_id,
-                    destination_port_id,
-                    container_size,
-                    current_time,
-                )
-                for container_size in CONTAINER_SIZES
-            ]
+        for container_size in CONTAINER_SIZES:
+            process_container_size(origin_port_id, destination_port_id, container_size, current_time)
