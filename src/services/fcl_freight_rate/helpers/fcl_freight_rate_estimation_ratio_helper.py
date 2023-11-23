@@ -2,7 +2,7 @@ from peewee import SQL
 from datetime import datetime, timedelta
 from services.chakravyuh.models.worker_log import WorkerLog
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from services.fcl_freight_rate.interaction.calc_fcl_freight_rate_estimation_ratio import fcl_freight_rate_estimation_ratio
+from services.fcl_freight_rate.interaction.populate_fcl_freight_rate_estimation_ratio import populate_fcl_freight_rate_estimation_ratio
 
 
 
@@ -35,7 +35,7 @@ def fcl_freight_rate_estimation_ratio_helper():
         worker.save()
 
     try:
-        fcl_freight_rate_estimation_ratio()
+        populate_fcl_freight_rate_estimation_ratio()
         worker.status = 'completed'
         
     except:

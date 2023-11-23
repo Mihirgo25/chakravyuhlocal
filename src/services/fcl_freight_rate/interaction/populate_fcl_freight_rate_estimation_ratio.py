@@ -11,9 +11,11 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_estimation_ratio import (
     create_fcl_freight_rate_estimation_ratio,
 )
-from configs.global_constants import CONTAINER_TYPES, ALL_COMMODITIES
+from configs.global_constants import CONTAINER_TYPES, ALL_COMMODITIES, CONTAINER_SIZES
 from configs.fcl_freight_rate_constants import CRITICAL_PORTS_INDIA_VIETNAM
-from services.fcl_freight_rate.helpers.get_critical_ports_extension_parameters import fetch_all_base_port_ids
+from services.fcl_freight_rate.helpers.get_critical_ports_extension_parameters import (
+    fetch_all_base_port_ids,
+)
 
 
 def apply_filter(df, container_type, commodity):
@@ -157,7 +159,12 @@ def get_previous_months_data(
                 (FclFreightRateAudit.created_at <= end_time),
                 ~(
                     FclFreightRate.mode.in_(
-                        ["predicted", "cluster_extension", "cogolens", "rate_manufactured"]
+                        [
+                            "predicted",
+                            "cluster_extension",
+                            "cogolens",
+                            "rate_manufactured",
+                        ]
                     )
                 ),
                 (FclFreightRate.rate_type == DEFAULT_RATE_TYPE),
@@ -324,7 +331,7 @@ def process_container_size(
                 create_fcl_freight_rate_estimation_ratio(request)
 
 
-def fcl_freight_rate_estimation_ratio():
+def populate_fcl_freight_rate_estimation_ratio():
     """
     Calculate the weighted ratio for shipping lines associated with specified origin and destination port pairs. This calculation will be utilized subsequently to estimate BAS prices for shipping lines lacking available data. This process is applicable for both China to India and India to China trade line. Utilizes concurrent execution with a ThreadPoolExecutor for efficient processing.
 
@@ -334,7 +341,7 @@ def fcl_freight_rate_estimation_ratio():
     Returns:
     - None
     """
-    # india to china and china to india trade lines
+    # all critical ports combinations
     critical_origin_port_ids = CRITICAL_PORTS_INDIA_VIETNAM
     critical_destination_port_ids = fetch_all_base_port_ids()
 
@@ -356,28 +363,8 @@ def fcl_freight_rate_estimation_ratio():
                     process_container_size,
                     origin_port_id,
                     destination_port_id,
-                    "20",
+                    container_size,
                     current_time,
-                ),
-                executor.submit(
-                    process_container_size,
-                    origin_port_id,
-                    destination_port_id,
-                    "40",
-                    current_time,
-                ),
-                executor.submit(
-                    process_container_size,
-                    origin_port_id,
-                    destination_port_id,
-                    "40HC",
-                    current_time,
-                ),
-                executor.submit(
-                    process_container_size,
-                    origin_port_id,
-                    destination_port_id,
-                    "45HC",
-                    current_time,
-                ),
+                )
+                for container_size in CONTAINER_SIZES
             ]

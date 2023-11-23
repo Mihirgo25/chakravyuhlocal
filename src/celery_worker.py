@@ -85,7 +85,7 @@ from services.haulage_freight_rate.workers.haulage_freight_expiring_rates_schedu
     haulage_freight_expiring_rates_scheduler,
 )
 
-from services.fcl_freight_rate.interaction.calc_fcl_freight_rate_estimation_ratio import fcl_freight_rate_estimation_ratio
+from services.fcl_freight_rate.interaction.populate_fcl_freight_rate_estimation_ratio import populate_fcl_freight_rate_estimation_ratio
 from services.fcl_freight_rate.helpers.fcl_freight_rate_estimation_ratio_helper import fcl_freight_rate_estimation_ratio_helper
 
 CELERY_CONFIG = {
