@@ -9,11 +9,7 @@ from services.haulage_freight_rate.schedulers.electricity_price_scheduler import
 from kombu import Exchange, Queue
 from celery.schedules import crontab
 from services.chakravyuh.interaction.get_air_invoice_estimation_prediction import invoice_rates_updation
-from services.fcl_customs_rate.interaction.update_fcl_customs_rate_platform_prices import update_fcl_customs_rate_platform_prices
 from database.rails_db import get_past_cost_booking_data
-from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate
-from services.fcl_customs_rate.helpers.update_organization_fcl_customs import update_organization_fcl_customs
-from services.fcl_cfs_rate.helpers.update_organisation_fcl_cfs import update_organization_fcl_cfs
 from services.extensions.interactions.create_freight_look_surcharge_rates import create_surcharge_rate_api
 # Rate Producers
 
@@ -426,35 +422,6 @@ def process_electricity_data_delays(self):
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, retry_backoff=True, max_retries=5)
-def create_fcl_customs_rate_delay(self, request):
-    try:
-        return create_fcl_customs_rate(request)
-    except Exception as e:
-        if type(e).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= e)
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def update_fcl_customs_rate_platform_prices_delay(self, request):
-    try:
-        update_fcl_customs_rate_platform_prices(request)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def fcl_customs_functions_delay(self,fcl_customs_object,request):
-    try:
-        update_organization_fcl_customs(request)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def bulk_operation_perform_action_functions_fcl_customs_cfs_delay(self, action_name, object, sourced_by_id, procured_by_id):

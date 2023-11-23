@@ -11,8 +11,7 @@ def create_fcl_customs_rate(request):
       return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-  from celery_worker import fcl_customs_functions_delay
-  from services.fcl_customs_rate.fcl_customs_celery_worker import update_fcl_customs_rate_job_on_rate_addition_delay
+  from services.fcl_customs_rate.fcl_customs_celery_worker import update_fcl_customs_rate_job_on_rate_addition_delay, fcl_customs_functions_delay
   request = {key: value for key, value in request.items() if value is not None}
   params = get_create_object_params(request)
   customs_rate = FclCustomsRate.select().where(

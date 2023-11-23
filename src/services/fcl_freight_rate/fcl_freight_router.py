@@ -367,6 +367,15 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local_job_stats 
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local_job import (
     update_fcl_freight_rate_local_job,
 )
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_local_feedbacks import (
+    list_fcl_freight_rate_local_feedbacks,
+)
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local_feedback import (
+    delete_fcl_freight_rate_local_feedback,
+)
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_feedback import (
+    create_fcl_freight_rate_local_feedback,
+)
 
 from libs.rate_limiter import rate_limiter
 from configs.env import DEFAULT_USER_ID

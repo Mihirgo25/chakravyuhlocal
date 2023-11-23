@@ -4,7 +4,7 @@ from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
 from configs.env import DEFAULT_USER_ID
 from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
-from celery_worker import create_fcl_customs_rate_delay
+from services.fcl_customs_rate.fcl_customs_celery_worker import create_fcl_customs_rate_delay
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def get_zone_wise_rate_query(request):
