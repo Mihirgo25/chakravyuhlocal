@@ -263,3 +263,12 @@ MIN_ALLOWED_MARKUP = -50
 MAX_ALLOWED_MARKUP = 100
 
 REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}
+
+FCL_FREIGHT_FALLBACK_FAKE_SCHEDULES = [
+    {
+        'departure_offset_days': 7,
+        'transit_time': 11,
+        'number_of_stops': 0,
+        'schedule_type': 'direct'
+    }
+]
