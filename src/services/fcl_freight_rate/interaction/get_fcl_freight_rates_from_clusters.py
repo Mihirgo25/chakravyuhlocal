@@ -6,6 +6,7 @@ from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping impor
     FclFreightLocationClusterMapping,
 )
 from fastapi.encoders import jsonable_encoder
+import random
 from datetime import datetime, timedelta
 import concurrent.futures
 from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
@@ -323,7 +324,8 @@ def get_create_params(
 
         if destination_port_id != request["destination_port_id"]:
             param["destination_main_port_id"] = destination_port_id
-
+            
+        randomization_factor = random.uniform(1, 1.13)
         for validity in critical_freight_rates[0]["validities"]:
             param["validity_start"] = datetime.strptime(
                 datetime.now().date().isoformat(), "%Y-%m-%d"
@@ -341,6 +343,8 @@ def get_create_params(
                         "sl_ratio", 1
                     )
                     line_item["price"] = round(normalized_median * sl_ratio * secondary_factor, 2)
+                    if sl_ratio == 1:
+                        line_item["price"]= round(line_item["price"] * randomization_factor, 2)
             param["line_items"] = line_items
 
         create_params.append(param)
