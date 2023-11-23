@@ -338,7 +338,7 @@ def create_fcl_freight_rate(request):
 def adjust_dynamic_pricing(
     request, row, freight: FclFreightRate, current_validities, is_rate_extended_via_bo
 ):
-    from celery_worker import (
+    from services.fcl_freight_rate.fcl_celery_worker import (
         extend_fcl_freight_rates,
         adjust_fcl_freight_dynamic_pricing,
     )

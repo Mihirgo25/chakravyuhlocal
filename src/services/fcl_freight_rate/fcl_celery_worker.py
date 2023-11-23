@@ -26,6 +26,10 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request impor
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
 from services.fcl_freight_rate.helpers.cluster_extension_by_latest_trends_helper import cluster_extension_by_latest_trends_helper
 
+from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
+
+from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreightVyuhSetter
+
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_job import (
     update_live_booking_visiblity_for_fcl_freight_rate_local_job
 )
@@ -39,10 +43,30 @@ from micro_services.client import organization
 import concurrent.futures
 
 tasks = {
+    'fcl_freigh_rates_to_cogo_assured': {
+        'task': 'services.fcl_freight_rate.fcl_celery_worker.fcl_freight_rates_to_cogo_assured',
+        'schedule': crontab(minute=0, hour='*/2'),
+        'options': {'queue' : 'fcl_freight_rate'}
+        },
+    # 'update_cogo_assured_fcl_freight_rates': {
+    #     'task': 'services.fcl_freight_rate.fcl_celery_worker.update_cogo_assured_fcl_freight_rates',
+    #     'schedule': crontab(minute=30, hour=18),
+    #     'options': { 'queue': 'fcl_freight_rate' }
+    #     },
+    'cluster_extension_by_latest_trends_worker':{
+        'task': 'services.fcl_freight_rate.fcl_celery_worker.cluster_extension_by_latest_trends_worker',
+        "schedule": crontab(hour=23, minute=00),
+        'options': {'queue': 'fcl_freight_rate'}
+    },
     'update_fcl_freight_jobs_status_to_backlogs': {
         'task': 'services.fcl_freight_rate.fcl_celery_worker.update_fcl_freight_rate_jobs_to_backlog_delay',
         'schedule': crontab(hour=22, minute=5),
         'options': {'queue': 'fcl_freight_rate'}
+    },
+    "update_fcl_freight_local_jobs_status_to_backlogs": {
+        "task": "services.fcl_freight_rate.fcl_celery_worker.update_fcl_freight_rate_local_jobs_to_backlog_delay",
+        "schedule": crontab(hour=22, minute=50),
+        "options": {"queue": "fcl_freight_rate"}
     },
 }
 
@@ -258,6 +282,39 @@ def cluster_extension_by_latest_trends_worker(self):
             pass
         else:
             raise self.retry(exc= exc) @celery.task(bind=True, max_retries=1, retry_backoff=True)
+        
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def extend_fcl_freight_rates(self, rate):
+    try:
+        fcl_freight_vyuh = FclFreightVyuhProducer(rate=rate)
+        fcl_freight_vyuh.extend_rate()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind=True, retry_backoff=True,max_retries=3)
+def transform_dynamic_pricing(self, new_rate, current_validities, affected_transformation, new):
+    try:
+        fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities)
+        fcl_freight_vyuh.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=new)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
+    try:
+        fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities)
+        fcl_freight_vyuh.set_dynamic_pricing()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
 def update_fcl_freight_rate_local_jobs_to_backlog_delay(self):
     try:

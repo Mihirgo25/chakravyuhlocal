@@ -52,27 +52,27 @@ tasks = {
         "options": {"queue": "fcl_freight_rate"}
     },
     # 'adjust_air_freight_dynamic_pricing':{
-    #     'task': 'celery_worker.adjust_air_freight_dynamic_pricing',
+    #     'task': 'services.air_freight_rate.air_celery_worker..adjust_air_freight_dynamic_pricing',
     #     'schedule': crontab(minute=00,hour=00),
     #     'options': {'queue' : 'fcl_freight_rate'}
     # },
     'send_air_freight_local_charges_update_reminder_notification':{
-        'task': 'celery_worker.send_air_freight_local_charges_update_reminder_notification_in_delay',
+        'task': 'services.air_freight_rate.air_celery_worker..send_air_freight_local_charges_update_reminder_notification_in_delay',
         'schedule': crontab(minute=00,hour=21,day_of_month = '1'),
         'options': {'queue': 'low'}
     },
     'send_expired_air_freight_rate_notification':{
-        'task': 'celery_worker.send_expired_air_freight_rate_notification_in_delay',
+        'task': 'services.air_freight_rate.air_celery_worker..send_expired_air_freight_rate_notification_in_delay',
         'schedule': crontab(minute=30,hour=20),
         'options': {'queue' : 'low'}
     },
     'send_near_expiry_air_freight_rate_notification':{
-        'task': 'celery_worker.send_near_expiry_air_freight_rate_notification_in_delay',
+        'task': 'services.air_freight_rate.air_celery_worker..send_near_expiry_air_freight_rate_notification_in_delay',
         'schedule': crontab(minute=00,hour=20),
         'options': {'queue' : 'low'}
     },
     'adjust_air_freight_rate_airline_factors':{
-        'task': 'celery_worker.air_freight_airline_factors_in_delay',
+        'task': 'services.air_freight_rate.air_celery_worker..air_freight_airline_factors_in_delay',
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     },

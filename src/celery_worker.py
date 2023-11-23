@@ -8,16 +8,11 @@ from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
 from services.haulage_freight_rate.schedulers.electricity_price_scheduler import electricity_price_scheduler
 from kombu import Exchange, Queue
 from celery.schedules import crontab
-from services.chakravyuh.interaction.get_air_invoice_estimation_prediction import invoice_rates_updation
 from database.rails_db import get_past_cost_booking_data
 from services.extensions.interactions.create_freight_look_surcharge_rates import create_surcharge_rate_api
 # Rate Producers
 
-from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
-
 # Dynamic Pricing
-
-from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreightVyuhSetter
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 from playhouse.postgres_ext import ServerSide
 from services.fcl_freight_rate.workers.fcl_freight_critical_port_pairs_scheduler import (
@@ -81,16 +76,6 @@ celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
 
 celery.conf.update(**CELERY_CONFIG)
 celery.conf.beat_schedule = {
-    'fcl_freigh_rates_to_cogo_assured': {
-        'task': 'services.fcl_freight_rate.fcl_celery_worker.fcl_freight_rates_to_cogo_assured',
-        'schedule': crontab(minute=0, hour='*/2'),
-        'options': {'queue' : 'fcl_freight_rate'}
-        },
-    # 'update_cogo_assured_fcl_freight_rates': {
-    #     'task': 'services.fcl_freight_rate.fcl_celery_worker.update_cogo_assured_fcl_freight_rates',
-    #     'schedule': crontab(minute=30, hour=18),
-    #     'options': { 'queue': 'fcl_freight_rate' }
-    #     },
     'process_fuel_data_delays': {
         'task': 'celery_worker.process_fuel_data_delay',
         'schedule': crontab(minute=00,hour=21),
@@ -106,11 +91,6 @@ celery.conf.beat_schedule = {
     #     'schedule': crontab(minute=30,hour=18),
     #     'options': {'queue' : 'fcl_freight_rate'}
     # },
-    'cluster_extension_by_latest_trends_worker':{
-        'task': 'services.fcl_freight_rate.fcl_celery_worker.cluster_extension_by_latest_trends_worker',
-        "schedule": crontab(hour=23, minute=00),
-        'options': {'queue': 'fcl_freight_rate'}
-    },
     'cache_data_worker':{
         'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
         'schedule': crontab(hour=16, minute=00),
@@ -135,11 +115,6 @@ celery.conf.beat_schedule = {
         "task": "celery_worker.create_job_for_critical_port_pairs_delay",
         'schedule': crontab(hour=1, minute=00),
         "options": {"queue": "fcl_freight_rate"},
-    },
-    "update_fcl_freight_local_jobs_status_to_backlogs": {
-        "task": "services.fcl_freight_rate.fcl_celery_worker.update_fcl_freight_rate_local_jobs_to_backlog_delay",
-        "schedule": crontab(hour=22, minute=50),
-        "options": {"queue": "fcl_freight_rate"}
     },
 }
 
@@ -362,40 +337,6 @@ def update_contract_service_task_delay(self, object):
 def update_spot_negotiation_locals_rate_task_delay(self,object):
     try:
        common.update_spot_negotiation_locals_rate(object)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-
-@celery.task(bind = True, retry_backoff=True,max_retries=3)
-def extend_fcl_freight_rates(self, rate):
-    try:
-        fcl_freight_vyuh = FclFreightVyuhProducer(rate=rate)
-        fcl_freight_vyuh.extend_rate()
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind=True, retry_backoff=True,max_retries=3)
-def transform_dynamic_pricing(self, new_rate, current_validities, affected_transformation, new):
-    try:
-        fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities)
-        fcl_freight_vyuh.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=new)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, retry_backoff=True,max_retries=3)
-def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
-    try:
-        fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities)
-        fcl_freight_vyuh.set_dynamic_pricing()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
