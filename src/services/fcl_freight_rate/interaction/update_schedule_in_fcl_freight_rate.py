@@ -48,6 +48,7 @@ def execute_transaction_code(request):
     if validity_object_found:
         validity_start = datetime.strptime(validity_object_found["validity_start"], "%Y-%m-%d").date()
         validity_end = datetime.strptime(validity_object_found["validity_end"], "%Y-%m-%d").date()
+        payment_term = validity_object_found["payment_term"]
         line_items = validity_object_found["line_items"]
         schedule_type = schedule_type
         freight.set_validities(
