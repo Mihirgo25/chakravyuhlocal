@@ -5,7 +5,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rate
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
 from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
-from datetime import datetime, timedelta
+from datetime import datetime
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
@@ -18,6 +18,7 @@ from libs.get_conditional_line_items import get_filtered_line_items
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
 from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_predicted_fcl_freight_rate_delay
 from services.chakravyuh.interaction.get_serviceable_shipping_lines import get_serviceable_shipping_lines
+
 
 def initialize_freight_query(requirements, prediction_required = False, get_cogo_assured=False):
     freight_query = FclFreightRate.select(
@@ -621,7 +622,7 @@ def add_freight_objects(freight_query_result, response_object, request):
 
 def build_response_object(freight_query_result, request):
     source = 'spot_rates'
-    if freight_query_result['mode'] == 'predicted':
+    if freight_query_result['mode'] in ['predicted', 'rate_manufactured']:
         source = 'predicted'
     elif freight_query_result['rate_type'] != 'market_place':
         source = 'cogo_assured_rate' if freight_query_result['rate_type'] == 'cogo_assured' else  freight_query_result['rate_type'] 
