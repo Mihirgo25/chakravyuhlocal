@@ -355,6 +355,7 @@ from services.lcl_freight_rate.workers.update_lcl_freight_rate_job_on_rate_addit
 from services.ltl_freight_rate.workers.update_ltl_freight_rate_job_on_rate_addition import (
     update_ltl_freight_rate_job_on_rate_addition,
 )
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards_with_schedules import get_fcl_freight_rate_cards_with_schedules
 
 from libs.rate_limiter import rate_limiter
 from configs.env import DEFAULT_USER_ID
@@ -2336,16 +2337,14 @@ def create_fcl_freight_rate_bulk_operation_data(
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    try:
-        data = create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
-        return JSONResponse(content=json_encoder(data))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
+    # try:
+    data=create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
+    return JSONResponse(content=json_encoder(data))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.post("/create_fcl_freight_rate_free_day_request")
