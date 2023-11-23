@@ -241,6 +241,7 @@ def process_container_size(
                 cur_df = cur_df[
                     cur_df["shipping_line_id"] != "e6da6a42-cc37-4df2-880a-525d81251547"
                 ]
+                cur_df = cur_df.reset_index(drop=True)
                 df_avg = cur_df.groupby("shipping_line_id")["price"].mean()
                 df_avg = pd.DataFrame(df_avg)
 
