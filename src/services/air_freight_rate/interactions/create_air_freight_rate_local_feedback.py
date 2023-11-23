@@ -50,17 +50,9 @@ def execute_transaction_code(request):
     for key, value in create_params.items(): 
         setattr(locals_feedback, key, value)
     
-    if locals_feedback.feedbacks:
-        feedback =  locals_feedback.feedbacks + request.get('feedbacks')
-        locals_feedback.feedbacks = list(set(feedback))
-    else:
-        locals_feedback.feedbacks = request.get('feedbacks')
-    
-    if locals_feedback.remarks:
-        remarks = locals_feedback.remarks + request.get('remarks')
-        locals_feedback.remarks = list(set(remarks))
-    else:
-        locals_feedback.remarks = request.get('remarks')
+    locals_feedback.feedbacks = list(set(locals_feedback.feedbacks + request.get('feedbacks',[]))) if locals_feedback.feedbacks else request.get('feedbacks',[])
+    locals_feedback.remarks = list(set(locals_feedback.feedbacks + request.get('remarks',[]))) if locals_feedback.remarks else request.get('remarks',[])
+    locals_feedback.attachment_file_urls = list(set(locals_feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if locals_feedback.attachment_file_urls else request.get('attachment_file_urls',[])
 
     try:
         locals_feedback.save()

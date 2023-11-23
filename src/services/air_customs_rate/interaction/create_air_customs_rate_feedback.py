@@ -49,17 +49,11 @@ def execute_transaction_code(request):
     
     air_customs_feedback.set_airport()
     air_customs_feedback.set_spot_search()
-    if air_customs_feedback.feedbacks:
-        feedback = air_customs_feedback.feedbacks + request.get('feedbacks')
-        air_customs_feedback.feedbacks = list(set(feedback))
-    else:
-        air_customs_feedback.feedbacks = request.get('feedbacks')
-    
-    if air_customs_feedback.remarks:
-        remarks = air_customs_feedback.remarks + request.get('remarks')
-        air_customs_feedback.remarks = list(set(remarks))
-    else:
-        air_customs_feedback.remarks = request.get('remarks')
+
+    air_customs_feedback.feedbacks = list(set(air_customs_feedback.feedbacks + request.get('feedbacks',[]))) if air_customs_feedback.feedbacks else request.get('feedbacks',[])
+    air_customs_feedback.remarks = list(set(air_customs_feedback.feedbacks + request.get('remarks',[]))) if air_customs_feedback.remarks else request.get('remarks',[])
+    air_customs_feedback.attachment_file_urls = list(set(air_customs_feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if air_customs_feedback.attachment_file_urls else request.get('attachment_file_urls',[])
+
     try:
         air_customs_feedback.save()
     except:

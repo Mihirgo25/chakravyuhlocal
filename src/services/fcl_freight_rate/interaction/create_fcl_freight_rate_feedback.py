@@ -65,17 +65,10 @@ def execute_transaction_code(request):
             setattr(feedback, attr, ids)
         else:
             setattr(feedback, attr, value)
-    if feedback.feedbacks:
-        feedbacks = feedback.feedbacks + request.get('feedbacks')
-        feedback.feedbacks = list(set(feedbacks))
-    else:
-        feedback.feedbacks = request.get('feedbacks')
-    
-    if feedback.remarks:
-        remarks = feedback.remarks + request.get('remarks')
-        feedback.remarks = list(set(remarks))
-    else:
-        feedback.remarks = request.get('remarks')
+
+    feedback.feedbacks = list(set(feedback.feedbacks + request.get('feedbacks',[]))) if feedback.feedbacks else request.get('feedbacks',[])
+    feedback.remarks = list(set(feedback.feedbacks + request.get('remarks',[]))) if feedback.remarks else request.get('remarks',[])
+    feedback.attachment_file_urls = list(set(feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if feedback.attachment_file_urls else request.get('attachment_file_urls',[])
 
     try:
         if feedback.validate_before_save():

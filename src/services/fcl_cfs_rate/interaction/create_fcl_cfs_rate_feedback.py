@@ -44,17 +44,10 @@ def execute_transaction_code(request):
     for attr, value in create_params.items():
         setattr(cfs_feedback, attr, value)
     
-    if cfs_feedback.feedbacks:
-        feedback = cfs_feedback.feedbacks + request.get('feedbacks')
-        cfs_feedback.feedbacks = list(set(feedback))
-    else:
-        cfs_feedback.feedbacks = request.get('feedbacks')
-    
-    if cfs_feedback.remarks:
-        remarks = cfs_feedback.remarks + request.get('remarks')
-        cfs_feedback.remarks = list(set(remarks))
-    else:
-        cfs_feedback.remarks = request.get('remarks')
+    cfs_feedback.feedbacks = list(set(cfs_feedback.feedbacks + request.get('feedbacks',[]))) if cfs_feedback.feedbacks else request.get('feedbacks',[])
+    cfs_feedback.remarks = list(set(cfs_feedback.feedbacks + request.get('remarks',[]))) if cfs_feedback.remarks else request.get('remarks',[])
+    cfs_feedback.attachment_file_urls = list(set(cfs_feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if cfs_feedback.attachment_file_urls else request.get('attachment_file_urls',[])
+
     cfs_feedback.set_port()
     cfs_feedback.set_spot_search()
 
