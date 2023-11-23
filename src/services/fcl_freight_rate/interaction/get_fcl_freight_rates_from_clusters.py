@@ -2,7 +2,9 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_location_cluster import (
     FclFreightLocationCluster,
 )
-from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
+from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import (
+    FclFreightLocationClusterMapping,
+)
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime, timedelta
 import concurrent.futures
@@ -19,6 +21,9 @@ from configs.global_constants import CHINA_COUNTRY_ID, INDIA_COUNTRY_ID
 from micro_services.client import common
 
 
+USD_CURRENCY = "USD"
+
+
 def get_shipping_line_mapping(critical_freight_rates):
     """Generate a mapping of shipping line IDs to their average prices.
 
@@ -30,7 +35,7 @@ def get_shipping_line_mapping(critical_freight_rates):
     """
     shipping_line_data = {}
     shipping_line_mapping = {}
-    
+
     for rate in critical_freight_rates:
         validities = rate["validities"]
         total_price = 0.0
@@ -42,11 +47,11 @@ def get_shipping_line_mapping(critical_freight_rates):
             for line_item in line_items:
                 if line_item["code"] == "BAS":
                     price = line_item.get("price", 0.0)
-                    if line_item["currency"] != "USD":
+                    if line_item["currency"] != USD_CURRENCY:
                         price = common.get_money_exchange_for_fcl(
                             dict(
                                 from_currency=line_item["currency"],
-                                to_currency="USD",
+                                to_currency=USD_CURRENCY,
                                 price=price,
                             )
                         ).get("price", 0.0)
@@ -286,6 +291,10 @@ def get_create_params(
         shipping_line_mapping,
         shipping_line_ids,
     )
+    
+    secondary_factor = 1.2 if not is_origin_base_port else 1
+    if not is_destination_base_port:
+        secondary_factor *= 1.2
 
     for shipping_line_id in shipping_line_ids:
         param = {
@@ -330,7 +339,7 @@ def get_create_params(
                     sl_ratio = shipping_line_mapping.get(shipping_line_id, {}).get(
                         "sl_ratio", 1
                     )
-                    line_item["price"] = normalized_median * max(sl_ratio, 1.13)
+                    line_item["price"] = normalized_median * sl_ratio * secondary_factor
             param["line_items"] = line_items
 
         create_params.append(param)
