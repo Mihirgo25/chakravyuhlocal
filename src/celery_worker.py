@@ -208,7 +208,7 @@ celery.conf.beat_schedule = {
     },
     'fcl_freight_rate_estimation_ratio_worker':{
         'task': 'celery_worker.fcl_freight_rate_estimation_ratio_worker',
-        'schedule': crontab(hour='16', minute=00, day_of_week='sat'),
+        'schedule': crontab(hour='16', minute=00, day_of_week='sun'),
         'options': {'queue': 'fcl_freight_rate'}
     },
 }
