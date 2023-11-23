@@ -30,14 +30,14 @@ def execute_transaction_code(request):
         object.save()
     except Exception as e:
         print("Exception in deleting feedback", e)
-
-    update_spot_search_delay.apply_async(
-       kwargs = {"data":{
-        "only_rates_update_required" : True,
-        "id" : object.source_id
-       }},
-       queue = "critical"
-     )
+    if "rate_added" in request.get("closing_remarks",[]):
+      update_spot_search_delay.apply_async(
+        kwargs = {"data":{
+          "only_rates_update_required" : True,
+          "id" : object.source_id
+        }},
+        queue = "critical"
+      )
 
     create_audit_for_customs_feedback(request, object, data)
     get_multiple_service_objects(object)

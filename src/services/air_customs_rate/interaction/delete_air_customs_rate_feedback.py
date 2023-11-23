@@ -32,13 +32,14 @@ def execute_transaction_code(request):
     except Exception:
         raise HTTPException(status_code=500, detail = 'Error while deleting feedback')
     
-    update_spot_search_delay.apply_async(
-       kwargs = {"data":{
-        "only_rates_update_required" : True,
-        "id" : object.source_id
-       }},
-       queue = "critical"
-     )
+    if "rate_added" in request.get('closing_remarks',[]):
+      update_spot_search_delay.apply_async(
+        kwargs = {"data":{
+          "only_rates_update_required" : True,
+          "id" : object.source_id
+        }},
+        queue = "critical"
+      )
 
     create_audit_for_customs_feedback(request, object.id, data)
     get_multiple_service_objects(object)
