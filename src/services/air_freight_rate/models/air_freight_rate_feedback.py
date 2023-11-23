@@ -41,7 +41,6 @@ class AirFreightRateFeedback(BaseModel):
     preferred_airlines = BinaryJSONField(null=True)
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
-    preferred_storage_free_days = IntegerField(null=True)
     remarks = ArrayField(field_class=TextField, null=True)
     serial_id = BigIntegerField(
         constraints=[
