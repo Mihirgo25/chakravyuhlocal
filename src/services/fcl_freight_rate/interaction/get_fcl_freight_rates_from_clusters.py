@@ -146,6 +146,44 @@ def get_current_median(
     return normalized_median
 
 
+def get_fcl_freight_rates_from_clusters(request, serviceable_shipping_lines):
+    ff_mlo = get_ff_mlo()
+
+    create_params = []
+    get_default_create_params = (
+        request["origin_country_id"] != CHINA_COUNTRY_ID
+        or request["destination_country_id"] != INDIA_COUNTRY_ID
+    )
+
+    for hash in serviceable_shipping_lines:
+        origin_port_id = hash.get("origin_main_port_id") or hash.get("origin_port_id")
+        destination_port_id = hash.get("destination_main_port_id") or hash.get(
+            "destination_port_id"
+        )
+        shipping_line_ids = hash.get("shipping_lines")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [
+                executor.submit(
+                    get_create_params,
+                    origin_port_id,
+                    destination_port_id,
+                    request,
+                    ff_mlo,
+                    shipping_line_ids,
+                    get_default_create_params,
+                )
+            ]
+        create_params.extend(futures)
+
+    for i in range(len(create_params)):
+        create_params[i] = create_params[i].result()
+
+    create_params = [sublist for list in create_params for sublist in list if sublist]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [
+            executor.submit(create_fcl_freight_rate_data, param)
+            for param in create_params
+        ]
 
 
 def get_create_params(
