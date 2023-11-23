@@ -220,7 +220,7 @@ def get_previous_months_data(
 
 
 def process_container_size(
-    origin_port_id, destination_port_id, container_size, current_time, count
+    origin_port_id, destination_port_id, container_size, current_time
 ):
     """
     Calculating ratios for each shipping line per month, as we consider a span of 3 months (or 2 months) to compute the weighted ratio. The calculated ratios are then saved to the database.
@@ -351,8 +351,6 @@ def process_container_size(
                     "weighted_ratio": row.weighted_ratio,
                 }
                 create_fcl_freight_rate_estimation_ratio(request)
-                count += 1 
-                print(count)
 
 
 def populate_fcl_freight_rate_estimation_ratio():
@@ -365,35 +363,22 @@ def populate_fcl_freight_rate_estimation_ratio():
     Returns:
     - None
     """
-    # india to china and china to india trade lines
-    critical_origin_port_ids = [
-        "eb187b38-51b2-4a5e-9f3c-978033ca1ddf",
-        "7aa6ac82-c295-497f-bfe1-90294cdfa7a9",
-        "3c843f50-867c-4b07-bb57-e61af97dabfe",
-    ]
-    critical_destination_port_ids = [
-        "23630ba9-b478-4000-ba75-05606d72d19f",
-        "2b318074-ad35-41e9-bb00-68d27a47ec47",
-        "33470eb3-0a63-4427-bf7e-b68d043364dc",
-        "6eb66c1b-9348-4fb9-a9e7-37c5d153272e",
-        "762ea6af-c125-48cd-9b40-cf0539bd55ca",
-        "79b677ac-e075-47a4-8f99-bfa2cda5e55b",
-        "83da7f49-f04c-4c05-b967-346bc7d528f8",
-        "c47b8ce8-4110-4a33-a98f-d1e83ba83779",
-    ]
+    # all critical ports combinations
+    critical_origin_port_ids = CRITICAL_PORTS_INDIA_VIETNAM
+    critical_destination_port_ids = fetch_all_base_port_ids()
 
     origin_destination_port_pairs = []
 
-    # for origin_port_id in critical_origin_port_ids:
-    #     for destination_port_id in critical_destination_port_ids:
-    #         origin_destination_port_pairs.append((origin_port_id, destination_port_id))
+    for origin_port_id in critical_origin_port_ids:
+        for destination_port_id in critical_destination_port_ids:
+            origin_destination_port_pairs.append((origin_port_id, destination_port_id))
 
     for origin_port_id in critical_destination_port_ids:
         for destination_port_id in critical_origin_port_ids:
             origin_destination_port_pairs.append((origin_port_id, destination_port_id))
 
     current_time = datetime.now()
-    count = 0
     for origin_port_id, destination_port_id in origin_destination_port_pairs:
         for container_size in CONTAINER_SIZES:
-            process_container_size(origin_port_id, destination_port_id, container_size, current_time, count)
+            process_container_size(origin_port_id, destination_port_id, container_size, current_time)
+            
