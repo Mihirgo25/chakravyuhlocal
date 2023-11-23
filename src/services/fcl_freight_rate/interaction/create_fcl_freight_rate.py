@@ -99,7 +99,7 @@ def create_fcl_freight_rate_data(request):
 
 
 def create_fcl_freight_rate(request):
-    from celery_worker import (
+    from services.fcl_freight_rate.fcl_celery_worker import (
         delay_fcl_functions,
         update_fcl_freight_rate_request_in_delay,
         update_fcl_freight_rate_feedback_in_delay,
@@ -383,7 +383,7 @@ def adjust_dynamic_pricing(
 
 
 def adjust_cogoassured_price(row, request):
-    from celery_worker import create_fcl_freight_rate_delay
+    from services.fcl_freight_rate.fcl_celery_worker import create_fcl_freight_rate_delay
 
     if row["rate_type"] != DEFAULT_RATE_TYPE:
         return
