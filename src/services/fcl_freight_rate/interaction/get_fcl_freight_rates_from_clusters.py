@@ -18,6 +18,7 @@ from database.rails_db import get_ff_mlo
 from services.fcl_freight_rate.models.fcl_freight_rate_estimation_ratio import (
     FclFreightRateEstimationRatio,
 )
+from configs.global_constants import CHINA_COUNTRY_ID, INDIA_COUNTRY_ID
 
 
 def get_shipping_line_mapping(critical_freight_rates):
@@ -99,7 +100,9 @@ def get_current_median(
     if destination_port_id != request["destination_port_id"]:
         data["destination_main_port_id"] = destination_port_id
 
-    unique_shipping_line_ids = list(set(shipping_line_ids + list(shipping_line_mapping.keys())))
+    unique_shipping_line_ids = list(
+        set(shipping_line_ids + list(shipping_line_mapping.keys()))
+    )
 
     query = FclFreightRateEstimationRatio.select().where(
         FclFreightRateEstimationRatio.commodity == request["commodity"],
@@ -144,6 +147,10 @@ def get_fcl_freight_rates_from_clusters(request, serviceable_shipping_lines):
     ff_mlo = get_ff_mlo()
 
     create_params = []
+    get_default_create_params = (
+        request["origin_country_id"] != CHINA_COUNTRY_ID
+        or request["destination_country_id"] != INDIA_COUNTRY_ID
+    )
 
     for hash in serviceable_shipping_lines:
         origin_port_id = hash.get("origin_main_port_id") or hash.get("origin_port_id")
@@ -160,22 +167,29 @@ def get_fcl_freight_rates_from_clusters(request, serviceable_shipping_lines):
                     request,
                     ff_mlo,
                     shipping_line_ids,
+                    get_default_create_params,
                 )
             ]
         create_params.extend(futures)
 
-
-
     for i in range(len(create_params)):
         create_params[i] = create_params[i].result()
 
-
     create_params = [sublist for list in create_params for sublist in list if sublist]
-    with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
-        futures = [executor.submit(create_fcl_freight_rate_data, param) for param in create_params]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [
+            executor.submit(create_fcl_freight_rate_data, param)
+            for param in create_params
+        ]
+
 
 def get_create_params(
-    origin_port_id, destination_port_id, request, ff_mlo, shipping_line_ids
+    origin_port_id,
+    destination_port_id,
+    request,
+    ff_mlo,
+    shipping_line_ids,
+    get_default_create_params,
 ):
     """Generate parameters for creating freight rate entries based on various criteria.
 
@@ -238,22 +252,39 @@ def get_create_params(
         FclFreightRate.service_provider_id.in_(ff_mlo),
         ~FclFreightRate.rate_not_available_entry,
         FclFreightRate.rate_type == "market_place",
-        FclFreightRate.last_rate_available_date >= request['validity_start'],
+        FclFreightRate.last_rate_available_date >= request["validity_start"],
     )
-         
-    critical_freight_rates = jsonable_encoder(list(critical_freight_rates_query.dicts()))
+
+    critical_freight_rates = jsonable_encoder(
+        list(critical_freight_rates_query.dicts())
+    )
     create_params = []
 
     if not critical_freight_rates:
         return create_params
 
+    if get_default_create_params:
+        return default_create_params(
+            request,
+            origin_port_id,
+            destination_port_id,
+            critical_freight_rates,
+            create_params,
+        )
+
     shipping_line_mapping = {}
     shipping_line_mapping = get_shipping_line_mapping(critical_freight_rates)
-    
-    normalized_median= get_current_median(request,origin_port_id,destination_port_id,destination_base_port_id,origin_base_port_id,shipping_line_mapping,shipping_line_ids)
+    normalized_median = get_current_median(
+        request,
+        origin_port_id,
+        destination_port_id,
+        destination_base_port_id,
+        origin_base_port_id,
+        shipping_line_mapping,
+        shipping_line_ids,
+    )
 
-    for shipping_line_id in shipping_line_ids:    
-            
+    for shipping_line_id in shipping_line_ids:
         param = {
             "origin_port_id": request["origin_port_id"],
             "destination_port_id": request["destination_port_id"],
@@ -293,12 +324,59 @@ def get_create_params(
             line_items = jsonable_encoder(line_items)
             for line_item in line_items:
                 if line_item["code"] == "BAS":
-                    sl_ratio=shipping_line_mapping.get(shipping_line_id, {}).get('sl_ratio', 1)
-                    line_item["price"]=normalized_median*max(sl_ratio, 1.13)
+                    sl_ratio = shipping_line_mapping.get(shipping_line_id, {}).get(
+                        "sl_ratio", 1
+                    )
+                    line_item["price"] = normalized_median * max(sl_ratio, 1.13)
             param["line_items"] = line_items
 
         create_params.append(param)
 
-
     return create_params
 
+
+def default_create_params(
+    request, origin_port_id, destination_port_id, critical_freight_rates, create_params
+):
+    for rate in critical_freight_rates:
+        param = {
+            "origin_port_id": request["origin_port_id"],
+            "destination_port_id": request["destination_port_id"],
+            "origin_country_id": request["origin_country_id"],
+            "destination_country_id": request["destination_country_id"],
+            "container_size": request["container_size"],
+            "container_type": request["container_type"],
+            "commodity": request["commodity"]
+            if request.get("commodity")
+            else "general",
+            "shipping_line_id": rate["shipping_line_id"],
+            "weight_limit": rate["weight_limit"],
+            "service_provider_id": DEFAULT_SERVICE_PROVIDER_ID,
+            "performed_by_id": DEFAULT_USER_ID,
+            "procured_by_id": DEFAULT_USER_ID,
+            "sourced_by_id": DEFAULT_USER_ID,
+            "source": "rate_extension",
+            "mode": "cluster_extension",
+            "accuracy": 80,
+            "extended_from_object_id": rate["id"],
+        }
+
+        if origin_port_id != request["origin_port_id"]:
+            param["origin_main_port_id"] = origin_port_id
+
+        if destination_port_id != request["destination_port_id"]:
+            param["destination_main_port_id"] = destination_port_id
+
+        for validity in rate["validities"]:
+            param["validity_start"] = datetime.strptime(
+                datetime.now().date().isoformat(), "%Y-%m-%d"
+            )
+            param["validity_end"] = datetime.strptime(
+                (datetime.now() + timedelta(days=3)).date().isoformat(), "%Y-%m-%d"
+            )
+            param["schedule_type"] = validity["schedule_type"]
+            param["payment_term"] = validity["payment_term"]
+            param["line_items"] = validity["line_items"]
+            create_params.append(param)
+
+    return create_params
