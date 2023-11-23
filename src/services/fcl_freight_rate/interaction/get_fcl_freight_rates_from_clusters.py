@@ -278,6 +278,7 @@ def get_create_params(
             destination_port_id,
             critical_freight_rates,
             create_params,
+            shipping_line_ids
         )
 
     shipping_line_mapping = {}
@@ -339,7 +340,7 @@ def get_create_params(
                     sl_ratio = shipping_line_mapping.get(shipping_line_id, {}).get(
                         "sl_ratio", 1
                     )
-                    line_item["price"] = normalized_median * sl_ratio * secondary_factor
+                    line_item["price"] = round(normalized_median * sl_ratio * secondary_factor, 2)
             param["line_items"] = line_items
 
         create_params.append(param)
@@ -348,9 +349,11 @@ def get_create_params(
 
 
 def default_create_params(
-    request, origin_port_id, destination_port_id, critical_freight_rates, create_params
+    request, origin_port_id, destination_port_id, critical_freight_rates, create_params, shipping_line_ids
 ):
-    for rate in critical_freight_rates:
+    serviceable_rates = [rate for rate in critical_freight_rates if  rate["shipping_line_id"] in shipping_line_ids]
+   
+    for rate in serviceable_rates:
         param = {
             "origin_port_id": request["origin_port_id"],
             "destination_port_id": request["destination_port_id"],
