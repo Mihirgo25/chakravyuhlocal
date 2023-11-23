@@ -32,13 +32,14 @@ REQUIRED_SCHEDULE_KEYS = [
 INDIA_COUNTRY_CURRENCY = "INR"
 
 
-def create_sailing_schedules_hash(sailing_schedules, sailing_schedules_hash):
+def create_sailing_schedules_hash(sailing_schedules):
     """
     Create a hash of sailing schedules and update the existing sailing schedules.
     Returns:
         dict: Updated sailing schedules hash.
     """
-
+    sailing_schedules_hash = {}
+    
     for sailing_schedule in sailing_schedules:
         key = ":".join(
             [
@@ -306,7 +307,8 @@ def get_freights(
                         "arrival": sailing_schedule.get("arrival"),
                         "number_of_stops": sailing_schedule.get("number_of_stops"),
                         "transit_time": sailing_schedule.get("transit_time"),
-                        "legs": sailing_schedule.get("legs"),
+                        "legs": [],
+                        "schedule_id": sailing_schedule.get("id"),
                         "si_cutoff": sailing_schedule.get("si_cutoff"),
                         "vgm_cutoff": sailing_schedule.get("vgm_cutoff"),
                         "reliability_score": sailing_schedule.get("reliability_score"),
@@ -555,9 +557,7 @@ def get_fcl_freight_rate_cards_schedules(
                 results = executor.result()
                 sailing_schedules.extend(results)
 
-            sailing_schedules_hash = create_sailing_schedules_hash(
-                sailing_schedules, sailing_schedules_hash
-            )
+            sailing_schedules_hash = create_sailing_schedules_hash(sailing_schedules)
 
             rates = []
             data = {
