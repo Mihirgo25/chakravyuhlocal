@@ -2,9 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_location_cluster import (
     FclFreightLocationCluster,
 )
-from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import (
-    FclFreightLocationClusterMapping,
-)
+from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime, timedelta
 import concurrent.futures
