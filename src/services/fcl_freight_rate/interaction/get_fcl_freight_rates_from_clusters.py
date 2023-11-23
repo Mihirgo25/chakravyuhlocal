@@ -339,7 +339,7 @@ def get_create_params(
                     sl_ratio = shipping_line_mapping.get(shipping_line_id, {}).get(
                         "sl_ratio", 1
                     )
-                    line_item["price"] = normalized_median * sl_ratio * secondary_factor
+                    line_item["price"] = round(normalized_median * sl_ratio * secondary_factor, 2)
             param["line_items"] = line_items
 
         create_params.append(param)
