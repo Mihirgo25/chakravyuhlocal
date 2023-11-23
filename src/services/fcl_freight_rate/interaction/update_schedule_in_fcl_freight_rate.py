@@ -2,12 +2,12 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from database.db_session import db
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-
+from datetime import datetime
 
 def create_audit(request):
     data = {
         "validity_id": request["validity_id"],
-        "schedule_id": request["schedule_id"],
+        "schedule_id": request.get("schedule_id"),
     }
     FclFreightRateAudit.create(
         action_name="schedule_update",
@@ -34,7 +34,7 @@ def execute_transaction_code(request):
     freight = FclFreightRate.select().where(FclFreightRate.id == rate_id).first()
 
     if not freight:
-        raise HTTPException(status=404, detail=f"No freight found with id: {rate_id}")
+        raise HTTPException(status_code=404, detail=f"No freight found with id: {rate_id}")
 
     validities = freight.validities
 
@@ -42,12 +42,13 @@ def execute_transaction_code(request):
 
     for validity_object in validities:
         if validity_object["id"] == validity_id:
+            breakpoint()
             validity_object_found = validity_object
             break
 
     if validity_object_found:
-        validity_start = validity_object_found["validity_start"]
-        validity_end = validity_object_found["validity_end"]
+        validity_start = datetime.strptime(validity_object_found["validity_start"], "%Y-%m-%d").date()
+        validity_end = datetime.strptime(validity_object_found["validity_end"], "%Y-%m-%d").date()
         line_items = validity_object_found["line_items"]
         schedule_type = schedule_type
         payment_term = validity_object_found["payment_term"]
@@ -60,13 +61,23 @@ def execute_transaction_code(request):
             payment_term=payment_term,
             schedule_id=schedule_id,
         )
+        if deleted:
+            freight.set_validities(
+            validity_start=validity_start,
+            validity_end=validity_end,
+            line_items=line_items,
+            schedule_type=schedule_type,
+            deleted=False,
+            payment_term=payment_term,
+            schedule_id=schedule_id,
+        )
         freight.sourced_by_id = sourced_by_id
         freight.save()
 
-        create_audit(request)
+        # create_audit(request)
     else:
         raise HTTPException(
-            status=404, detail=f"No Validity found with id: {validity_id}"
+            status_code=404, detail=f"No Validity found with id: {validity_id}"
         )
 
     return {"id": rate_id}
