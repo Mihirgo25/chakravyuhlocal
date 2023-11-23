@@ -51,16 +51,15 @@ def execute_transaction_code(request):
         line_items = validity_object["line_items"]
         schedule_type = schedule_type
         payment_term = validity_object["payment_term"]
+        
         freight.set_validities(
-            validity_start,
-            validity_end,
-            line_items,
-            schedule_type,
-            deleted,
-            payment_term,
-            {},
-            None,
-            schedule_id,
+            validity_start=validity_start,
+            validity_end=validity_end,
+            line_items=line_items,
+            schedule_type=schedule_type,
+            deleted=deleted,
+            payment_term=payment_term,
+            schedule_id=schedule_id,
         )
         freight.sourced_by_id = sourced_by_id
         freight.save()
