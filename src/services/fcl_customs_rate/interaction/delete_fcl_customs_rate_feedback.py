@@ -1,7 +1,6 @@
 from services.fcl_customs_rate.models.fcl_customs_rate_feedback import FclCustomsRateFeedback
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from database.db_session import db
-from micro_services.client import spot_search
 from fastapi import HTTPException
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_job import (

@@ -140,8 +140,8 @@ def get_create_params(request):
         'attachment_file_urls':request.get('attachment_file_urls'),
         'commodity_description':request.get('commodity_description'),
         'rate_type':request.get('rate_type') or request.get('booking_params', {}).get('rate_card', {}).get('rate_type'),
-        'spot_search_serial_id':request.get('spot_search_serial_id')
-
+        'spot_search_serial_id':request.get('spot_search_serial_id'),
+        'shipping_line_id':request.get('shipping_line_id')
     }
     loc_ids = []
 

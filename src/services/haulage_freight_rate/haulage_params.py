@@ -127,6 +127,7 @@ class CreateHaulageFreightRateFeedback(BaseModel):
   transport_mode: str = None
   spot_search_serial_id: int = None
   attachment_file_urls: List[str] = []
+  shipping_line_id: str = None
 
 class RevertedRateParams(BaseModel):
     id: str = None

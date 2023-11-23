@@ -400,6 +400,7 @@ class CreateFclFreightRateFeedback(BaseModel):
     commodity_description: str = None
     rate_type: str = None
     spot_search_serial_id: int = None
+    shipping_line_id: str = None
 
 class CreateFclFreightRateNotAvailable(BaseModel):
     origin_port_id: str
