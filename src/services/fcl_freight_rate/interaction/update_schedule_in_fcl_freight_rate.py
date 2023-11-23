@@ -26,13 +26,10 @@ def update_schedule_in_fcl_freight_rate(request):
 def execute_transaction_code(request):
     rate_id = request["rate_id"]
     validity_id = request["validity_id"]
-    schedule_id = request.get("schedule_id")
     sourced_by_id = request["performed_by_id"]
+    schedule_id = request.get("schedule_id")
     schedule_type = request["schedule_type"]
-
-    deleted = True
-    if schedule_id:
-        deleted = False
+    deleted = bool(not schedule_id)
 
     freight = FclFreightRate.select().where(FclFreightRate.id == rate_id).first()
 

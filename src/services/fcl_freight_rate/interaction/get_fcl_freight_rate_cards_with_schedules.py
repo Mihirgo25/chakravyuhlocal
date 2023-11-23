@@ -32,14 +32,14 @@ REQUIRED_SCHEDULE_KEYS = [
 INDIA_COUNTRY_CURRENCY = "INR"
 
 
-def create_sailing_schedules_hash(sailing_schedules):
+def generate_sailing_schedules_hash(sailing_schedules):
     """
     Create a hash of sailing schedules and update the existing sailing schedules.
     Returns:
         dict: Updated sailing schedules hash.
     """
     sailing_schedules_hash = {}
-    
+
     for sailing_schedule in sailing_schedules:
         key = ":".join(
             [
@@ -200,7 +200,7 @@ def get_freight_schedules(
     """
 
     schedules = []
-    schedule_found = False
+    should_create_fake_schedules = True
 
     if freight.get("schedule_id"):
         schedules = [
@@ -209,23 +209,22 @@ def get_freight_schedules(
             if freight.get("schedule_id") == schedule.get("id")
         ]
         if schedules:
-            schedule_found = True
+            return schedules
 
-    if not schedule_found:
-        for schedule in data_schedules:
-            if (
-                freight["validity_start"]
-                <= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
-                and freight["validity_end"]
-                >= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
-                and freight["schedule_type"] == schedule.get("schedule_type")
-            ):
-                if schedule.get("id") in selected_schedule_ids:
-                    schedule_found = True
-                    continue
-                schedules.append(schedule)
+    for schedule in data_schedules:
+        if (
+            freight["validity_start"]
+            <= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
+            and freight["validity_end"]
+            >= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
+            and freight["schedule_type"] == schedule.get("schedule_type")
+        ):
+            if schedule.get("id") in selected_schedule_ids:
+                should_create_fake_schedules = False
+                continue
+            schedules.append(schedule)
 
-    if not schedule_found:
+    if not schedules and should_create_fake_schedules:
         transit_times = get_transit_time(data_schedules)
         avg_transit_time = (
             sum(transit_times) / len(transit_times) if transit_times else None
@@ -557,7 +556,7 @@ def get_fcl_freight_rate_cards_with_schedules(
                 results = executor.result()
                 sailing_schedules.extend(results)
 
-            sailing_schedules_hash = create_sailing_schedules_hash(sailing_schedules)
+            sailing_schedules_hash = generate_sailing_schedules_hash(sailing_schedules)
 
             rates = []
             data = {
