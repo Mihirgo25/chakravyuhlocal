@@ -1,5 +1,5 @@
 from database.db_session import db
-from services.lcl_freight_rate.models.lcl_freight_rate_audit import LclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_estimation_ratio import FclFreightRateEstimationRatio
 
 class Table:
     def __init__(self) -> None:
@@ -17,7 +17,7 @@ class Table:
 
 if __name__ == "__main__":
     models = [
-        LclFreightRateAudit
+        FclFreightRateEstimationRatio
     ]
 
     Table().create_tables(models)
