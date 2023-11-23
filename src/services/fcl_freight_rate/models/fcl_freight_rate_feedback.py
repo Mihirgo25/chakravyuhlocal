@@ -67,6 +67,8 @@ class FclFreightRateFeedback(BaseModel):
     reverted_validities = BinaryJSONField(null=True)
     rate_type = CharField(null=True, index=True)
     spot_search_serial_id = BigIntegerField(null = True)
+    shipping_line_id = UUIDField(null = True)
+    shipping_line = BinaryJSONField(null = True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -329,3 +331,11 @@ class FclFreightRateFeedback(BaseModel):
             }
         }
         common.create_communication(data)
+    
+    def set_shipping_line(self):
+        if self.shipping_line or not self.shipping_line_id:
+            return
+        shipping_line = get_operators(id=self.shipping_line_id)
+        if len(shipping_line) != 0:
+            shipping_line[0]['id']=str(shipping_line[0]['id'])
+            self.shipping_line = {key:value for key,value in shipping_line[0].items() if key in ['id', 'business_name', 'short_name', 'logo_url']}

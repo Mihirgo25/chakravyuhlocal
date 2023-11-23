@@ -58,6 +58,7 @@ class FclFreightRateLocalFeedback(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     spot_search_serial_id = BigIntegerField(null = True)
     attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
+    shipping_line = BinaryJSONField(null = True)
 
     class Meta:
         table_name = "fcl_freight_rate_local_feedbacks"
@@ -139,3 +140,11 @@ class FclFreightRateLocalFeedback(BaseModel):
                 }
             }
             common.create_communication(data)
+    
+    def set_shipping_line(self):
+        if self.shipping_line or not self.shipping_line_id:
+            return
+        shipping_line = get_operators(id=self.shipping_line_id)
+        if len(shipping_line) != 0:
+            shipping_line[0]['id']=str(shipping_line[0]['id'])
+            self.shipping_line = {key:value for key,value in shipping_line[0].items() if key in ['id', 'business_name', 'short_name', 'logo_url']}

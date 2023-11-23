@@ -72,6 +72,7 @@ class AirFreightRateFeedback(BaseModel):
     airline_id=UUIDField(null=True,index=True)
     spot_search_serial_id = BigIntegerField(null = True)
     attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
+    airline = BinaryJSONField(null = True)
 
     class Meta:
         table_name = "air_freight_rate_feedbacks"
@@ -225,6 +226,17 @@ class AirFreightRateFeedback(BaseModel):
             },
         }
         common.create_communication(data)
+    
+    def set_airline(self):
+        if self.airline or not self.airline_id:
+            return
+        airline = get_operators(id=self.airline_id, operator_type="airline")
+        if len(airline) != 0:
+            self.airline = {
+                key: str(value)
+                for key, value in airline[0].items()
+                if key in ["id", "business_name", "short_name", "logo_url"]
+            }
 
     def validate_trade_type(self):
         if self.trade_type not in ["import", "export", "domestic"]:
@@ -299,7 +311,7 @@ class AirFreightRateFeedback(BaseModel):
     def validate_before_save(self):
         self.validate_trade_type()
         self.validate_feedback_type()
-        self.validate_preferred_airline_ids()
+        self.set_airline()
         self.validate_preferred_storage_free_days()
         self.validate_feedbacks()
         # self.validate_perform_by_org_id()

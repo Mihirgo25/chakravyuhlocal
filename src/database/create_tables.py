@@ -71,6 +71,18 @@ class Table:
               ALTER TABLE fcl_freight_rate_feedbacks ADD COLUMN if not exists attachment_file_urls _text;
               
               ALTER TABLE ftl_freight_rate_feedbacks ADD COLUMN if not exists attachment_file_urls _text;
+
+              ALTER TABLE fcl_freight_rate_feedbacks ADD COLUMN if not exists shipping_line_id uuid;
+
+              ALTER TABLE haulage_freight_rate_feedbacks ADD COLUMN if not exists shipping_line_id uuid;
+
+              ALTER TABLE fcl_freight_rate_feedbacks ADD COLUMN if not exists shipping_line jsonb;
+
+              ALTER TABLE haulage_freight_rate_feedbacks ADD COLUMN if not exists shipping_line jsonb;
+
+              ALTER TABLE air_freight_rate_feedbacks ADD COLUMN if not exists airline jsonb;
+
+              ALTER TABLE air_freight_rate_local_feedbacks ADD COLUMN if not exists airline jsonb;
               
               ALTER TABLE haulage_freight_rate_feedbacks ADD COLUMN if not exists attachment_file_urls _text;"""
             )

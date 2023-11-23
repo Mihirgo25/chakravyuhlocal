@@ -54,6 +54,7 @@ def execute_transaction_code(request):
     locals_feedback.feedbacks = list(set(locals_feedback.feedbacks + request.get('feedbacks',[]))) if locals_feedback.feedbacks else request.get('feedbacks',[])
     locals_feedback.remarks = list(set(locals_feedback.feedbacks + request.get('remarks',[]))) if locals_feedback.remarks else request.get('remarks',[])
     locals_feedback.attachment_file_urls = list(set(locals_feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if locals_feedback.attachment_file_urls else request.get('attachment_file_urls',[])
+    locals_feedback.set_shipping_line()
 
     try:
         locals_feedback.save()

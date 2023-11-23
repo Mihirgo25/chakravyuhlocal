@@ -59,6 +59,7 @@ class AirFreightRateLocalFeedback(BaseModel):
     airline_id=UUIDField(null=True,index=True)
     spot_search_serial_id = BigIntegerField(null = True)
     attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
+    airline = BinaryJSONField(null = True)
 
     class Meta:
         table_name = "air_freight_rate_local_feedbacks"
@@ -140,3 +141,14 @@ class AirFreightRateLocalFeedback(BaseModel):
                 }
             }
             common.create_communication(data)
+
+    def set_airline(self):
+        if self.airline or not self.airline_id:
+            return
+        airline = get_operators(id=self.airline_id, operator_type="airline")
+        if len(airline) != 0:
+            self.airline = {
+                key: str(value)
+                for key, value in airline[0].items()
+                if key in ["id", "business_name", "short_name", "logo_url"]
+            }
