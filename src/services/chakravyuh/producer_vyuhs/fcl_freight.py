@@ -257,7 +257,7 @@ class FclFreightVyuh():
         '''
             Creates rates for single combination of rate extension
         '''
-        from celery_worker import create_fcl_freight_rate_delay
+        from services.fcl_freight_rate.fcl_celery_worker import create_fcl_freight_rate_delay
         validity_start = self.validity_start
         validity_end = self.validity_end
         validities_to_create = [{ 'validity_start': validity_start, 'validity_end': validity_end }]

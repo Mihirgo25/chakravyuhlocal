@@ -198,7 +198,7 @@ def process_fcl_freight_local(params, converted_file, update):
 def create_fcl_freight_local_rate(
     params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, writer, last_row
 ):
-    from celery_worker import celery_create_fcl_freight_rate_local
+    from services.fcl_freight_rate.fcl_celery_worker import celery_create_fcl_freight_rate_local
     keys_to_extract = ['trade_type', 'container_size', 'container_type', 'commodity']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['main_port_id'] = get_port_id(rows[0].get('main_port'))
@@ -434,7 +434,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
 
 
 def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row):
-    from celery_worker import celery_create_fcl_freight_rate_free_day
+    from services.fcl_freight_rate.fcl_celery_worker import celery_create_fcl_freight_rate_free_day
     keys_to_extract = ['location_type', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'free_limit', 'specificity_type', 'previous_days_applicable', 'validity_start', 'validity_end']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     keys_to_float = ['lower_limit', 'upper_limit', 'price']
@@ -1138,7 +1138,7 @@ def process_fcl_freight_freight(params, converted_file, update):
 def create_fcl_freight_freight_rate(
     params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
 ):
-    from celery_worker import create_fcl_freight_rate_delay, celery_extend_create_fcl_freight_rate_data
+    from services.fcl_freight_rate.fcl_celery_worker import create_fcl_freight_rate_delay, celery_extend_create_fcl_freight_rate_data
     keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term', 'rate_type']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['validity_start'] = convert_date_format(object.get('validity_start'))

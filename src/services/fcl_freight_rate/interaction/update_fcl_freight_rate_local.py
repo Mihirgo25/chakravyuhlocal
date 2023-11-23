@@ -51,7 +51,8 @@ def create_audit(request, fcl_freight_local_id):
     )
 
 def execute_transaction_code(request):
-  from celery_worker import update_multiple_service_objects, update_fcl_freight_rate_local_job_on_rate_addition_delay
+  from celery_worker import update_multiple_service_objects
+  from services.fcl_freight_rate.fcl_celery_worker import update_fcl_freight_rate_local_job_on_rate_addition_delay
 
   fcl_freight_local = FclFreightRateLocal.get_by_id(request['id'])
 

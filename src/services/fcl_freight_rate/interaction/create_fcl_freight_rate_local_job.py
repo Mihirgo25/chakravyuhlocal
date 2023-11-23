@@ -21,7 +21,7 @@ def create_fcl_freight_rate_local_job(request, source):
       return execute_transaction_code(request, source)
 
 def execute_transaction_code(request, source):
-    from celery_worker import update_live_booking_visiblity_for_fcl_freight_rate_local_job_delay
+    from services.fcl_freight_rate.fcl_celery_worker import update_live_booking_visiblity_for_fcl_freight_rate_local_job_delay
     request = jsonable_encoder(request)
     params = {
         'port_id' : request.get('port_id'),
