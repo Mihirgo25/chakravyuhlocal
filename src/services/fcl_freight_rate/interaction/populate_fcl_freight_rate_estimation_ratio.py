@@ -16,6 +16,7 @@ from configs.fcl_freight_rate_constants import CRITICAL_PORTS_INDIA_VIETNAM
 from services.fcl_freight_rate.helpers.get_critical_ports_extension_parameters import (
     fetch_all_base_port_ids,
 )
+from database.rails_db import get_ff_mlo
 
 
 def apply_filter(df, container_type, commodity):
@@ -131,6 +132,7 @@ def get_previous_months_data(
     - List: List of DataFrames for previous months
     """
     previous_months_data = []
+    ff_mlo = get_ff_mlo()
 
     for days in [30, 60, 90]:
         start_time = current_time - timedelta(days=days)
@@ -151,12 +153,12 @@ def get_previous_months_data(
                 on=(FclFreightRate.id == FclFreightRateAudit.object_id),
             )
             .where(
-                (FclFreightRate.origin_port_id == origin_port_id),
-                (FclFreightRate.destination_port_id == destination_port_id),
-                (FclFreightRate.container_size == container_size),
-                (FclFreightRateAudit.action_name.in_(["create", "update"])),
-                (FclFreightRateAudit.created_at >= start_time),
-                (FclFreightRateAudit.created_at <= end_time),
+                FclFreightRate.origin_port_id == origin_port_id,
+                FclFreightRate.destination_port_id == destination_port_id,
+                FclFreightRate.container_size == container_size,
+                FclFreightRateAudit.action_name.in_(["create", "update"]),
+                FclFreightRateAudit.created_at >= start_time,
+                FclFreightRateAudit.created_at <= end_time,
                 ~(
                     FclFreightRate.mode.in_(
                         [
@@ -167,8 +169,8 @@ def get_previous_months_data(
                         ]
                     )
                 ),
-                (FclFreightRate.rate_type == DEFAULT_RATE_TYPE),
-                ~FclFreightRate.service_provider["category_types"].contains("nvocc"),
+                FclFreightRate.service_provider.in_(ff_mlo),
+                FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
             )
         )
 
