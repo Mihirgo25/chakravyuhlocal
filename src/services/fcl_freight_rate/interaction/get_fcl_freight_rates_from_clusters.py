@@ -294,7 +294,7 @@ def get_create_params(
             for line_item in line_items:
                 if line_item["code"] == "BAS":
                     sl_ratio=shipping_line_mapping.get(shipping_line_id, {}).get('sl_ratio', 1)
-                    line_item["price"]=normalized_median*sl_ratio
+                    line_item["price"]=normalized_median*max(sl_ratio, 1.13)
             param["line_items"] = line_items
 
         create_params.append(param)
