@@ -53,7 +53,7 @@ def execute_transaction_code(request):
                 "only_rates_update_required" : True,
                 "id" : obj.source_id
             }},
-            queue = "low"
+            queue = "critical"
         )
         create_audit(request, obj.id, obj.transport_mode)
         get_multiple_service_objects(obj)

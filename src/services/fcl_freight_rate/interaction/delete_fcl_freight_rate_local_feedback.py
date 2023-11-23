@@ -34,7 +34,7 @@ def execute_transaction_code(request):
                 "only_rates_update_required" : True,
                 "id" : obj.source_id
             }},
-            queue = "low"
+            queue = "critical"
         )
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')

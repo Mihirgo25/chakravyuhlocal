@@ -37,7 +37,7 @@ def execute_transaction_code(request):
         "only_rates_update_required" : True,
         "id" : object.source_id
        }},
-       queue = "low"
+       queue = "critical"
      )
 
     create_audit_for_customs_feedback(request, object.id, data)
