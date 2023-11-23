@@ -220,7 +220,7 @@ def get_previous_months_data(
 
 
 def process_container_size(
-    origin_port_id, destination_port_id, container_size, current_time
+    origin_port_id, destination_port_id, container_size, current_time, count
 ):
     """
     Calculating ratios for each shipping line per month, as we consider a span of 3 months (or 2 months) to compute the weighted ratio. The calculated ratios are then saved to the database.
@@ -351,6 +351,8 @@ def process_container_size(
                     "weighted_ratio": row.weighted_ratio,
                 }
                 create_fcl_freight_rate_estimation_ratio(request)
+                count += 1 
+                print(count)
 
 
 def populate_fcl_freight_rate_estimation_ratio():
@@ -382,15 +384,16 @@ def populate_fcl_freight_rate_estimation_ratio():
 
     origin_destination_port_pairs = []
 
-    for origin_port_id in critical_origin_port_ids:
-        for destination_port_id in critical_destination_port_ids:
-            origin_destination_port_pairs.append((origin_port_id, destination_port_id))
+    # for origin_port_id in critical_origin_port_ids:
+    #     for destination_port_id in critical_destination_port_ids:
+    #         origin_destination_port_pairs.append((origin_port_id, destination_port_id))
 
     for origin_port_id in critical_destination_port_ids:
         for destination_port_id in critical_origin_port_ids:
             origin_destination_port_pairs.append((origin_port_id, destination_port_id))
 
     current_time = datetime.now()
+    count = 0
     for origin_port_id, destination_port_id in origin_destination_port_pairs:
         for container_size in CONTAINER_SIZES:
-            process_container_size(origin_port_id, destination_port_id, container_size, current_time)
+            process_container_size(origin_port_id, destination_port_id, container_size, current_time, count)
