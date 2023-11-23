@@ -81,7 +81,7 @@ def currency_exchange_to_usd(df):
             data = {"from_currency": currency, "to_currency": "USD", "price": "1"}
             resp = common.get_money_exchange_for_fcl(data)
             conversion_rate = resp.get("rate") or resp["price"] / float(data["price"])
-            currency_rate_mappings['currency'] = conversion_rate
+            currency_rate_mappings[currency] = conversion_rate
             
     def convert_currency(row):
         if row["currency"] != "USD":
