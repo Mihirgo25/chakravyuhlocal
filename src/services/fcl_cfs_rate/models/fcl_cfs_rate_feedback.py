@@ -94,7 +94,7 @@ class FclCfsRateFeedback(BaseModel):
         self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
 
     def send_notifications_to_supply_agents(self, request):
-        port = maps.list_locations({'filters':{'id': self.port_id}})['list']
+        port = maps.list_locations({'filters':{'id': self.port_id}}).get("list",[{}])
         filters = {
             'service_type': 'fcl_cfs',
             'status': 'active',
@@ -116,7 +116,7 @@ class FclCfsRateFeedback(BaseModel):
             'template_name': 'customs_rate_disliked',
             'variables': {
                 'service_type': 'Fcl cfs',
-                'location': port[0]['display_name'],
+                'location': port[0].get('display_name'),
                 'details': request.get('booking_params')
             }
         }
