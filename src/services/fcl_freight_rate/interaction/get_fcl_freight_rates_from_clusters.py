@@ -5,7 +5,6 @@ from services.fcl_freight_rate.models.fcl_freight_location_cluster import (
 from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import (
     FclFreightLocationClusterMapping,
 )
-
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime, timedelta
 import concurrent.futures
@@ -19,6 +18,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_estimation_ratio import (
     FclFreightRateEstimationRatio,
 )
 from configs.global_constants import CHINA_COUNTRY_ID, INDIA_COUNTRY_ID
+from micro_services.client import common
 
 
 def get_shipping_line_mapping(critical_freight_rates):
@@ -41,7 +41,16 @@ def get_shipping_line_mapping(critical_freight_rates):
             line_items = validity.get("line_items", [])
             for line_item in line_items:
                 if line_item["code"] == "BAS":
-                    total_price += line_item.get("price", 0.0)
+                    price = line_item.get("price", 0.0)
+                    if line_item["currency"] != "USD":
+                        price = common.get_money_exchange_for_fcl(
+                            dict(
+                                from_currency=line_item["currency"],
+                                to_currency="USD",
+                                price=price,
+                            )
+                        ).get("price", 0.0)
+                    total_price += float(price)
                     count += 1
 
         if count > 0:
