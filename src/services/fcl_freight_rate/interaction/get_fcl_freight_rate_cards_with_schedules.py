@@ -484,7 +484,7 @@ def format_rate_cards_params(fcl_freight_rate_cards_params):
     return fcl_freight_rate_cards_params
 
 
-def get_fcl_freight_rate_cards_schedules(
+def get_fcl_freight_rate_cards_with_schedules(
     spot_negotiation_rates, fcl_freight_rate_cards_params, sailing_schedules_required
 ):
     """
