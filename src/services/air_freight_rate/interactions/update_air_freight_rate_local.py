@@ -3,7 +3,7 @@ from services.air_freight_rate.models.air_freight_rate_local import AirFreightRa
 from fastapi import HTTPException
 from datetime import *
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-from celery_worker import update_air_freight_rate_local_job_on_rate_addition_delay
+from services.air_freight_rate.air_celery_worker import update_air_freight_rate_local_job_on_rate_addition_delay
 # import sel,up
 
 def update_air_freight_rate_local(request):
