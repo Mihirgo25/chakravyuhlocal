@@ -302,7 +302,7 @@ def validate_air_freight_unsatisfactory_rate_function(request):
         if request.get('currency') != 'USD':
             bas_standard_price = common.get_money_exchange_for_fcl({"price": bas_standard_price,"from_currency": request.get('currency'),"to_currency": "USD",})["price"]
 
-        if bas_standard_price > lower_bound and bas_standard_price < upper_bound:
+        if bas_standard_price >= lower_bound and bas_standard_price <= upper_bound:
             return {'message': 'Best available rate for this port pair'}
         else:
             return {}
