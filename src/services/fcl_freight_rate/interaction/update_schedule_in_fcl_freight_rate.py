@@ -46,12 +46,11 @@ def execute_transaction_code(request):
             break
 
     if validity_object_found:
-        validity_start = validity_object["validity_start"]
-        validity_end = validity_object["validity_end"]
-        line_items = validity_object["line_items"]
+        validity_start = validity_object_found["validity_start"]
+        validity_end = validity_object_found["validity_end"]
+        line_items = validity_object_found["line_items"]
         schedule_type = schedule_type
-        payment_term = validity_object["payment_term"]
-        
+        payment_term = validity_object_found["payment_term"]
         freight.set_validities(
             validity_start=validity_start,
             validity_end=validity_end,
