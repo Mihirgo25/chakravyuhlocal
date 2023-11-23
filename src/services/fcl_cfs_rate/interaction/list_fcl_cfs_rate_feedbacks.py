@@ -77,8 +77,8 @@ def apply_similar_id_filter(query, filters):
         ).first()
     
     if feedback_data:
-        query = query.where(FclCfsRateFeedback.id != filters.get('similar_id'))
         query = query.where(
+            FclCfsRateFeedback.id != filters.get('similar_id'),
             FclCfsRateFeedback.port_id == feedback_data.port_id, 
             FclCfsRateFeedback.commodity == feedback_data.commodity, 
             FclCfsRateFeedback.trade_type == feedback_data.trade_type

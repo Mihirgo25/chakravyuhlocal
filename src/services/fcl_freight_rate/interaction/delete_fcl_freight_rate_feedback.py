@@ -29,14 +29,15 @@ def execute_transaction_code(request):
             obj.save()
         except:
             raise HTTPException(status_code=500, detail="Freight rate local deletion failed")
-        
-        update_spot_search_delay.apply_async(
-            kwargs = {"data":{
-                "only_rates_update_required" : True,
-                "id" : obj.source_id
-            }},
-            queue = "critical"
-        )
+
+        if "rate_added" in request.closing_params:
+            update_spot_search_delay.apply_async(
+                kwargs = {"data":{
+                    "only_rates_update_required" : True,
+                    "id" : obj.source_id
+                }},
+                queue = "critical"
+            )
 
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')

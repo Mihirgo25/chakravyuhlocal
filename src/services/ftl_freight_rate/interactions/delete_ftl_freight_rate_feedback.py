@@ -30,13 +30,14 @@ def execute_transaction_code(request):
         except:
             raise HTTPException(status_code=500, detail="Ftl Freight rate Feedback deletion failed")
 
-        update_spot_search_delay.apply_async(
-            kwargs = {"data":{
-                "only_rates_update_required" : True,
-                "id" : obj.source_id
-            }},
-            queue = "critical"
-        )
+        if "rate_added" in request.get("closing_remarks",[]):
+            update_spot_search_delay.apply_async(
+                kwargs = {"data":{
+                    "only_rates_update_required" : True,
+                    "id" : obj.source_id
+                }},
+                queue = "critical"
+            )
         create_audit(request, obj.id)
         
         delete_ftl_freight_rate_job(request)
