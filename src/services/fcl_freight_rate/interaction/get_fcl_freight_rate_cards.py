@@ -18,6 +18,7 @@ from libs.get_conditional_line_items import get_filtered_line_items
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
 from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_predicted_fcl_freight_rate_delay
 from services.chakravyuh.interaction.get_serviceable_shipping_lines import get_serviceable_shipping_lines
+from configs.global_constants import CHINA_COUNTRY_ID, INDIA_COUNTRY_ID
 
 def initialize_freight_query(requirements, prediction_required = False, get_cogo_assured=False):
     freight_query = FclFreightRate.select(
@@ -723,16 +724,17 @@ def post_discard_noneligible_rates(freight_rates, requirements):
     return freight_rates
 
 def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted, serviceable_shipping_lines = []):
-    try:
-        get_fcl_freight_rates_from_clusters(requirements, serviceable_shipping_lines)
-    except:
-        pass
-    initial_query = initialize_freight_query(requirements)
-    cluster_freight_rates = jsonable_encoder(list(initial_query.dicts()))
-    cluster_freight_rates = pre_discard_noneligible_rates(cluster_freight_rates, requirements)
-    
-    if cluster_freight_rates:
-        freight_rates = cluster_freight_rates
+    if requirements['origin_country_id'] == CHINA_COUNTRY_ID and requirements['destination_country_id'] == INDIA_COUNTRY_ID:
+        try:
+            get_fcl_freight_rates_from_clusters(requirements, serviceable_shipping_lines)
+        except:
+            pass
+        initial_query = initialize_freight_query(requirements)
+        cluster_freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        cluster_freight_rates = pre_discard_noneligible_rates(cluster_freight_rates, requirements)
+        
+        if cluster_freight_rates:
+            freight_rates = cluster_freight_rates
     
     if len(freight_rates) == 0:
         get_fcl_freight_predicted_rate(requirements, serviceable_shipping_lines)
