@@ -6,6 +6,7 @@ from datetime import datetime
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
+from functools import reduce
 
 
 
@@ -31,7 +32,9 @@ def update_fcl_freight_rate_local_job_on_rate_addition(request, id):
         (getattr(FclFreightRateLocalJob, key) == value) for key, value in params.items()
     ]
     conditions.append(FclFreightRateLocalJob.status << ["pending", "backlog"])
-    conditions.append(~(FclFreightRateLocalJob.sources.contains('live_booking')))
+    exception_conditions = [(~FclFreightRateLocalJob.sources.contains(tag)) for tag in ['live_booking','rate_request','rate_feedback']]
+    combined_condition = reduce(lambda a, b: a & b, exception_conditions)
+    conditions.append(combined_condition)
     affected_ids = jsonable_encoder([
         job.id
         for job in FclFreightRateLocalJob.select(FclFreightRateLocalJob.id).where(*conditions)
