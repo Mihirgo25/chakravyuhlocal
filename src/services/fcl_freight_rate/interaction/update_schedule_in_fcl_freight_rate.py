@@ -36,13 +36,12 @@ def execute_transaction_code(request):
     if not freight:
         raise HTTPException(status_code=404, detail=f"No freight found with id: {rate_id}")
 
-    validities = freight.validities
+    validity_object = None
 
     validity_object_found = None
 
-    for validity_object in validities:
+    for validity_object in freight.validities:
         if validity_object["id"] == validity_id:
-            breakpoint()
             validity_object_found = validity_object
             break
 
@@ -51,7 +50,6 @@ def execute_transaction_code(request):
         validity_end = datetime.strptime(validity_object_found["validity_end"], "%Y-%m-%d").date()
         line_items = validity_object_found["line_items"]
         schedule_type = schedule_type
-        payment_term = validity_object_found["payment_term"]
         freight.set_validities(
             validity_start=validity_start,
             validity_end=validity_end,
