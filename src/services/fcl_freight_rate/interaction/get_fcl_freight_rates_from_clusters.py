@@ -75,6 +75,82 @@ def get_shipping_line_mapping(critical_freight_rates):
     return shipping_line_mapping
 
 
+def get_current_median(
+    request,
+    origin_port_id,
+    destination_port_id,
+    destination_base_port_id,
+    origin_base_port_id,
+    shipping_line_mapping,
+    shipping_line_ids,
+):
+    """Calculate the normalized median for shipping line ratios based on given parameters.
+
+    Args:
+        request,
+        origin_port_id,
+        destination_port_id,
+        destination_base_port_id,
+        origin_base_port_id,
+        shipping_line_mapping,
+        shipping_line_ids
+
+    Returns:
+        float: The normalized median value.
+    """
+    data = {
+        "origin_port_id": request["origin_port_id"],
+        "destination_port_id": request["destination_port_id"],
+    }
+
+    if origin_port_id != request["origin_port_id"]:
+        data["origin_main_port_id"] = origin_port_id
+
+    if destination_port_id != request["destination_port_id"]:
+        data["destination_main_port_id"] = destination_port_id
+
+    unique_shipping_line_ids = list(
+        set(shipping_line_ids + list(shipping_line_mapping.keys()))
+    )
+
+    query = FclFreightRateEstimationRatio.select().where(
+        FclFreightRateEstimationRatio.commodity == request["commodity"],
+        FclFreightRateEstimationRatio.container_type == request["container_type"],
+        FclFreightRateEstimationRatio.container_size == request["container_size"],
+        FclFreightRateEstimationRatio.destination_port_id == destination_base_port_id,
+        FclFreightRateEstimationRatio.origin_port_id == origin_base_port_id,
+        FclFreightRateEstimationRatio.shipping_line_id << unique_shipping_line_ids,
+    )
+
+    sl_ratio_mapping = {}
+
+    for row in query:
+        key = str(row.shipping_line_id)
+        sl_ratio_mapping[key] = row.sl_weighted_ratio
+
+    sum = 0.0
+    count = 0
+    normalized_median = 0
+
+    for shipping_line_id in unique_shipping_line_ids:
+        sl_ratio_value = sl_ratio_mapping.get(shipping_line_id, 1)
+        sl_avg_value = shipping_line_mapping.get(shipping_line_id, {}).get("sl_avg")
+
+        shipping_line_info = shipping_line_mapping.get(
+            shipping_line_id, {"sl_avg": None}
+        )
+        shipping_line_info["sl_ratio"] = sl_ratio_value
+        shipping_line_mapping[shipping_line_id] = shipping_line_info
+
+        if sl_avg_value is not None:
+            sum += float(sl_avg_value / sl_ratio_value)
+            count += 1
+
+    if count > 0:
+        normalized_median = sum / count
+
+    return normalized_median
+
 
 def get_fcl_freight_rates_from_clusters(request, serviceable_shipping_lines):
     ff_mlo = get_ff_mlo()
