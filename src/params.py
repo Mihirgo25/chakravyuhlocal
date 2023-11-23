@@ -1076,6 +1076,6 @@ class UpdateFclFreightRateLocalJob(BaseModel):
 class UpdateScheduleInFclFreightRate(BaseModel):
     validity_id: str
     rate_id: str
-    schedule_id: str
+    schedule_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
