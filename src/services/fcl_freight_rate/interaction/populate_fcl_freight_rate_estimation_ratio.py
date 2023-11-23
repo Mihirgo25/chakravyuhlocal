@@ -189,7 +189,7 @@ def get_previous_months_data(
                         ]
                     )
                 ),
-                FclFreightRate.service_provider.in_(ff_mlo),
+                FclFreightRate.service_provider_id.in_(ff_mlo),
                 FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
             )
         )
