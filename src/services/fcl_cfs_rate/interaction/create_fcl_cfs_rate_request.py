@@ -30,6 +30,8 @@ def execute_transaction_code(request):
 
     if not cfs_request:
         cfs_request = FclCfsRateRequest(**search_params)
+        next_sequence_value = db.execute_sql("SELECT nextval('fcl_cfs_rate_request_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(cfs_request,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
     for attr, value in create_params.items():

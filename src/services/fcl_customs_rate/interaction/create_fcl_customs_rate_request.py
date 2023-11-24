@@ -31,6 +31,8 @@ def execute_transaction_code(request):
 
     if not customs_request:
         customs_request = FclCustomsRateRequest(**search_params)
+        next_sequence_value = db.execute_sql("SELECT nextval('fcl_customs_rate_request_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(customs_request,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
     for attr, value in create_params.items():
