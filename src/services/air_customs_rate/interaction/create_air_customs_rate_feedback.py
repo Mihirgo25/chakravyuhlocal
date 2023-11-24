@@ -74,8 +74,6 @@ def execute_transaction_code(request):
 
 def get_create_params(request):
     return {
-        # 'feedbacks': request.get('feedbacks'),
-        # 'remarks': request.get('remarks'),
         'preferred_customs_rate': request.get('preferred_customs_rate'),
         'preferred_customs_rate_currency': request.get('preferred_customs_rate_currency'),
         'feedback_type': request.get('feedback_type'),
