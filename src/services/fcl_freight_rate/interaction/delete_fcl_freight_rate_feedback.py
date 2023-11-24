@@ -30,7 +30,7 @@ def execute_transaction_code(request):
         except:
             raise HTTPException(status_code=500, detail="Freight rate local deletion failed")
 
-        if "rate_added" in request.closing_params:
+        if "rate_added" in request.get('closing_remarks',[]):
             update_spot_search_delay.apply_async(
                 kwargs = {"data":{
                     "only_rates_update_required" : True,

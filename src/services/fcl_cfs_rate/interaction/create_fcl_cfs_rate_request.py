@@ -26,7 +26,8 @@ def execute_transaction_code(request):
         FclCfsRateRequest.source_id == request.get('source_id'),
         FclCfsRateRequest.performed_by_id == request.get('performed_by_id'),
         FclCfsRateRequest.performed_by_type == request.get('performed_by_type'),
-        FclCfsRateRequest.performed_by_org_id == request.get('performed_by_org_id')).first()
+        FclCfsRateRequest.performed_by_org_id == request.get('performed_by_org_id'),
+         FclCfsRateRequest.trade_type == request.get('trade_type')).first()
 
     if not cfs_request:
         cfs_request = FclCfsRateRequest(**search_params)
