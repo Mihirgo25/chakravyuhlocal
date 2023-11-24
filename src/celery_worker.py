@@ -448,3 +448,23 @@ def fcl_freight_rate_estimation_ratio_worker(self):
             pass
         else:
             raise self.retry(exc= exc) 
+        
+@celery.task(bind=True, max_retries=1, retry_backoff=True)
+def update_spot_search_delay(self, data):
+    try:
+        return spot_search.update_spot_search(data)
+    except Exception as exc:
+        if type(exc).__name__ == "HTTPException":
+            pass
+        else:
+            raise self.retry(exc=exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def send_notifications_to_supply_agents_local_feedback(self, object):
+    try:
+        object.send_notifications_to_supply_agents()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
