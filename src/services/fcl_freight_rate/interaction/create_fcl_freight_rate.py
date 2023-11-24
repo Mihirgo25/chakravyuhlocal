@@ -213,13 +213,13 @@ def create_fcl_freight_rate(request):
     if row["rate_type"] == "cogo_assured":
         freight.set_validities_for_cogo_assured_rates(request.get("validities"))
     else:
-        other_params={
-        'comparison_charge_code':request.get('comparison_charge_code'),
-        'rates_greater_than_price':request.get('rates_greater_than_price'),
-        'rates_less_than_price':request.get('rates_less_than_price'),
-        'comparison_currency':request.get('comparison_currency')
+        other_params = {
+            "comparison_charge_code": request.get("comparison_charge_code"),
+            "rates_greater_than_price": request.get("rates_greater_than_price"),
+            "rates_less_than_price": request.get("rates_less_than_price"),
+            "comparison_currency": request.get("comparison_currency"),
         }
-        
+
         freight.set_validities(
             request["validity_start"].date(),
             request["validity_end"].date(),
@@ -228,7 +228,7 @@ def create_fcl_freight_rate(request):
             False,
             request.get("payment_term"),
             other_params,
-            request.get('tag'),
+            request.get("tag"),
             request.get("schedule_id"),
         )
 
@@ -265,11 +265,6 @@ def create_fcl_freight_rate(request):
     # adjust_cogoassured_price(row, request)
 
     create_audit(request, freight.id)
-
-    if not request.get("importer_exporter_id") and not request.get(
-        "rate_not_available_entry"
-    ):
-        freight.delete_rate_not_available_entry()
 
     freight.update_platform_prices_for_other_service_providers()
 
