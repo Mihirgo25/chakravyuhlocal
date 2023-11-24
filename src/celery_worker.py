@@ -468,3 +468,13 @@ def send_notifications_to_supply_agents_local_feedback(self, object):
             pass
         else:
             raise self.retry(exc= exc)
+
+@celery.task(bind = True, max_retries = 5, retry_backoff = True)
+def update_organization_delay(self, params):
+    try:
+        organization.update_organization(params)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)

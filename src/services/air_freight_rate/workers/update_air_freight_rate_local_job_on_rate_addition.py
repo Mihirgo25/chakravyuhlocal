@@ -1,5 +1,5 @@
-from services.air_freight_rate.models.air_freight_rate_local_jobs import AirFreightRateLocalJob
-from services.air_freight_rate.models.air_freight_rate_local_job_mappings import (
+from services.air_freight_rate.models.air_freight_rate_local_job import AirFreightRateLocalJob
+from services.air_freight_rate.models.air_freight_rate_local_job_mapping import (
     AirFreightRateLocalJobMapping,
 )
 from database.rails_db import get_user

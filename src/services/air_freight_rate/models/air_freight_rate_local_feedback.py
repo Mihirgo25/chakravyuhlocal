@@ -56,7 +56,7 @@ class AirFreightRateLocalFeedback(BaseModel):
     service_provider_id = UUIDField(null=True, index=True)
     commodity = TextField(null=True,index=True)
     airline_id=UUIDField(null=True,index=True)
-    spot_search_serial_id = BigIntegerField(null = True)
+    spot_search_serial_id = BigIntegerField(index = True, null = True)
     attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     airline = BinaryJSONField(null = True)
 

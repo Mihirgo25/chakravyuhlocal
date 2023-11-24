@@ -1,4 +1,4 @@
-from services.air_freight_rate.models.air_freight_rate_local_jobs import AirFreightRateLocalJob
+from services.air_freight_rate.models.air_freight_rate_local_job import AirFreightRateLocalJob
 from services.air_freight_rate.constants.air_freight_rate_constants import AIR_COVERAGE_USERS
 from database.db_session import rd
 from micro_services.client import common

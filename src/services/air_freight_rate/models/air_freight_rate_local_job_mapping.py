@@ -4,7 +4,7 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 from micro_services.client import *
 from database.rails_db import *
-from services.air_freight_rate.models.air_freight_rate_local_jobs import AirFreightRateLocalJob
+from services.air_freight_rate.models.air_freight_rate_local_job import AirFreightRateLocalJob
 
 class BaseModel(Model):
     class Meta:

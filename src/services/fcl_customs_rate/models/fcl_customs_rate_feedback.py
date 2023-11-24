@@ -45,7 +45,7 @@ class FclCustomsRateFeedback(BaseModel):
     service_provider_id = UUIDField(null=True)
     cargo_handling_type = CharField(null = True, index = True)
     reverted_rate = BinaryJSONField(null = True)
-    spot_search_serial_id = BigIntegerField(null = True)
+    spot_search_serial_id = BigIntegerField(index = True, null = True)
     attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
 
     def save(self, *args, **kwargs):

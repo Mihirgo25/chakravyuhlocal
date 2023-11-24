@@ -54,7 +54,7 @@ class HaulageFreightRateFeedback(BaseModel):
     haulage_type = TextField(null=True)
     trip_type = TextField(null=True)
     transport_mode = TextField(index=True)
-    spot_search_serial_id = BigIntegerField(null = True)
+    spot_search_serial_id = BigIntegerField(index = True, null = True)
     attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     shipping_line_id = UUIDField(null = True)
     shipping_line = BinaryJSONField(null = True)

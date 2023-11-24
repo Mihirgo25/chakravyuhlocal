@@ -1,4 +1,4 @@
-from services.air_freight_rate.models.air_freight_rate_local_jobs import AirFreightRateLocalJob
+from services.air_freight_rate.models.air_freight_rate_local_job import AirFreightRateLocalJob
 from database.rails_db import get_user
 from fastapi import HTTPException
 

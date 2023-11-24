@@ -1,5 +1,5 @@
-from services.air_freight_rate.models.air_freight_rate_local_jobs import AirFreightRateLocalJob
-from services.air_freight_rate.models.air_freight_rate_local_job_mappings import AirFreightRateLocalJobMapping
+from services.air_freight_rate.models.air_freight_rate_local_job import AirFreightRateLocalJob
+from services.air_freight_rate.models.air_freight_rate_local_job_mapping import AirFreightRateLocalJobMapping
 from services.air_freight_rate.helpers.generate_csv_file_url_for_air_locals import (
     generate_csv_file_url_for_air_locals,
 )
