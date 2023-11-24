@@ -213,6 +213,13 @@ def create_fcl_freight_rate(request):
     if row["rate_type"] == "cogo_assured":
         freight.set_validities_for_cogo_assured_rates(request.get("validities"))
     else:
+        other_params={
+        'comparison_charge_code':request.get('comparison_charge_code'),
+        'rates_greater_than_price':request.get('rates_greater_than_price'),
+        'rates_less_than_price':request.get('rates_less_than_price'),
+        'comparison_currency':request.get('comparison_currency')
+        }
+        
         freight.set_validities(
             request["validity_start"].date(),
             request["validity_end"].date(),
@@ -220,7 +227,9 @@ def create_fcl_freight_rate(request):
             request.get("schedule_type"),
             False,
             request.get("payment_term"),
-            request.get("tag"),
+            other_params,
+            request.get('tag'),
+            request.get("schedule_id"),
         )
 
     freight.set_platform_prices(row["rate_type"])

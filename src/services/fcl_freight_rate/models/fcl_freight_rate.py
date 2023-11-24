@@ -20,7 +20,6 @@ from database.rails_db import get_eligible_orgs
 from micro_services.client import *
 from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import is_price_in_range
 from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM, DEFAULT_RATE_TYPE
-from copy import deepcopy
 from playhouse.shortcuts import ThreadSafeDatabaseMetadata
 
 class UnknownField(object):
@@ -481,7 +480,7 @@ class FclFreightRate(BaseModel):
       self.validities = main_validities
 
 
-    def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term, tag = None, other_params={}):
+    def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term, other_params={}, tag = None, schedule_id= None):
         new_validities = []
         new_tags = {}
         
@@ -584,6 +583,7 @@ class FclFreightRate(BaseModel):
                 "currency": currency,
                 "market_price": market_price,
                 "schedule_type": schedule_type,
+                "schedule_id": schedule_id,
                 "payment_term": payment_term,
                 "likes_count": 0,
                 "dislikes_count": 0,
@@ -1016,6 +1016,7 @@ class FclFreightRateValidity(BaseModel):
     platform_price: float = None
     currency: str
     schedule_type: str = None
+    schedule_id: str = None
     payment_term: str = None
     id: str
     likes_count: int = None

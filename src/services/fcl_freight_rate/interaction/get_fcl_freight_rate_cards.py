@@ -5,7 +5,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rate
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
 from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
-from datetime import datetime, timedelta
+from datetime import datetime
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
@@ -18,6 +18,7 @@ from libs.get_conditional_line_items import get_filtered_line_items
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
 from services.fcl_freight_rate.fcl_celery_worker import create_jobs_for_predicted_fcl_freight_rate_delay
 from services.chakravyuh.interaction.get_serviceable_shipping_lines import get_serviceable_shipping_lines
+
 
 def initialize_freight_query(requirements, prediction_required = False, get_cogo_assured=False):
     freight_query = FclFreightRate.select(
@@ -561,6 +562,7 @@ def build_freight_object(freight_validity, additional_weight_rate, additional_we
         'validity_id': freight_validity['id'],
         'likes_count': freight_validity['likes_count'],
         'dislikes_count': freight_validity['dislikes_count'],
+        'schedule_id': freight_validity.get('schedule_id'),
         'line_items': [],
         'created_at': freight_validity['created_at'],
         'updated_at': freight_validity['updated_at'],
@@ -620,7 +622,7 @@ def add_freight_objects(freight_query_result, response_object, request):
 
 def build_response_object(freight_query_result, request):
     source = 'spot_rates'
-    if freight_query_result['mode'] == 'predicted':
+    if freight_query_result['mode'] in ['predicted', 'rate_manufactured']:
         source = 'predicted'
     elif freight_query_result.get('mode') == 'disliked':
         source = 'disliked'

@@ -865,6 +865,14 @@ class AddLocalRateMarkup(BaseModel):
     line_item_code: str
 
 
+class AddSailingSchedules(BaseModel):
+    filters: dict = {}
+    validity_start: datetime
+    validity_end: datetime
+    schedule_id: str
+    schedule_type: str
+
+
 class ExtendFreightRateToIcds(BaseModel):
     filters: dict = {}
     markup_type: str
@@ -946,6 +954,7 @@ class CreateBulkOperation(BaseModel):
     extend_freight_rate_to_icds: ExtendFreightRateToIcds = None
     add_local_conditions: AddLocalConditions = None
     delete_local_rate_line_item: DeleteLocalRateLineItem = None
+    add_sailing_schedules: AddSailingSchedules = None
 
 
 class UpdateFclFreightRateTask(BaseModel):
@@ -1064,6 +1073,15 @@ class UpdateFclFreightRateJob(BaseModel):
 class UpdateFclFreightRateLocalJob(BaseModel):
     id: str
     user_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+    
+class UpdateScheduleInFclFreightRate(BaseModel):
+    validity_id: str
+    rate_id: str
+    schedule_id: str=None
+    schedule_type : str
     performed_by_id: str = None
     performed_by_type: str = None
 
