@@ -49,7 +49,6 @@ def update_fcl_cfs_rate_job_on_rate_addition_delay(self, request, id):
         else:
             raise self.retry(exc=exc)
 
-from services.fcl_cfs_rate.helpers.update_organization_fcl_cfs import update_organization_fcl_cfs
 from celery_worker import celery
 from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices import update_fcl_cfs_rate_platform_prices
 
@@ -57,17 +56,6 @@ from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices impor
 def send_notifications_to_supply_agents_cfs_request_delay(self, object):
     try:
         object.send_notifications_to_supply_agents()
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-        
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def fcl_cfs_functions_delay(self,fcl_cfs_object,request):
-    try:
-        update_organization_fcl_cfs(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

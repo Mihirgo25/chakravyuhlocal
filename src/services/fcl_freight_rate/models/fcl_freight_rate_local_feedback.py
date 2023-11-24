@@ -56,7 +56,7 @@ class FclFreightRateLocalFeedback(BaseModel):
     trade_type = CharField(index=True, null=True)
     service_provider_id= UUIDField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    spot_search_serial_id = BigIntegerField(null = True)
+    spot_search_serial_id = BigIntegerField(index = True, null = True)
     attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     shipping_line = BinaryJSONField(null = True)
 

@@ -49,16 +49,28 @@ class Table:
               ALTER TABLE air_freight_rate_feedbacks DROP COLUMN preferred_storage_free_days;
               
               ALTER TABLE air_customs_rate_feedbacks ADD COLUMN if not exists spot_search_serial_id BIGINT;
+
+              CREATE INDEX IF NOT EXISTS idx_spot_search_serial_id ON air_customs_rate_feedbacks(spot_search_serial_id);
               
               ALTER TABLE air_freight_rate_feedbacks ADD COLUMN if not exists spot_search_serial_id BIGINT;
+
+              CREATE INDEX IF NOT EXISTS idx_spot_search_serial_id ON air_freight_rate_feedbacks(spot_search_serial_id);
               
               ALTER TABLE fcl_customs_rate_feedbacks ADD COLUMN if not exists spot_search_serial_id BIGINT;
+
+              CREATE INDEX IF NOT EXISTS idx_spot_search_serial_id ON fcl_customs_rate_feedbacks(spot_search_serial_id);
               
               ALTER TABLE fcl_freight_rate_feedbacks ADD COLUMN if not exists spot_search_serial_id BIGINT;
+
+              CREATE INDEX IF NOT EXISTS idx_spot_search_serial_id ON fcl_freight_rate_feedbacks(spot_search_serial_id);
               
               ALTER TABLE ftl_freight_rate_feedbacks ADD COLUMN if not exists spot_search_serial_id BIGINT;
+
+              CREATE INDEX IF NOT EXISTS idx_spot_search_serial_id ON ftl_freight_rate_feedbacks(spot_search_serial_id);
               
               ALTER TABLE haulage_freight_rate_feedbacks ADD COLUMN if not exists spot_search_serial_id BIGINT;
+
+              CREATE INDEX IF NOT EXISTS idx_spot_search_serial_id ON haulage_freight_rate_feedbacks(spot_search_serial_id);
               
               ALTER TABLE fcl_freight_rate_feedbacks ADD COLUMN if not exists preferred_free_days jsonb;
               
