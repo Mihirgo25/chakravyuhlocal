@@ -34,7 +34,8 @@ def execute_transaction_code(request):
             update_spot_search_delay.apply_async(
                 kwargs = {"data":{
                     "only_rates_update_required" : True,
-                    "id" : obj.source_id
+                    "id" : obj.source_id,
+                    "clear_is_disliked_cache": "spot_search_rate_is_disliked_{}_{}_{}".format(str(obj.source_id),str(obj.fcl_freight_rate_id),str(obj.validity_id))
                 }},
                 queue = "critical"
             )
