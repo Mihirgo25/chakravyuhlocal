@@ -41,6 +41,8 @@ from services.fcl_freight_rate.workers.update_fcl_freight_rate_local_job_on_rate
 )
 from micro_services.client import organization
 import concurrent.futures
+from services.fcl_freight_rate.interaction.populate_fcl_freight_rate_estimation_ratio import populate_fcl_freight_rate_estimation_ratio
+from services.fcl_freight_rate.helpers.fcl_freight_rate_estimation_ratio_helper import fcl_freight_rate_estimation_ratio_helper
 
 tasks = {
     'fcl_freigh_rates_to_cogo_assured': {
@@ -67,6 +69,11 @@ tasks = {
         "task": "services.fcl_freight_rate.fcl_celery_worker.update_fcl_freight_rate_local_jobs_to_backlog_delay",
         "schedule": crontab(hour=22, minute=50),
         "options": {"queue": "fcl_freight_rate"}
+    },
+    'fcl_freight_rate_estimation_ratio_worker':{
+        'task': 'services.fcl_freight_rate.fcl_celery_worker.fcl_freight_rate_estimation_ratio_worker',
+        'schedule': crontab(hour='16', minute=00, day_of_week='sun'),
+        'options': {'queue': 'fcl_freight_rate'}
     },
 }
 
@@ -344,3 +351,13 @@ def update_fcl_freight_rate_local_job_on_rate_addition_delay(self, request, id):
             pass
         else:
             raise self.retry(exc=exc)
+        
+@celery.task(bind = True,retry_backoff=True,max_retries=3)
+def fcl_freight_rate_estimation_ratio_worker(self):
+    try:
+        fcl_freight_rate_estimation_ratio_helper()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
