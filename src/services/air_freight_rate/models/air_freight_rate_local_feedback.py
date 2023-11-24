@@ -1,10 +1,24 @@
-from peewee import *
+from peewee import SQL, Model
 from database.db_session import db
-from playhouse.postgres_ext import *
-from fastapi import HTTPException
-from services.air_freight_rate.constants.air_freight_rate_constants import *
-from micro_services.client import *
-from database.rails_db import *
+from playhouse.postgres_ext import (
+    UUIDField, 
+    BinaryJSONField, 
+    ArrayField, 
+    TextField, 
+    DateTimeField, 
+    CharField, 
+    BigIntegerField, 
+    DoubleField,
+)
+from micro_services.client import (
+    maps, 
+    spot_search, 
+    common,
+)
+from database.rails_db import (
+    get_partner_users_by_expertise, 
+    get_partner_users,
+)
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
 from celery_worker import create_communication_background
 import datetime
@@ -136,14 +150,3 @@ class AirFreightRateLocalFeedback(BaseModel):
                 }
             }
             common.create_communication(data)
-
-    def set_airline(self):
-        if self.airline or not self.airline_id:
-            return
-        airline = get_operators(id=self.airline_id, operator_type="airline")
-        if len(airline) != 0:
-            self.airline = {
-                key: str(value)
-                for key, value in airline[0].items()
-                if key in ["id", "business_name", "short_name", "logo_url"]
-            }

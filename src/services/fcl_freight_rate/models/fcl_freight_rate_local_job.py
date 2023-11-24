@@ -2,8 +2,7 @@ from peewee import *
 import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
-from micro_services.client import *
-from database.rails_db import *
+from database.rails_db import get_operators
 from micro_services.client import maps
 
 

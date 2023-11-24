@@ -1,9 +1,13 @@
-from peewee import *
+from peewee import Model, SQL
 import datetime
 from database.db_session import db
-from playhouse.postgres_ext import *
-from micro_services.client import *
-from database.rails_db import *
+from playhouse.postgres_ext import (
+    UUIDField, 
+    TextField, 
+    BigIntegerField, 
+    ForeignKeyField, 
+    DateField,
+)
 from services.air_freight_rate.models.air_freight_rate_local_job import AirFreightRateLocalJob
 
 class BaseModel(Model):

@@ -1,9 +1,6 @@
 from peewee import *
 import datetime
 from database.db_session import db
-from playhouse.postgres_ext import *
-from micro_services.client import *
-from database.rails_db import *
 from services.fcl_freight_rate.models.fcl_freight_rate_local_job import FclFreightRateLocalJob
 
 
