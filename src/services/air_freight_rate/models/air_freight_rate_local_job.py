@@ -33,7 +33,7 @@ class AirFreightRateLocalJob(BaseModel):
     closed_by_id = UUIDField(null=True, index=True)
     closed_by = BinaryJSONField(null=True)
     closing_remarks = TextField(null=True)
-    rate_type = TextField(null=True)
+    rate_type = TextField(null=True, index=True)
     init_key = TextField(index=True, null=True)
     is_visible = BooleanField(default=True)
     price_type = CharField(null=True)

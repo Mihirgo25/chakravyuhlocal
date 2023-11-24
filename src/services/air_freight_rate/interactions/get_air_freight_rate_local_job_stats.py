@@ -1,5 +1,5 @@
-from services.air_freight_rate.models.air_freight_rate_local_jobs import AirFreightRateLocalJob
-from services.air_freight_rate.models.air_freight_rate_local_job_mappings import AirFreightRateLocalJobMapping
+from services.air_freight_rate.models.air_freight_rate_local_job import AirFreightRateLocalJob
+from services.air_freight_rate.models.air_freight_rate_local_job_mapping import AirFreightRateLocalJobMapping
 import json
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters

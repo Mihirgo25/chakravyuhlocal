@@ -112,7 +112,8 @@ def build_response_object(result, request):
       'main_port_id': result['main_port_id'],
       'shipping_line_id': result['shipping_line_id'],
       'source': 'predicted' if result['service_provider_id'] in PREDICTED_RATES_SERVICE_PROVIDER_IDS else 'spot_rates',
-      'tags': []
+      'tags': [],
+      'rate_id': result.get('id')
     }
 
     if (

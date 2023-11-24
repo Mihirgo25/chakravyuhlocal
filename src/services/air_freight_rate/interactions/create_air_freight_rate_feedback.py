@@ -33,7 +33,7 @@ def create_air_freight_rate_feedback(request):
      
 def execute_transaction_code(request):
 
-    rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id,AirFreightRate.commodity).where(AirFreightRate.id==request['rate_id']).first()
+    rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id,AirFreightRate.commodity, AirFreightRate.operation_type, AirFreightRate.shipment_type).where(AirFreightRate.id==request['rate_id']).first()
     if not rate:
         raise HTTPException(status_code=404, detail='Rate Not Found')
     
@@ -98,6 +98,8 @@ def execute_transaction_code(request):
     
         request['source_id'] = feedback.id
         request['serial_id'] = feedback.serial_id
+        request['shipment_type'] = rate.shipment_type
+        request['operation_type'] = rate.operation_type
         create_air_freight_rate_job(request, "rate_feedback")   
     
     return {
@@ -120,9 +122,7 @@ def update_likes_dislike_count(rate,request):
     rate.save()
     
 def get_create_params(request,rate):
-    params={ 
-        # 'feedbacks': request.get('feedbacks'),
-        # 'remarks': request.get('remarks'),
+    params={
         'preferred_freight_rate': request.get('preferred_freight_rate'),
         'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'preferred_storage_free_days': request.get('preferred_storage_free_days'),

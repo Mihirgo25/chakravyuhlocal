@@ -1,5 +1,5 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_local_jobs import FclFreightRateLocalJob
-from services.fcl_freight_rate.models.fcl_freight_rate_local_job_mappings import (
+from services.fcl_freight_rate.models.fcl_freight_rate_local_job import FclFreightRateLocalJob
+from services.fcl_freight_rate.models.fcl_freight_rate_local_job_mapping import (
     FclFreightRateLocalJobMapping,
 )
 import json

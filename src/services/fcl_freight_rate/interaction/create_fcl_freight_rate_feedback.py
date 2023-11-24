@@ -108,8 +108,6 @@ def update_likes_dislikes_count(rate, request):
 
 def get_create_params(request):
     params =  {
-        # 'feedbacks': request.get('feedbacks'),
-        # 'remarks': request.get('remarks'),
         'preferred_freight_rate': request.get('preferred_freight_rate'),
         'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'preferred_free_days': request.get('preferred_free_days'),
