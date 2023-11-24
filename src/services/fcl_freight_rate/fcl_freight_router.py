@@ -9,8 +9,11 @@ from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
+from pydantic import Json
 
 
+
+from services.fcl_freight_rate.interaction.update_schedule_in_fcl_freight_rate import update_schedule_in_fcl_freight_rate
 from libs.update_charges_yml import update_charges_yml
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import (
     create_fcl_freight_commodity_cluster,
@@ -352,6 +355,7 @@ from services.lcl_freight_rate.workers.update_lcl_freight_rate_job_on_rate_addit
 from services.ltl_freight_rate.workers.update_ltl_freight_rate_job_on_rate_addition import (
     update_ltl_freight_rate_job_on_rate_addition,
 )
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards_with_schedules import get_fcl_freight_rate_cards_with_schedules
 
 from libs.rate_limiter import rate_limiter
 from configs.env import DEFAULT_USER_ID
@@ -2334,15 +2338,13 @@ def create_fcl_freight_rate_bulk_operation_data(
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
-        data = create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
+        data=create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
         return JSONResponse(content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.post("/create_fcl_freight_rate_free_day_request")
@@ -3211,6 +3213,40 @@ def update_ltl_freight_rate_job_on_rate_addition_api(
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.get('/get_fcl_freight_rate_cards_with_schedules')
+def get_fcl_freight_rate_cards_with_schedules_data(
+    spot_negotiation_rates: Json = Query(None),
+    fcl_freight_rate_cards_params: Json = Query(None),
+    sailing_schedules_required: bool = False,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        resp = get_fcl_freight_rate_cards_with_schedules(spot_negotiation_rates, fcl_freight_rate_cards_params, sailing_schedules_required)
+        return JSONResponse(status_code=200, content=json_encoder(resp))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@fcl_freight_router.post("/update_schedule_in_fcl_freight_rate")
+def update_schedule_in_fcl_freight_rate_data(request: UpdateScheduleInFclFreightRate, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = update_schedule_in_fcl_freight_rate(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })    
