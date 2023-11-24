@@ -67,11 +67,11 @@ class AirFreightRateLocalFeedback(BaseModel):
       self.updated_at = datetime.datetime.now()
       return super(AirFreightRateLocalFeedback, self).save(*args, **kwargs)
     
-    def supply_agents_to_notify(self, request):
-        locations_data = AirFreightRateLocalFeedback.select(AirFreightRateLocalFeedback.airport_id, AirFreightRateLocalFeedback.country_id, AirFreightRateLocalFeedback.continent_id).where(AirFreightRateLocalFeedback.source_id == request.get('source_id')).dicts().get()
+    def supply_agents_to_notify(self):
+        locations_data = AirFreightRateLocalFeedback.select(AirFreightRateLocalFeedback.airport_id, AirFreightRateLocalFeedback.country_id, AirFreightRateLocalFeedback.continent_id).where(AirFreightRateLocalFeedback.source_id == self.source_id).dicts().get()
         locations = list(filter(None,[str(value or "") for key,value in locations_data.items()]))
 
-        supply_agents_data = get_partner_users_by_expertise('air_freight_local', location_ids = locations, trade_type = request.get('trade_type'))
+        supply_agents_data = get_partner_users_by_expertise('air_freight_local', location_ids = locations, trade_type = self.trade_type)
         supply_agents_list = list(set([item.get('partner_user_id') for item in supply_agents_data]))
 
         supply_agents_user_data = get_partner_users(supply_agents_list)
@@ -88,17 +88,17 @@ class AirFreightRateLocalFeedback(BaseModel):
         route = {key['id']:key['display_name'] for key in route_data}
         return { 'user_ids': supply_agents_user_ids, 'location': route.get(str(locations_data.get('airport_id') or '')) }
 
-    def send_notifications_to_supply_agents(self, request):
-        request_info = self.supply_agents_to_notify(request)
+    def send_notifications_to_supply_agents(self):
+        request_info = self.supply_agents_to_notify()
         data = {
             'type': 'platform_notification',
             'service': 'spot_search',
-            'service_id': request.get('source_id'),
+            'service_id': self.source_id,
             'template_name': 'local_rate_disliked',
             'variables': { 
                 'service_type': 'air freight local',
                 'location': request_info.get('location'),
-                'details':request.get('booking_params')
+                'details':self.booking_params
             }
         }
         for user_id in (request_info.get('user_ids') or []):
