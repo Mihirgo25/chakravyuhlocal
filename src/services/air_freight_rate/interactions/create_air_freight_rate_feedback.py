@@ -33,7 +33,7 @@ def create_air_freight_rate_feedback(request):
      
 def execute_transaction_code(request):
 
-    rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id,AirFreightRate.commodity, AirFreightRate.operation_type, AirFreightRate.stacking_type).where(AirFreightRate.id==request['rate_id']).first()
+    rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id,AirFreightRate.commodity, AirFreightRate.operation_type, AirFreightRate.shipment_type).where(AirFreightRate.id==request['rate_id']).first()
     if not rate:
         raise HTTPException(status_code=404, detail='Rate Not Found')
     
