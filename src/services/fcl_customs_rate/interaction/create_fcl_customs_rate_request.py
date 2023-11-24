@@ -27,7 +27,8 @@ def execute_transaction_code(request):
         FclCustomsRateRequest.source_id == request.get('source_id'),
         FclCustomsRateRequest.performed_by_id == request.get('performed_by_id'),
         FclCustomsRateRequest.performed_by_type == request.get('performed_by_type'),
-        FclCustomsRateRequest.performed_by_org_id == request.get('performed_by_org_id')).first()
+        FclCustomsRateRequest.performed_by_org_id == request.get('performed_by_org_id'),
+        FclCustomsRateRequest.trade_type == request.get('trade_type')).first()
 
     if not customs_request:
         customs_request = FclCustomsRateRequest(**search_params)

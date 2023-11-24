@@ -27,7 +27,8 @@ def execute_transaction_code(request):
         AirCustomsRateRequest.source_id == request.get('source_id'),
         AirCustomsRateRequest.performed_by_id == request.get('performed_by_id'),
         AirCustomsRateRequest.performed_by_type == request.get('performed_by_type'),
-        AirCustomsRateRequest.performed_by_org_id == request.get('performed_by_org_id')).first()
+        AirCustomsRateRequest.performed_by_org_id == request.get('performed_by_org_id'),
+        AirCustomsRateRequest.trade_type == request.get('trade_type')).first()
 
     if not air_customs_request:
         air_customs_request = AirCustomsRateRequest(**search_params)
