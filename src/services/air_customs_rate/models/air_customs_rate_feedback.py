@@ -45,7 +45,7 @@ class AirCustomsRateFeedback(BaseModel):
     continent_id = UUIDField(null=True)
     city_id = UUIDField(null=True)
     reverted_rate = BinaryJSONField(null = True)
-    spot_search_serial_id = BigIntegerField(index = True, null = True)
+    spot_search_serial_id = BigIntegerField(index=True, null = True)
     attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
 
     def save(self, *args, **kwargs):

@@ -16,7 +16,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class AirFreightRateLocalFeedback(BaseModel):
-    air_freight_rate_local_id = UUIDField(null=True,index=True)
+    air_freight_rate_local_id = UUIDField(null=True)
     booking_params = BinaryJSONField(null=True)
     closed_by_id = UUIDField(null=True,index=True)
     closing_remarks = ArrayField(
@@ -25,7 +25,7 @@ class AirFreightRateLocalFeedback(BaseModel):
         null=True,
     )
     created_at = DateTimeField(default=datetime.datetime.now)
-    feedback_type = CharField(null=True)
+    feedback_type = CharField(index=True, null=True)
     feedbacks = ArrayField(field_class=TextField, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     performed_by_id = UUIDField(null=True,index=True)
@@ -36,27 +36,23 @@ class AirFreightRateLocalFeedback(BaseModel):
     preferred_rate = DoubleField(null=True)
     preferred_rate_currency = CharField(null=True)
     remarks = ArrayField(field_class=TextField, null=True)
-    serial_id = BigIntegerField(
-        constraints=[
-            SQL("DEFAULT nextval('air_freight_rate_local_feedback_serial_id_seq'::regclass)")
-        ]
-    )
+    serial_id = BigIntegerField(index=True, constraints=[SQL("DEFAULT nextval('air_freight_rate_local_feedback_serial_id_seq'::regclass)")])
     source = CharField(null=True)
-    source_id = UUIDField(null=True,index=True)
-    status = CharField(null=True)
-    trade_type = CharField(null=True)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    source_id = UUIDField(null=True)
+    status = CharField(index=True, null=True)
+    trade_type = CharField(index=True, null=True)
+    updated_at = DateTimeField(index=True, default=datetime.datetime.now)
     closed_by = BinaryJSONField(null=True)
     reverted_rate = BinaryJSONField(null=True)
     airport_id = UUIDField(null=True, index=True)
     country_id = UUIDField(null=True, index=True)
-    continent_id = UUIDField(null=True, index=True)
+    continent_id = UUIDField(null=True)
     trade_id = UUIDField(null=True, index=True)
     cogo_entity_id = UUIDField(null=True, index=True)
     service_provider_id = UUIDField(null=True, index=True)
-    commodity = TextField(null=True,index=True)
+    commodity = TextField(null=True)
     airline_id=UUIDField(null=True,index=True)
-    spot_search_serial_id = BigIntegerField(index = True, null = True)
+    spot_search_serial_id = BigIntegerField(index=True, null = True)
     attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     airline = BinaryJSONField(null = True)
 

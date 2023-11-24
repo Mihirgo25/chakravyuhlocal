@@ -21,7 +21,7 @@ class AirFreightRateLocalJob(BaseModel):
     airline = BinaryJSONField(null=True)
     airline_id = UUIDField(null=True, index=True)
     commodity = CharField(null=True, index=True)
-    trade_type = CharField(null=True, index=True)
+    trade_type = CharField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     status = CharField(index=True, null=True)
@@ -30,18 +30,16 @@ class AirFreightRateLocalJob(BaseModel):
     )
     user_id = UUIDField(index=True, null=True)
     assigned_to = BinaryJSONField(null=True)
-    closed_by_id = UUIDField(null=True, index=True)
+    closed_by_id = UUIDField(null=True)
     closed_by = BinaryJSONField(null=True)
     closing_remarks = TextField(null=True)
-    rate_type = TextField(null=True, index=True)
-    init_key = TextField(index=True, null=True)
+    rate_type = TextField(null=True)
+    init_key = TextField(null=True)
     is_visible = BooleanField(default=True)
     price_type = CharField(null=True)
     cogo_entity_id = UUIDField(null=True, index=True)
-    serial_id = BigIntegerField(
-        constraints=[SQL("DEFAULT nextval('air_freight_rate_local_jobs_serial_id_seq')")],
-    )
-    search_source = TextField(null=True, index=True)
+    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_freight_rate_local_jobs_serial_id_seq')")], index=True)
+    search_source = TextField(null=True)
 
     class Meta:
         table_name = "air_freight_rate_local_jobs"

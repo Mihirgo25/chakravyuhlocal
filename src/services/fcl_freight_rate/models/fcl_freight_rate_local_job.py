@@ -16,17 +16,17 @@ class BaseModel(Model):
 class FclFreightRateLocalJob(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     port_id = UUIDField(index=True, null=True)
-    port = BinaryJSONField(index=True, null=True)
-    main_port_id = UUIDField(index=True, null=True)
-    main_port = BinaryJSONField(index=True, null=True)
-    terminal_id = UUIDField(index=True, null=True)
+    port = BinaryJSONField(null=True)
+    main_port_id = UUIDField(null=True)
+    main_port = BinaryJSONField(null=True)
+    terminal_id = UUIDField(null=True)
     terminal = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(null=True, index=True)
     shipping_line = BinaryJSONField(null=True)
     service_provider_id = UUIDField(null=True, index=True)
     service_provider = BinaryJSONField(null=True)
-    container_size = CharField(null=True, index=True)
-    container_type = CharField(null=True, index=True)
+    container_size = CharField(null=True)
+    container_type = CharField(null=True)
     commodity = CharField(null=True, index=True)
     trade_type = CharField(null=True)
     sources = ArrayField(
@@ -37,19 +37,15 @@ class FclFreightRateLocalJob(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     status = CharField(index=True, null=True)
-    closed_by_id = UUIDField(null=True, index=True)
+    closed_by_id = UUIDField(null=True)
     closed_by = BinaryJSONField(null=True)
     closing_remarks = TextField(null=True)
-    rate_type = TextField(null=True, index=True)
-    init_key = TextField(index=True, null=True)
+    rate_type = TextField(null=True)
+    init_key = TextField(null=True)
     is_visible = BooleanField(default=True)
     cogo_entity_id = UUIDField(null=True, index=True)
-    serial_id = BigIntegerField(
-        constraints=[
-            SQL("DEFAULT nextval('fcl_freight_rate_local_jobs_serial_id_seq')")
-        ],
-    )
-    search_source = TextField(null=True, index=True)
+    serial_id = BigIntegerField(index=True, constraints=[SQL("DEFAULT nextval('fcl_freight_rate_local_jobs_serial_id_seq')")])
+    search_source = TextField(null=True)
 
     class Meta:
         table_name = "fcl_freight_rate_local_jobs"
