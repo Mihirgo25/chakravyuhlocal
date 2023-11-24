@@ -185,8 +185,6 @@ def build_response_object(result, requirements):
     source = 'predicted'
     if requirements["predicted_rate"]:
         source = 'spot_rates'
-    elif result.get('source') == 'disliked':
-        source = 'disliked'
 
     response_object = {
         "id": result["id"],

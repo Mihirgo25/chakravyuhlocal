@@ -69,8 +69,6 @@ def build_response_object(result,request):
     source = 'spot_rates'
     if result.get('mode') == 'predicted':
         source = 'predicted'
-    elif result.get('source') == 'disliked':
-        source = 'disliked'
     elif result.get('rate_type') != 'market_place':
         source = result.get('rate_type')
 

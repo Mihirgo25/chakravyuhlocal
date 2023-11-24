@@ -253,8 +253,6 @@ def build_response_object(result, request):
     source = 'predicted'
     if request.get("predicted_rate"):
         source = 'spot_rates'
-    elif result.get('source') == 'disliked':
-        source = 'disliked'
     
     response_object = {
         "id": result.get("id"),
