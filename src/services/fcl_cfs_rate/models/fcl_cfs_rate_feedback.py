@@ -42,6 +42,8 @@ class FclCfsRateFeedback(BaseModel):
     trade_type = CharField(null=True)
     trade_id = UUIDField(null=True)
     commodity = CharField(null=True, index=True)
+    container_size = CharField(null=True)
+    container_type = CharField(null=True)
     service_provider_id = UUIDField(null=True)
     reverted_rate = BinaryJSONField(null = True)
     spot_search_serial_id = BigIntegerField(null = True)

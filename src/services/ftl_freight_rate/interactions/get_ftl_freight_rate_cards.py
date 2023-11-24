@@ -250,12 +250,6 @@ def get_location_mapping(location_ids):
 
 
 def build_response_object(result, request):
-    source = 'predicted'
-    if request.get("predicted_rate"):
-        source = 'spot_rates'
-    elif result.get('source') == 'disliked':
-        source = 'disliked'
-    
     response_object = {
         "id": result.get("id"),
         "origin_location_id": result.get("origin_location_id"),
@@ -266,7 +260,7 @@ def build_response_object(result, request):
         "service_provider_id": result.get("service_provider_id"),
         "importer_exporter_id": result.get("importer_exporter_id"),
         "line_items": [],
-        "source": source,
+        "source": "spot_rates" if request.get("predicted_rate") else "predicted",
         "tags": [],
         "truck_type": request.get("truck_type"),
         "trucks_count": request.get("trucks_count"),
