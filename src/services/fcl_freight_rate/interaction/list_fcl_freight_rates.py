@@ -108,6 +108,7 @@ def get_data(query, expired_rates_required,is_line_items_required):
           'is_best_price': (validity_object['price'] == platform_price),
           'schedule_type' : validity_object['schedule_type'],
           'payment_type' : validity_object['payment_term'],
+          'schedule_id' : validity_object.get('schedule_id'),
           'is_rate_expired' : datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') < datetime.now()}
         
         if is_line_items_required:
