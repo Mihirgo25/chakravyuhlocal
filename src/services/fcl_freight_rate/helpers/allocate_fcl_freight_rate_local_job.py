@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_local_jobs import FclFreightRateLocalJob
+from services.fcl_freight_rate.models.fcl_freight_rate_local_job import FclFreightRateLocalJob
 from configs.fcl_freight_rate_constants import FCL_EXPORT_COVERAGE_USERS, FCL_IMPORT_COVERAGE_USERS
 from database.db_session import rd
 from datetime import datetime

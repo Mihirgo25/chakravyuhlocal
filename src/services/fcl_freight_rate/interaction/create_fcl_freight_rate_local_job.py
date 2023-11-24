@@ -1,5 +1,5 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_local_jobs import FclFreightRateLocalJob
-from services.fcl_freight_rate.models.fcl_freight_rate_local_job_mappings import FclFreightRateLocalJobMapping
+from services.fcl_freight_rate.models.fcl_freight_rate_local_job import FclFreightRateLocalJob
+from services.fcl_freight_rate.models.fcl_freight_rate_local_job_mapping import FclFreightRateLocalJobMapping
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from database.rails_db import get_user
 from fastapi.encoders import jsonable_encoder
