@@ -60,7 +60,7 @@ def execute_transaction_code(request):
         setattr(feedback, attr, value)
 
     feedback.feedbacks = list(set(feedback.feedbacks + request.get('feedbacks',[]))) if feedback.feedbacks else request.get('feedbacks',[])
-    feedback.remarks = list(set(feedback.feedbacks + request.get('remarks',[]))) if feedback.remarks else request.get('remarks',[])
+    feedback.remarks = list(set(feedback.remarks + request.get('remarks',[]))) if feedback.remarks else request.get('remarks',[])
     feedback.attachment_file_urls = list(set(feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if feedback.attachment_file_urls else request.get('attachment_file_urls',[])
 
     feedback.validate_before_save()

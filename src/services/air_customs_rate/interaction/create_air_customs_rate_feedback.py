@@ -51,7 +51,7 @@ def execute_transaction_code(request):
     air_customs_feedback.set_spot_search()
 
     air_customs_feedback.feedbacks = list(set(air_customs_feedback.feedbacks + request.get('feedbacks',[]))) if air_customs_feedback.feedbacks else request.get('feedbacks',[])
-    air_customs_feedback.remarks = list(set(air_customs_feedback.feedbacks + request.get('remarks',[]))) if air_customs_feedback.remarks else request.get('remarks',[])
+    air_customs_feedback.remarks = list(set(air_customs_feedback.remarks + request.get('remarks',[]))) if air_customs_feedback.remarks else request.get('remarks',[])
     air_customs_feedback.attachment_file_urls = list(set(air_customs_feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if air_customs_feedback.attachment_file_urls else request.get('attachment_file_urls',[])
 
     try:
