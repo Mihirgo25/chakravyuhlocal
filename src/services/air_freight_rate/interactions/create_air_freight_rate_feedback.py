@@ -123,8 +123,6 @@ def update_likes_dislike_count(rate,request):
     
 def get_create_params(request,rate):
     params={
-        'preferred_freight_rate': request.get('preferred_freight_rate'),
-        'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'preferred_storage_free_days': request.get('preferred_storage_free_days'),
         'preferred_airline_ids': request.get('preferred_airline_ids'),
         'feedback_type': request.get('feedback_type'),
@@ -145,8 +143,12 @@ def get_create_params(request,rate):
         'status': 'active',
         'airline_id':request.get('airline_id'),
         'spot_search_serial_id':request.get('spot_search_serial_id')
-
       }
+    
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_freight_rate'] = request.get('preferred_freight_rate')
+        params['preferred_freight_rate_currency'] = request.get('preferred_freight_rate_currency')
+
     return params
 
 def get_locations(air_freight_rate):

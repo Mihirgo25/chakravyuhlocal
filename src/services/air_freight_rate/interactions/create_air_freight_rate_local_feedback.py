@@ -75,7 +75,13 @@ def execute_transaction_code(request):
     }
 
 def get_create_params(request):
-    return {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks']} | ({'status': 'active'})
+    params = {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks','preferred_rate','preferred_rate_currency']} | ({'status': 'active'})
+
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_rate'] = request.get('preferred_rate')
+        params['preferred_rate_currency'] = request.get('preferred_rate_currency')
+
+    return params
 
 def create_audit(request, local_request_id, action_name):
     AirServiceAudit.create(

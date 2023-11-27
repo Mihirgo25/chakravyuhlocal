@@ -77,7 +77,11 @@ def execute_transaction_code(request):
     }
 
 def get_create_params(request):
-    params = {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks']} | ({'status': 'active'})
+    params = {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks','preferred_rate','preferred_rate_currency']} | ({'status': 'active'})
+    
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_rate'] = request.get('preferred_rate')
+        params['preferred_rate_currency'] = request.get('preferred_rate_currency')
 
     loc_ids = []
     if request.get('port_id'):

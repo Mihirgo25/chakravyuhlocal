@@ -107,8 +107,6 @@ def update_likes_dislikes_count(rate, request):
 
 def get_create_params(request):
     params =  {
-        'preferred_freight_rate': request.get('preferred_freight_rate'),
-        'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'preferred_free_days': request.get('preferred_free_days'),
         'preferred_shipping_line_ids': request.get('preferred_shipping_line_ids'),
         'feedback_type': request.get('feedback_type'),
@@ -132,6 +130,11 @@ def get_create_params(request):
         'spot_search_serial_id':request.get('spot_search_serial_id'),
         'shipping_line_id':request.get('shipping_line_id')
     }
+
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_freight_rate'] = request.get('preferred_freight_rate')
+        params['preferred_freight_rate_currency'] = request.get('preferred_freight_rate_currency')
+
     loc_ids = []
 
     if request.get('origin_port_id'):

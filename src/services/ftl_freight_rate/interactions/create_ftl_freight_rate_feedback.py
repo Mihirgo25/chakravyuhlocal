@@ -67,8 +67,6 @@ def execute_transaction_code(request):
 
 def get_create_params(request):
     params =  {
-        'preferred_freight_rate': request.get('preferred_freight_rate'),
-        'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'origin_location_id':request.get('origin_location_id'),
@@ -79,8 +77,12 @@ def get_create_params(request):
         'origin_location': request.get('origin_location'),
         'destination_location': request.get('destination_location'),
         'spot_search_serial_id':request.get('spot_search_serial_id')
-
     }
+
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_freight_rate'] = request.get('preferred_freight_rate')
+        params['preferred_freight_rate_currency'] = request.get('preferred_freight_rate_currency')
+
     return params
 
 def create_audit(request, feedback):

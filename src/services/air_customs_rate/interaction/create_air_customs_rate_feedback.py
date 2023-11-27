@@ -73,9 +73,7 @@ def execute_transaction_code(request):
     }
 
 def get_create_params(request):
-    return {
-        'preferred_customs_rate': request.get('preferred_customs_rate'),
-        'preferred_customs_rate_currency': request.get('preferred_customs_rate_currency'),
+    params = {
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'status': 'active',
@@ -89,6 +87,11 @@ def get_create_params(request):
         'city_id':request.get('city_id'),
         'spot_search_serial_id':request.get('spot_search_serial_id')
     }
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_customs_rate'] = request.get('preferred_customs_rate')
+        params['preferred_customs_rate_currency'] = request.get('preferred_customs_rate_currency')
+    
+    return params
 
 def create_audit(request, air_customs_feedback_id):
     data = {key:value for key,value in request.items() if key != 'performed_by_id'}

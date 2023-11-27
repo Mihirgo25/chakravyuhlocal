@@ -71,9 +71,7 @@ def execute_transaction_code(request):
     }
 
 def get_create_params(request):
-    return {
-        'preferred_rate': request.get('preferred_rate'),
-        'preferred_rate_currency': request.get('preferred_rate_currency'),
+    params = {
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'status': 'active',
@@ -86,6 +84,11 @@ def get_create_params(request):
         'spot_search_serial_id':request.get('spot_search_serial_id'),
         'cogo_entity_id':request.get('cogo_entity_id')
     }
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_rate'] = request.get('preferred_rate')
+        params['preferred_rate_currency'] = request.get('preferred_rate_currency')
+    
+    return params
 
 def create_audit(request, cfs_feedback):
     FclCfsRateAudit.create(

@@ -70,7 +70,7 @@ def execute_transaction_code(request):
     }
 
 def get_create_params(request):
-    return {
+    params = {
         'preferred_customs_rate': request.get('preferred_customs_rate'),
         'preferred_customs_rate_currency': request.get('preferred_customs_rate_currency'),
         'feedback_type': request.get('feedback_type'),
@@ -84,8 +84,13 @@ def get_create_params(request):
         'service_provider_id': request.get('service_provider_id'),
         'cargo_handling_type' : request.get('cargo_handling_type'),
         'spot_search_serial_id':request.get('spot_search_serial_id')
-
     }
+
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_customs_rate'] = request.get('preferred_customs_rate')
+        params['preferred_customs_rate_currency'] = request.get('preferred_customs_rate_currency')
+    
+    return params
 
 def create_audit(request, customs_feedback):
     FclCustomsRateAudit.create(
