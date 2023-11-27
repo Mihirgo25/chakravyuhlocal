@@ -1554,7 +1554,7 @@ def update_air_freight_rate_local_job_api(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.post("/create_air_freight_rate_local_feedback")
-def create_air_freight_rate_local_feedback_data(request: CreateAirFreightRateLocalFeedbackParams, resp: dict = Depends(authorize_token)):
+def create_air_freight_rate_local_feedback_api(request: CreateAirFreightRateLocalFeedbackParams, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -1570,7 +1570,7 @@ def create_air_freight_rate_local_feedback_data(request: CreateAirFreightRateLoc
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_freight_router.post("/delete_air_freight_rate_local_feedback")
-def delete_air_freight_rates_local_feedback(request: DeleteAirFreightRateLocalFeedbackParams, resp: dict = Depends(authorize_token)):
+def delete_air_freight_rate_local_feedback_api(request: DeleteAirFreightRateLocalFeedbackParams, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -1586,7 +1586,7 @@ def delete_air_freight_rates_local_feedback(request: DeleteAirFreightRateLocalFe
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_freight_router.get("/list_air_freight_rate_local_feedbacks")
-def list_air_freight_rate_local_feedbacks_data(
+def list_air_freight_rate_local_feedbacks_api(
     filters: str = None,
     spot_search_details_required: bool = False,
     page_limit: int = 10,

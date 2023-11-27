@@ -190,7 +190,7 @@ def create_air_freight_rate_delay(self, request):
             raise self.retry(exc= exc)
     
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def create_saas_air_schedule_airport_pair_delay (self,air_object,request):
+def create_saas_air_schedule_airport_pair_delay(self,air_object,request):
     try:
         create_saas_air_schedule_airport_pair(air_object,request)
     except Exception as exc:
