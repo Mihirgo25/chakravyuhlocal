@@ -43,7 +43,7 @@ service_info = {
     
 }
 
-def allocate_job(source, service_provider_id, trade_type, service_name):
+def allocate_job(source, service_provider_id, service_name, trade_type=None):
     """
     Allocate jobs to online users based on job load of users for the given service.
     If no users are online then job is allocated according to round robin method.

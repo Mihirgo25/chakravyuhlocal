@@ -46,7 +46,7 @@ def execute_transaction_code(request, source):
 
     if not fcl_freight_rate_local_job:
         fcl_freight_rate_local_job = create_job_object(params)
-        user_id = allocate_job(source, params['service_provider_id'], request.get("trade_type"), 'fcl_freight_local')
+        user_id = allocate_job(source, params['service_provider_id'], 'fcl_freight_local', request.get("trade_type"))
         fcl_freight_rate_local_job.user_id = user_id
         fcl_freight_rate_local_job.assigned_to = get_user(user_id)[0]
         fcl_freight_rate_local_job.status = 'pending'

@@ -47,7 +47,7 @@ def execute_transaction_code(request, source):
 
     if not haulage_freight_rate_job:
         haulage_freight_rate_job = create_job_object(params)
-        user_id = allocate_job(source, params['service_provider_id'], None, 'haulage_freight')
+        user_id = allocate_job(source, params['service_provider_id'], 'haulage_freight')
         haulage_freight_rate_job.user_id = user_id
         haulage_freight_rate_job.assigned_to = get_user(user_id)[0]
         haulage_freight_rate_job.status = 'pending'

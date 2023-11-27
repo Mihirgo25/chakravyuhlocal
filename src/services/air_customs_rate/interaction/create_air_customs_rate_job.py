@@ -39,7 +39,7 @@ def execute_transaction_code(request, source):
 
     if not air_customs_rate_job:
         air_customs_rate_job = create_job_object(params)
-        user_id = allocate_job(source, params['service_provider_id'], None, 'air_customs')
+        user_id = allocate_job(source, params['service_provider_id'], 'air_customs')
         air_customs_rate_job.user_id = user_id
         air_customs_rate_job.assigned_to = get_user(user_id)[0]
         air_customs_rate_job.status = 'pending'
