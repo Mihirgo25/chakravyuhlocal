@@ -29,8 +29,7 @@ def execute_transaction_code(request):
         FclFreightRateLocalFeedback.performed_by_id == request.get('performed_by_id'),
         FclFreightRateLocalFeedback.performed_by_type == request.get('performed_by_type'),
         FclFreightRateLocalFeedback.performed_by_org_id == request.get('performed_by_org_id'),
-        FclFreightRateLocalFeedback.status == 'active',
-        FclFreightRateLocalFeedback.trade_type == request.get('trade_type')
+        FclFreightRateLocalFeedback.status == 'active'
     ).first()
 
     if not locals_feedback:
@@ -41,8 +40,7 @@ def execute_transaction_code(request):
             'source_id': request.get('source_id'),
             'performed_by_id': request.get('performed_by_id'),
             'performed_by_type': request.get('performed_by_type'),
-            'performed_by_org_id': request.get('performed_by_org_id'),
-            'trade_type':request.get('trade_type')
+            'performed_by_org_id': request.get('performed_by_org_id')
         }
         locals_feedback = FclFreightRateLocalFeedback(**unique_object_params)
         next_sequence_value = db.execute_sql("SELECT nextval('fcl_freight_rate_local_feedback_serial_id_seq'::regclass)").fetchone()[0]
@@ -79,7 +77,7 @@ def execute_transaction_code(request):
     }
 
 def get_create_params(request):
-    params = {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks','attachment_file_urls','trade_type']} | ({'status': 'active'})
+    params = {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks']} | ({'status': 'active'})
 
     loc_ids = []
     if request.get('port_id'):
