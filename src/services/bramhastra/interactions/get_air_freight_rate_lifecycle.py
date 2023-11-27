@@ -56,16 +56,16 @@ def get_date_range_filter(where):
     )
 
 
-async def get_air_freight_rate_lifecycle(filters):
+def get_air_freight_rate_lifecycle(filters):
     where = get_direct_indirect_filters_for_rate(filters)
 
-    search_to_book_statistics = await get_search_to_book_and_feedback_statistics(
+    search_to_book_statistics = get_search_to_book_and_feedback_statistics(
         filters.copy(), where
     )
 
-    missing_rates_statistics = await get_missing_rates(filters.copy(), where)
+    missing_rates_statistics = get_missing_rates(filters.copy(), where)
 
-    stale_rate_statistics = await get_stale_rate_statistics(filters.copy(), where)
+    stale_rate_statistics = get_stale_rate_statistics(filters.copy(), where)
 
     statistics = [
         [
@@ -134,7 +134,7 @@ async def get_air_freight_rate_lifecycle(filters):
     return dict(searches=search_to_book_statistics["spot_search"], cards=statistics)
 
 
-async def get_stale_rate_statistics(filters, where):
+def get_stale_rate_statistics(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
@@ -149,7 +149,7 @@ async def get_stale_rate_statistics(filters, where):
         return charts[0]
 
 
-async def get_missing_rates(filters, rate_where):
+def get_missing_rates(filters, rate_where):
     clickhouse = ClickHouse()
 
     where = get_direct_indirect_filters(filters)
@@ -181,7 +181,7 @@ async def get_missing_rates(filters, rate_where):
         return missing_rates[0]
 
 
-async def get_search_to_book_and_feedback_statistics(filters, where):
+def get_search_to_book_and_feedback_statistics(filters, where):
     clickhouse = ClickHouse()
     queries = [
         """SELECT SUM(spot_search_count) as spot_search,

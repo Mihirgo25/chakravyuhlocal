@@ -33,7 +33,7 @@ ALLOWABLE_QUERY_TYPES = {"default", "aggregate"}
 LOCATION_KEYS = {"origin_airport_id", "destination_airport_id"}
 
 
-async def add_service_objects(statistics):
+def add_service_objects(statistics):
     location_ids = set()
     airline_ids = set()
 
@@ -44,9 +44,9 @@ async def add_service_objects(statistics):
             if k == "airline_id":
                 airline_ids.add(v)
 
-    airlines = await get_airlines(airline_ids)
+    airlines = get_airlines(airline_ids)
 
-    locations = await get_locations(location_ids)
+    locations = get_locations(location_ids)
 
     for statistic in statistics:
         update_statistic = dict()
@@ -64,7 +64,7 @@ async def add_service_objects(statistics):
         statistic.update(update_statistic)
 
 
-async def get_airlines(ids):
+def get_airlines(ids):
     return {
         airline["id"]: airline
         for airline in maps.list_operators(
@@ -76,7 +76,7 @@ async def get_airlines(ids):
     }
 
 
-async def get_locations(ids):
+def get_locations(ids):
     return {
         location["id"]: location
         for location in maps.list_locations(
@@ -89,7 +89,7 @@ async def get_locations(ids):
     }
 
 
-async def list_air_freight_rate_statistics(
+def list_air_freight_rate_statistics(
     filters, page_limit, page, is_service_object_required, pagination_data_required
 ):
     if (
@@ -97,12 +97,12 @@ async def list_air_freight_rate_statistics(
         and filters.get("query_type") not in ALLOWABLE_QUERY_TYPES
     ):
         raise ValueError("invalid type")
-    return await eval(
+    return eval(
         f"use_{filters.get('query_type') or DEFAULT_QUERY_TYPE}_query(filters, page_limit, page,is_service_object_required, pagination_data_required)"
     )
 
 
-async def use_aggregate_query(
+def use_aggregate_query(
     filters, page_limit, page, is_service_object_required, pagination_data_required
 ):
     clickhouse = ClickHouse()
@@ -139,14 +139,14 @@ async def use_aggregate_query(
     statistics = jsonable_encoder(clickhouse.execute(" ".join(query), filters))
 
     if is_service_object_required:
-        await add_service_objects(statistics)
+        add_service_objects(statistics)
 
     response["list"] = statistics
 
     return response
 
 
-async def use_default_query(
+def use_default_query(
     filters, page_limit, page, is_service_object_required, pagination_data_required
 ):
     clickhouse = ClickHouse()
@@ -176,7 +176,7 @@ async def use_default_query(
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     if is_service_object_required:
-        await add_service_objects(statistics)
+        add_service_objects(statistics)
 
     response["list"] = statistics
 
