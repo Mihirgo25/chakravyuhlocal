@@ -8,8 +8,8 @@ import sentry_sdk
 def validate_rate_feedback(request):
     response = {}
     try:
-        if request.get('service_type') in ['haulage_freight','trailer_freight']:
-            return response
+        if request.get('service_type') not in ['fcl_freight','air_freight']:
+            return {'is_valid_feedback':True}
 
         if 'unsatisfactory_rate' in request.get('feedbacks'):
             message = eval("validate_{}_unsatisfactory_rate_function(request)".format(request.get('service_type')))
