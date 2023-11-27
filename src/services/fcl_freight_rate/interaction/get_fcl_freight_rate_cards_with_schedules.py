@@ -434,10 +434,10 @@ def get_port_pairs_hash(
         if data["source"] == "spot_negotiation_rate":
             for freight_object in data["freights"]:
                 freight_object["validity_start"] = datetime.strptime(
-                    freight_object["validity_start"], "%Y-%m-%d"
+                    freight_object["validity_start"].split("T")[0], "%Y-%m-%d"
                 ).date()
                 freight_object["validity_end"] = datetime.strptime(
-                    freight_object["validity_end"], "%Y-%m-%d"
+                    freight_object["validity_end"].split("T")[0], "%Y-%m-%d"
                 ).date()
 
         updated_list.append(data)
