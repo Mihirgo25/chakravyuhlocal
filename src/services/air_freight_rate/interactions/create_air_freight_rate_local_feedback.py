@@ -28,7 +28,8 @@ def execute_transaction_code(request):
         AirFreightRateLocalFeedback.performed_by_id == request.get('performed_by_id'),
         AirFreightRateLocalFeedback.performed_by_type == request.get('performed_by_type'),
         AirFreightRateLocalFeedback.performed_by_org_id == request.get('performed_by_org_id'),
-        AirFreightRateLocalFeedback.status == 'active'
+        AirFreightRateLocalFeedback.status == 'active',
+        AirFreightRateLocalFeedback.trade_type == request.get('trade_type')
     ).first()
 
     if not locals_feedback:
@@ -39,7 +40,8 @@ def execute_transaction_code(request):
             'source_id': request.get('source_id'),
             'performed_by_id': request.get('performed_by_id'),
             'performed_by_type': request.get('performed_by_type'),
-            'performed_by_org_id': request.get('performed_by_org_id')
+            'performed_by_org_id': request.get('performed_by_org_id'),
+            'trade_type':request.get('trade_type')
         }
         locals_feedback = AirFreightRateLocalFeedback(**unique_object_params)
         next_sequence_value = db.execute_sql("SELECT nextval('air_freight_rate_local_feedback_serial_id_seq'::regclass)").fetchone()[0]
@@ -75,7 +77,7 @@ def execute_transaction_code(request):
     }
 
 def get_create_params(request):
-    return {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks']} | ({'status': 'active'})
+    return {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id','feedbacks','remarks','attachment_file_urls','trade_type']} | ({'status': 'active'})
 
 def create_audit(request, local_request_id, action_name):
     AirServiceAudit.create(

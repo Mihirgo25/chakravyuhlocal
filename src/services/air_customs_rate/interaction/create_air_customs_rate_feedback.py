@@ -26,7 +26,8 @@ def execute_transaction_code(request):
         'source_id': request.get('source_id'),
         'performed_by_id': request.get('performed_by_id'),
         'performed_by_type': request.get('performed_by_type'),
-        'performed_by_org_id': request.get('performed_by_org_id')
+        'performed_by_org_id': request.get('performed_by_org_id'),
+        'trade_type':request.get('trade_type')
     }
 
     air_customs_feedback = AirCustomsRateFeedback.select().where(
@@ -36,7 +37,8 @@ def execute_transaction_code(request):
         AirCustomsRateFeedback.performed_by_id == request.get('performed_by_id'),
         AirCustomsRateFeedback.performed_by_type == request.get('performed_by_type'),
         AirCustomsRateFeedback.performed_by_org_id == request.get('performed_by_org_id'),
-        AirCustomsRateFeedback.status == 'active').first()
+        AirCustomsRateFeedback.status == 'active',
+        AirCustomsRateFeedback.trade_type == request.get('trade_type')).first()
 
     if not air_customs_feedback:
         air_customs_feedback = AirCustomsRateFeedback(**params)

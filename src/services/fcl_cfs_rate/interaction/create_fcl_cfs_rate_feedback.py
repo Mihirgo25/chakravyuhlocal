@@ -23,7 +23,8 @@ def execute_transaction_code(request):
         'source_id': request.get('source_id'),
         'performed_by_id': request.get('performed_by_id'),
         'performed_by_type': request.get('performed_by_type'),
-        'performed_by_org_id': request.get('performed_by_org_id')
+        'performed_by_org_id': request.get('performed_by_org_id'),
+        'trade_type':request.get('trade_type')
     }
 
     cfs_feedback = FclCfsRateFeedback.select().where(
@@ -33,7 +34,8 @@ def execute_transaction_code(request):
         FclCfsRateFeedback.performed_by_id == request.get('performed_by_id'),
         FclCfsRateFeedback.performed_by_type == request.get('performed_by_type'),
         FclCfsRateFeedback.performed_by_org_id == request.get('performed_by_org_id'),
-        FclCfsRateFeedback.status == 'active').first()
+        FclCfsRateFeedback.status == 'active',
+        FclCfsRateFeedback.trade_type == request.get('trade_type')).first()
 
     if not cfs_feedback:
         cfs_feedback = FclCfsRateFeedback(**params)
@@ -79,7 +81,6 @@ def get_create_params(request):
         'status': 'active',
         'port_id':request.get('port_id'),
         'country_id':request.get('country_id'),
-        'trade_type':request.get('trade_type'),
         'trade_id':request.get('trade_id'),
         'commodity': request.get('commodity'),
         'service_provider_id': request.get('service_provider_id'),
