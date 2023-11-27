@@ -155,7 +155,6 @@ class CreateFclCfsRateFeedback(BaseModel):
   rate_type: str = 'market_place'
   spot_search_serial_id: int = None
   cogo_entity_id: str = None
-  attachment_file_urls: List[str] = []
 
 class DeleteFclCfsRateFeedback(BaseModel):
   fcl_cfs_rate_feedback_ids: list[str]

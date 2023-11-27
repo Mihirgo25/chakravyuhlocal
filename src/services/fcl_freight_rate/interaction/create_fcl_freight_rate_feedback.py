@@ -129,7 +129,6 @@ def get_create_params(request):
         'container_size': request.get('container_size'),
         'container_type': request.get('container_type'),
         'service_provider_id': request.get('service_provider_id'),
-        'attachment_file_urls':request.get('attachment_file_urls'),
         'commodity_description':request.get('commodity_description'),
         'rate_type':request.get('rate_type') or request.get('booking_params', {}).get('rate_card', {}).get('rate_type'),
         'spot_search_serial_id':request.get('spot_search_serial_id'),
