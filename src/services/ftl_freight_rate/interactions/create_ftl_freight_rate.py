@@ -10,7 +10,9 @@ def create_audit(request, freight_id):
     audit_data["validity_start"] = request.get("validity_start").isoformat()
     audit_data["validity_end"] = request.get("validity_end").isoformat()
     audit_data["line_items"] = request.get("line_items")
-    audit_data["Ftl_freight_rate_request_id"] = request.get("Ftl_freight_rate_request_id")
+    audit_data["Ftl_freight_rate_request_id"] = request.get(
+        "Ftl_freight_rate_request_id"
+    )
 
     audit_id = FtlFreightRateAudit.create(
         rate_sheet_id=request.get("rate_sheet_id"),
@@ -20,104 +22,135 @@ def create_audit(request, freight_id):
         object_id=freight_id,
         object_type="FtlFreightRate",
         source=request.get("source"),
-        sourced_by_id = request.get("sourced_by_id"),
-        procured_by_id = request.get("procured_by_id")
+        sourced_by_id=request.get("sourced_by_id"),
+        procured_by_id=request.get("procured_by_id"),
     )
     return audit_id
 
+
 def create_ftl_freight_rate(request):
     with db.atomic():
-      return execute_transaction_code(request)
+        return execute_transaction_code(request)
+
 
 def execute_transaction_code(request):
-    from services.ftl_freight_rate.ftl_celery_worker import delay_ftl_functions, update_ftl_freight_rate_request_delay, send_missing_or_dislike_rate_notifications_to_kam, send_missing_or_dislike_rate_notifications_to_platform, update_ftl_freight_rate_job_on_rate_addition_delay
+    from services.ftl_freight_rate.ftl_celery_worker import (
+        delay_ftl_functions,
+        update_ftl_freight_rate_request_delay,
+        send_missing_or_dislike_rate_notifications_to_kam,
+        send_missing_or_dislike_rate_notifications_to_platform,
+        update_ftl_freight_rate_job_on_rate_addition_delay,
+    )
 
     params = {
-      'rate_sheet_id':request.get('rate_sheet_id'),
-      'origin_location_id':request.get('origin_location_id'),
-      'destination_location_id':request.get('destination_location_id'),
-      'truck_type':request.get('truck_type'),
-      'commodity':request.get('commodity'),
-      'importer_exporter_id':request.get('importer_exporter_id'),
-      'service_provider_id':request.get('service_provider_id'),
-      'performed_by_id':request.get('performed_by_id'),
-      'procured_by_id':request.get('procured_by_id'),
-      'sourced_by_id':request.get('sourced_by_id'),
-      'validity_start':request.get('validity_start'),
-      'validity_end':request.get('validity_end'),
-      'truck_body_type':request.get('truck_body_type'),
-      'trip_type':request.get('trip_type'),
-      'transit_time':request.get('transit_time'),
-      'detention_free_time':request.get('detention_free_time'),
-      'minimum_chargeable_weight':request.get('minimum_chargeable_weight'),
-      'unit':request.get('unit'),
-      'line_items':request.get('line_items'),
-      'ftl_freight_rate_request_id':request.get('ftl_freight_rate_request_id'),
-      'source': request.get('source', "manual"),
-      'accuracy': request.get('accuracy', 100),
-      'rate_type': request.get("rate_type", DEFAULT_RATE_TYPE)
-  }
+        "rate_sheet_id": request.get("rate_sheet_id"),
+        "origin_location_id": request.get("origin_location_id"),
+        "destination_location_id": request.get("destination_location_id"),
+        "truck_type": request.get("truck_type"),
+        "commodity": request.get("commodity"),
+        "importer_exporter_id": request.get("importer_exporter_id"),
+        "service_provider_id": request.get("service_provider_id"),
+        "performed_by_id": request.get("performed_by_id"),
+        "procured_by_id": request.get("procured_by_id"),
+        "sourced_by_id": request.get("sourced_by_id"),
+        "validity_start": request.get("validity_start"),
+        "validity_end": request.get("validity_end"),
+        "truck_body_type": request.get("truck_body_type"),
+        "trip_type": request.get("trip_type"),
+        "transit_time": request.get("transit_time"),
+        "detention_free_time": request.get("detention_free_time"),
+        "minimum_chargeable_weight": request.get("minimum_chargeable_weight"),
+        "unit": request.get("unit"),
+        "line_items": request.get("line_items"),
+        "ftl_freight_rate_request_id": request.get("ftl_freight_rate_request_id"),
+        "source": request.get("source", "manual"),
+        "accuracy": request.get("accuracy", 100),
+        "rate_type": request.get("rate_type", DEFAULT_RATE_TYPE),
+    }
 
     init_key = f'{str(params["origin_location_id"])}:{str(params["destination_location_id"])}:{str(params["truck_type"])}:{str(params["commodity"] or "")}:{str(params["service_provider_id"])}:{str(params["importer_exporter_id"] or "")}:{str(params["truck_body_type"])}:{str(params["rate_type"])}:{str(params["trip_type"])}'
 
     ftl_freight_rate = (
         FtlFreightRate.select()
         .where(
-          FtlFreightRate.init_key == init_key,
+            FtlFreightRate.init_key == init_key,
         )
         .first()
-      )
+    )
 
     if not ftl_freight_rate:
-      ftl_freight_rate = FtlFreightRate(init_key = init_key)
-      for key in list(params.keys()):
-          setattr(ftl_freight_rate, key, params[key])
+        ftl_freight_rate = FtlFreightRate(init_key=init_key)
+        for key in list(params.keys()):
+            setattr(ftl_freight_rate, key, params[key])
       
     set_params = get_set_params(request)
     for key, value in set_params.items():
         setattr(ftl_freight_rate, key, value)
 
     ftl_freight_rate.set_locations()
-    ftl_freight_rate.validate_validities(ftl_freight_rate.validity_start, ftl_freight_rate.validity_end)
+    ftl_freight_rate.validate_validities(
+        ftl_freight_rate.validity_start, ftl_freight_rate.validity_end
+    )
     ftl_freight_rate.rate_not_available_entry = False
 
     ftl_freight_rate.set_platform_price()
     ftl_freight_rate.set_is_best_price()
 
-    if 'rate_sheet_validation' not in request:
+    if "rate_sheet_validation" not in request:
         ftl_freight_rate.validate_before_save()
 
     ftl_freight_rate.update_line_item_messages(ftl_freight_rate.possible_charge_codes())
 
     try:
-      ftl_freight_rate.save()
+        ftl_freight_rate.save()
     except Exception as e:
-      raise HTTPException(status_code=400, detail="rate not saved")
-
-    if not ftl_freight_rate.importer_exporter_id:
-      ftl_freight_rate.delete_rate_not_available_entry()
+        raise HTTPException(status_code=400, detail="rate not saved")
 
     create_audit(request, ftl_freight_rate.id)
 
     ftl_freight_rate.update_platform_prices_for_other_service_providers()
 
-    delay_ftl_functions.apply_async(kwargs={'ftl_object':ftl_freight_rate, 'request':request},queue='low')
+    delay_ftl_functions.apply_async(
+        kwargs={"ftl_object": ftl_freight_rate, "request": request},queue="low"
+    )
     get_multiple_service_objects(ftl_freight_rate)
 
-    if request.get('ftl_freight_rate_request_id'):
-      update_ftl_freight_rate_request_delay.apply_async(kwargs={'request':{'ftl_freight_rate_request_id': request.get('ftl_freight_rate_request_id'), 'reverted_rates': [{"id": str(ftl_freight_rate.id), "line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id'),'closing_remarks':['rate_added']}},queue='critical')
-    
-    if params["source"]  != "predicted" and params['rate_type'] == "market_place":
-        update_ftl_freight_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": ftl_freight_rate.id},queue='fcl_freight_rate')
+    if request.get("ftl_freight_rate_request_id"):
+        update_ftl_freight_rate_request_delay.apply_async(
+            kwargs={
+                "request": {
+                    "ftl_freight_rate_request_id": request.get(
+                        "ftl_freight_rate_request_id"
+                    ),
+                    "reverted_rates": [
+                        {
+                            "id": str(ftl_freight_rate.id),
+                            "line_items": request.get("line_items"),
+                            "validity_start": request["validity_start"].isoformat(),
+                            "validity_end": request["validity_end"].isoformat(),
+                        }
+                    ],
+                    "performed_by_id": request.get("performed_by_id"),
+                    "closing_remarks": ["rate_added"],
+                }
+            },
+            queue="critical",
+        )
+
+    if params["source"] != "predicted" and params["rate_type"] == "market_place":
+        update_ftl_freight_rate_job_on_rate_addition_delay.apply_async(
+            kwargs={"request": request, "id": ftl_freight_rate.id},
+            queue="fcl_freight_rate",
+        )
 
     return {"id": ftl_freight_rate.id}
 
 def get_set_params(request):
    return {
-      'line_items':request.get('line_items'),
-      'validity_start':request.get('validity_start'),
-      'validity_end':request.get('validity_end'),
-      'procured_by_id':request.get('procured_by_id'),
-      'sourced_by_id':request.get('sourced_by_id'),
-      'source': request.get('source', "manual")
+      "line_items":request.get("line_items"),
+      "validity_start":request.get("validity_start"),
+      "validity_end":request.get("validity_end"),
+      "procured_by_id":request.get("procured_by_id"),
+      "sourced_by_id":request.get("sourced_by_id"),
+      "source": request.get("source", "manual")
    }

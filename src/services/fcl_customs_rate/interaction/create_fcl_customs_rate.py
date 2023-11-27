@@ -6,89 +6,108 @@ from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from libs.get_normalized_line_items import get_normalized_line_items
 
+
 def create_fcl_customs_rate(request):
     with db.atomic():
-      return execute_transaction_code(request)
+        return execute_transaction_code(request)
+
 
 def execute_transaction_code(request):
-  from celery_worker import fcl_customs_functions_delay
-  from services.fcl_customs_rate.fcl_customs_celery_worker import update_fcl_customs_rate_job_on_rate_addition_delay
-  request = {key: value for key, value in request.items() if value is not None}
-  params = get_create_object_params(request)
-  customs_rate = FclCustomsRate.select().where(
-        FclCustomsRate.location_id == request.get('location_id'),
-        FclCustomsRate.trade_type ==request.get('trade_type'),
-        FclCustomsRate.container_size== request.get('container_size'),
-        FclCustomsRate.container_type==request.get('container_type'),
-        FclCustomsRate.commodity == request.get('commodity'),
-        FclCustomsRate.service_provider_id==request.get('service_provider_id'),
-        FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id'),
-        FclCustomsRate.rate_type == request.get('rate_type'),
-        ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True)))
-        ).order_by(FclCustomsRate.cargo_handling_type.desc(nulls='LAST')).first()
+    from celery_worker import fcl_customs_functions_delay
+    from services.fcl_customs_rate.fcl_customs_celery_worker import (
+        update_fcl_customs_rate_job_on_rate_addition_delay,
+    )
 
-  if not customs_rate:
-    customs_rate = FclCustomsRate(**params)
-    customs_rate.set_location()
-    customs_rate.set_location_ids()
-    customs_rate.set_location_type()
+    request = {key: value for key, value in request.items() if value is not None}
+    params = get_create_object_params(request)
+    customs_rate = (
+        FclCustomsRate.select()
+        .where(
+            FclCustomsRate.location_id == request.get("location_id"),
+            FclCustomsRate.trade_type == request.get("trade_type"),
+            FclCustomsRate.container_size == request.get("container_size"),
+            FclCustomsRate.container_type == request.get("container_type"),
+            FclCustomsRate.commodity == request.get("commodity"),
+            FclCustomsRate.service_provider_id == request.get("service_provider_id"),
+            FclCustomsRate.importer_exporter_id == request.get("importer_exporter_id"),
+            FclCustomsRate.rate_type == request.get("rate_type"),
+            (
+                (
+                    FclCustomsRate.cargo_handling_type
+                    == request.get("cargo_handling_type")
+                )
+                | (FclCustomsRate.cargo_handling_type.is_null(True))
+            ),
+        )
+        .order_by(FclCustomsRate.cargo_handling_type.desc(nulls="LAST"))
+        .first()
+    )
 
-  customs_rate.sourced_by_id = request.get("sourced_by_id")
-  customs_rate.procured_by_id = request.get("procured_by_id")
-  customs_rate.customs_line_items = get_normalized_line_items(request.get('customs_line_items'))
-  customs_rate.cfs_line_items = request.get('cfs_line_items')
+    if not customs_rate:
+        customs_rate = FclCustomsRate(**params)
+        customs_rate.set_location()
+        customs_rate.set_location_ids()
+        customs_rate.set_location_type()
 
-  customs_rate.set_platform_price()
-  customs_rate.set_is_best_price()
+    customs_rate.sourced_by_id = request.get("sourced_by_id")
+    customs_rate.procured_by_id = request.get("procured_by_id")
+    customs_rate.customs_line_items = get_normalized_line_items(
+        request.get("customs_line_items")
+    )
+    customs_rate.cfs_line_items = request.get("cfs_line_items")
 
-  customs_rate.validate_before_save()
-  customs_rate.update_customs_line_item_messages()
+    customs_rate.set_platform_price()
+    customs_rate.set_is_best_price()
 
-  try:
-     customs_rate.save()
-  except Exception as e:
-      raise HTTPException(status_code=500, detail='Customs Rate did not save')
+    customs_rate.validate_before_save()
+    customs_rate.update_customs_line_item_messages()
 
-  if not customs_rate.importer_exporter_id:
-    customs_rate.delete_rate_not_available_entry()
+    try:
+        customs_rate.save()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Customs Rate did not save")
 
-  create_audit(request, customs_rate.id)
+    create_audit(request, customs_rate.id)
 
-  customs_rate.update_platform_prices_for_other_service_providers()
-  fcl_customs_functions_delay.apply_async(kwargs={'fcl_customs_object':customs_rate, 'request':request},queue = 'low')
-  get_multiple_service_objects(customs_rate)
+    customs_rate.update_platform_prices_for_other_service_providers()
+    fcl_customs_functions_delay.apply_async(
+        kwargs={"fcl_customs_object": customs_rate, "request": request}, queue="low"
+    )
+    get_multiple_service_objects(customs_rate)
 
-  if params['rate_type'] == "market_place":
-        update_fcl_customs_rate_job_on_rate_addition_delay.apply_async(kwargs={'request': request, "id": customs_rate.id},queue='fcl_freight_rate')
+    if params["rate_type"] == "market_place":
+        update_fcl_customs_rate_job_on_rate_addition_delay.apply_async(
+            kwargs={"request": request, "id": customs_rate.id}, queue="fcl_freight_rate"
+        )
 
-  return {'id': customs_rate.id}
+    return {"id": customs_rate.id}
+
 
 def get_create_object_params(request):
     return {
-      'location_id':request.get('location_id'),
-      'trade_type' : request.get('trade_type'),
-      'container_size' : request.get('container_size'),
-      'container_type' : request.get('container_type'),
-      'service_provider_id': request.get('service_provider_id'),
-      'commodity' : request.get('commodity'),
-      'importer_exporter_id' : request.get('importer_exporter_id'),
-      'accuracy': request.get('accuracy', 100),
-      'mode' : request.get('mode','manual'),
-      "rate_type" : request.get('rate_type', DEFAULT_RATE_TYPE),
-      "cargo_handling_type":request.get('cargo_handling_type')
+        "location_id": request.get("location_id"),
+        "trade_type": request.get("trade_type"),
+        "container_size": request.get("container_size"),
+        "container_type": request.get("container_type"),
+        "service_provider_id": request.get("service_provider_id"),
+        "commodity": request.get("commodity"),
+        "importer_exporter_id": request.get("importer_exporter_id"),
+        "accuracy": request.get("accuracy", 100),
+        "mode": request.get("mode", "manual"),
+        "rate_type": request.get("rate_type", DEFAULT_RATE_TYPE),
+        "cargo_handling_type": request.get("cargo_handling_type"),
     }
 
-def create_audit(request, customs_rate_id):
-  audit_data = {
-      'customs_line_items': request.get('customs_line_items')
-  }
 
-  FclCustomsRateAudit.create(
-    object_id = customs_rate_id,
-    object_type = 'FclCustomsRate',
-    action_name = 'create',
-    performed_by_id = request.get('performed_by_id'),
-    rate_sheet_id = request.get('rate_sheet_id'),
-    data = audit_data,
-    performed_by_type = request.get("performed_by_type") or "agent"
-  )
+def create_audit(request, customs_rate_id):
+    audit_data = {"customs_line_items": request.get("customs_line_items")}
+
+    FclCustomsRateAudit.create(
+        object_id=customs_rate_id,
+        object_type="FclCustomsRate",
+        action_name="create",
+        performed_by_id=request.get("performed_by_id"),
+        rate_sheet_id=request.get("rate_sheet_id"),
+        data=audit_data,
+        performed_by_type=request.get("performed_by_type") or "agent",
+    )
