@@ -20,7 +20,7 @@ ALLOWED_TIME_PERIOD = 6
 EXPIRATION_TIME = 3600
 
 DEFAULT_AGGREGATE_SELECT = {
-    "average_price": "(SUM(standard_price*sign)/COUNT(DISTINCT id))",
+    "average_price": "AVG(standard_price)",
     "min_price": "MIN(standard_price)",
     "max_price": "MAX(standard_price)",
 }
