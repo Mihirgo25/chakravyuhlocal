@@ -4,6 +4,7 @@ from datetime import datetime,timedelta
 from micro_services.client import common
 import statistics
 from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import get_road_distance
+import copy
 
 CURRENCY_CODE = ""
 
@@ -22,7 +23,7 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
             requested_distance = 1
 
         final_line_items = [{"code": "BAS", "unit": "per_truck", "price": 0, "remarks": [], "currency": CURRENCY_CODE}, {"code": "FSC", "unit": "per_truck", "price": 0, "remarks": [], "currency": CURRENCY_CODE}]
-        final_line_items_copy = final_line_items
+        final_line_items_copy = copy.deepcopy(final_line_items)
         for ftl_rate in ftl_rates_extended:
             truck_body_type = ftl_rate.get('truck_body_type')
             unit = ftl_rate.get('unit')
