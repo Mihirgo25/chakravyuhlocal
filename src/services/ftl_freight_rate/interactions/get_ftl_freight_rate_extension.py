@@ -22,12 +22,15 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
             requested_distance = 1
 
         final_line_items = [{"code": "BAS", "unit": "per_truck", "price": 0, "remarks": [], "currency": CURRENCY_CODE}, {"code": "FSC", "unit": "per_truck", "price": 0, "remarks": [], "currency": CURRENCY_CODE}]
+        final_line_items_copy = final_line_items
         for ftl_rate in ftl_rates_extended:
             truck_body_type = ftl_rate.get('truck_body_type')
             unit = ftl_rate.get('unit')
             min_chargeable_weights_list.append(ftl_rate.get('minimum_chargeable_weight'))
             transit_time_list.append(ftl_rate.get('transit_time'))
             supply_rate_distance = ftl_rate.get('distance')
+            if not supply_rate_distance:
+                continue
             # calculate sum of prices
             final_line_items = get_calculated_line_items(final_line_items, ftl_rate.get("line_items", []), count_by_code, requested_distance, supply_rate_distance)
         
@@ -35,6 +38,9 @@ def get_ftl_freight_rate_extension(ftl_rates_extended, request):
         for final_item in final_line_items:
             if count_by_code.get(final_item['code']):
                 final_item['price'] = final_item['price'] / count_by_code[final_item['code']]
+
+        if final_line_items == final_line_items_copy:
+            return new_list
 
         detention_free_time = 1
         validity_start = datetime.now().date()
