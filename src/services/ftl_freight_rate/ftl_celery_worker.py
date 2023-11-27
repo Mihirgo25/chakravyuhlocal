@@ -4,6 +4,7 @@ from services.ftl_freight_rate.interactions.create_ftl_freight_rate import creat
 from services.ftl_freight_rate.workers.update_ftl_freight_rate_jobs_to_backlog import update_ftl_freight_rate_jobs_to_backlog
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate_job import update_live_booking_visiblity_for_ftl_freight_rate_job
 from services.ftl_freight_rate.workers.update_ftl_freight_rate_job_on_rate_addition import update_ftl_freight_rate_job_on_rate_addition
+from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import create_ftl_freight_rate_distance
 
 from celery.schedules import crontab
 
@@ -30,10 +31,10 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def adding_multiple_service_objects(self,ftl_object,request):
-    from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
+def delay_ftl_functions(self,ftl_object,request):
     try:
-       adding_multiple_service_object(ftl_object, request)
+       adding_multiple_service_object(request)
+       create_ftl_freight_rate_distance(ftl_object,request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
