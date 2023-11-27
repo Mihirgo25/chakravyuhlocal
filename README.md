@@ -65,6 +65,12 @@ The `shell` command is useful for development. It drops you into an python shell
 > envision server shell
 ```
 
+By default our shell has logger enabled to disable it we have --nolog option
+
+```bash
+> shipment server shell --nolog
+```
+
 Envision shell has autoreload enabled, to disable it run
 
 ```
