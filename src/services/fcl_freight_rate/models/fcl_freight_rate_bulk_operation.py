@@ -25,10 +25,10 @@ from fastapi.encoders import jsonable_encoder
 from database.db_session import rd
 from libs.parse_numeric import parse_numeric
 from services.fcl_freight_rate.helpers.adjust_markup_price import adjusted_price_for_flash_booking
+from services.fcl_freight_rate.interaction.update_schedule_in_fcl_freight_rate import update_schedule_in_fcl_freight_rate
 
 
-
-ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate','add_local_conditions','delete_local_rate_line_item']
+ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate','add_local_conditions','delete_local_rate_line_item', 'add_sailing_schedules']
 MARKUP_TYPES = ['net','percent','absolute']
 BATCH_SIZE = 1000
 
@@ -339,7 +339,19 @@ class FclFreightRateBulkOperation(BaseModel):
             
             # if [t for t in self.data['destination_port_ids']if t not in  destination_icd_location] != None:
             #     raise HTTPException(status_code=400, detail='destination_icd_port_id is invalid')
-            
+    def validate_add_sailing_schedules_data(self):
+        data = self.data
+        
+        if data['validity_end'].date() < datetime.now().date():
+            raise HTTPException(status_code=400, detail='validity_end cannot be less than current date')
+        
+        if data['validity_end'].date() < data['validity_start'].date():
+            raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start') 
+        
+        data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
+        data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')        
+
+
     def perform_batch_extend_validity_action(self, batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data 
         sourced_by_ids = data.get('sourced_by_ids')
@@ -1595,3 +1607,80 @@ class FclFreightRateBulkOperation(BaseModel):
         self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()
+
+    def perform_batch_add_sailing_schedules_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
+        data = self.data
+        
+        validity_start = datetime.strptime(data['validity_start'], '%Y-%m-%d')
+        validity_end = datetime.strptime(data['validity_end'], '%Y-%m-%d') 
+
+        fcl_freight_rates = list(batch_query.dicts())
+
+        for freight in fcl_freight_rates:
+            count += 1
+
+            if FclFreightRateAudit.get_or_none(bulk_operation_id=self.id, object_id=freight['id']):
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
+                continue
+
+            validities = [k for k in freight["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d').date() >= datetime.now().date()]
+            validity_id=None
+            for validity_object in validities:
+                validity_object['validity_start'] = datetime.strptime(validity_object['validity_start'], '%Y-%m-%d')
+                validity_object['validity_end'] = datetime.strptime(validity_object['validity_end'], '%Y-%m-%d')
+                
+                if data['schedule_type'] == validity_object['schedule_type'] and validity_object['validity_start'] >= validity_start and  validity_object['validity_end'] <= validity_end:
+                   validity_id = validity_object['id']
+                   break
+            
+            if validity_id:
+                data={
+                    'validity_id':validity_id,
+                    'rate_id':freight['id'],
+                    'schedule_id':data['schedule_id'],
+                    'schedule_type': data['schedule_type']
+                }
+                update_schedule_in_fcl_freight_rate(data)
+            else:
+                continue
+
+            total_affected_rates += 1
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+        return count, total_affected_rates
+            
+            
+
+    def perform_add_sailing_schedules_action(self, sourced_by_id=None, procured_by_id=None, cogo_entity_id=None):
+        total_affected_rates = 0
+        data = self.data
+
+        filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
+
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+
+        includes = { 
+                    'id': True,
+                    'validities': True,
+                }
+
+        query = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= None, includes=includes, sort_by="id")['list']
+        total_count = query.count()
+        count = 0
+        offset = 0
+
+        while(offset < total_count):
+            batch_query = query.offset(offset).limit(BATCH_SIZE)
+            offset += BATCH_SIZE
+            count, total_affected_rates = self.perform_batch_add_sailing_schedules_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
+
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = 100 if count == total_count else  get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()   
+        
