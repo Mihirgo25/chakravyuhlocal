@@ -19,7 +19,7 @@ import time
 from functools import wraps
 import logging
 from playhouse.pool import PooledPostgresqlExtDatabase
-from enums.global_enums import AppEnv
+from enums.global_enums import AppEnv, Environment
 
 logger = logging.getLogger("peewee")
 db_state_default = {"closed": None, "conn": None, "ctx": None, "transactions": None}
@@ -69,16 +69,15 @@ class CustomDatabase(PooledPostgresqlExtDatabase):
             db.connect(reuse_if_open = True)
         return super().execute_sql(sql, params, commit)
 
-
 db = (
     CustomDatabase(**db_params)
-    if ENVIRONMENT_TYPE == "cli" or APP_ENV != AppEnv.production
+    if ENVIRONMENT_TYPE == Environment.cli or APP_ENV != AppEnv.production
     else PooledPostgresqlExtDatabase(**db_params)
 )
 
 db._state = PeeweeConnectionState()
 
-if APP_ENV != "development":
+if APP_ENV != AppEnv.development:
     rd = redis.Redis(
         host=REDIS_HOST,
         port=REDIS_PORT,
