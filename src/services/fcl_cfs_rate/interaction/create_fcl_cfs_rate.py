@@ -6,7 +6,7 @@ from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from libs.get_multiple_service_objects import get_multiple_service_objects
-
+from libs.get_normalized_line_items import get_normalized_line_items
 
 def create_audit_for_cfs_rate(request, cfs_object_id):
     audit_data = {
@@ -68,7 +68,7 @@ def execute_transaction_code(request):
     if not cfs_object:
         cfs_object = FclCfsRate(**params)
 
-    cfs_object.line_items = request.get("line_items")
+    cfs_object.line_items = get_normalized_line_items(request.get('line_items'))
     cfs_object.free_days = request.get("free_days")
     cfs_object.rate_not_available_entry = False
     cfs_object.set_platform_price()

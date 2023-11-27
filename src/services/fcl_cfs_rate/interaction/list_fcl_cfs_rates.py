@@ -6,6 +6,7 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from micro_services.client import common
 from configs.fcl_freight_rate_constants import RATE_TYPES
 from libs.apply_eligible_lsp_filters import apply_eligible_lsp_filters
+from libs.get_normalized_line_items import get_normalized_line_items
 
 possible_direct_filters = ['id', 'location_id', 'country_code', 'trade_id', 'content_id', 'trade_type', 'service_provider id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'cargo_handling_type','rate_type']
 possible_indirect_filters = ['location_ids', 'importer_exporter_present', 'is_rate_available']
@@ -83,11 +84,11 @@ def apply_is_rate_available_filter(query, filters):
     return query
 
 def get_data(query):
-    query_result = query.dicts()
+    data = list(query.dicts())
 
-    data = list(query_result)
     for object in data:
         if object['line_items']:
+            object['line_items'] = get_normalized_line_items(object['line_items'])
             object['total_price_currency'] = object['line_items'][0].get('currency')
         else:
             object['total_price_currency'] = 'INR'
