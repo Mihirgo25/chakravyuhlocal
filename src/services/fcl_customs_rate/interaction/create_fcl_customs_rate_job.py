@@ -7,7 +7,7 @@ from database.db_session import db
 from  configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from configs.env import DEFAULT_USER_ID
-from services.fcl_customs_rate.helpers.allocate_fcl_customs_rate_job import allocate_fcl_customs_rate_job
+from libs.allocate_job import allocate_job
 
 
 
@@ -39,7 +39,7 @@ def execute_transaction_code(request, source):
 
     if not fcl_customs_rate_job:
         fcl_customs_rate_job = create_job_object(params)
-        user_id = allocate_fcl_customs_rate_job(source, params['service_provider_id'])
+        user_id = allocate_job(source, params['service_provider_id'], 'fcl_customs')
         fcl_customs_rate_job.user_id = user_id
         fcl_customs_rate_job.assigned_to = get_user(user_id)[0]
         fcl_customs_rate_job.status = 'pending'
