@@ -85,7 +85,7 @@ def execute(request):
     }
 
 def extend_rate_fun(object,request,validity_object):
-    from celery_worker import extend_air_freight_rates_in_delay
+    from services.air_freight_rate.air_celery_worker import extend_air_freight_rates_in_delay
     validity_object['validity_start']=datetime.strptime(validity_object.get('validity_start'),'%Y-%m-%d')
     validity_object['validity_end']=datetime.strptime(validity_object.get('validity_end'),'%Y-%m-%d')
     rate = request | {

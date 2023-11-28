@@ -344,8 +344,7 @@ class FclCustomsRate(BaseModel):
         self.is_best_price = total_price <= self.platform_price
 
     def update_platform_prices_for_other_service_providers(self):
-        from celery_worker import update_fcl_customs_rate_platform_prices_delay
-
+        from services.fcl_customs_rate.fcl_customs_celery_worker import update_fcl_customs_rate_platform_prices_delay
         request = {
             "location_id": self.location_id,
             "trade_type": self.trade_type,

@@ -3,7 +3,7 @@ from database.db_session import db
 from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
-from celery_worker import send_notifications_to_supply_agents_cfs_request_delay
+from services.fcl_cfs_rate.fcl_cfs_celery_worker import send_notifications_to_supply_agents_cfs_request_delay
 from libs.get_multiple_service_objects import get_multiple_service_objects
 from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_job import create_fcl_cfs_rate_job
 
@@ -26,10 +26,13 @@ def execute_transaction_code(request):
         FclCfsRateRequest.source_id == request.get('source_id'),
         FclCfsRateRequest.performed_by_id == request.get('performed_by_id'),
         FclCfsRateRequest.performed_by_type == request.get('performed_by_type'),
-        FclCfsRateRequest.performed_by_org_id == request.get('performed_by_org_id')).first()
+        FclCfsRateRequest.performed_by_org_id == request.get('performed_by_org_id'),
+         FclCfsRateRequest.trade_type == request.get('trade_type')).first()
 
     if not cfs_request:
         cfs_request = FclCfsRateRequest(**search_params)
+        next_sequence_value = db.execute_sql("SELECT nextval('fcl_cfs_rate_request_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(cfs_request,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
     for attr, value in create_params.items():
@@ -48,6 +51,7 @@ def execute_transaction_code(request):
     send_notifications_to_supply_agents_cfs_request_delay.apply_async(kwargs={'object':cfs_request}, queue = 'low')
 
     request["source_id"] = cfs_request.id
+    request['serial_id'] = cfs_request.serial_id
     create_fcl_cfs_rate_job(request, "rate_request")
 
     return {'id': cfs_request.id}

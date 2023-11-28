@@ -2,7 +2,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreight
 from database.db_session import db
 from micro_services.client import *
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-from celery_worker import create_communication_background, update_multiple_service_objects, update_fcl_freight_rate_request_in_delay
+from celery_worker import create_communication_background, update_multiple_service_objects
+from services.fcl_freight_rate.fcl_celery_worker import update_fcl_freight_rate_request_in_delay
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_job import create_fcl_freight_rate_job
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from datetime import datetime, timedelta
@@ -39,6 +40,8 @@ def execute_transaction_code(request):
 
     if not request_object:
         request_object = FclFreightRateRequest(**unique_object_params)
+        next_sequence_value = db.execute_sql("SELECT nextval('fcl_freight_rate_request_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(request_object,'serial_id',next_sequence_value)
         action = 'create'
 
     create_params = get_create_params(request)
@@ -60,7 +63,7 @@ def execute_transaction_code(request):
         send_request_stats_in_delay.apply_async(kwargs = {'action':action,'object':request_object},queue = 'statistics')
 
         request['source_id'] = request_object.id
-
+        request['serial_id'] = request_object.serial_id
         create_fcl_freight_rate_job(request, "rate_request")
 
         return {

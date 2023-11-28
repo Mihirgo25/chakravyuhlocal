@@ -9,7 +9,7 @@ from database.db_session import db
 from configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.lcl_freight_rate.models.lcl_freight_rate_audit import LclFreightRateAudit
 from configs.env import DEFAULT_USER_ID
-from services.lcl_freight_rate.helpers.allocate_lcl_freight_rate_job import allocate_lcl_freight_rate_job
+from libs.allocate_job import allocate_job
 
 
 def create_lcl_freight_rate_job(request, source):
@@ -29,9 +29,10 @@ def execute_transaction_code(request, source):
         "rate_type": request.get("rate_type"),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
-        'shipment_id': request.get('shipment_id')
+        'shipment_id': request.get('shipment_id'),
+        'source_id': request.get('source_id')
     }
-    init_key = f'{str(params.get("origin_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or  "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}'
+    init_key = f'{str(params.get("origin_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("destination_port_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or  "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}:{str(params.get("source_id") or "")}'
     lcl_freight_rate_job = (
         LclFreightRateJob.select()
         .where(
@@ -44,7 +45,7 @@ def execute_transaction_code(request, source):
 
     if not lcl_freight_rate_job:
         lcl_freight_rate_job = create_job_object(params)
-        user_id = allocate_lcl_freight_rate_job(source, params['service_provider_id'])
+        user_id = allocate_job(source, params['service_provider_id'], 'lcl_freight')
         lcl_freight_rate_job.user_id = user_id
         lcl_freight_rate_job.assigned_to = get_user(user_id)[0]
         lcl_freight_rate_job.status = "pending"
@@ -76,7 +77,7 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = LclFreightRateJobMapping.create(
         source_id=request.get("source_id"),
         shipment_id=request.get("shipment_id"),
-        shipment_serial_id = request.get("shipment_serial_id"),
+        source_serial_id = request.get("serial_id"),
         shipment_service_id = request.get("service_id"),
         job_id=jobs_id,
         source=source,

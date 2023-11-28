@@ -35,14 +35,22 @@ def execute_transaction_code(request):
         FtlFreightRateFeedback.source_id == request.get('source_id'),
         FtlFreightRateFeedback.performed_by_id == request.get('performed_by_id'),
         FtlFreightRateFeedback.performed_by_type == request.get('performed_by_type'),
-        FtlFreightRateFeedback.performed_by_org_id == request.get('performed_by_org_id')).first()
+        FtlFreightRateFeedback.performed_by_org_id == request.get('performed_by_org_id'),
+        FtlFreightRateFeedback.status == 'active').first()
 
     if not feedback:
         feedback = FtlFreightRateFeedback(**row)
+        next_sequence_value = db.execute_sql("SELECT nextval('ftl_freight_rate_feedback_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(feedback,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
     for attr, value in create_params.items():
         setattr(feedback, attr, value)
+
+    feedback.feedbacks = list(set(feedback.feedbacks + request.get('feedbacks',[]))) if feedback.feedbacks else request.get('feedbacks',[])
+    feedback.remarks = list(set(feedback.remarks + request.get('remarks',[]))) if feedback.remarks else request.get('remarks',[])
+    feedback.attachment_file_urls = list(set(feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if feedback.attachment_file_urls else request.get('attachment_file_urls',[])
+
     try:
         feedback.save()
     except:
@@ -52,16 +60,13 @@ def execute_transaction_code(request):
     
     if feedback.feedback_type == 'disliked':
         request['source_id'] = feedback.id
+        request['serial_id'] = feedback.serial_id
         create_ftl_freight_rate_job(request, "rate_feedback")
 
-    return {'id': request['rate_id']}
+    return {'id': feedback.id, 'serial_id':feedback.serial_id}
 
 def get_create_params(request):
     params =  {
-        'feedbacks': request.get('feedbacks'),
-        'remarks': request.get('remarks'),
-        'preferred_freight_rate': request.get('preferred_freight_rate'),
-        'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'origin_location_id':request.get('origin_location_id'),
@@ -70,8 +75,14 @@ def get_create_params(request):
         'destination_country_id': request.get('destination_country_id'),
         'service_provider_id': request.get('service_provider_id'),
         'origin_location': request.get('origin_location'),
-        'destination_location': request.get('destination_location')
+        'destination_location': request.get('destination_location'),
+        'spot_search_serial_id':request.get('spot_search_serial_id')
     }
+
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_freight_rate'] = request.get('preferred_freight_rate')
+        params['preferred_freight_rate_currency'] = request.get('preferred_freight_rate_currency')
+
     return params
 
 def create_audit(request, feedback):

@@ -13,6 +13,7 @@ from services.nandi.interactions.list_draft_fcl_freight_rate_locals import list_
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
 from services.nandi.helpers.check_fcl_freight_local_for_draft import check_fcl_freight_rate_local_for_draft
+from services.nandi.interactions.validate_dislike_rates import validate_rate_feedback
 nandi_router = APIRouter()
 
 @nandi_router.post("/update_draft_fcl_freight_rate")
@@ -137,6 +138,35 @@ def create_fcl_freight_rate_for_draft(request: CreateFclFreightDraft, resp: dict
 
         draft_fcl_freight = create_draft_fcl_freight_rate_data(request)
         return JSONResponse(status_code=200, content=json_encoder(draft_fcl_freight))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@nandi_router.get("/validate_rate_feedback")
+def validate_rate_feedback_api(
+    service_type: str,
+    rate_id: str,
+    feedbacks: list[str] = [],
+    chargeable_weight: int = None,
+    price: float = None,
+    currency: str = None,
+    resp: dict = Depends(authorize_token)
+    ):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        request = {
+            "service_type": service_type,
+            "rate_id": rate_id,
+            "feedbacks": feedbacks,
+            "chargeable_weight": chargeable_weight,
+            "price": price,
+            "currency": currency,
+        }
+        object = validate_rate_feedback(request)
+        return JSONResponse(status_code=200, content=json_encoder(object))
     except HTTPException as e:
         raise
     except Exception as e:

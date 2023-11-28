@@ -19,7 +19,7 @@ possible_direct_filters = [
     "user_id",
     "cogo_entity_id"
 ]
-possible_indirect_filters = ["updated_at", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
+possible_indirect_filters = ["updated_at", "is_flash_booking_reverted", "source_id", "source_serial_id"]
 
 uncommon_filters = ["serial_id", "status"]
 
@@ -127,10 +127,10 @@ def apply_source_id_filter(query, filters):
     query = query.where(FclCfsRateJob.id << job_ids)
     return query
 
-def apply_shipment_serial_id_filter(query, filters):
-    if filters.get('shipment_serial_id') and not isinstance(filters.get('shipment_serial_id'), list):
-        filters['shipment_serial_id'] = [filters.get('shipment_serial_id')]
-    subquery = list(FclCfsRateJobMapping.select(FclCfsRateJobMapping.job_id).where(FclCfsRateJobMapping.shipment_serial_id << filters['shipment_serial_id']).dicts())
+def apply_source_serial_id_filter(query, filters):
+    if filters.get('source_serial_id') and not isinstance(filters.get('source_serial_id'), list):
+        filters['source_serial_id'] = [filters.get('source_serial_id')]
+    subquery = list(FclCfsRateJobMapping.select(FclCfsRateJobMapping.job_id).where(FclCfsRateJobMapping.source_serial_id << filters['source_serial_id']).dicts())
     job_ids = []
     for data in subquery:
         job_ids.append(data['job_id'])

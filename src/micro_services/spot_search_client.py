@@ -21,3 +21,5 @@ class SpotSearchApiClient:
     def send_spot_search_rate_update(self,data={}):
         return self.client.request('GET','send_spot_search_rate_update',data)
 
+    def update_spot_search(self, data = {}):
+        return self.client.request('POST','update_spot_search',data)

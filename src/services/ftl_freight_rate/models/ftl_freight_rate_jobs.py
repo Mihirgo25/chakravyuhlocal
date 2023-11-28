@@ -38,7 +38,7 @@ class FtlFreightRateJob(BaseModel):
     closed_by_id = UUIDField(null=True, index=True)
     closed_by = BinaryJSONField(null=True)
     closing_remarks = TextField(null=True)
-    rate_type = TextField(null=True)
+    rate_type = TextField(null=True, index=True)
     is_visible = BooleanField(default=True)
     init_key = TextField(index=True, null=True)
     cogo_entity_id = UUIDField(null=True, index=True)

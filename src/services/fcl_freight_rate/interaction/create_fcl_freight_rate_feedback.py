@@ -46,11 +46,14 @@ def execute_transaction_code(request):
         FclFreightRateFeedback.source_id == request['source_id'],
         FclFreightRateFeedback.performed_by_id == request['performed_by_id'],
         FclFreightRateFeedback.performed_by_type == request['performed_by_type'],
-        FclFreightRateFeedback.performed_by_org_id == request['performed_by_org_id']).first()
+        FclFreightRateFeedback.performed_by_org_id == request['performed_by_org_id'],
+        FclFreightRateFeedback.status == 'active').first()
 
     if not feedback:
         action = 'create'
         feedback = FclFreightRateFeedback(**row)
+        next_sequence_value = db.execute_sql("SELECT nextval('fcl_freight_rate_feedback_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(feedback,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
 
@@ -62,6 +65,10 @@ def execute_transaction_code(request):
             setattr(feedback, attr, ids)
         else:
             setattr(feedback, attr, value)
+
+    feedback.feedbacks = list(set(feedback.feedbacks + request.get('feedbacks',[]))) if feedback.feedbacks else request.get('feedbacks',[])
+    feedback.remarks = list(set(feedback.remarks + request.get('remarks',[]))) if feedback.remarks else request.get('remarks',[])
+    feedback.attachment_file_urls = list(set(feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if feedback.attachment_file_urls else request.get('attachment_file_urls',[])
 
     try:
         if feedback.validate_before_save():
@@ -76,11 +83,12 @@ def execute_transaction_code(request):
     if request['feedback_type'] == 'disliked':
         set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
         request['source_id'] = feedback.id
+        request['serial_id'] = feedback.serial_id
         create_fcl_freight_rate_job(request, "rate_feedback")
         
     send_feedback_statistics_in_delay.apply_async(kwargs = {'action': action,'feedback': feedback, 'request': request},queue = 'statistics')
 
-    return {'id': request['rate_id']}
+    return {'id': feedback.id, 'serial_id':feedback.serial_id}
 
 def update_likes_dislikes_count(rate, request):
     validities = rate.validities
@@ -99,11 +107,7 @@ def update_likes_dislikes_count(rate, request):
 
 def get_create_params(request):
     params =  {
-        'feedbacks': request.get('feedbacks'),
-        'remarks': request.get('remarks'),
-        'preferred_freight_rate': request.get('preferred_freight_rate'),
-        'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
-        'preferred_detention_free_days': request.get('preferred_detention_free_days'),
+        'preferred_free_days': request.get('preferred_free_days'),
         'preferred_shipping_line_ids': request.get('preferred_shipping_line_ids'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
@@ -121,10 +125,16 @@ def get_create_params(request):
         'container_size': request.get('container_size'),
         'container_type': request.get('container_type'),
         'service_provider_id': request.get('service_provider_id'),
-        'attachment_file_urls':request.get('attachment_file_urls'),
         'commodity_description':request.get('commodity_description'),
-        'rate_type':request.get('rate_type') or request.get('booking_params', {}).get('rate_card', {}).get('rate_type')
+        'rate_type':request.get('rate_type') or request.get('booking_params', {}).get('rate_card', {}).get('rate_type'),
+        'spot_search_serial_id':request.get('spot_search_serial_id'),
+        'shipping_line_id':request.get('shipping_line_id')
     }
+
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_freight_rate'] = request.get('preferred_freight_rate')
+        params['preferred_freight_rate_currency'] = request.get('preferred_freight_rate_currency')
+
     loc_ids = []
 
     if request.get('origin_port_id'):

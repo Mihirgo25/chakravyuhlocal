@@ -134,7 +134,7 @@ def execute_transaction_code(request):
   }
 
 def adjust_dynamic_pricing(request, freight: FclFreightRate, current_validities):
-    from celery_worker import extend_fcl_freight_rates, adjust_fcl_freight_dynamic_pricing
+    from services.fcl_freight_rate.fcl_celery_worker import extend_fcl_freight_rates, adjust_fcl_freight_dynamic_pricing
     rate_obj = request | { 
         'origin_port_id': freight.origin_port_id,
         'destination_port_id': freight.destination_port_id,

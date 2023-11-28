@@ -35,10 +35,13 @@ def execute_transaction_code(request):
         AirCustomsRateFeedback.source_id == request.get('source_id'),
         AirCustomsRateFeedback.performed_by_id == request.get('performed_by_id'),
         AirCustomsRateFeedback.performed_by_type == request.get('performed_by_type'),
-        AirCustomsRateFeedback.performed_by_org_id == request.get('performed_by_org_id')).first()
+        AirCustomsRateFeedback.performed_by_org_id == request.get('performed_by_org_id'),
+        AirCustomsRateFeedback.status == 'active').first()
 
     if not air_customs_feedback:
         air_customs_feedback = AirCustomsRateFeedback(**params)
+        next_sequence_value = db.execute_sql("SELECT nextval('air_customs_rate_feedback_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(air_customs_feedback,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
     for attr, value in create_params.items():
@@ -46,6 +49,10 @@ def execute_transaction_code(request):
     
     air_customs_feedback.set_airport()
     air_customs_feedback.set_spot_search()
+
+    air_customs_feedback.feedbacks = list(set(air_customs_feedback.feedbacks + request.get('feedbacks',[]))) if air_customs_feedback.feedbacks else request.get('feedbacks',[])
+    air_customs_feedback.remarks = list(set(air_customs_feedback.remarks + request.get('remarks',[]))) if air_customs_feedback.remarks else request.get('remarks',[])
+    air_customs_feedback.attachment_file_urls = list(set(air_customs_feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if air_customs_feedback.attachment_file_urls else request.get('attachment_file_urls',[])
 
     try:
         air_customs_feedback.save()
@@ -57,18 +64,16 @@ def execute_transaction_code(request):
     send_notifications_to_supply_agents(request)
     if air_customs_feedback.feedback_type == 'disliked':
         request['source_id'] = air_customs_feedback.id
+        request['serial_id'] = air_customs_feedback.serial_id
         create_air_customs_rate_job(request, "rate_feedback")
 
     return {
-      'id': request.get('rate_id')
+      'id': air_customs_feedback.id,
+      'serial_id':air_customs_feedback.serial_id
     }
 
 def get_create_params(request):
-    return {
-        'feedbacks': request.get('feedbacks'),
-        'remarks': request.get('remarks'),
-        'preferred_customs_rate': request.get('preferred_customs_rate'),
-        'preferred_customs_rate_currency': request.get('preferred_customs_rate_currency'),
+    params = {
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'status': 'active',
@@ -79,8 +84,14 @@ def get_create_params(request):
         'commodity': request.get('commodity'),
         'service_provider_id': request.get('service_provider_id'),
         'continent_id':request.get('continent_id'),
-        'city_id':request.get('city_id')
+        'city_id':request.get('city_id'),
+        'spot_search_serial_id':request.get('spot_search_serial_id')
     }
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_customs_rate'] = request.get('preferred_customs_rate')
+        params['preferred_customs_rate_currency'] = request.get('preferred_customs_rate_currency')
+    
+    return params
 
 def create_audit(request, air_customs_feedback_id):
     data = {key:value for key,value in request.items() if key != 'performed_by_id'}
