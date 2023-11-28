@@ -12,7 +12,6 @@ class Table:
 
     def create_tables(self, models):
         try:
-            db.create_tables(models)
 
             db.execute_sql(
                 """
@@ -119,6 +118,8 @@ class Table:
               
               CREATE INDEX ftl_freight_rate_job_rate_type on ftl_freight_rate_jobs (rate_type);"""
             )
+            db.create_tables(models)
+
 
             db.close()
             print("created table")
