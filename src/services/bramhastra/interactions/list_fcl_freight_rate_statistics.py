@@ -161,7 +161,7 @@ async def use_average_price_filter(
     )
 
 
-async def use_rates_affected_filter(
+def use_rates_affected_filter(
     filters, page_limit, page, is_service_object_required
 ):
     clickhouse = ClickHouse()
@@ -178,7 +178,7 @@ async def use_rates_affected_filter(
     return {"list": clickhouse.execute(" ".join(query), filters)}
 
 
-async def use_default_filter(filters, page_limit, page, is_service_object_required):
+def use_default_filter(filters, page_limit, page, is_service_object_required):
     clickhouse = ClickHouse()
 
     select = ",".join(DEFAULT_PARAMS)
@@ -204,7 +204,7 @@ async def use_default_filter(filters, page_limit, page, is_service_object_requir
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     if statistics and is_service_object_required:
-        await add_service_objects(statistics)
+        add_service_objects(statistics)
 
     return dict(
         list=statistics,

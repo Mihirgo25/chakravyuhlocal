@@ -8,23 +8,23 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 TRADE_MAPPINGS = {"import": "origin", "export": "destination"}
 
 
-async def get_fcl_freight_rate_world(filters):
-    statistics = await get_count_distribution(filters)
-    count = await get_total_count()
+def get_fcl_freight_rate_world(filters):
+    statistics = get_count_distribution(filters)
+    count = get_total_count()
     return {
         "total_count": count,
         "statistics": statistics,
     }
 
 
-async def get_total_count():
+def get_total_count():
     query = f"SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE validity_end >= toDate(now())"
     clickhouse = ClickHouse()
     if result := clickhouse.execute(query):
         return result[0]["count"]
 
 
-async def get_count_distribution(filters):
+def get_count_distribution(filters):
     trade = "origin"
     location = "country"
     if "trade_type" in filters:

@@ -12,16 +12,16 @@ from services.bramhastra.enums import RedisKeys
 ALLOWED_TIME_PERIOD = 6
 
 
-async def get_air_freight_rate_charts(filters):
+def get_air_freight_rate_charts(filters):
     where = get_direct_indirect_filters(filters)
 
-    accuracy = await get_accuracy(filters, where)
-    deviation = await get_deviation(filters, where)
-    spot_search_to_checkout_count = await get_spot_search_to_checkout_count(
+    accuracy = get_accuracy(filters, where)
+    deviation = get_deviation(filters, where)
+    spot_search_to_checkout_count = get_spot_search_to_checkout_count(
         filters, where
     )
     rate_count_with_deviation_more_than_30 = (
-        await get_rate_count_with_deviation_more_than_30(filters, where)
+        get_rate_count_with_deviation_more_than_30(filters, where)
     )
 
     return dict(
@@ -32,7 +32,7 @@ async def get_air_freight_rate_charts(filters):
     )
 
 
-async def get_accuracy(filters, where):
+def get_accuracy(filters, where):
     if is_json_needed(filters):
         return get_link()
 
@@ -54,7 +54,7 @@ async def get_accuracy(filters, where):
     return format_charts(charts, filters.get("source"))
 
 
-async def get_deviation(filters, where):
+def get_deviation(filters, where):
     clickhouse = ClickHouse()
     queries = [
         """SELECT CASE
@@ -84,7 +84,7 @@ async def get_deviation(filters, where):
     return [i for i in response if i["range"] or i["range"] == 0]
 
 
-async def get_spot_search_to_checkout_count(filters, where):
+def get_spot_search_to_checkout_count(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
@@ -103,7 +103,7 @@ async def get_spot_search_to_checkout_count(filters, where):
     return statistics
 
 
-async def get_rate_count_with_deviation_more_than_30(filters, where):
+def get_rate_count_with_deviation_more_than_30(filters, where):
     clickhouse = ClickHouse()
 
     queries = [

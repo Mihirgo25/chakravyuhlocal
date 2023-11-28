@@ -13,7 +13,7 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 )
 
 
-async def get_fcl_freight_rate_distribution(filters):
+def get_fcl_freight_rate_distribution(filters):
     clickhouse = ClickHouse()
 
     queries = [
@@ -91,7 +91,7 @@ def format_distribution(response, distribution):
             del data["mode"]
 
 
-async def get_total_rate_count(filters, where):
+def get_total_rate_count(filters, where):
     queries = [
         f"SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"
     ]

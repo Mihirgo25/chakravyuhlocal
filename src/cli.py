@@ -156,10 +156,12 @@ def run_development_server(port: int = 8000):
 
 @envision_server.command("shell")
 @click.argument("ipython_args", nargs=-1, type=click.UNPROCESSED)
-def shell(ipython_args):
-    handler = logging.StreamHandler()
-    handler.setFormatter(ColoredFormatter("%(levelname)s:%(name)s: %(message)s"))
-    configure_logger(["peewee", "httpx", "click"])
+@click.option("--nolog",is_flag=True, default=False)
+def shell(ipython_args, nolog):
+    if not nolog:
+        handler = logging.StreamHandler()
+        handler.setFormatter(ColoredFormatter("%(levelname)s:%(name)s: %(message)s"))
+        configure_logger(["peewee", "httpx", "click"])
     config = load_default_config()
     config.TerminalInteractiveShell.banner1 = (
         f"""Python {sys.version} on {sys.platform} IPython: {IPython.__version__}"""

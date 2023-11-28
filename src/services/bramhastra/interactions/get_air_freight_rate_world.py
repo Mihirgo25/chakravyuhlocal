@@ -5,10 +5,10 @@ from services.bramhastra.models.air_freight_rate_statistic import (
 )
 
 
-async def get_air_freight_rate_world():
-    statistics = await get_count_distribution()
+def get_air_freight_rate_world():
+    statistics = get_count_distribution()
 
-    count = await get_total_count()
+    count = get_total_count()
 
     return {
         "total_rates": count,
@@ -16,14 +16,14 @@ async def get_air_freight_rate_world():
     }
 
 
-async def get_total_count():
+def get_total_count():
     query = f"SELECT COUNT(DISTINCT rate_id) as count FROM brahmastra.{AirFreightRateStatistic._meta.table_name} WHERE validity_end >= toDate(now())"
     clickhouse = ClickHouse()
     if result := clickhouse.execute(query):
         return result[0]["count"]
 
 
-async def get_count_distribution():
+def get_count_distribution():
     clickhouse = ClickHouse()
 
     query = f"""

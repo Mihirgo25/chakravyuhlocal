@@ -79,11 +79,11 @@ def get_date_range_filter(where, filters):
     )
 
 
-async def get_fcl_freight_rate_lifecycle(filters):
+def get_fcl_freight_rate_lifecycle(filters):
     where = []
     get_direct_indirect_filters(filters, where)
 
-    lifecycle_statistics = await get_lifecycle_statistics(filters, where)
+    lifecycle_statistics = get_lifecycle_statistics(filters, where)
 
     graph = LifeCycleConfig(lifecycle_statistics).fill_flows()
 
@@ -93,7 +93,7 @@ async def get_fcl_freight_rate_lifecycle(filters):
     )
 
 
-async def get_stale_rate_statistics(filters, where):
+def get_stale_rate_statistics(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
@@ -108,7 +108,7 @@ async def get_stale_rate_statistics(filters, where):
         return charts[0]
 
 
-async def get_lifecycle_statistics(filters, where):
+def get_lifecycle_statistics(filters, where):
     # Business
     spot_search_count = [distict_id_query("spot_search")]
 
