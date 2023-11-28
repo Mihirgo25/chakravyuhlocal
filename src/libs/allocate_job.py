@@ -59,8 +59,6 @@ def allocate_job(source, service_provider_id, service_name, trade_type=None):
     """
     
     model = service_info[service_name]['model']
-    users = []
-    redis_key = ""
     
     if service_name in ['fcl_freight', 'fcl_freight_local']:
         if trade_type == "export":
