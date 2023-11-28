@@ -144,12 +144,28 @@ def create_fcl_freight_rate_for_draft(request: CreateFclFreightDraft, resp: dict
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
-@nandi_router.post("/validate_rate_feedback")
-def validate_rate_feedback_api(request: ValidateFreightRateFeedback, resp: dict = Depends(authorize_token)):
+@nandi_router.get("/validate_rate_feedback")
+def validate_rate_feedback_api(
+    service_type: str,
+    rate_id: str,
+    feedbacks: list[str] = [],
+    chargeable_weight: int = None,
+    price: int = None,
+    currency: str = None,
+    resp: dict = Depends(authorize_token)
+    ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        object = validate_rate_feedback(request.dict(exclude_none=True))
+        request = {
+            "service_type": service_type,
+            "rate_id": rate_id,
+            "feedbacks": feedbacks,
+            "chargeable_weight": chargeable_weight,
+            "price": price,
+            "currency": currency,
+        }
+        object = validate_rate_feedback(request)
         return JSONResponse(status_code=200, content=json_encoder(object))
     except HTTPException as e:
         raise
