@@ -12,6 +12,8 @@ class Table:
 
     def create_tables(self, models):
         try:
+            db.create_tables(models)
+
             db.execute_sql(
                 """
               CREATE SEQUENCE IF NOT EXISTS air_freight_rate_local_jobs_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
@@ -119,7 +121,6 @@ class Table:
               CREATE INDEX ftl_freight_rate_job_rate_type on ftl_freight_rate_jobs (rate_type);"""
             )
 
-            db.create_tables(models)
             db.close()
             print("created table")
         except:
