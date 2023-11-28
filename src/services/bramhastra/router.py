@@ -62,6 +62,12 @@ from services.bramhastra.interactions.list_fcl_freight_recommended_trends import
 from services.bramhastra.interactions.list_fcl_freight_rate_trends import (
     list_fcl_freight_rate_trends,
 )
+from services.bramhastra.interactions.list_air_freight_recommended_trends import (
+    list_air_freight_recommended_trends,
+)
+from services.bramhastra.interactions.list_air_freight_rate_trends import (
+    list_air_freight_rate_trends,
+)
 from services.bramhastra.interactions.get_fcl_freight_rate_differences import (
     get_fcl_freight_rate_differences,
 )
@@ -639,6 +645,45 @@ def get_fcl_freight_rate_differences_api(
 
     try:
         response = get_fcl_freight_rate_differences(filters)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@bramhastra.get("/list_air_freight_recommended_trends", tags=["Public"])
+@rate_limiter.add(max_requests=3, time_window=3600)
+def list_air_freight_recommended_trends_api(
+    request: Request,
+    filters: Annotated[Json, Query()] = {},
+    limit: int = 5,
+    is_service_object_required: bool = False,
+):
+    try:
+        limit = min(limit, 5)
+        response = list_air_freight_recommended_trends(
+            filters, limit, is_service_object_required
+        )
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+    
+
+@bramhastra.get("/list_air_freight_rate_trends")
+def list_air_freight_rate_trends_api(
+    filters: Annotated[Json, Query()] = {},
+):
+    try:
+        response = list_air_freight_rate_trends(filters)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
