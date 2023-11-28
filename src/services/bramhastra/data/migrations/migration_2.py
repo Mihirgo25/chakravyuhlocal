@@ -835,12 +835,18 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
 
         except Exception as e:
             print('! _Exception:',e)
-             
-            
+
+    def reset_table():
+        db.drop_tables(models=[AirFreightRateStatistic])
+        db.create_tables(models=[AirFreightRateStatistic])
+        pass
+                     
 def main():
     populate_from_rates = PopulateAirFreightRateStatistics()
+    populate_from_rates.reset_table()
     populate_from_rates.populate_from_active_rates()
     populate_from_rates.update_pricing_map_zone_ids()
+
 
 if __name__ == "__main__":
     main()
