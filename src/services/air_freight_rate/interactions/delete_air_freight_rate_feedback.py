@@ -43,7 +43,7 @@ def execute_transaction_code(request):
                 kwargs = {"data":{
                     "only_rates_update_required" : True,
                     "id" : obj.source_id,
-                    "clear_is_disliked_cache": "spot_search_rate_is_disliked_{}_{}_{}".format(str(obj.source_id),str(obj.air_freight_rate_id),str(obj.validity_id))
+                    "is_disliked_cache_key": "spot_search_rate_is_disliked_{}_{}_{}".format(str(obj.source_id),str(obj.air_freight_rate_id),str(obj.validity_id))
                 }},
                 queue = "critical"
             )
