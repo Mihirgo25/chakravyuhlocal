@@ -4,6 +4,7 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
 from libs.get_multiple_service_objects import get_multiple_service_objects
+from libs.get_normalized_line_items import get_normalized_line_items
 
 def create_audit_for_updating_cfs(request, cfs_object_id):
     audit_data = {
@@ -33,8 +34,8 @@ def execute_transaction_code(request):
     update_params =  {
         'procured_by_id':request.get('procured_by_id'),
         'sourced_by_id':request.get('sourced_by_id'),
-        'line_items':request.get('line_items'),
-        'free_limit':request.get('free_limit'),
+        'line_items' : get_normalized_line_items(request.get('line_items')),
+        'free_days':request.get('free_days'),
         'rate_type':request.get('rate_type')
     }
 

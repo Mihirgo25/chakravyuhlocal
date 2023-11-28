@@ -3,7 +3,7 @@ from services.rate_sheet.interactions.validate_fcl_cfs_object import validate_fc
 from configs.fcl_cfs_rate_constants import FREE_DAYS_TYPES
 
 def process_fcl_cfs_cfs(params, converted_file, update):
-    valid_headers = ['location', 'trade_type', 'container_size', 'container_type', 'commodity', 'code', 'unit', 'price', 'currency', 'cargo_handling_type', 'weight_slab_lower_limit', 'weight_slab_upper_limit', 'weight_slab_price', 'weight_slab_currency', 'free_days_type', 'free_days_limit', 'free_days_lower_limit', 'free_days_upper_limit', 'free_days_price', 'free_days_currency', 'remark1', 'remark2', 'remark3']
+    valid_headers = ['location', 'trade_type', 'container_size', 'container_type', 'commodity', 'code', 'unit', 'price', 'market_price','currency', 'cargo_handling_type', 'weight_slab_lower_limit', 'weight_slab_upper_limit', 'weight_slab_price', 'weight_slab_currency', 'free_days_type', 'free_days_limit', 'free_days_lower_limit', 'free_days_upper_limit', 'free_days_price', 'free_days_currency', 'remark1', 'remark2', 'remark3']
     total_lines = 0
     original_path = get_original_file_path(converted_file)
     rows = []
@@ -235,6 +235,7 @@ def create_fcl_cfs_rate(params, converted_file, rows, created_by_id, procured_by
                 'code': t.get('code'),
                 'unit': t.get('unit'),
                 'price': parse_numeric(t.get('price')),
+                'market_price': parse_numeric(t.get('market_price')),
                 'currency': t.get('currency'),
                 'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
                 'slabs': []

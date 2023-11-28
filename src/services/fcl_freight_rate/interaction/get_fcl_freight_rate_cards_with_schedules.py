@@ -128,9 +128,9 @@ def update_grouping(
         if sailing_schedules_required and data["source"] != "cogo_assured_rate":
             key_elements = [
                 data.get("shipping_line_id"),
-                str(freight["departure"] or ""),
-                str(freight["arrival"] or ""),
-                str(freight["number_of_stops"] or ""),
+                str(freight.get("departure") or ""),
+                str(freight.get("arrival") or ""),
+                str(freight.get("number_of_stops") or ""),
                 data.get("origin_main_port_id") or "",
                 data.get("destination_main_port_id") or "",
                 str(detention_free_limit) or "",
@@ -139,9 +139,9 @@ def update_grouping(
         else:
             key_elements = [
                 data.get("shipping_line_id"),
-                str(freight["validity_start"] or ""),
-                str(freight["validity_end"] or ""),
-                str(freight["number_of_stops"] or ""),
+                str(freight.get("validity_start") or ""),
+                str(freight.get("validity_end") or ""),
+                str(freight.get("number_of_stops") or ""),
                 data.get("origin_main_port_id") or "",
                 data.get("destination_main_port_id") or "",
                 str(detention_free_limit) or "",
@@ -217,7 +217,7 @@ def get_freight_schedules(
             <= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
             and freight["validity_end"]
             >= datetime.strptime(schedule["departure"], "%Y-%m-%d").date()
-            and freight["schedule_type"] == schedule.get("schedule_type")
+            and freight.get("schedule_type") == schedule.get("schedule_type")
         ):
             if schedule.get("id") in selected_schedule_ids:
                 should_create_fake_schedules = False
@@ -287,7 +287,7 @@ def get_freights(
 
     if sailing_schedules_required and data["source"] != "cogo_assured_rate":
         for freight in data["freights"]:
-            if freight["schedule_type"] in ["transhipment", "transshipment"]:
+            if freight.get("schedule_type") in ["transhipment", "transshipment"]:
                 freight["schedule_type"] = "transshipment"
 
             schedules = get_freight_schedules(
@@ -434,10 +434,10 @@ def get_port_pairs_hash(
         if data["source"] == "spot_negotiation_rate":
             for freight_object in data["freights"]:
                 freight_object["validity_start"] = datetime.strptime(
-                    freight_object["validity_start"], "%Y-%m-%d"
+                    freight_object["validity_start"].split("T")[0], "%Y-%m-%d"
                 ).date()
                 freight_object["validity_end"] = datetime.strptime(
-                    freight_object["validity_end"], "%Y-%m-%d"
+                    freight_object["validity_end"].split("T")[0], "%Y-%m-%d"
                 ).date()
 
         updated_list.append(data)
