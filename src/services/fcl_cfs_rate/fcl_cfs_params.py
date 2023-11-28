@@ -16,6 +16,8 @@ class StandardLineItem(BaseModel):
   currency: str
   remarks: list[str] = []
   slabs: list[Slab] = []
+  market_price: float = None
+  original_price: float = None
 
 class FreeDaysType(BaseModel):
   free_days_type:str
@@ -94,6 +96,7 @@ class UpdateFclCfsRate(BaseModel):
     free_limit: int = None
     performed_by_type: str = None
     rate_type: str = 'market_place'
+    free_days: list[FreeDaysType] = []
     
 class Filters(BaseModel):
   filters: dict = {}
