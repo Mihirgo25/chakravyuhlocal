@@ -62,6 +62,12 @@ from services.bramhastra.interactions.list_fcl_freight_recommended_trends import
 from services.bramhastra.interactions.list_fcl_freight_rate_trends import (
     list_fcl_freight_rate_trends,
 )
+from services.bramhastra.interactions.list_air_freight_recommended_trends import (
+    list_air_freight_recommended_trends,
+)
+from services.bramhastra.interactions.list_air_freight_rate_trends import (
+    list_air_freight_rate_trends,
+)
 from services.bramhastra.interactions.get_fcl_freight_rate_differences import (
     get_fcl_freight_rate_differences,
 )
@@ -227,7 +233,7 @@ def get_fcl_freight_rate_charts_api(
 @bramhastra.get(
     "/get_fcl_freight_rate_distribution", response_model=FclFreightRateDistribution
 )
-async def get_fcl_freight_rate_distribution_api(
+def get_fcl_freight_rate_distribution_api(
     filters: Annotated[Json, Query()] = {},
     auth_response: dict = Depends(authorize_token),
 ):
@@ -237,7 +243,7 @@ async def get_fcl_freight_rate_distribution_api(
         )
 
     try:
-        response = await get_fcl_freight_rate_distribution(filters)
+        response = get_fcl_freight_rate_distribution(filters)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
@@ -251,7 +257,7 @@ async def get_fcl_freight_rate_distribution_api(
 @bramhastra.get(
     "/get_fcl_freight_rate_lifecycle", response_model=FclFreightRateLifeCycleResponse
 )
-async def get_fcl_freight_rate_lifecycle_api(
+def get_fcl_freight_rate_lifecycle_api(
     filters: Annotated[Json, Query()] = {},
     auth_response: dict = Depends(authorize_token),
 ):
@@ -261,7 +267,7 @@ async def get_fcl_freight_rate_lifecycle_api(
         )
 
     try:
-        response = await get_fcl_freight_rate_lifecycle(filters)
+        response = get_fcl_freight_rate_lifecycle(filters)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
@@ -305,7 +311,7 @@ def get_fcl_freight_map_view_statistics_api(
 @bramhastra.get(
     "/get_fcl_freight_rate_world", response_model=FclFreightRateWorldResponse
 )
-async def get_fcl_freight_rate_world_api(
+def get_fcl_freight_rate_world_api(
     filters: Annotated[Json, Query()] = {},
     auth_response: dict = Depends(authorize_token),
 ):
@@ -315,7 +321,7 @@ async def get_fcl_freight_rate_world_api(
         )
 
     try:
-        response = await get_fcl_freight_rate_world(filters)
+        response = get_fcl_freight_rate_world(filters)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
@@ -327,7 +333,7 @@ async def get_fcl_freight_rate_world_api(
 
 
 @bramhastra.get("/list_fcl_freight_rate_statistics", response_model=DefaultList)
-async def list_fcl_freight_rate_statistics_api(
+def list_fcl_freight_rate_statistics_api(
     filters: Annotated[Json, Query()] = {},
     page_limit: int = 10,
     page: int = 1,
@@ -340,7 +346,7 @@ async def list_fcl_freight_rate_statistics_api(
         )
 
     try:
-        response = await list_fcl_freight_rate_statistics(
+        response = list_fcl_freight_rate_statistics(
             filters, page_limit, page, is_service_object_required
         )
         return JSONResponse(status_code=200, content=response)
@@ -354,7 +360,7 @@ async def list_fcl_freight_rate_statistics_api(
 
 
 @bramhastra.get("/list_air_freight_rate_statistics", response_model=DefaultList)
-async def list_air_freight_rate_statistics_api(
+def list_air_freight_rate_statistics_api(
     filters: Annotated[Json, Query()] = {},
     page_limit: int = 10,
     page: int = 1,
@@ -367,7 +373,7 @@ async def list_air_freight_rate_statistics_api(
             status_code=auth_response.get("status_code"), content=auth_response
         )
     try:
-        response = await list_air_freight_rate_statistics(
+        response = list_air_freight_rate_statistics(
             filters,
             page_limit,
             page,
@@ -546,7 +552,7 @@ def get_air_freight_rate_trends_api(
 
 
 @bramhastra.get("/get_air_freight_rate_world")
-async def get_air_freight_rate_world_api(
+def get_air_freight_rate_world_api(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
@@ -555,7 +561,7 @@ async def get_air_freight_rate_world_api(
         )
 
     try:
-        response = await get_air_freight_rate_world()
+        response = get_air_freight_rate_world()
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
@@ -639,6 +645,45 @@ def get_fcl_freight_rate_differences_api(
 
     try:
         response = get_fcl_freight_rate_differences(filters)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@bramhastra.get("/list_air_freight_recommended_trends", tags=["Public"])
+@rate_limiter.add(max_requests=3, time_window=3600)
+def list_air_freight_recommended_trends_api(
+    request: Request,
+    filters: Annotated[Json, Query()] = {},
+    limit: int = 5,
+    is_service_object_required: bool = False,
+):
+    try:
+        limit = min(limit, 5)
+        response = list_air_freight_recommended_trends(
+            filters, limit, is_service_object_required
+        )
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+    
+
+@bramhastra.get("/list_air_freight_rate_trends")
+def list_air_freight_rate_trends_api(
+    filters: Annotated[Json, Query()] = {},
+):
+    try:
+        response = list_air_freight_rate_trends(filters)
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise

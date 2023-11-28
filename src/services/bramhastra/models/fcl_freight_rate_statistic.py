@@ -103,6 +103,7 @@ class FclFreightRateStatistic(BaseModel):
     bas_standard_price_accuracy = FloatField(default = 0)
     bas_standard_price_diff_from_selected_rate = FloatField(default=0)
     parent_rate_mode = CharField(index = True, null = True)
+    last_shipment_booked_at = DateTimeTZField(null = True)
 
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.utcnow()

@@ -65,6 +65,7 @@ class Shipment:
                 self.__update(
                     statistic,
                     {"bookings_created"},
+                    {"last_shipment_booked_at": shipment["shipment_created_at"]},
                 )
                 shipment_copy.update(
                     {

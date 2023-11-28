@@ -48,7 +48,7 @@ DEFAULT_QUERY_TYPE = "default"
 ALLOWABLE_QUERY_TYPES = {"default", "average_price", "rates_affected"}
 
 
-async def add_service_objects(statistics):
+def add_service_objects(statistics):
     location_ids = set()
     shipping_line_ids = set()
 
@@ -59,9 +59,9 @@ async def add_service_objects(statistics):
             if k == "shipping_line_id":
                 shipping_line_ids.add(v)
 
-    shipping_lines = await get_shipping_lines(shipping_line_ids)
+    shipping_lines = get_shipping_lines(shipping_line_ids)
 
-    locations = await get_locations(location_ids)
+    locations = get_locations(location_ids)
 
     for statistic in statistics:
         update_statistic = dict()
@@ -79,7 +79,7 @@ async def add_service_objects(statistics):
         statistic.update(update_statistic)
 
 
-async def get_shipping_lines(ids):
+def get_shipping_lines(ids):
     if not ids:
         return dict()
     return {
@@ -93,7 +93,7 @@ async def get_shipping_lines(ids):
     }
 
 
-async def get_locations(ids):
+def get_locations(ids):
     if not ids:
         return dict()
     return {
@@ -108,7 +108,7 @@ async def get_locations(ids):
     }
 
 
-async def list_fcl_freight_rate_statistics(
+def list_fcl_freight_rate_statistics(
     filters, page_limit, page, is_service_object_required
 ):
     if (
@@ -116,12 +116,12 @@ async def list_fcl_freight_rate_statistics(
         and filters.get("query_type") not in ALLOWABLE_QUERY_TYPES
     ):
         raise ValueError("invalid type")
-    return await eval(
+    return eval(
         f"use_{filters.get('query_type') or DEFAULT_QUERY_TYPE}_filter(filters, page_limit, page,is_service_object_required)"
     )
 
 
-async def use_average_price_filter(
+def use_average_price_filter(
     filters, page_limit, page, is_service_object_required
 ):
     grouping = filters.get("group_by") or DEFAULT_PARAMS
@@ -150,7 +150,7 @@ async def use_average_price_filter(
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     if statistics and is_service_object_required:
-        await add_service_objects(statistics)
+        add_service_objects(statistics)
 
     return dict(
         list=statistics,
