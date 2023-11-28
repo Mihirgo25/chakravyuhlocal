@@ -25,29 +25,29 @@ class Table:
               
               CREATE SEQUENCE IF NOT EXISTS air_freight_rate_local_feedback_serial_id_seq START WITH 1 INCREMENT BY 1 MINVALUE 0;
 
-              ALTER TABLE fcl_freight_rate_job_mappings RENAME COLUMN if exists shipment_serial_id TO source_serial_id;
+              ALTER TABLE fcl_freight_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;
 
-              ALTER TABLE air_freight_rate_job_mappings RENAME COLUMN if exists shipment_serial_id TO source_serial_id;
+              ALTER TABLE air_freight_rate_job_mappings RENAME COLUMN shipment_serial_id TO source_serial_id;
 
-              ALTER TABLE haulage_freight_rate_job_mappings RENAME COLUMN if exists shipment_serial_id TO source_serial_id;
+              ALTER TABLE haulage_freight_rate_job_mappings RENAME COLUMN  shipment_serial_id TO source_serial_id;
 
-              ALTER TABLE fcl_customs_rate_job_mappings RENAME COLUMN if exists shipment_serial_id TO source_serial_id;
+              ALTER TABLE fcl_customs_rate_job_mappings RENAME COLUMN  shipment_serial_id TO source_serial_id;
 
-              ALTER TABLE air_customs_rate_job_mappings RENAME COLUMN if exists shipment_serial_id TO source_serial_id;
+              ALTER TABLE air_customs_rate_job_mappings RENAME COLUMN  shipment_serial_id TO source_serial_id;
 
-              ALTER TABLE fcl_cfs_rate_job_mappings RENAME COLUMN if exists shipment_serial_id TO source_serial_id;
+              ALTER TABLE fcl_cfs_rate_job_mappings RENAME COLUMN  shipment_serial_id TO source_serial_id;
 
-              ALTER TABLE lcl_freight_rate_job_mappings RENAME COLUMN if exists shipment_serial_id TO source_serial_id;
+              ALTER TABLE lcl_freight_rate_job_mappings RENAME COLUMN  shipment_serial_id TO source_serial_id;
 
-              ALTER TABLE ftl_freight_rate_job_mappings RENAME COLUMN if exists shipment_serial_id TO source_serial_id;
+              ALTER TABLE ftl_freight_rate_job_mappings RENAME COLUMN  shipment_serial_id TO source_serial_id;
 
-              ALTER TABLE ltl_freight_rate_job_mappings RENAME COLUMN if exists shipment_serial_id TO source_serial_id;
+              ALTER TABLE ltl_freight_rate_job_mappings RENAME COLUMN  shipment_serial_id TO source_serial_id;
 
-              ALTER TABLE lcl_customs_rate_job_mappings RENAME COLUMN if exists shipment_serial_id TO source_serial_id;
+              ALTER TABLE lcl_customs_rate_job_mappings RENAME COLUMN  shipment_serial_id TO source_serial_id;
 
-              ALTER TABLE fcl_freight_rate_feedbacks DROP COLUMN if exists preferred_detention_free_days;
+              ALTER TABLE fcl_freight_rate_feedbacks DROP COLUMN  preferred_detention_free_days;
               
-              ALTER TABLE air_freight_rate_feedbacks DROP COLUMN if exists preferred_storage_free_days;
+              ALTER TABLE air_freight_rate_feedbacks DROP COLUMN  preferred_storage_free_days;
               
               ALTER TABLE air_customs_rate_feedbacks ADD COLUMN if not exists spot_search_serial_id BIGINT;
               
