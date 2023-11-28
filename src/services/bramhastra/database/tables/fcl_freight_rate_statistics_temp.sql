@@ -90,7 +90,8 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_before_rate_statistics TO brahma
     `shipment_cancelled` UInt16,
     `bas_standard_price_accuracy` Float64,
     `bas_standard_price_diff_from_selected_rate` Float64,
-    `parent_rate_mode` String
+    `parent_rate_mode` String,
+    `last_shipment_booked_at` DateTime
 ) AS
 SELECT
     JSONExtractInt(data, 'before', 'id') AS id,
@@ -176,7 +177,8 @@ SELECT
     JSONExtractInt(data, 'before', 'shipment_cancelled') AS shipment_cancelled,
     JSONExtractFloat(data, 'before', 'bas_standard_price_accuracy') AS bas_standard_price_accuracy,
     JSONExtractFloat(data, 'before', 'bas_standard_price_diff_from_selected_rate') AS bas_standard_price_diff_from_selected_rate,
-    JSONExtractString(data, 'before', 'parent_rate_mode') AS parent_rate_mode
+    JSONExtractString(data, 'before', 'parent_rate_mode') AS parent_rate_mode,
+    JSONExtractString(data, 'before', 'last_shipment_booked_at') AS last_shipment_booked_at
     FROM brahmastra.kafka_fcl_freight_rate_statistics
     WHERE JSONExtractString(data, 'before') IS NOT NULL AND JSONExtractString(data,'op') = 'u';
 
@@ -265,7 +267,8 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_statistics TO brahmas
     `shipment_cancelled` UInt16,
     `bas_standard_price_accuracy` Float64,
     `bas_standard_price_diff_from_selected_rate` Float64,
-    `parent_rate_mode` String
+    `parent_rate_mode` String,
+    `last_shipment_booked_at` DateTime
 ) AS
     SELECT
     JSONExtractInt(data, 'after', 'id') AS id,
@@ -351,7 +354,8 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_rate_statistics TO brahmas
     JSONExtractInt(data, 'after', 'shipment_cancelled') AS shipment_cancelled,
     JSONExtractFloat(data, 'after', 'bas_standard_price_accuracy') AS bas_standard_price_accuracy,
     JSONExtractFloat(data, 'after', 'bas_standard_price_diff_from_selected_rate') AS bas_standard_price_diff_from_selected_rate,
-    JSONExtractString(data, 'after', 'parent_rate_mode') AS parent_rate_mode
+    JSONExtractString(data, 'after', 'parent_rate_mode') AS parent_rate_mode,
+    JSONExtractString(data, 'after', 'last_shipment_booked_at') AS last_shipment_booked_at
 FROM brahmastra.kafka_fcl_freight_rate_statistics  
 WHERE JSONExtractString(data, 'after') IS NOT NULL AND JSONExtractString(data,'op') in ('c','u');
 
@@ -440,7 +444,8 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics_temp
         shipment_cancelled UInt16,
         bas_standard_price_accuracy Float64,
         bas_standard_price_diff_from_selected_rate Float64,
-        parent_rate_mode String
+        parent_rate_mode String,
+        last_shipment_booked_at DateTime
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (is_deleted,container_size ,origin_country_id,origin_port_id,shipping_line_id,rate_id,validity_id, id, tag, price, bas_standard_price, version)

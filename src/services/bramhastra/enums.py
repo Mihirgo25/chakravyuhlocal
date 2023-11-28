@@ -211,3 +211,7 @@ class RateRequestState(Bramhastra):
     created = 1
     closed = 2
     rate_added = 3
+
+class AirDefault(Bramhastra):
+    commodity = "general"
+    source = "spot_search"
