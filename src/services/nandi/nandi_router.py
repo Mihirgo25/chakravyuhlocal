@@ -149,7 +149,7 @@ def validate_rate_feedback_api(
     service_type: str,
     rate_id: str,
     feedbacks: list[str] = [],
-    chargeable_weight: int = None,
+    chargeable_weight: float = None,
     price: float = None,
     currency: str = None,
     resp: dict = Depends(authorize_token)
