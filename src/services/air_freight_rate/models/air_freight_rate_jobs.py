@@ -81,6 +81,6 @@ class AirFreightRateJob(BaseModel):
           "trade_id": location["trade_id"],
           "country_code": location["country_code"],
           "display_name": location["display_name"],
-          "country": location["country"]
+          "country": location["country"] if location.get("country") else None
         }
         return loc_data
