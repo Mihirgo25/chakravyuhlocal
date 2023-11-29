@@ -44,6 +44,7 @@ from services.bramhastra.models.fcl_freight_rate_request_statistics import (
 from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
     FeedbackFclFreightRateStatistic,
 )
+from services.bramhastra.models.air_freight_action import AirFreightAction
 from database.create_clicks import Clicks
 from database.db_session import db
 
@@ -68,10 +69,14 @@ def main():
         pass
     db.create_tables(
         [
+        
             FclFreightAction,
+            AirFreightAction,
             ShipmentFclFreightRateStatistic,
             FeedbackFclFreightRateStatistic,
             FclFreightRateRequestStatistic,
+            AirFreightRateStatistic,
+            
         ]
     )
 
@@ -93,6 +98,7 @@ def main():
             FclFreightRateStatistic,
             FclFreightRateRequestStatistic,
             FclFreightAction,
+            AirFreightAction,
         ],
         ignore_oltp=True,
     ).create()

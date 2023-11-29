@@ -18,7 +18,7 @@ from playhouse.postgres_ext import (
 from datetime import datetime
 from services.bramhastra.constants import DEFAULT_UUID, DEFAULT_ENUM
 from configs.env import DEFAULT_USER_ID
-from services.bramhastra.enums import FclModes, ImportTypes
+from services.bramhastra.enums import ImportTypes
 
 
 class BaseModel(Model):
