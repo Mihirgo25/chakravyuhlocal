@@ -47,6 +47,7 @@ DEFAULT_REQUIRED_FIELDS = [
     "port",
     "port_id",
     "main_port_id",
+    "main_port",
     "terminal",
     "terminal_id",
     "trade_type",
