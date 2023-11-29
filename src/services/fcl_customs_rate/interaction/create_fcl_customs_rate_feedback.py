@@ -32,10 +32,13 @@ def execute_transaction_code(request):
         FclCustomsRateFeedback.source_id == request.get('source_id'),
         FclCustomsRateFeedback.performed_by_id == request.get('performed_by_id'),
         FclCustomsRateFeedback.performed_by_type == request.get('performed_by_type'),
-        FclCustomsRateFeedback.performed_by_org_id == request.get('performed_by_org_id')).first()
+        FclCustomsRateFeedback.performed_by_org_id == request.get('performed_by_org_id'),
+        FclCustomsRateFeedback.status == 'active').first()
 
     if not customs_feedback:
         customs_feedback = FclCustomsRateFeedback(**params)
+        next_sequence_value = db.execute_sql("SELECT nextval('fcl_customs_rate_feedback_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(customs_feedback,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
     for attr, value in create_params.items():
@@ -43,6 +46,10 @@ def execute_transaction_code(request):
     
     customs_feedback.set_location()
     customs_feedback.set_spot_search()
+
+    customs_feedback.feedbacks = list(set(customs_feedback.feedbacks + request.get('feedbacks',[]))) if customs_feedback.feedbacks else request.get('feedbacks',[])
+    customs_feedback.remarks = list(set(customs_feedback.remarks + request.get('remarks',[]))) if customs_feedback.remarks else request.get('remarks',[])
+    customs_feedback.attachment_file_urls = list(set(customs_feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if customs_feedback.attachment_file_urls else request.get('attachment_file_urls',[])
 
     try:
         customs_feedback.save()
@@ -54,16 +61,16 @@ def execute_transaction_code(request):
 
     if customs_feedback.feedback_type == 'disliked':
         request['source_id'] = customs_feedback.id
+        request['serial_id'] = customs_feedback.serial_id
         create_fcl_customs_rate_job(request, "rate_feedback")
         
     return {
-      'id': request.get('rate_id')
+      'id': customs_feedback.id,
+      'serial_id':customs_feedback.serial_id
     }
 
 def get_create_params(request):
-    return {
-        'feedbacks': request.get('feedbacks'),
-        'remarks': request.get('remarks'),
+    params = {
         'preferred_customs_rate': request.get('preferred_customs_rate'),
         'preferred_customs_rate_currency': request.get('preferred_customs_rate_currency'),
         'feedback_type': request.get('feedback_type'),
@@ -75,8 +82,15 @@ def get_create_params(request):
         'trade_id':request.get('trade_id'),
         'commodity': request.get('commodity'),
         'service_provider_id': request.get('service_provider_id'),
-        'cargo_handling_type' : request.get('cargo_handling_type')
+        'cargo_handling_type' : request.get('cargo_handling_type'),
+        'spot_search_serial_id':request.get('spot_search_serial_id')
     }
+
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_customs_rate'] = request.get('preferred_customs_rate')
+        params['preferred_customs_rate_currency'] = request.get('preferred_customs_rate_currency')
+    
+    return params
 
 def create_audit(request, customs_feedback):
     FclCustomsRateAudit.create(

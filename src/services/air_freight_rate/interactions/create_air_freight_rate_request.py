@@ -57,6 +57,8 @@ def execute_transaction_code(request):
 
     if not request_object:
         request_object = AirFreightRateRequest(**unique_object_params)
+        next_sequence_value = db.execute_sql("SELECT nextval('air_freight_rate_requests_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(request_object,'serial_id',next_sequence_value)
     create_params = get_create_params(request)
 
     for attr, value in create_params.items():
@@ -89,6 +91,7 @@ def execute_transaction_code(request):
                  request_object, airports
             )
     request["source_id"] = request_object.id
+    request['serial_id'] = request_object.serial_id
     create_air_freight_rate_job(request, "rate_request")
     return {"id": str(request_object.id)}
 

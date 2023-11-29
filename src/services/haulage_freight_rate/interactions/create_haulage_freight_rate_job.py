@@ -7,7 +7,7 @@ from database.db_session import db
 from configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from configs.env import DEFAULT_USER_ID
-from services.haulage_freight_rate.helpers.allocate_haulage_freight_rate_job import allocate_haulage_freight_rate_job
+from libs.allocate_job import allocate_job
 
 
 def create_haulage_freight_rate_job(request, source):
@@ -37,16 +37,17 @@ def execute_transaction_code(request, source):
         'rate_type' : request.get('rate_type'),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
-        'shipment_id': request.get('shipment_id')
+        'shipment_id': request.get('shipment_id'),
+        'source_id': request.get('source_id')
     }
 
-    init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("haulage_type") or "")}:{str(params.get("trailer_type") or "")}:{str(params.get("transport_modes_keyword") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}'
+    init_key = f'{str(params.get("origin_location_id") or "")}:{str(params.get("destination_location_id") or "")}:{str(params.get("shipping_line_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("container_size") or  "")}:{str(params.get("container_type") or "")}:{str(params.get("commodity") or "")}:{str(params.get("haulage_type") or "")}:{str(params.get("trailer_type") or "")}:{str(params.get("transport_modes_keyword") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("shipment_id") or "")}:{str(params.get("source_id") or "")}'
     haulage_freight_rate_job = HaulageFreightRateJob.select().where(HaulageFreightRateJob.init_key == init_key, HaulageFreightRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
     if not haulage_freight_rate_job:
         haulage_freight_rate_job = create_job_object(params)
-        user_id = allocate_haulage_freight_rate_job(source, params['service_provider_id'])
+        user_id = allocate_job(source, params['service_provider_id'], 'haulage_freight')
         haulage_freight_rate_job.user_id = user_id
         haulage_freight_rate_job.assigned_to = get_user(user_id)[0]
         haulage_freight_rate_job.status = 'pending'
@@ -76,7 +77,7 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = HaulageFreightRateJobMapping.create(
         source_id=request.get("source_id"),
         shipment_id=request.get("shipment_id"),
-        shipment_serial_id = request.get("shipment_serial_id"),
+        source_serial_id = request.get("serial_id"),
         shipment_service_id = request.get("service_id"),
         job_id= jobs_id,
         source = source,

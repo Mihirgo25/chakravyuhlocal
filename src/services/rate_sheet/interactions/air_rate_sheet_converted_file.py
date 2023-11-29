@@ -248,7 +248,7 @@ def create_air_freight_freight_rate(
     csv_writer,
     last_row,
 ):
-    from celery_worker import (
+    from services.air_freight_rate.air_celery_worker import (
         create_air_freight_rate_freight_delay,
     )
 
@@ -623,7 +623,7 @@ def create_air_freight_local_rate(
     csv_writer,
     last_row,
 ):
-    from celery_worker import (
+    from services.air_freight_rate.air_celery_worker import (
         create_air_freight_rate_local_delay,
     )
 
@@ -933,7 +933,7 @@ def create_air_freight_surcharge_rate(
     csv_writer,
     last_row,
 ):
-    from celery_worker import (
+    from services.air_freight_rate.air_celery_worker import (
         create_air_freight_rate_surcharge_delay,
     )
 

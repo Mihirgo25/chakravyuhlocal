@@ -32,7 +32,8 @@ def execute_transaction_code(request):
         FclFreightRateLocalRequest.source_id == request.get('source_id'),
         FclFreightRateLocalRequest.performed_by_id == request.get('performed_by_id'),
         FclFreightRateLocalRequest.performed_by_type == request.get('performed_by_type'),
-        FclFreightRateLocalRequest.performed_by_org_id == request.get('performed_by_org_id') 
+        FclFreightRateLocalRequest.performed_by_org_id == request.get('performed_by_org_id'),
+        FclFreightRateLocalRequest.trade_type == request.get('trade_type')
     ).first()
 
     if not local_request:
@@ -52,7 +53,6 @@ def execute_transaction_code(request):
 
     send_notifications_to_supply_agents_local_request.apply_async(kwargs={'object':local_request},queue='communication')
 
-    
     return {
     'id': local_request.id
     }

@@ -29,10 +29,12 @@ def get_air_customs_rate_cards(request):
 
 def initialize_air_customs_rate_query(request):
     query = AirCustomsRate.select(
+        AirCustomsRate.id,
         AirCustomsRate.line_items,
         AirCustomsRate.service_provider_id,
         AirCustomsRate.importer_exporter_id,
         AirCustomsRate.mode,
+        AirCustomsRate.source,
         AirCustomsRate.rate_type
     ).where(
         AirCustomsRate.airport_id == request.get('airport_id'),
@@ -73,6 +75,7 @@ def build_response_object(result,request):
     response_object = {
         'service_provider_id':result.get('service_provider_id'),
         'importer_exporter_id':result.get('importer_exporter_id'),
+        'rate_id':result.get('id'),
         'line_items':[],
         'total_price':0,
         'source': source

@@ -7,7 +7,7 @@ from database.db_session import db
 from configs.global_constants import POSSIBLE_SOURCES_IN_JOB_MAPPINGS
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from configs.env import DEFAULT_USER_ID
-from services.air_customs_rate.helpers.allocate_air_customs_rate_job import allocate_air_customs_rate_job
+from libs.allocate_job import allocate_job
 
 
 def create_air_customs_rate_job(request, source):
@@ -29,16 +29,17 @@ def execute_transaction_code(request, source):
         'trade_type': request.get('trade_type'),
         'search_source': request.get('source'),
         'is_visible': request.get('is_visible', True),
-        'shipment_id': request.get('shipment_id')
+        'shipment_id': request.get('shipment_id'),
+        'source_id': request.get('source_id')
     }
     
-    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("shipment_id") or "")}'
+    init_key = f'{str(params.get("airport_id") or "")}:{str(params.get("service_provider_id") or "")}:{str(params.get("commodity") or "")}:{str(params.get("rate_type") or "")}:{str(params.get("trade_type") or "")}:{str(params.get("shipment_id") or "")}:{str(params.get("source_id") or "")}'
     air_customs_rate_job = AirCustomsRateJob.select().where(AirCustomsRateJob.init_key == init_key, AirCustomsRateJob.status << ['backlog', 'pending']).first()
     params['init_key'] = init_key
 
     if not air_customs_rate_job:
         air_customs_rate_job = create_job_object(params)
-        user_id = allocate_air_customs_rate_job(source, params['service_provider_id'])
+        user_id = allocate_job(source, params['service_provider_id'], 'air_customs')
         air_customs_rate_job.user_id = user_id
         air_customs_rate_job.assigned_to = get_user(user_id)[0]
         air_customs_rate_job.status = 'pending'
@@ -69,7 +70,7 @@ def set_jobs_mapping(jobs_id, request, source):
     mapping_id = AirCustomsRateJobMapping.create(
         source_id=request.get("source_id"),
         shipment_id=request.get("shipment_id"),
-        shipment_serial_id = request.get("shipment_serial_id"),
+        source_serial_id = request.get("serial_id"),
         shipment_service_id = request.get("service_id"),
         job_id= jobs_id,
         source = source,

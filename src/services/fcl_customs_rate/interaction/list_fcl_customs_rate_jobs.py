@@ -19,7 +19,7 @@ possible_direct_filters = [
     "service_provider_id",
     "cogo_entity_id"
 ]
-possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted", "source_id", "shipment_serial_id"]
+possible_indirect_filters = ["updated_at", "start_date", "end_date", "source", "is_flash_booking_reverted", "source_id", "source_serial_id"]
 
 
 STRING_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
@@ -91,7 +91,7 @@ def list_fcl_customs_rate_jobs(
 def get_data(query, filters):
     data = list(query.dicts())
     for d in data:
-        mappings_query = FclCustomsRateJobMapping.select(FclCustomsRateJobMapping.shipment_service_id, FclCustomsRateJobMapping.shipment_serial_id, FclCustomsRateJobMapping.source_id, FclCustomsRateJobMapping.shipment_id, FclCustomsRateJobMapping.status).where(FclCustomsRateJobMapping.job_id == d['id'])
+        mappings_query = FclCustomsRateJobMapping.select(FclCustomsRateJobMapping.shipment_service_id, FclCustomsRateJobMapping.source_serial_id, FclCustomsRateJobMapping.source_id, FclCustomsRateJobMapping.shipment_id, FclCustomsRateJobMapping.status).where(FclCustomsRateJobMapping.job_id == d['id'])
         if filters and filters.get('source'):
             if not isinstance(filters.get('source'), list):
                 filters['source'] = [filters.get('source')]
@@ -101,7 +101,7 @@ def get_data(query, filters):
             d['source_id'] = mappings_data.source_id
             d['shipment_id'] = mappings_data.shipment_id
             d['reverted_status'] = mappings_data.status
-            d['shipment_serial_id'] = mappings_data.shipment_serial_id
+            d['source_serial_id'] = mappings_data.source_serial_id
             d['shipment_service_id'] = mappings_data.shipment_service_id
             d['reverted_count'] = get_reverted_count(mappings_data)
     return data
@@ -167,10 +167,10 @@ def apply_source_id_filter(query, filters):
     query = query.where(FclCustomsRateJob.id << job_ids)
     return query
 
-def apply_shipment_serial_id_filter(query, filters):
-    if filters.get('shipment_serial_id') and not isinstance(filters.get('shipment_serial_id'), list):
-        filters['shipment_serial_id'] = [filters.get('shipment_serial_id')]
-    subquery = list(FclCustomsRateJobMapping.select(FclCustomsRateJobMapping.job_id).where(FclCustomsRateJobMapping.shipment_serial_id << filters['shipment_serial_id']).dicts())
+def apply_source_serial_id_filter(query, filters):
+    if filters.get('source_serial_id') and not isinstance(filters.get('source_serial_id'), list):
+        filters['source_serial_id'] = [filters.get('source_serial_id')]
+    subquery = list(FclCustomsRateJobMapping.select(FclCustomsRateJobMapping.job_id).where(FclCustomsRateJobMapping.source_serial_id << filters['source_serial_id']).dicts())
     job_ids = []
     for data in subquery:
         job_ids.append(data['job_id'])

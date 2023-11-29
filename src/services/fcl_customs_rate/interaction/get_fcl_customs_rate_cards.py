@@ -37,7 +37,8 @@ def initialize_customs_query(request):
         FclCustomsRate.location_type,
         FclCustomsRate.location_id,
         FclCustomsRate.mode,
-        FclCustomsRate.rate_type
+        FclCustomsRate.rate_type,
+        FclCustomsRate.id
     ).where(
       FclCustomsRate.container_size == request.get('container_size'),
       FclCustomsRate.container_type == request.get('container_type'),
@@ -96,7 +97,8 @@ def build_response_object(result, request):
       'location_id': result.get('location_id'),
       'line_items': [],
       'source': source,
-      'tags': []
+      'tags': [],
+      "rate_id":result.get('id')
     }
 
     if response_object['service_provider_id'] in CONFIRMED_INVENTORY['service_provider_ids']:

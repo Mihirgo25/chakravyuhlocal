@@ -41,7 +41,6 @@ class AirFreightRateFeedback(BaseModel):
     preferred_airlines = BinaryJSONField(null=True)
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
-    preferred_storage_free_days = IntegerField(null=True)
     remarks = ArrayField(field_class=TextField, null=True)
     serial_id = BigIntegerField(
         constraints=[
@@ -70,6 +69,9 @@ class AirFreightRateFeedback(BaseModel):
     commodity = TextField(null=True,index=True)
     operation_type = TextField(null=True,index=True)
     airline_id=UUIDField(null=True,index=True)
+    spot_search_serial_id = BigIntegerField(index=True, null = True)
+    attachment_file_urls = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
+    airline = BinaryJSONField(null = True)
 
     class Meta:
         table_name = "air_freight_rate_feedbacks"
@@ -223,6 +225,17 @@ class AirFreightRateFeedback(BaseModel):
             },
         }
         common.create_communication(data)
+    
+    def set_airline(self):
+        if self.airline or not self.airline_id:
+            return
+        airline = get_operators(id=self.airline_id, operator_type="airline")
+        if len(airline) != 0:
+            self.airline = {
+                key: str(value)
+                for key, value in airline[0].items()
+                if key in ["id", "business_name", "short_name", "logo_url"]
+            }
 
     def validate_trade_type(self):
         if self.trade_type not in ["import", "export", "domestic"]:
@@ -246,12 +259,6 @@ class AirFreightRateFeedback(BaseModel):
             ]
         return True
 
-    def validate_preferred_storage_free_days(self):
-        if  self.preferred_storage_free_days and not self.preferred_storage_free_days >= 0:
-            raise HTTPException(
-                status_code=400, detail="freedays should be greater than zero"
-            )
-
     def validate_feedbacks(self):
         if self.feedbacks:
             for feedback in self.feedbacks:
@@ -272,38 +279,13 @@ class AirFreightRateFeedback(BaseModel):
         if self.source and self.source not in FEEDBACK_SOURCES:
             raise HTTPException(status_code=400, detail="invalid feedback source")
 
-    def validate_source_id(self):
-        if self.source == "spot_search":
-            spot_search_data = spot_search.list_spot_searches(
-                {"filters": {"id": [str(self.source_id)]}}
-            )
-            if "list" in spot_search_data and len(spot_search_data["list"]) != 0:
-                return True
-        if self.source == "checkout":
-            checkout_data = checkout.list_checkouts(
-                {"filters": {"id": [str(self.source_id)]}}
-            )
-            if "list" in checkout_data and len(checkout_data["list"]) != 0:
-                return True
-        raise HTTPException(status_code=400, detail="invalid source id")
-
-    def validate_performed_by_id(self):
-        if self.performed_by_id:
-            performed_by = get_user(id=str(self.performed_by_id))
-            if not performed_by:
-                raise HTTPException(status_code=400, detail="Invalid Performed By Id")
-        return True
 
     def validate_before_save(self):
         self.validate_trade_type()
         self.validate_feedback_type()
-        self.validate_preferred_airline_ids()
-        self.validate_preferred_storage_free_days()
+        self.set_airline()
         self.validate_feedbacks()
-        # self.validate_perform_by_org_id()
         self.validate_source()
-        # self.validate_source_id()
-        # self.validate_performed_by_id()
         return True
     
     def send_notification_to_supply_agents(self,air_freight_rate,airports):

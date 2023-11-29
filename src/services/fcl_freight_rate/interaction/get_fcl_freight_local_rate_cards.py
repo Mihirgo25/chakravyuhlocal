@@ -71,6 +71,7 @@ def initialize_local_query(request):
         FclFreightRateLocal.container_size,
         FclFreightRateLocal.container_type,
         FclFreightRateLocal.terminal_id,
+        FclFreightRateLocal.id
     ).where(
         FclFreightRateLocal.port_id == request["port_id"],
         FclFreightRateLocal.container_size == request["container_size"],
@@ -107,13 +108,12 @@ def build_response_list(query_results, request):
 
 def build_response_object(result, request):
     response_object = {
-        "service_provider_id": result["service_provider_id"],
-        "main_port_id": result["main_port_id"],
-        "shipping_line_id": result["shipping_line_id"],
-        "source": "predicted"
-        if result["service_provider_id"] in PREDICTED_RATES_SERVICE_PROVIDER_IDS
-        else "spot_rates",
-        "tags": [],
+      'service_provider_id': result['service_provider_id'],
+      'main_port_id': result['main_port_id'],
+      'shipping_line_id': result['shipping_line_id'],
+      'source': 'predicted' if result['service_provider_id'] in PREDICTED_RATES_SERVICE_PROVIDER_IDS else 'spot_rates',
+      'tags': [],
+      'rate_id': result.get('id')
     }
 
     if (

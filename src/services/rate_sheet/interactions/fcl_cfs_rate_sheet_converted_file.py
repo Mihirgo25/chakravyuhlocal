@@ -222,7 +222,7 @@ def process_fcl_cfs_cfs(params, converted_file, update):
     return
 
 def create_fcl_cfs_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row):
-    from celery_worker import create_fcl_cfs_rate_delay
+    from services.fcl_cfs_rate.fcl_cfs_celery_worker import create_fcl_cfs_rate_delay
     keys_to_extract = ['trade_type', 'container_size', 'container_type', 'commodity','cargo_handling_type']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['location_id'] = get_port_id(rows[0]['location'])

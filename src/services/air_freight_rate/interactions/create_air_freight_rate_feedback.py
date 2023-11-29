@@ -5,7 +5,8 @@ from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-from celery_worker import send_air_freight_rate_feedback_notification_in_delay,get_rate_from_cargo_ai_in_delay
+from celery_worker import send_air_freight_rate_feedback_notification_in_delay
+from services.air_freight_rate.air_celery_worker import get_rate_from_cargo_ai_in_delay
 from micro_services.client import *
 from services.air_freight_rate.constants.air_freight_rate_constants import CARGOAI_ACTIVE_ON_DISLIKE_RATE
 from libs.get_multiple_service_objects import get_multiple_service_objects
@@ -32,7 +33,7 @@ def create_air_freight_rate_feedback(request):
      
 def execute_transaction_code(request):
 
-    rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id,AirFreightRate.commodity).where(AirFreightRate.id==request['rate_id']).first()
+    rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id,AirFreightRate.commodity, AirFreightRate.operation_type, AirFreightRate.shipment_type).where(AirFreightRate.id==request['rate_id']).first()
     if not rate:
         raise HTTPException(status_code=404, detail='Rate Not Found')
     
@@ -46,18 +47,21 @@ def execute_transaction_code(request):
       'performed_by_org_id': request['performed_by_org_id'],
     }
     feedback=AirFreightRateFeedback.select().where(
-        AirFreightRateFeedback.air_freight_rate_id==request.get('air_freight_rate_id'),
+        AirFreightRateFeedback.air_freight_rate_id==request.get('rate_id'),
         AirFreightRateFeedback.validity_id==request.get('validity_id'),
         AirFreightRateFeedback.source==request.get('source'),
         AirFreightRateFeedback.source_id==request.get('source_id'),
         AirFreightRateFeedback.performed_by_id==request.get('performed_by_id'),
         AirFreightRateFeedback.performed_by_type==request.get('performed_by_type'),
-        AirFreightRateFeedback.performed_by_org_id==request.get('performed_by_org_id')
+        AirFreightRateFeedback.performed_by_org_id==request.get('performed_by_org_id'),
+        AirFreightRateFeedback.status == 'active'
     ).first()
 
 
     if not feedback:
         feedback=AirFreightRateFeedback(**row)
+        next_sequence_value = db.execute_sql("SELECT nextval('air_freight_rate_feedback_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(feedback,'serial_id',next_sequence_value)
 
     create_params =get_create_params(request,rate)
 
@@ -69,6 +73,11 @@ def execute_transaction_code(request):
             setattr(feedback,attr,ids)
         else: 
             setattr(feedback,attr,value)
+
+    feedback.feedbacks = list(set(feedback.feedbacks + request.get('feedbacks',[]))) if feedback.feedbacks else request.get('feedbacks',[])
+    feedback.remarks = list(set(feedback.remarks + request.get('remarks',[]))) if feedback.remarks else request.get('remarks',[])
+    feedback.attachment_file_urls = list(set(feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if feedback.attachment_file_urls else request.get('attachment_file_urls',[])
+
     feedback.validate_before_save()
     try:
         feedback.save()
@@ -88,9 +97,15 @@ def execute_transaction_code(request):
             send_air_freight_rate_feedback_notification_in_delay.apply_async(kwargs={'object':feedback,'air_freight_rate':rate,'airports':airports},queue='communication')
     
         request['source_id'] = feedback.id
+        request['serial_id'] = feedback.serial_id
+        request['shipment_type'] = rate.shipment_type
+        request['operation_type'] = rate.operation_type
         create_air_freight_rate_job(request, "rate_feedback")   
     
-    return {'id': request['rate_id']}
+    return {
+        'id': str(feedback.id),
+        'serial_id':feedback.serial_id
+        }
 
 def update_likes_dislike_count(rate,request):
     validities=rate.validities
@@ -107,11 +122,7 @@ def update_likes_dislike_count(rate,request):
     rate.save()
     
 def get_create_params(request,rate):
-    params={ 
-        'feedbacks': request.get('feedbacks'),
-        'remarks': request.get('remarks'),
-        'preferred_freight_rate': request.get('preferred_freight_rate'),
-        'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
+    params={
         'preferred_storage_free_days': request.get('preferred_storage_free_days'),
         'preferred_airline_ids': request.get('preferred_airline_ids'),
         'feedback_type': request.get('feedback_type'),
@@ -130,8 +141,14 @@ def get_create_params(request,rate):
         'service_provider_id':request.get('service_provider_id'),
         'operation_type':request.get('operation_type'),
         'status': 'active',
-        'airline_id':request.get('airline_id')
+        'airline_id':request.get('airline_id'),
+        'spot_search_serial_id':request.get('spot_search_serial_id')
       }
+    
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_freight_rate'] = request.get('preferred_freight_rate')
+        params['preferred_freight_rate_currency'] = request.get('preferred_freight_rate_currency')
+
     return params
 
 def get_locations(air_freight_rate):

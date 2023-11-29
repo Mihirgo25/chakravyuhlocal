@@ -142,7 +142,7 @@ def create_air_freight_rate_api(rate, locations):
 
 
 def create_freight_look_rates(request):
-    from celery_worker import process_freight_look_rates
+    from services.air_freight_rate.air_celery_worker import process_freight_look_rates
     rates = request['rates']
     destination = request.get('destination')
     new_rates = rates
