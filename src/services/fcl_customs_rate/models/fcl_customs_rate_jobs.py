@@ -74,6 +74,6 @@ class FclCustomsRateJob(BaseModel):
           "country_code": location["country_code"],
           "type": location["type"],
           "display_name": location["display_name"],
-          "country": location["country"] if location.get("country") else None
+          "country": location.get("country")
         }
         return loc_data
