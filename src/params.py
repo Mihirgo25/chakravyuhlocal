@@ -1120,3 +1120,4 @@ class CreateFclFreightRateLocalFeedback(BaseModel):
     trade_type: str = None
     shipping_line_id: str = None
     spot_search_serial_id: int = None
+    main_port_id: str = None
