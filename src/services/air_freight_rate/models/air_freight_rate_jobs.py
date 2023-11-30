@@ -33,7 +33,7 @@ class AirFreightRateJob(BaseModel):
     closing_remarks = TextField(null=True)
     shipment_type = CharField(null=True)
     stacking_type = CharField(null=True, index=True)
-    rate_type = TextField(null=True)
+    rate_type = TextField(null=True, index=True)
     init_key = TextField(index=True, null=True)
     commodity_type = CharField(null=True)
     commodity_sub_type = CharField(null=True)
@@ -81,6 +81,6 @@ class AirFreightRateJob(BaseModel):
           "trade_id": location["trade_id"],
           "country_code": location["country_code"],
           "display_name": location["display_name"],
-          "country": location["country"]
+          "country": location.get("country")
         }
         return loc_data

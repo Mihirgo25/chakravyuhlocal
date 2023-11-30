@@ -29,6 +29,7 @@ DEFAULT_AGGREGATE_PARAMS = {
     "checkout_count": "SUM(checkout*sign)",
     "bookings_created": "SUM(shipment*sign)",
     "rate_deviation_from_booking_rate": "MAX(ABS(bas_standard_price_diff_from_selected_rate))",
+    "bas_standard_price_deviation": "stddevPop(bas_standard_price)",
 }
 
 DEFAULT_SELECT_KEYS = {
@@ -134,7 +135,7 @@ def use_average_price_filter(
     select = ",".join(grouping)
 
     queries = [
-        f"""SELECT {select},AVG(bas_standard_price) as average_standard_price FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE sign = 1 AND bas_standard_price > 0 AND is_deleted = False"""
+        f"""SELECT {select},AVG(bas_standard_price) as average_standard_price, stddevPop(bas_standard_price) as bas_standard_price_deviation FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE sign = 1 AND bas_standard_price > 0 AND is_deleted = False"""
     ]
 
     if where := get_direct_indirect_filters(filters):

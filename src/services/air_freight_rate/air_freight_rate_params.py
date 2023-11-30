@@ -250,7 +250,6 @@ class CreateAirFreightRateFeedbackParams(BaseModel):
     preferred_freight_rate: float = None
     preferred_freight_rate_currency: str = None
     preferred_airline_ids: list[str] = []
-    preferred_storage_free_days: int = None
     feedback_type: str
     booking_params: dict = {}
     trade_type: str = None
@@ -267,7 +266,8 @@ class CreateAirFreightRateFeedbackParams(BaseModel):
     operation_type: str = None
     airline_id: str = None
     commodity: str = None
-
+    spot_search_serial_id: int = None
+    attachment_file_urls: List[str] = []
 
 class CreateAirFreightRateRequestParams(BaseModel):
     source: str
@@ -555,7 +555,7 @@ class CreateAirFreightRateJob(BaseModel):
     source: str = None
     source_id: str = None
     shipment_id: str = None
-    shipment_serial_id: int = None
+    serial_id: int = None
     service_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
@@ -579,6 +579,7 @@ class DeleteAirFreightRateLocalJob(BaseModel):
     closing_remarks: str = None
     data: dict = {}
     source_id: str = None
+    service_id: str = None
     shipment_id: str = None
     rate_id: str = None
     performed_by_id: str = None
@@ -589,6 +590,8 @@ class CreateAirFreightRateLocalJob(BaseModel):
     source: str = None
     source_id: str = None
     shipment_id: str = None
+    serial_id: int = None
+    service_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
     airport_id: str = None
@@ -596,11 +599,7 @@ class CreateAirFreightRateLocalJob(BaseModel):
     trade_type: str = None
     service_provider_id: str = None
     commodity: str = None
-    commodity_type: str = None
     rate_type: str = None
-    operation_type: str = None
-    shipment_type: str = None
-    stacking_type: str = None
     is_visible: bool = True
     price_type: str = None
     
@@ -615,3 +614,37 @@ class UpdateAirFreightRateLocalJob(BaseModel):
     user_id: str
     performed_by_id: str = None
     performed_by_type: str = None
+
+class CreateAirFreightRateLocalFeedbackParams(BaseModel):
+    source: str
+    source_id: str
+    performed_by_id: str
+    performed_by_org_id: str
+    performed_by_type: str
+    rate_id: str
+    likes_count: int
+    dislikes_count: int
+    feedbacks: list[str] = []
+    remarks: list[str] = []
+    preferred_rate: float = None
+    preferred_rate_currency: str = None
+    feedback_type: str
+    booking_params: dict = {}
+    trade_type: str = None
+    airport_id: str = None
+    country_id: str = None
+    continent_id: str = None
+    trade_id: str = None
+    service_provider_id: str = None
+    cogo_entity_id: str = None
+    airline_id: str = None
+    commodity: str = None
+    spot_search_serial_id: int = None
+    attachment_file_urls: List[str] = []
+
+class DeleteAirFreightRateLocalFeedbackParams(BaseModel):
+    air_freight_rate_local_feedback_ids: List[str]
+    closing_remarks: List[str] = []
+    performed_by_id: str = None
+    performed_by_type: str = None
+    reverted_rate: RevertedRateParams = None

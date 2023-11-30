@@ -41,6 +41,8 @@ def execute_transaction_code(request):
     )
     if not request_object:
         request_object = FtlFreightRateRequest(**unique_object_params)
+        next_sequence_value = db.execute_sql("SELECT nextval('ftl_freight_rate_request_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(request_object,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
     for attr, value in create_params.items():
@@ -57,6 +59,8 @@ def execute_transaction_code(request):
     update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
     
     request['source_id'] = request_object.id
+    
+    request['serial_id'] = request_object.serial_id
 
     create_ftl_freight_rate_job(request, "rate_request")
 

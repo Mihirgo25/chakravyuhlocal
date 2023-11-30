@@ -34,7 +34,7 @@ class FclFreightRateFeedback(BaseModel):
     performed_by_org_id = UUIDField(index=True, null=True)
     performed_by_org = BinaryJSONField(null=True)
     performed_by_type = CharField(index=True, null=True)
-    preferred_detention_free_days = IntegerField(null=True)
+    preferred_free_days = BinaryJSONField(null=True)
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
     preferred_shipping_line_ids = ArrayField(field_class=UUIDField, null=True, constraints=[SQL("DEFAULT '{}'::uuid[]")])
@@ -65,6 +65,9 @@ class FclFreightRateFeedback(BaseModel):
     relevant_supply_agent_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     reverted_validities = BinaryJSONField(null=True)
     rate_type = CharField(null=True, index=True)
+    spot_search_serial_id = BigIntegerField(index=True, null = True)
+    shipping_line_id = UUIDField(null = True)
+    shipping_line = BinaryJSONField(null = True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -327,3 +330,11 @@ class FclFreightRateFeedback(BaseModel):
             }
         }
         common.create_communication(data)
+    
+    def set_shipping_line(self):
+        if self.shipping_line or not self.shipping_line_id:
+            return
+        shipping_line = get_operators(id=self.shipping_line_id)
+        if len(shipping_line) != 0:
+            shipping_line[0]['id']=str(shipping_line[0]['id'])
+            self.shipping_line = {key:value for key,value in shipping_line[0].items() if key in ['id', 'business_name', 'short_name', 'logo_url']}

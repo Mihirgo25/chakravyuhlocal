@@ -27,10 +27,13 @@ def execute_transaction_code(request):
         AirCustomsRateRequest.source_id == request.get('source_id'),
         AirCustomsRateRequest.performed_by_id == request.get('performed_by_id'),
         AirCustomsRateRequest.performed_by_type == request.get('performed_by_type'),
-        AirCustomsRateRequest.performed_by_org_id == request.get('performed_by_org_id')).first()
+        AirCustomsRateRequest.performed_by_org_id == request.get('performed_by_org_id'),
+        AirCustomsRateRequest.trade_type == request.get('trade_type')).first()
 
     if not air_customs_request:
         air_customs_request = AirCustomsRateRequest(**search_params)
+        next_sequence_value = db.execute_sql("SELECT nextval('air_customs_rate_request_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(air_customs_request,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
     for attr, value in create_params.items():
@@ -49,6 +52,7 @@ def execute_transaction_code(request):
     send_notifications_to_supply_agents(request)
     
     request['source_id'] = air_customs_request.id
+    request['serial_id'] = air_customs_request.serial_id
     create_air_customs_rate_job(request, "rate_request")
     
     return {

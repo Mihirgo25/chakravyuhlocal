@@ -1,12 +1,12 @@
 from peewee import *
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
-from celery_worker import fcl_cfs_functions_delay
+from celery_worker import update_organization_delay
 from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from libs.get_multiple_service_objects import get_multiple_service_objects
-
+from libs.get_normalized_line_items import get_normalized_line_items
 
 def create_audit_for_cfs_rate(request, cfs_object_id):
     audit_data = {
@@ -68,7 +68,7 @@ def execute_transaction_code(request):
     if not cfs_object:
         cfs_object = FclCfsRate(**params)
 
-    cfs_object.line_items = request.get("line_items")
+    cfs_object.line_items = get_normalized_line_items(request.get('line_items'))
     cfs_object.free_days = request.get("free_days")
     cfs_object.rate_not_available_entry = False
     cfs_object.set_platform_price()
@@ -89,9 +89,24 @@ def execute_transaction_code(request):
     create_audit_for_cfs_rate(request, cfs_object.id)
 
     cfs_object.update_platform_prices_for_other_service_providers()
-    fcl_cfs_functions_delay.apply_async(
-        kwargs={"fcl_cfs_object": cfs_object, "request": request}, queue="low"
-    )
+
+    query = FclCfsRate.select(
+                FclCfsRate.id
+            ).where(
+                FclCfsRate.service_provider_id == request.get("service_provider_id"), 
+                FclCfsRate.rate_not_available_entry == False, 
+                FclCfsRate.rate_type == DEFAULT_RATE_TYPE
+            ).exists()
+
+    if not query:
+        params = {
+            "id" : request.get("service_provider_id"), 
+            "freight_rates_added" : True
+        }
+        update_organization_delay.apply_async(
+            kwargs={"params": params}, queue="low"
+        )
+
     get_multiple_service_objects(cfs_object)
 
     if params["rate_type"] == "market_place":

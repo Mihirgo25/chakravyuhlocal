@@ -39,7 +39,7 @@ class HaulageFreightRateJob(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     status = CharField(index=True, null=True)
-    rate_type = TextField(null=True)
+    rate_type = TextField(null=True, index=True)
     init_key = TextField(index=True, null=True)
     is_visible = BooleanField(default=True)
     cogo_entity_id = UUIDField(null=True, index=True)
@@ -79,7 +79,7 @@ class HaulageFreightRateJob(BaseModel):
           "country_id": location["country_id"],
           "country_code": location["country_code"],
           "display_name": location["display_name"],
-          "country": location["country"]
+          "country": location.get("country")
         }
         return loc_data
       

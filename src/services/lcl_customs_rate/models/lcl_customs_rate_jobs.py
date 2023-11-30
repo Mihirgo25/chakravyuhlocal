@@ -36,7 +36,7 @@ class LclCustomsRateJob(BaseModel):
     closed_by_id = UUIDField(null=True, index=True)
     closed_by = BinaryJSONField(null=True)
     closing_remarks = TextField(null=True)
-    rate_type = TextField(null=True)
+    rate_type = TextField(null=True, index=True)
     init_key = TextField(index=True, null=True)
     is_visible = BooleanField(null=True, default=True)
     cogo_entity_id = UUIDField(null=True, index=True)
@@ -78,6 +78,6 @@ class LclCustomsRateJob(BaseModel):
             "country_code": location["country_code"],
             "type": location["type"],
             "display_name": location["display_name"],
-            "country": location["country"]
+            "country": location.get("country")
         }
         return loc_data

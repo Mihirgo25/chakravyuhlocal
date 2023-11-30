@@ -16,6 +16,8 @@ class StandardLineItem(BaseModel):
   currency: str
   remarks: list[str] = []
   slabs: list[Slab] = []
+  market_price: float = None
+  original_price: float = None
 
 class FreeDaysType(BaseModel):
   free_days_type:str
@@ -94,6 +96,7 @@ class UpdateFclCfsRate(BaseModel):
     free_limit: int = None
     performed_by_type: str = None
     rate_type: str = 'market_place'
+    free_days: list[FreeDaysType] = []
     
 class Filters(BaseModel):
   filters: dict = {}
@@ -126,6 +129,42 @@ class UpdateFclCfsRatePlatformPrice(BaseModel):
   importer_exporter_id: str = None
   is_line_items_error_messages_present: bool = False
 
+class CreateFclCfsRateFeedback(BaseModel):
+  source: str
+  source_id: str
+  performed_by_id: str = None
+  performed_by_org_id: str
+  performed_by_type: str = None
+  rate_id: str
+  likes_count: int
+  dislikes_count: int
+  feedbacks: list[str] = []
+  remarks: list[str] = []
+  preferred_rate: float = None
+  preferred_rate_currency: str = None
+  feedback_type: str
+  booking_params: dict ={}
+  port_id: str = None
+  country_id: str = None
+  trade_type: str = None
+  trade_id: str = None
+  commodity: str = None
+  continent_id: str = None
+  container_size: str = None
+  container_type: str = None
+  cargo_handling_type: str = None
+  service_provider_id: str = None
+  attachment_file_urls: List[str] = []
+  rate_type: str = 'market_place'
+  spot_search_serial_id: int = None
+  cogo_entity_id: str = None
+
+class DeleteFclCfsRateFeedback(BaseModel):
+  fcl_cfs_rate_feedback_ids: list[str]
+  closing_remarks: list[str] = []
+  performed_by_id: str = None
+  performed_by_type: str  = None
+
 class DeleteFclCfsRateJob(BaseModel):
     id: str = None
     closing_remarks: str = None
@@ -142,7 +181,7 @@ class CreateFclCfsRateJob(BaseModel):
     source: str = None
     source_id: str = None
     shipment_id: str = None
-    shipment_serial_id: int = None
+    serial_id: int = None
     service_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None

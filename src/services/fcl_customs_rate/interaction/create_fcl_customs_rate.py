@@ -13,35 +13,20 @@ def create_fcl_customs_rate(request):
 
 
 def execute_transaction_code(request):
-    from celery_worker import fcl_customs_functions_delay
-    from services.fcl_customs_rate.fcl_customs_celery_worker import (
-        update_fcl_customs_rate_job_on_rate_addition_delay,
-    )
-
+    from services.fcl_customs_rate.fcl_customs_celery_worker import update_fcl_customs_rate_job_on_rate_addition_delay, fcl_customs_functions_delay
     request = {key: value for key, value in request.items() if value is not None}
     params = get_create_object_params(request)
-    customs_rate = (
-        FclCustomsRate.select()
-        .where(
-            FclCustomsRate.location_id == request.get("location_id"),
-            FclCustomsRate.trade_type == request.get("trade_type"),
-            FclCustomsRate.container_size == request.get("container_size"),
-            FclCustomsRate.container_type == request.get("container_type"),
-            FclCustomsRate.commodity == request.get("commodity"),
-            FclCustomsRate.service_provider_id == request.get("service_provider_id"),
-            FclCustomsRate.importer_exporter_id == request.get("importer_exporter_id"),
-            FclCustomsRate.rate_type == request.get("rate_type"),
-            (
-                (
-                    FclCustomsRate.cargo_handling_type
-                    == request.get("cargo_handling_type")
-                )
-                | (FclCustomsRate.cargo_handling_type.is_null(True))
-            ),
-        )
-        .order_by(FclCustomsRate.cargo_handling_type.desc(nulls="LAST"))
-        .first()
-    )
+    customs_rate = FclCustomsRate.select().where(
+        FclCustomsRate.location_id == request.get('location_id'),
+        FclCustomsRate.trade_type ==request.get('trade_type'),
+        FclCustomsRate.container_size== request.get('container_size'),
+        FclCustomsRate.container_type==request.get('container_type'),
+        FclCustomsRate.commodity == request.get('commodity'),
+        FclCustomsRate.service_provider_id==request.get('service_provider_id'),
+        FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id'),
+        FclCustomsRate.rate_type == request.get('rate_type'),
+        ((FclCustomsRate.cargo_handling_type == request.get('cargo_handling_type')) | (FclCustomsRate.cargo_handling_type.is_null(True)))
+        ).order_by(FclCustomsRate.cargo_handling_type.desc(nulls='LAST')).first()
 
     if not customs_rate:
         customs_rate = FclCustomsRate(**params)

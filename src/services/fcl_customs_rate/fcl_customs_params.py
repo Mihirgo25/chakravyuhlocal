@@ -103,6 +103,8 @@ class CreateFclCustomsRateFeedback(BaseModel):
   commodity: str = None
   service_provider_id: str = None
   cargo_handling_type: str = None
+  spot_search_serial_id: int = None
+  attachment_file_urls: List[str] = []
 
 class UpdateFclCustomsRatePlatformPrices(BaseModel):
   location_id: str
@@ -155,7 +157,7 @@ class CreateFclCustomsRateJob(BaseModel):
     source: str = None
     source_id: str = None
     shipment_id: str = None
-    shipment_serial_id: int = None
+    serial_id: int = None
     service_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None

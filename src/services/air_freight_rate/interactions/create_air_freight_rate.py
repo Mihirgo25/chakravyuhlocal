@@ -43,8 +43,7 @@ def create_air_freight_rate(request):
 
     
 def create_air_freight_rate_data(request):
-    from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,extend_air_freight_rates_in_delay
-    from services.air_freight_rate.air_celery_worker import update_air_freight_rate_job_on_rate_addition_delay
+    from services.air_freight_rate.air_celery_worker import extend_air_freight_rates_in_delay, update_air_freight_rate_job_on_rate_addition_delay, create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay
     
     action = "update"
     

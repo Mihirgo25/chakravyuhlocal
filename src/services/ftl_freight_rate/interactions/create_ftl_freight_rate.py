@@ -3,7 +3,7 @@ from database.db_session import db
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
 from configs.ftl_freight_rate_constants import DEFAULT_RATE_TYPE
 from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
-
+from libs.get_multiple_service_objects import get_multiple_service_objects
 
 def create_audit(request, freight_id):
     audit_data = {}
@@ -35,7 +35,7 @@ def create_ftl_freight_rate(request):
 
 def execute_transaction_code(request):
     from services.ftl_freight_rate.ftl_celery_worker import (
-        adding_multiple_service_objects,
+        delay_ftl_functions,
         update_ftl_freight_rate_request_delay,
         send_missing_or_dislike_rate_notifications_to_kam,
         send_missing_or_dislike_rate_notifications_to_platform,
@@ -82,14 +82,12 @@ def execute_transaction_code(request):
         ftl_freight_rate = FtlFreightRate(init_key=init_key)
         for key in list(params.keys()):
             setattr(ftl_freight_rate, key, params[key])
+      
+    set_params = get_set_params(request)
+    for key, value in set_params.items():
+        setattr(ftl_freight_rate, key, value)
 
     ftl_freight_rate.set_locations()
-    ftl_freight_rate.line_items = request.get("line_items")
-    ftl_freight_rate.validity_start = request.get("validity_start")
-    ftl_freight_rate.validity_end = request.get("validity_end")
-    ftl_freight_rate.procured_by_id = request.get("procured_by_id")
-    ftl_freight_rate.sourced_by_id = request.get("sourced_by_id")
-
     ftl_freight_rate.validate_validities(
         ftl_freight_rate.validity_start, ftl_freight_rate.validity_end
     )
@@ -112,9 +110,10 @@ def execute_transaction_code(request):
 
     ftl_freight_rate.update_platform_prices_for_other_service_providers()
 
-    adding_multiple_service_objects.apply_async(
-        kwargs={"ftl_object": ftl_freight_rate, "request": request}, queue="low"
+    delay_ftl_functions.apply_async(
+        kwargs={"ftl_object": ftl_freight_rate, "request": request},queue="low"
     )
+    get_multiple_service_objects(ftl_freight_rate)
 
     if request.get("ftl_freight_rate_request_id"):
         update_ftl_freight_rate_request_delay.apply_async(
@@ -145,3 +144,13 @@ def execute_transaction_code(request):
         )
 
     return {"id": ftl_freight_rate.id}
+
+def get_set_params(request):
+   return {
+      "line_items":request.get("line_items"),
+      "validity_start":request.get("validity_start"),
+      "validity_end":request.get("validity_end"),
+      "procured_by_id":request.get("procured_by_id"),
+      "sourced_by_id":request.get("sourced_by_id"),
+      "source": request.get("source", "manual")
+   }

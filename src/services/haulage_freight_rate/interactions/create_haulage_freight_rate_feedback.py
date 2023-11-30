@@ -46,15 +46,22 @@ def execute_transaction_code(request):
         HaulageFreightRateFeedback.performed_by_id == request['performed_by_id'],
         HaulageFreightRateFeedback.performed_by_type == request['performed_by_type'],
         HaulageFreightRateFeedback.transport_mode == request['transport_mode'],
-        HaulageFreightRateFeedback.performed_by_org_id == request['performed_by_org_id']).first()
+        HaulageFreightRateFeedback.performed_by_org_id == request['performed_by_org_id'],
+        HaulageFreightRateFeedback.status == 'active').first()
     
     if not feedback:
         feedback = HaulageFreightRateFeedback(**row)
+        next_sequence_value = db.execute_sql("SELECT nextval('haulage_freight_rate_feedback_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(feedback,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
 
     for attr, value in create_params.items():
         setattr(feedback, attr, value)
+
+    feedback.feedbacks = list(set(feedback.feedbacks + request.get('feedbacks',[]))) if feedback.feedbacks else request.get('feedbacks',[])
+    feedback.remarks = list(set(feedback.remarks + request.get('remarks',[]))) if feedback.remarks else request.get('remarks',[])
+    feedback.attachment_file_urls = list(set(feedback.attachment_file_urls + request.get('attachment_file_urls',[]))) if feedback.attachment_file_urls else request.get('attachment_file_urls',[])
 
     feedback.validate_before_save()
     try:
@@ -66,18 +73,15 @@ def execute_transaction_code(request):
     get_multiple_service_objects(feedback)
 
     if feedback.feedback_type == 'disliked':
-        request['source_id'] = feedback.id    
+        request['source_id'] = feedback.id
+        request['serial_id'] = feedback.serial_id  
         create_haulage_freight_rate_job(request, "rate_feedback")
         
-    return {'id': feedback.id}
+    return {'id': feedback.id, 'serial_id':feedback.serial_id}
 
  
 def get_create_params(request):
     params = {
-        'feedbacks': request.get('feedbacks'),
-        'remarks': request.get('remarks'),
-        'preferred_freight_rate': request.get('preferred_freight_rate'),
-        'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'origin_location_id': request.get('origin_location_id'),
@@ -95,8 +99,15 @@ def get_create_params(request):
         'trailer_type': request.get('trailer_type'),
         'haulage_type': request.get('haulage_type'),
         'trip_type': request.get('trip_type'),
-        'transport_mode': request.get('transport_mode')
+        'transport_mode': request.get('transport_mode'),
+        'spot_search_serial_id':request.get('spot_search_serial_id'),
+        'shipping_line_id':request.get('shipping_line_id')
     }
+
+    if 'unsatisfactory_rate' in request.get('feedbacks'):
+        params['preferred_freight_rate'] = request.get('preferred_freight_rate')
+        params['preferred_freight_rate_currency'] = request.get('preferred_freight_rate_currency')
+
     loc_ids = []
 
     if request.get('origin_location_id'):

@@ -340,7 +340,7 @@ class AirFreightVyuh():
 
 
     def set_estimations(self):
-        from celery_worker import transform_air_dynamic_pricing
+        from services.air_freight_rate.air_celery_worker import transform_air_dynamic_pricing
         
         affected_transformations = self.get_transformations_to_be_affected()
         new_transformations_to_add = self.get_transformations_to_be_added(affected_transformations)
@@ -431,7 +431,7 @@ class AirFreightVyuh():
         return all_rates
 
     def insert_rates_to_rms(self):
-        from celery_worker import extend_air_freight_rates
+        from services.air_freight_rate.air_celery_worker import extend_air_freight_rates
         origin_airport_id = self.new_rate['origin_airport_id']
         destination_airport_id = self.new_rate['destination_airport_id']
         weight_slabs = self.create_weight_slabs(origin_airport_id,destination_airport_id,'airport')

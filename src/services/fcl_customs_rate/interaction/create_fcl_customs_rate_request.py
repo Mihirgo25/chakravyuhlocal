@@ -27,10 +27,13 @@ def execute_transaction_code(request):
         FclCustomsRateRequest.source_id == request.get('source_id'),
         FclCustomsRateRequest.performed_by_id == request.get('performed_by_id'),
         FclCustomsRateRequest.performed_by_type == request.get('performed_by_type'),
-        FclCustomsRateRequest.performed_by_org_id == request.get('performed_by_org_id')).first()
+        FclCustomsRateRequest.performed_by_org_id == request.get('performed_by_org_id'),
+        FclCustomsRateRequest.trade_type == request.get('trade_type')).first()
 
     if not customs_request:
         customs_request = FclCustomsRateRequest(**search_params)
+        next_sequence_value = db.execute_sql("SELECT nextval('fcl_customs_rate_request_serial_id_seq'::regclass)").fetchone()[0]
+        setattr(customs_request,'serial_id',next_sequence_value)
 
     create_params = get_create_params(request)
     for attr, value in create_params.items():
@@ -48,6 +51,7 @@ def execute_transaction_code(request):
     get_multiple_service_objects(customs_request)
     send_notifications_to_supply_agents(request)
     request['source_id'] = customs_request.id
+    request['serial_id'] = customs_request.serial_id
     create_fcl_customs_rate_job(request, "rate_request")
     
     return {
