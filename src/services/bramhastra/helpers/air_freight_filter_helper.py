@@ -1,5 +1,7 @@
 from datetime import date, timedelta, datetime
 from math import ceil
+from services.bramhastra.enums import MapsFilter, Status
+from micro_services.client import maps
 
 POSSIBLE_DIRECT_FILTERS = {
     "origin_airport_id",
@@ -113,3 +115,39 @@ def add_pagination_data(clickhouse, queries, filters, page, page_limit):
     total_pages = ceil(total_count / page_limit)
 
     return total_count, total_pages
+
+def set_port_code_filters_and_service_object(filters, location_object):
+    origin_port_code = filters.pop(MapsFilter.origin_port_code.value, None)
+    destination_port_code = filters.pop(MapsFilter.destination_port_code.value, None)
+
+    locations = maps.list_locations(
+        data={
+            "filters": {
+                "port_code": [origin_port_code, destination_port_code],
+                "status": Status.active.value,
+            },
+            "includes": {
+                "id": True,
+                "name": True,
+                "display_name": True,
+                "port_code": True,
+            },
+        }
+    ).get("list", None)
+
+    port_code_to_location_details_mapping = {
+        location["port_code"]: location for location in locations
+    }
+
+    if origin_port_code:
+        location_object["origin_airport"] = port_code_to_location_details_mapping.get(
+            origin_port_code
+        )
+
+        filters["origin_airport_id"] = location_object["origin_airport"]["id"]
+
+    if destination_port_code:
+        location_object["destination_airport"] = port_code_to_location_details_mapping.get(
+            destination_port_code
+        )
+        filters["destination_airport_id"] = location_object["destination_airport"]["id"]

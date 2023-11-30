@@ -78,6 +78,9 @@ DEFAULT_ENUM = "empty"
 
 UNIQUE_FCL_SPOT_SEARCH_SERVICE_KEYS = {"commodity", "container_size", "container_type"}
 
+UNIQUE_AIR_SPOT_SEARCH_SERVICE_KEYS = {"commodity"}
+
+
 GLOBAL_MIN = -1000000000000000  # 10e-15
 
 DIFFERENCE_CHOICE_TYPE = ["rate_request", "feedback"]

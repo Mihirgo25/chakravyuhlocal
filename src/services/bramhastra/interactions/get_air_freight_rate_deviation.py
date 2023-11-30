@@ -1,43 +1,45 @@
 from services.bramhastra.client import ClickHouse
-from services.bramhastra.helpers.fcl_freight_filter_helper import (
+from services.bramhastra.helpers.air_freight_filter_helper import (
     get_direct_indirect_filters,
 )
 from fastapi.encoders import jsonable_encoder
 from math import ceil
-from services.bramhastra.models.fcl_freight_rate_statistic import (
-    FclFreightRateStatistic,
+from services.bramhastra.models.air_freight_rate_statistic import (
+    AirFreightRateStatistic,
 )
 
-POSSIBLE_SELECT_KEYS = {
-    "origin_port_id",
+POSSIBLE_SELECT_KEYS = (
+    "origin_airport_id",
     "origin_region_id",
     "origin_continent_id",
     "origin_trade_id",
     "origin_country_id",
     "destination_country_id",
-    "destination_port_id",
+    "destination_airport_id",
     "destination_region_id",
     "destination_continent_id",
     "destination_trade_id",
     "service_provider_id",
-    "shipping_line_id",
-}
+    "airline_id",
+)
 
-LOCATION_KEYS = {
-    "origin_port_id",
+LOCATION_KEYS = (
+    "origin_airport_id",
     "origin_region_id",
+    "origin_country_id",
     "origin_continent_id",
     "origin_trade_id",
-    "destination_port_id",
+    "destination_airport_id",
     "destination_region_id",
+    "destination_country_id",
     "destination_continent_id",
     "destination_trade_id",
-}
+)
 
-DEFAULT_SELECT_KEYS = {"service_provider_id"}
+DEFAULT_SELECT_KEYS = ("service_provider_id")
 
 
-def get_fcl_freight_deviation(filters, page, page_limit):
+def get_air_freight_deviation(filters, page, page_limit):
     clickhouse = ClickHouse()
     
     grouping = set()
@@ -51,11 +53,11 @@ def get_fcl_freight_deviation(filters, page, page_limit):
         grouping = DEFAULT_SELECT_KEYS.copy()
         
     subquery = [
-        f"WITH AVERAGE AS (SELECT AVG(standard_price) AS average_price,count(validity_id) AS validity_count FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"
+        f"WITH AVERAGE AS (SELECT AVG(standard_price) AS average_price,count(validity_id) AS validity_count FROM brahmastra.{AirFreightRateStatistic._meta.table_name}"
     ]
 
     queries = [
-        f',NORMAL AS (SELECT {",".join(grouping)},AVG(standard_price) as price FROM brahmastra.{FclFreightRateStatistic._meta.table_name}'
+        f',NORMAL AS (SELECT {",".join(grouping)},AVG(standard_price) as price FROM brahmastra.{AirFreightRateStatistic._meta.table_name}'
     ]
 
     final_query = [
