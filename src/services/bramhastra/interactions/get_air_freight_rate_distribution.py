@@ -17,20 +17,35 @@ def get_air_freight_rate_distribution(filters):
         queries.append(where)
 
     queries.append(
-        """), source_count as (SELECT source,count(source) as value,
-        sum(bookings_created) as bookings_created,
-        sum(shipment_cancelled_count + shipment_aborted_count) as shipment_cancelled_count,
-        floor((shipment_cancelled_count/bookings_created)*100,2) as shipment_cancelled_percentage,
-        sum(shipment_completed_count) as shipment_completed_count,
-        floor((shipment_completed_count/bookings_created)*100,2) as shipment_completed_percentage,
-        sum(shipment_in_progress_count)  as shipment_in_progress_count,
-        floor((shipment_in_progress_count/bookings_created)*100,2) as shipment_in_progress_percentage,
-        sum(shipment_confirmed_by_service_provider_count)  as shipment_confirmed_by_service_provider_count, 
-        floor((shipment_confirmed_by_service_provider_count/bookings_created)*100,2) as shipment_confirmed_by_service_provider_percentage,  
-        sum(shipment_received_count)  as shipment_received_count,
-        floor((shipment_received_count/bookings_created)*100,2) as shipment_received_percentage
-        from rate_distribution group by source)
-           SELECT * from source_count"""
+        """), source_count AS (
+        SELECT
+            source,
+            COUNT(source) AS value,
+            SUM(bookings_created) AS bookings_created,
+            SUM(shipment_cancelled_count + shipment_aborted_count) AS shipment_cancelled_count,
+            CASE WHEN bookings_created = 0 THEN 0
+                ELSE FLOOR((shipment_cancelled_count / NULLIF(bookings_created, 0)) * 100, 2)
+            END AS shipment_cancelled_percentage,
+            SUM(shipment_completed_count) AS shipment_completed_count,
+            CASE WHEN bookings_created = 0 THEN 0
+                ELSE FLOOR((shipment_completed_count / NULLIF(bookings_created, 0)) * 100, 2)
+            END AS shipment_completed_percentage,
+            SUM(shipment_in_progress_count) AS shipment_in_progress_count,
+            CASE WHEN bookings_created = 0 THEN 0
+                ELSE FLOOR((shipment_in_progress_count / NULLIF(bookings_created, 0)) * 100, 2)
+            END AS shipment_in_progress_percentage,
+            SUM(shipment_confirmed_by_service_provider_count) AS shipment_confirmed_by_service_provider_count,
+            CASE WHEN bookings_created = 0 THEN 0
+                ELSE FLOOR((shipment_confirmed_by_service_provider_count / NULLIF(bookings_created, 0)) * 100, 2)
+            END AS shipment_confirmed_by_service_provider_percentage,
+            SUM(shipment_received_count) AS shipment_received_count,
+            CASE WHEN bookings_created = 0 THEN 0
+                ELSE FLOOR((shipment_received_count / NULLIF(bookings_created, 0)) * 100, 2)
+            END AS shipment_received_percentage
+        FROM rate_distribution
+        GROUP BY source
+    )
+    SELECT * FROM source_count"""
     )
     
     response = clickhouse.execute(" ".join(queries), filters)

@@ -1071,20 +1071,20 @@ def get_air_freight_deviation_api(
 def get_air_freight_port_pair_count_api(
     filters: Json = Query(None), auth_response: dict = Depends(authorize_token)
 ):
-    if auth_response.get("status_code") != 200:
-        return JSONResponse(
-            status_code=auth_response.get("status_code"), content=auth_response
-        )
+    # if auth_response.get("status_code") != 200:
+    #     return JSONResponse(
+    #         status_code=auth_response.get("status_code"), content=auth_response
+    #     )
 
-    try:
-        if not filters:
-            return dict(port_pair_rate_count=[])
+    # try:
+        # if not filters:
+            # return dict(port_pair_rate_count=[])
         response = get_air_freight_port_pair_count(filters)
         return JSONResponse(status_code=200, content=response)
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(
+    #         status_code=500, content={"success": False, "error": str(e)}
+    #     )

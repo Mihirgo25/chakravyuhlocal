@@ -16,6 +16,7 @@ DEFAULT_INCUDE_PARAMS = {
     "service_provider_id",
     "cogo_entity_id",
     "commodity",
+    "commodity_type",
     "rate_type",
 }
 
@@ -48,7 +49,6 @@ def add_service_objects(statistics):
                 airline_ids.add(v)
 
     airlines = get_airlines(airline_ids)
-
     locations = get_locations(location_ids)
 
     for statistic in statistics:
@@ -68,27 +68,35 @@ def add_service_objects(statistics):
 
 
 def get_airlines(ids):
-    return {
-        airline["id"]: airline
-        for airline in maps.list_operators(
+    if not ids:
+        return dict()
+    
+    resp = maps.list_operators(
             dict(
                 filters=dict(id=list(ids)),
-                page_limit=len(ids),
+                page_limit=min(len(ids), 100),
             )
-        )["list"]
+        )
+    return {
+        airline["id"]: airline
+        for airline in resp["list"]
     }
 
 
 def get_locations(ids):
-    return {
-        location["id"]: location
-        for location in maps.list_locations(
+    if not ids:
+        return dict()
+    resp = maps.list_locations(
             dict(
                 filters=dict(id=list(ids)),
                 includes=dict(id=True, name=True, port_code=True),
-                page_limit=len(ids),
+                page_limit=min(len(ids), 100),
             )
-        )["list"]
+        )
+    
+    return {
+        location["id"]: location
+        for location in resp["list"]
     }
 
 
@@ -101,7 +109,7 @@ def list_air_freight_rate_statistics(
     ):
         raise ValueError("invalid type")
     return eval(
-        f"use_{filters.get('query_type') or DEFAULT_QUERY_TYPE}_query(filters, page_limit, page,is_service_object_required, pagination_data_required)"
+        f"use_{filters.get('query_type') or DEFAULT_QUERY_TYPE}_query({filters}, {page_limit}, {page},{is_service_object_required}, {pagination_data_required})"
     )
 
 
@@ -143,7 +151,6 @@ def use_aggregate_query(
 
     if is_service_object_required:
         add_service_objects(statistics)
-
     response["list"] = statistics
 
     return response

@@ -17,11 +17,12 @@ class MapsApiClient:
 
     @cached(maxsize=2000)
     def list_locations(self, data={}):
-        if APP_ENV == "production":
+        if APP_ENV != "production":
             keys = ['filters', 'includes']
             for key in keys:
                 if key in data:
                     data[key] = json.dumps(data[key])
+            self.client.url.set('https://api.cogoport.com/public_location')
             return self.client.request('GET', 'list_locations', {}, data)
         return self.client.request('GET', 'list_locations', data, {})
 

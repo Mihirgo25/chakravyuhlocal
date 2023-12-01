@@ -58,19 +58,18 @@ def alter_filters_for_map_view(filters, grouping):
         origin_key = f"origin_{filters['origin']['type']}_id"
         filters[origin_key] = filters["origin"]["id"]
         grouping.add(origin_key)
-        if "destination" in filters:
-            destination_index_to_look = min(
-                HEIRARCHY.index(filters["destination"]["type"]) + 1, len(HEIRARCHY) - 1
-            )
-            destination_key = f"destination_{HEIRARCHY[destination_index_to_look]}_id"
-            grouping.add(destination_key)
-            filters[f"destination_{filters['destination']['type']}_id"] = filters[
-                "destination"
-            ]["id"]
-            filters.pop("destination")
-        else:
-            grouping.add(f"destination_{filters['origin']['type']}_id")
         filters.pop("origin")
+
+    if "destination" in filters:
+        destination_index_to_look = min(
+            HEIRARCHY.index(filters["destination"]["type"]) + 1, len(HEIRARCHY) - 1
+        )
+        destination_key = f"destination_{HEIRARCHY[destination_index_to_look]}_id"
+        grouping.add(destination_key)
+        filters[f"destination_{filters['destination']['type']}_id"] = filters[
+            "destination"
+        ]["id"]
+        filters.pop("destination")
 
 
 def add_pagination_data(clickhouse, queries, filters, page, page_limit):

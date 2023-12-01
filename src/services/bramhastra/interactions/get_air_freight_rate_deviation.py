@@ -36,7 +36,7 @@ LOCATION_KEYS = (
     "destination_trade_id",
 )
 
-DEFAULT_SELECT_KEYS = ("service_provider_id")
+DEFAULT_SELECT_KEYS = {"service_provider_id"}
 
 
 def get_air_freight_deviation(filters, page, page_limit):
