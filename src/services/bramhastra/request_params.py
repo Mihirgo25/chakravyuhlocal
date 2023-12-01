@@ -271,7 +271,7 @@ class Shipment(BaseModel):
     shipment_updated_at: datetime = Field(alias="updated_at")
 
 
-class ShipmentParams(BaseModel):
+class FclShipmentParams(BaseModel):
     fcl_freight_services: list[ShipmentFclFreightService] = []
     shipment: Shipment
     checkout_id: str = None
@@ -279,19 +279,19 @@ class ShipmentParams(BaseModel):
 
 class ApplyShipmentFclFreightRateStatistics(BaseModel):
     action: str
-    params: ShipmentParams = None
+    params: FclShipmentParams = None
     shipment_update_params: Shipment = None
     shipment_service_update_params: ShipmentFclFreightService = None
 
 
-class QuotationParams(BaseModel):
+class FclQuotationParams(BaseModel):
     fcl_freight_service: ShipmentFclFreightService = None
     buy_quotation: BuyQuotation = None
     shipment: Shipment = None
 
 
 class ApplyQuotationFclFreightRateStatistics(BaseModel):
-    params: list[QuotationParams]
+    params: list[FclQuotationParams]
 
 
 class FclFreightRateRequest(BaseModel):
@@ -467,3 +467,104 @@ class ApplyRevenueDeskFclFreightStatistics(BaseModel):
         if not v:
             v = datetime.utcnow()
         return v
+
+class ApplyRevenueDeskAirFreightStatistics(BaseModel):
+    shipment_id: str = None
+    shipment_air_freight_service_id: str = None
+    rate_id: str = None
+    validities: list[str] = None
+    selected_for_booking: FclSelectedForBooking = None
+    selected_for_preference: FclSelectedForPreference = None
+    action: str = None
+    created_at: datetime = datetime.utcnow()
+
+    @validator("created_at", pre=True)
+    def convert_created_at(cls, v):
+        if not v:
+            v = datetime.utcnow()
+        return v
+    
+
+class ShipmentAirFreightService(BaseModel):
+    shipment_service_id: str = Field(alias="id")
+    shipment_service_state: str = Field(alias="state", default=None)
+    shipment_service_is_active: bool = Field(alias="is_active", default=None)
+    shipment_service_cancellation_reason: str = Field(
+        alias="cancellation_reason", default=None
+    )
+    shipment_service_created_at: datetime = Field(alias="created_at", default=None)
+    shipment_service_updated_at: datetime = Field(
+        alias="updated_at", default=datetime.utcnow()
+    )
+    airline_id: str = None
+    commodity_type: str = None
+    commodity_sub_type: str = None
+    height: float = 0
+    breadth: float = 0
+    length: float = 0
+    maximum_weight: float = 0
+    operation_type: str = None
+    
+
+class SpotSearchAirFreightRateStatistic(BaseModel):
+    spot_search_id: str = None
+    spot_search_air_freight_service_id: str = None
+    rates: list[Rate] = []
+    updated_at: datetime
+    created_at: datetime
+    origin_airport_id: str
+    origin_country_id: str = None
+    origin_trade_id: str = None
+    origin_continent_id: str = None
+    destination_airport_id: str
+    destination_country_id: str = None
+    destination_trade_id: str = None
+    destination_continent_id: str = None
+    commodity_type: str = None
+    commodity_sub_type: str = None
+    height: float = 0
+    breadth: float = 0
+    length: float = 0
+    maximum_weight: float = 0
+    operation_type: str = None
+    importer_exporter_id: str
+
+class CheckoutAirFreightService(BaseModel):
+    checkout_id: str
+    checkout_air_freight_service_id: str = Field(alias="id")
+    rate: CheckoutRate
+
+class AirFreightCheckoutParams(BaseModel):
+    checkout_source: str = Field(alias="source")
+    checkout_source_id: str = Field(alias="source_id")
+    importer_exporter_id: str
+    created_at: datetime
+    updated_at: datetime
+    checkout_air_freight_services: list[CheckoutAirFreightService]
+    
+class ApplySpotSearchAirFreightRateStatistic(BaseModel):
+    action: str
+    params: SpotSearchAirFreightRateStatistic
+
+class ApplyCheckoutAirFreightRateStatistic(BaseModel):
+    params: AirFreightCheckoutParams = None
+    action: str
+
+class AirShipmentParams(BaseModel):
+    air_freight_services: list[ShipmentAirFreightService] = []
+    shipment: Shipment
+    checkout_id: str = None
+
+class ApplyShipmentAirFreightRateStatistics(BaseModel):
+    action: str
+    params: AirShipmentParams = None
+    shipment_update_params: Shipment = None
+    shipment_service_update_params: ShipmentAirFreightService = None
+
+class AirQuotationParams(BaseModel):
+    fcl_freight_service: ShipmentAirFreightService = None
+    buy_quotation: BuyQuotation = None
+    shipment: Shipment = None
+
+class ApplyQuotationAirFreightRateStatistics(BaseModel):
+    params: list[AirQuotationParams]

@@ -3,7 +3,7 @@ from services.bramhastra.enums import RDAction, AppEnv
 from configs.env import APP_ENV
 
 
-def apply_fcl_freight_rate_rd_statistic(request):
+def apply_air_freight_rate_rd_statistic(request):
     if APP_ENV == AppEnv.production.value:
         revenue_desk = RevenueDesk(request)
         if (

@@ -215,3 +215,10 @@ class RateRequestState(Bramhastra):
 class AirDefault(Bramhastra):
     commodity = "general"
     source = "spot_search"
+
+class AirFeedbackClosingRemarks(Bramhastra):
+    rate_added = "rate_added"
+
+class AirFeedbackStatus(Bramhastra):
+    active = "active"
+    inactive = "inactive"

@@ -86,3 +86,29 @@ class World(BaseModel):
 class FclFreightRateWorldResponse(BaseModel):
     statistics: list[World]
     total_rates: int
+
+class AirFreightRateWorldResponse(BaseModel):
+    statistics: list[World]
+    total_rates: int
+
+class AirFreightRateCharts(BaseModel):
+    accuracy: list[RateAccuracyChart]
+    deviation: list[RateDeviationChart]
+    rate_count_with_deviation_more_than_30: float
+    spot_search_to_checkout_count: int
+
+class AirFreightRateBooking(BaseModel):
+    count: int
+    confirmed_booking: int
+    in_progress_booking: int
+    completed_booking: int
+
+class AirFreightRateDistribution(BaseModel):
+    total_rates: int
+    supply_rates: AirFreightRateBooking
+    extended_rates: AirFreightRateBooking
+    predicted_rates: AirFreightRateBooking
+
+class AirFreightRateLifeCycleResponse(BaseModel):
+    searches: int
+    cards: list[LifeCycle]

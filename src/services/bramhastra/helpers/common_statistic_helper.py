@@ -90,3 +90,46 @@ def create_fcl_freight_rate_statistic_fallback(rate_id, validity_id) -> Model:
             .first()
         ):
             return fcl_freight_rate_statistic
+
+
+def create_air_freight_rate_statistic_fallback(rate_id, validity_id) -> Model:
+    from services.air_freight_rate.interactions.list_air_freight_rates import (
+        list_air_freight_rates,
+    )
+    from enums.global_enums import Action
+    from services.bramhastra.request_params import ApplyAirFreightRateStatistic
+    from services.bramhastra.interactions.apply_air_freight_rate_statistic import (
+        apply_air_freight_rate_statistic,
+    )
+    from services.bramhastra.models.air_freight_rate_statistic import (
+        AirFreightRateStatistic,
+    )
+
+    air_freight_rates = list_air_freight_rates(
+        filters={"id": rate_id, "rate_type": "all"},
+        includes={k: 1 for k in RATE_REQUIRED_FIELDS},
+        pagination_data_required=False,
+    ).get("list", [])
+    if air_freight_rates:
+        air_freight_rate = air_freight_rates[0]
+        air_freight_rate["validities"] = [
+            validity
+            for validity in air_freight_rate["validities"]
+            if validity["id"] == validity_id
+        ]
+        if not air_freight_rate["validities"]:
+            return
+        apply_air_freight_rate_statistic(
+            ApplyAirFreightRateStatistic(
+                action=Action.create, params={"freight": air_freight_rate}
+            )
+        )
+        if (
+            air_freight_rate_statistic := AirFreightRateStatistic.select()
+            .where(
+                AirFreightRateStatistic.identifier
+                == get_air_freight_identifier(rate_id, validity_id)
+            )
+            .first()
+        ):
+            return air_freight_rate_statistic
