@@ -562,7 +562,7 @@ class ApplyShipmentAirFreightRateStatistics(BaseModel):
     shipment_service_update_params: ShipmentAirFreightService = None
 
 class AirQuotationParams(BaseModel):
-    fcl_freight_service: ShipmentAirFreightService = None
+    air_freight_service: ShipmentAirFreightService = None
     buy_quotation: BuyQuotation = None
     shipment: Shipment = None
 
