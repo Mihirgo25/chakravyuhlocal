@@ -8,8 +8,8 @@ ENGINE = Kafka('127.0.0.1:29092', 'arc.public.air_freight_rate_request_statistic
 CREATE MATERIALIZED VIEW brahmastra.air_freight_before_rate_request_statistics TO brahmastra.air_freight_rate_request_statistics
 (
     `id` UInt256,
-    `origin_port_id` UUID,
-    `destination_port_id` UUID,
+    `origin_airport_id` UUID,
+    `destination_airport_id` UUID,
     `origin_region_id` UUID,
     `destination_region_id` UUID,
     `origin_country_id` UUID,
@@ -37,14 +37,12 @@ CREATE MATERIALIZED VIEW brahmastra.air_freight_before_rate_request_statistics T
     `created_at` DateTime DEFAULT now(),
     `updated_at` DateTime DEFAULT now(),
     `sign` Int8 DEFAULT 1,
-    `version` UInt64 DEFAULT 1,
-    `operation_created_at` DateTime,
-    `operation_updated_at` DateTime
+    `version` UInt64 DEFAULT 1
 ) AS
 SELECT
     JSONExtractUInt(data, 'before', 'id') AS id,
-    JSONExtractString(data, 'before', 'origin_port_id') AS origin_port_id,
-    JSONExtractString(data, 'before', 'destination_port_id') AS destination_port_id,
+    JSONExtractString(data, 'before', 'origin_airport_id') AS origin_airport_id,
+    JSONExtractString(data, 'before', 'destination_airport_id') AS destination_airport_id,
     toUUIDOrZero(JSONExtractString(data, 'before', 'origin_region_id')) AS origin_region_id,
     toUUIDOrZero(JSONExtractString(data, 'before', 'destination_region_id')) AS destination_region_id,
     toUUIDOrZero(JSONExtractString(data, 'before', 'origin_country_id')) AS origin_country_id,
@@ -81,8 +79,8 @@ SELECT
 CREATE MATERIALIZED VIEW brahmastra.air_freight_after_rate_request_statistics TO brahmastra.air_freight_rate_request_statistics
 (
     `id` UInt256,
-    `origin_port_id` UUID,
-    `destination_port_id` UUID,
+    `origin_airport_id` UUID,
+    `destination_airport_id` UUID,
     `origin_region_id` UUID,
     `destination_region_id` UUID,
     `origin_country_id` UUID,
@@ -112,12 +110,12 @@ CREATE MATERIALIZED VIEW brahmastra.air_freight_after_rate_request_statistics TO
     `sign` Int8 DEFAULT 1,
     `version` UInt64 DEFAULT 1,
     `operation_created_at` DateTime,
-    `operation_updated_at` DateTime
+    `operation_updated_at` DateTime,
 ) AS
     SELECT
     JSONExtractUInt(data, 'after', 'id') AS id,
-    JSONExtractString(data, 'after', 'origin_port_id') AS origin_port_id,
-    JSONExtractString(data, 'after', 'destination_port_id') AS destination_port_id,
+    JSONExtractString(data, 'after', 'origin_airport_id') AS origin_airport_id,
+    JSONExtractString(data, 'after', 'destination_airport_id') AS destination_airport_id,
     toUUIDOrZero(JSONExtractString(data, 'after', 'origin_region_id')) AS origin_region_id,
     toUUIDOrZero(JSONExtractString(data, 'after', 'destination_region_id')) AS destination_region_id,
     toUUIDOrZero(JSONExtractString(data, 'after', 'origin_country_id')) AS origin_country_id,
@@ -155,8 +153,8 @@ WHERE JSONExtract(data,'op','String') in ('c','u');
 CREATE TABLE brahmastra.air_freight_rate_request_statistics
 (
         id UInt256,
-        origin_port_id UUID,
-        destination_port_id UUID,
+        origin_airport_id UUID,
+        destination_airport_id UUID,
         origin_region_id UUID,
         destination_region_id UUID,
         origin_country_id UUID,
@@ -184,10 +182,8 @@ CREATE TABLE brahmastra.air_freight_rate_request_statistics
         created_at DateTime DEFAULT now(),
         updated_at DateTime DEFAULT now(),
         sign Int8 DEFAULT 1,
-        version UInt64 DEFAULT 1,
-        operation_created_at DateTime,
-        operation_updated_at DateTime
+        version UInt64 DEFAULT 1
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (origin_continent_id,origin_country_id,origin_port_id,performed_by_id)
-ORDER BY (origin_continent_id,origin_country_id,origin_port_id,performed_by_id,updated_at);
+PRIMARY KEY (origin_continent_id,origin_country_id,origin_airport_id,performed_by_id)
+ORDER BY (origin_continent_id,origin_country_id,origin_airport_id,performed_by_id,updated_at);

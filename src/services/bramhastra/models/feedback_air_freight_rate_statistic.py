@@ -5,6 +5,7 @@ from peewee import (
     IntegerField,
     BigIntegerField,
     FloatField,
+    BooleanField
 )
 from datetime import datetime
 from database.db_session import db
@@ -30,6 +31,8 @@ class FeedbackAirFreightRateStatistic(BaseModel):
     created_at = DateTimeTZField(default=datetime.utcnow())
     updated_at = DateTimeTZField(default=datetime.utcnow())
     importer_exporter_id = UUIDField(null=True)
+    preferred_freight_rate = FloatField(null=True)
+    currency = CharField(default = "USD")
     feedbacks = ArrayField(CharField, null=True)
     closing_remarks = ArrayField(CharField, null=True)
     service_provider_id = UUIDField(null=True)
@@ -39,6 +42,9 @@ class FeedbackAirFreightRateStatistic(BaseModel):
     serial_id = BigIntegerField()
     sign = IntegerField(default=1)
     version = IntegerField(default=1)
+    operation_created_at = DateTimeTZField(default=datetime.utcnow())
+    operation_updated_at = DateTimeTZField(default=datetime.utcnow())
+    is_rate_reverted = BooleanField()
 
     class Meta:
         table_name = "feedback_air_freight_rate_statistics"

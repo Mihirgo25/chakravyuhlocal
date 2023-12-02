@@ -7,12 +7,14 @@ CREATE TABLE IF NOT EXISTS brahmastra.air_freight_rate_audit_statistics
     destination_continent_id UUID,
     origin_country_id UUID,
     destination_country_id UUID,
-    origin_port_id UUID,
-    destination_port_id UUID,
+    origin_airport_id UUID,
+    destination_airport_id UUID,
     cogo_entity_id UUID,
-    shipping_line_id UUID,
+    airline_id UUID,
     service_provider_id UUID,
-    commodity FixedString(256),  
+    commodity FixedString(256),
+    commodity_type FixedString(256),
+    commodity_subtype FixedString(256),
     container_size FixedString(256),  
     container_type FixedString(256),  
     importer_exporter_id UUID,
@@ -29,8 +31,8 @@ CREATE TABLE IF NOT EXISTS brahmastra.air_freight_rate_audit_statistics
     sourced_by_id UUID,
     procured_by_id UUID ,
     original_price Float32 DEFAULT 0,  
-    standard_price Float32 DEFAULT 0  
+    standard_price Float32 DEFAULT 0 
 )
 ENGINE = MergeTree()
-PRIMARY KEY (origin_continent_id,origin_country_id,origin_port_id,shipping_line_id)
-ORDER BY (origin_continent_id,origin_country_id,origin_port_id,shipping_line_id,standard_price);
+PRIMARY KEY (origin_continent_id,origin_country_id,origin_airport_id,airline_id)
+ORDER BY (origin_continent_id,origin_country_id,origin_airport_id,airline_id,standard_price);

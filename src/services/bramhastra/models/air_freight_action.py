@@ -56,10 +56,12 @@ class AirFreightAction(BaseModel):
     validity_start = DateField(null=True)
     validity_end = DateField(null=True)
     airline_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
-    service_provider_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
     selected_bas_standard_price = FloatField(default=0, null=True)
     bas_standard_price_accuracy = FloatField(default=0, null=True) 
     bas_standard_price_diff_from_selected_rate = FloatField(default=0, null=True)
+    shipment_state = TextField(default=None)
+    shipment_cancellation_reason = TextField(default=None)
+    revenue_desk_state = TextField(default= None)
     given_priority = IntegerField(default=0, null=True)
     rate_created_at = DateTimeTZField(index=True, null=True)
     rate_updated_at = DateTimeTZField(index=True, null=True)
@@ -69,6 +71,8 @@ class AirFreightAction(BaseModel):
     updated_at = DateTimeTZField(index=True, default=datetime.now())
     operation_created_at = DateTimeTZField(default=datetime.now())
     operation_updated_at = DateTimeTZField(default=datetime.now(), index=True)
+    sign = IntegerField(default=1)
+    version = IntegerField(default=1)
 
     def save(self, *args, **kwargs):
         self.operation_updated_at = datetime.now()

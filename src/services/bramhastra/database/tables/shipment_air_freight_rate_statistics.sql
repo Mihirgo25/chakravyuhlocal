@@ -2,8 +2,8 @@ CREATE TABLE brahmastra.shipment_air_freight_rate_statistics
 (
     id UInt256,
     air_freight_rate_statistic_id UInt256,
-    rate_id UUID,
     validity_id UUID,
+    rate_id UUID,
     shipment_id UUID,
     shipment_serial_id UInt256,
     shipment_source FixedString(256),

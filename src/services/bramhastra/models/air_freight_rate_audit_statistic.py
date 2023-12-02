@@ -1,4 +1,4 @@
-from peewee import Model, CharField, UUIDField, DateField, FloatField, BigAutoField
+from peewee import Model, CharField, UUIDField, DateField, FloatField, BigAutoField, IntegerField
 from playhouse.postgres_ext import DateTimeTZField
 from database.db_session import db
 
@@ -20,6 +20,8 @@ class AirFreightRateAuditStatistic(BaseModel):
     airline_id = UUIDField(index = True)
     service_provider_id = UUIDField()
     commodity = CharField()
+    commodity_type = CharField()
+    commodity_subtype = CharField()
     container_size = CharField()
     container_type = CharField()
     importer_exporter_id = UUIDField(null = True)
@@ -37,6 +39,8 @@ class AirFreightRateAuditStatistic(BaseModel):
     procured_by_id = UUIDField(null = True)
     original_price = FloatField(default = 0)
     standard_price = FloatField(default = 0)
+    sign = IntegerField(default=1)
+    version = IntegerField(default=1)
 
     class Meta:
         table_name = "air_freight_rate_audit_statistics"

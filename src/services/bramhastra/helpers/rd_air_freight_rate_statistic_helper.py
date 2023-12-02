@@ -6,7 +6,7 @@ from services.bramhastra.helpers.common_statistic_helper import (
 )
 from peewee import Model
 from services.bramhastra.models.air_freight_action import AirFreightAction
-from services.bramhastra.models.shipment_air_freight_rate_statistic import (
+from services.bramhastra.models.shipment_air_freight_rate_statistics import (
     ShipmentAirFreightRateStatistic,
 )
 from services.bramhastra.enums import SelectTypes, RevenueDeskState
