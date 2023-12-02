@@ -1,10 +1,9 @@
 CREATE TABLE brahmastra.kafka_air_freight_action
-(
     `data` String
 )
 ENGINE = Kafka('127.0.0.1:29092', 'arc.public.air_freight_actions', '001','JSONAsString');
 
-CREATE MATERIALIZED VIEW brahmastra.air_freight_before_actions TO brahmastra.air_freight_action
+CREATE MATERIALIZED VIEW brahmastra.air_freight_before_action TO brahmastra.air_freight_action
 (
     `id` UInt256,
     `origin_airport_id` UUID,
@@ -100,7 +99,7 @@ parseDateTimeBestEffort(JSONExtractString(data, 'before', 'operation_updated_at'
 FROM brahmastra.kafka_air_freight_action
 WHERE JSONExtractString(data, 'before') IS NOT NULL AND JSONExtract(data,'op','String') = 'u';
 
-CREATE MATERIALIZED VIEW brahmastra.air_freight_after_actions TO brahmastra.air_freight_action
+CREATE MATERIALIZED VIEW brahmastra.air_freight_after_action TO brahmastra.air_freight_action
 (
     `id` UInt256,
     `origin_airport_id` UUID,
@@ -199,7 +198,7 @@ CREATE MATERIALIZED VIEW brahmastra.air_freight_after_actions TO brahmastra.air_
 FROM brahmastra.kafka_air_freight_action
 WHERE JSONExtractString(data, 'after') IS NOT NULL AND JSONExtract(data,'op','String') in ('c','u');
 
-CREATE TABLE brahmastra.air_freight_actions
+CREATE TABLE brahmastra.air_freight_action
 (
         id UInt256,
         origin_airport_id UUID,

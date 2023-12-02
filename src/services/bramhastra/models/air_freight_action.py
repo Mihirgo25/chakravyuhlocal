@@ -87,7 +87,7 @@ class AirFreightAction(BaseModel):
         return type(self).get(self._pk_expr())
 
     class Meta:
-        table_name = "air_freight_actions"
+        table_name = "air_freight_action"
 
         CLICK_KEYS = [
             "origin_continent_id",

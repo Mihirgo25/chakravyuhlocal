@@ -1,7 +1,7 @@
 from services.bramhastra.models.air_freight_rate_statistic import (
     AirFreightRateStatistic,
 )
-from services.bramhastra.models.shipment_air_freight_rate_statistics import (
+from services.bramhastra.models.shipment_air_freight_rate_statistic import (
     ShipmentAirFreightRateStatistic,
 )
 from services.bramhastra.models.air_freight_action import AirFreightAction
