@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
-from peewee import SQL, fn
+from peewee import fn
 from datetime import datetime, timedelta
 import urllib
 import json
@@ -44,7 +44,6 @@ RATE_PARAMS = [
     "service_provider_id",
     "shipping_line_id",
     "mode",
-    # "accuracy",
     "cogo_entity_id",
     "sourced_by_id",
     "procured_by_id",
@@ -121,7 +120,7 @@ class PopulateRates:
         return get_fcl_freight_identifier(rate_id, validity_id)
 
     def populate_from_active_rates(self):
-        print("\npopulating rates ...")
+        print("populating rates ...")
 
         with urllib.request.urlopen(PERFORMED_BY_MAPPING_URL) as url:
             mappings = json.loads(url.read().decode())
@@ -155,7 +154,7 @@ class PopulateRates:
         print("Minutes Diff:", minutes_diff, "\n")
 
         minute_cntr = 0
-        MINUTES_RANGE = 15
+        MINUTES_RANGE = 21600
 
         while minute_cntr <= minutes_diff:
             subquery = FclFreightRateStatistic.select(
@@ -227,12 +226,9 @@ class PopulateRates:
             print(len(row_data), end="")
 
         if row_data:
-            breakpoint()
             FclFreightRateStatistic.insert_many(row_data).execute()
 
 
-populate_rates = PopulateRates()
-
-# This will populate all the remaining rates which are not present in statistics
-# They should have non-empty validities
-populate_rates.populate_from_active_rates()
+if __name__ == "__main__":
+    #30144
+    PopulateRates().populate_from_active_rates()

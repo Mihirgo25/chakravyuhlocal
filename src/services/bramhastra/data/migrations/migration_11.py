@@ -98,7 +98,6 @@ def find_and_fix_zero_BAS_prices():
                             print("Line item error:\n", e)
                     if is_updated:
                         break
-        breakpoint()
 
 
 if __name__ == "__main__":
