@@ -215,7 +215,6 @@ class PopulateRates:
                         row_data.append(row)
                 except Exception as e:
                     print(e)
-                    breakpoint()
 
             if len(row_data) >= 10000:
                 FclFreightRateStatistic.insert_many(row_data).execute()
