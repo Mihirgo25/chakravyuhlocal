@@ -171,8 +171,9 @@ class PopulateRates:
                     datetime.strptime(min_updated_at, "%Y-%m-%d")
                     + timedelta(minutes=minute_cntr + MINUTES_RANGE)
                 ),
-                (~FclFreightRate.id << subquery),
+                (FclFreightRate.id.not_in(subquery)),
             )
+            breakpoint()
 
             print(f"\n:: minute = {minute_cntr} / {minutes_diff} ::", end=" ")
             for rate in ServerSideQuery(query):
