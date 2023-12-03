@@ -233,5 +233,5 @@ class PopulateRates:
 
 
 if __name__ == "__main__":
-    #30144
+    # 30144
     PopulateRates().populate_from_active_rates()
