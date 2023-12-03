@@ -173,7 +173,6 @@ class PopulateRates:
                 ),
                 (FclFreightRate.id.not_in(subquery)),
             )
-            breakpoint()
 
             print(f"\n:: minute = {minute_cntr} / {minutes_diff} ::", end=" ")
             for rate in ServerSideQuery(query):
@@ -230,5 +229,5 @@ class PopulateRates:
 
 
 if __name__ == "__main__":
-    #30144
+    # 30144
     PopulateRates().populate_from_active_rates()
