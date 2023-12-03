@@ -50,6 +50,10 @@ RATE_PARAMS = [
 ]
 
 
+def insert(row):
+    for r in row:
+        FclFreightRateStatistic(**r).save(force_insert = True)
+
 class PopulateRates:
     def get_validity_params(self, validity):
         price = validity.get("price")
@@ -154,7 +158,7 @@ class PopulateRates:
         print("Minutes Diff:", minutes_diff, "\n")
 
         minute_cntr = 0
-        MINUTES_RANGE = 21600
+        MINUTES_RANGE = 21600/2
 
         while minute_cntr <= minutes_diff:
             subquery = FclFreightRateStatistic.select(
@@ -173,7 +177,6 @@ class PopulateRates:
                 ),
                 (FclFreightRate.id.not_in(subquery)),
             )
-            breakpoint()
 
             print(f"\n:: minute = {minute_cntr} / {minutes_diff} ::", end=" ")
             for rate in ServerSideQuery(query):
@@ -218,7 +221,7 @@ class PopulateRates:
                     print(e)
 
             if len(row_data) >= 10000:
-                FclFreightRateStatistic.insert_many(row_data).execute()
+                insert(row_data)
                 print(f"\n-- inserted {round(len(row_data)/1000,1)}K --")
                 row_data = []
 
@@ -226,7 +229,7 @@ class PopulateRates:
             print(len(row_data), end="")
 
         if row_data:
-            FclFreightRateStatistic.insert_many(row_data).execute()
+            insert(row_data)
 
 
 if __name__ == "__main__":
