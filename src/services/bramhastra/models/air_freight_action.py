@@ -40,7 +40,7 @@ class AirFreightAction(BaseModel):
     destination_trade_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
     commodity = CharField(null=True,index=True)
     commodity_type = CharField(null=True)
-    commodity_sub_type = CharField(null=True)
+    commodity_subtype = CharField(null=True)
     container_size = TextField(null=True, index=True)
     container_type = TextField(null=True, index=True)
     service_provider_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
@@ -59,9 +59,9 @@ class AirFreightAction(BaseModel):
     selected_bas_standard_price = FloatField(default=0, null=True)
     bas_standard_price_accuracy = FloatField(default=0, null=True) 
     bas_standard_price_diff_from_selected_rate = FloatField(default=0, null=True)
+    revenue_desk_state = TextField(default= None)
     shipment_state = TextField(default=None)
     shipment_cancellation_reason = TextField(default=None)
-    revenue_desk_state = TextField(default= None)
     given_priority = IntegerField(default=0, null=True)
     rate_created_at = DateTimeTZField(index=True, null=True)
     rate_updated_at = DateTimeTZField(index=True, null=True)
@@ -87,7 +87,7 @@ class AirFreightAction(BaseModel):
         return type(self).get(self._pk_expr())
 
     class Meta:
-        table_name = "air_freight_action"
+        table_name = "air_freight_actions"
 
         CLICK_KEYS = [
             "origin_continent_id",
