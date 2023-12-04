@@ -41,6 +41,8 @@ class AirFreightAction(BaseModel):
     commodity = CharField(null=True,index=True)
     commodity_type = CharField(null=True)
     commodity_subtype = CharField(null=True)
+    spot_search_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
+    spot_search_air_freight_service_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)
     container_size = TextField(null=True, index=True)
     container_type = TextField(null=True, index=True)
     service_provider_id = UUIDField(null=True, index=True, default=DEFAULT_UUID)

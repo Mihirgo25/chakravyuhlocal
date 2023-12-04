@@ -10,8 +10,8 @@ from typing import Union
 from peewee import Model
 
 COMMON_PARAMS = {
-    # AirFreightAction.spot_search_air_freight_service_id.name,
-    # AirFreightAction.spot_search_id.name,
+    AirFreightAction.spot_search_air_freight_service_id.name,
+    AirFreightAction.spot_search_id.name,
     AirFreightAction.origin_airport_id.name,
     AirFreightAction.destination_airport_id.name,
     AirFreightAction.origin_country_id.name,
@@ -22,9 +22,8 @@ COMMON_PARAMS = {
     AirFreightAction.destination_trade_id.name,
     AirFreightAction.container_size.name,
     AirFreightAction.container_type.name,
-    # AirFreightAction.containers_count.name,
     AirFreightAction.commodity_type.name,
-    AirFreightAction.commodity_sub_type.name,
+    AirFreightAction.commodity_subtype.name,
     AirFreightAction.created_at.name,
     AirFreightAction.updated_at.name,
 }
@@ -104,7 +103,7 @@ class SpotSearch:
         air_freight_action = (
             AirFreightAction.select(AirFreightAction.id)
             .where(
-                # AirFreightAction.spot_search_id == params.get("spot_search_id"),
+                AirFreightAction.spot_search_id == params.get("spot_search_id"),
                 AirFreightAction.rate_id == params.get("rate_id"),
                 AirFreightAction.validity_id == params.get("validity_id"),
             )
