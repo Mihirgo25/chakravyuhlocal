@@ -145,6 +145,10 @@ class MapsFilter(Bramhastra):
     origin_port_code = "origin_port_code"
     destination_port_code = "destination_port_code"
 
+class AirMapsFilter(Bramhastra):
+    origin_airport_code = "origin_airport_code"
+    destination_airport_code = "destination_airport_code"
+
 
 class Status(Bramhastra):
     active = "active"

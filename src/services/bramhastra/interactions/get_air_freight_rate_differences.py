@@ -1,6 +1,6 @@
 from services.bramhastra.client import ClickHouse
 from services.bramhastra.enums import Air
-from services.bramhastra.enums import MapsFilter
+from services.bramhastra.enums import AirMapsFilter
 from fastapi.encoders import jsonable_encoder
 from services.bramhastra.helpers.air_freight_filter_helper import (
     set_port_code_filters_and_service_object,
@@ -35,8 +35,8 @@ def get_rate(filters: dict) -> list:
 
     location_object = dict()
 
-    if filters.get(MapsFilter.origin_port_code.value) or filters.get(
-        MapsFilter.destination_port_code.value
+    if filters.get(AirMapsFilter.origin_airport_code.value) or filters.get(
+       AirMapsFilter.destination_airport_code.value
     ):
         set_port_code_filters_and_service_object(filters, location_object)
 
