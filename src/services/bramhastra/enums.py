@@ -43,6 +43,9 @@ class RedisKeys(Bramhastra):
     fcl_freight_rate_all_time_accuracy_chart = (
         "fcl_freight_rate_all_time_accuracy_chart"
     )
+    air_freight_rate_all_time_accuracy_chart = (
+        "air_freight_rate_all_time_accuracy_chart"
+    )
 
 
 class ShipmentServices(Bramhastra):
