@@ -3,7 +3,7 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 )
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from playhouse.postgres_ext import ServerSideQuery
+from playhouse.postgres_ext import ServerSideQuery, ServerSide
 from services.bramhastra.enums import Fcl
 from micro_services.client import common
 from peewee import fn
@@ -53,7 +53,7 @@ def find_and_fix_zero_BAS_prices():
     )
     counter = 0
 
-    for rate in ServerSideQuery(query):
+    for rate in ServerSide(query):
         counter += 1
         print("counter: ", counter, "/", total_count)
 
@@ -98,7 +98,6 @@ def find_and_fix_zero_BAS_prices():
                             print("Line item error:\n", e)
                     if is_updated:
                         break
-        breakpoint()
 
 
 if __name__ == "__main__":
