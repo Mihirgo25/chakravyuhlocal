@@ -171,17 +171,17 @@ class AirFreightVyuh():
             }
             line_items = past_air_invoice['line_items']
             actual_lineitem = None
-            bas_count = 0
+            count = 0
             for line_item in line_items:
                 if line_item['code'] == 'BAS' and line_item['unit'] == 'per_kg':
                     actual_lineitem = line_item
-                    bas_count = bas_count + 1
+                    count = count + 1
                 if line_item['code'] == 'BAS' and line_item['unit'] == 'per_shipment' and not actual_lineitem:
                     actual_lineitem = line_item
-                    bas_count = bas_count + 1
+                    count = count + 1
                     actual_lineitem['price'] = (line_item['price'] / (new_past_air_invoice['chargeable_weight'] or new_past_air_invoice['weight']))
 
-            if actual_lineitem and bas_count == 1:
+            if actual_lineitem and count == 1:
                 new_past_air_invoice['price'] = actual_lineitem['price']
                 new_past_air_invoice['unit'] = actual_lineitem['unit']
                 new_past_air_invoice['currency'] = actual_lineitem['currency']

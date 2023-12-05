@@ -5,10 +5,11 @@ from services.bramhastra.enums import AirDefault, Paginate
 from services.bramhastra.client import ClickHouse
 from micro_services.client import maps, common
 from fastapi.encoders import jsonable_encoder
-from services.bramhastra.enums import Fcl
+from services.bramhastra.enums import Air
 
 DIRECT_FILTERS = {
-    "commodity": AirDefault.commodity.value
+    "commodity": AirDefault.commodity.value,
+    "airline_id": None,
 }
 
 FREQUENCY = {
@@ -19,8 +20,8 @@ FREQUENCY = {
 }
 
 DEFAULT_AGGREGATE_SELECT = {
-    "past_freight_rate": "AVG(price)",
-    "current_freight_rate": "argMax(price, updated_at)",
+    "past_freight_rate": "AVG(standard_price)",
+    "current_freight_rate": "argMax(standard_price, updated_at)",
 }
 
 LOCATION_KEYS = ["origin_airport_id", "destination_airport_id"]
@@ -113,11 +114,11 @@ def change_currency(trends, filters):
 
     if (
         filters.get("currency")
-        and filters.get("currency") != Fcl.default_currency.value
+        and filters.get("currency") != Air.default_currency.value
     ):
         exchange_rate = common.get_exchange_rate(
             {
-                "from_currency": Fcl.default_currency.value,
+                "from_currency": Air.default_currency.value,
                 "to_currency": filters.get("currency"),
             }
         )

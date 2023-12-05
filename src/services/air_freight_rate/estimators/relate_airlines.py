@@ -33,9 +33,9 @@ class RelateAirline:
         air_freight_rates = jsonable_encoder(list(air_freight_rates.dicts()))
         return air_freight_rates
 
-    def get_bas_price_currency(self, invoice_rate):
+    def get_price_currency(self, invoice_rate):
         for line_item in invoice_rate["line_items"]:
-            if line_item["code"] == "BAS" and line_item["name"] == "Basic Air Freight" and line_item['unit']=='per_kg':
+            if line_item["name"] == "Basic Air Freight" and line_item['unit']=='per_kg':
                 return line_item["price"], line_item["currency"]
             return None, None
 
@@ -50,7 +50,7 @@ class RelateAirline:
         prime_airline_id = ""
         prime_airline_id_count =0 
         for invoice_rate in invoice_rates:
-            price, currency = self.get_bas_price_currency(invoice_rate)
+            price, currency = self.get_price_currency(invoice_rate)
             slab = self.get_weight_slab_for_invoice_rates(invoice_rate)
 
             if price:

@@ -46,7 +46,7 @@ class Shipment:
             if action is not None:
                 action_update_params = shipment_copy.copy()
                 action_update_params[
-                    AirFreightAction.bas_standard_price_accuracy.name
+                    AirFreightAction.standard_price_accuracy.name
                 ] = 100
                 self.__update(
                     action,

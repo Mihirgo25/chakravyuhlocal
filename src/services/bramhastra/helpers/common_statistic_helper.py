@@ -1,7 +1,7 @@
 from peewee import Model
 
 
-RATE_REQUIRED_FIELDS = {
+FCL_RATE_REQUIRED_FIELDS = {
     "id",
     "origin_port_id",
     "destination_port_id",
@@ -39,6 +39,34 @@ RATE_REQUIRED_FIELDS = {
 }
 
 
+AIR_RATE_REQUIRED_FIELDS = {
+    "id",
+    "origin_airport_id",
+    "destination_airport_id",
+    "origin_country_id",
+    "destination_country_id",
+    "origin_country_id",
+    "destination_country_id",
+    "origin_continent_id",
+    "destination_continent_id",
+    "origin_trade_id",
+    "destination_trade_id",
+    "qline_id",
+    "service_provider_id",
+    "validities",
+    "mode",
+    "commodity",
+    "commodity_type",
+    "commodity_subtype",
+    "cogo_entity_id",
+    "rate_type",
+    "tags",
+    "sourced_by_id",
+    "procured_by_id",
+    "created_at",
+    "updated_at",
+}
+
 def get_fcl_freight_identifier(rate_id, validity_id) -> str:
     return "".join([str(rate_id), str(validity_id)]).replace("-", "")
 
@@ -64,7 +92,7 @@ def create_fcl_freight_rate_statistic_fallback(rate_id, validity_id) -> Model:
 
     fcl_freight_rates = list_fcl_freight_rates(
         filters={"id": rate_id, "rate_type": "all"},
-        includes={k: 1 for k in RATE_REQUIRED_FIELDS},
+        includes={k: 1 for k in FCL_RATE_REQUIRED_FIELDS},
         pagination_data_required=False,
     ).get("list", [])
     if fcl_freight_rates:
@@ -107,7 +135,7 @@ def create_air_freight_rate_statistic_fallback(rate_id, validity_id) -> Model:
 
     air_freight_rates = list_air_freight_rates(
         filters={"id": rate_id, "rate_type": "all"},
-        includes={k: 1 for k in RATE_REQUIRED_FIELDS},
+        includes={k: 1 for k in AIR_RATE_REQUIRED_FIELDS},
         pagination_data_required=False,
     ).get("list", [])
     if air_freight_rates:

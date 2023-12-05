@@ -20,13 +20,13 @@ RATE_KEYS = {
 SELECTED_RATE_KEYS = {
     AirFreightAction.rate_id.name,
     AirFreightAction.validity_id.name,
-    # AirFreightAction.selected_air_freight_rate_statistic_id.name,
-    AirFreightAction.selected_bas_standard_price.name,
+    AirFreightAction.selected_air_freight_rate_statistic_id.name,
+    AirFreightAction.selected_standard_price.name,
 }
 
 STATISTICS_KEYS = {
-    AirFreightAction.bas_standard_price_accuracy.name,
-    AirFreightAction.bas_standard_price_diff_from_selected_rate.name,
+    AirFreightAction.standard_price_accuracy.name,
+    AirFreightAction.standard_price_diff_from_selected_rate.name,
 }
 
 
@@ -139,20 +139,20 @@ class RevenueDesk:
         for key in STATISTICS_KEYS:
             eval(f"self.set_{key}(key)")
 
-    def set_bas_standard_price_accuracy(self, key: str) -> None:
+    def set_standard_price_accuracy(self, key: str) -> None:
         self.original_rate_numerics[key] = (
             (
-                self.original_rate[AirFreightAction.bas_standard_price.name]
-                / (self.selected_rate[AirFreightAction.bas_standard_price.name] or 1)
+                self.original_rate[AirFreightAction.standard_price.name]
+                / (self.selected_rate[AirFreightAction.standard_price.name] or 1)
             )
             - 1
         ) * 100
         self.selected_rate_numerics[key] = 100
 
-    def set_bas_standard_price_diff_from_selected_rate(self, key: str) -> None:
+    def set_standard_price_diff_from_selected_rate(self, key: str) -> None:
         self.original_rate_numerics[key] = (
-            self.original_rate[AirFreightAction.bas_standard_price.name]
-            - self.selected_rate[AirFreightAction.bas_standard_price.name]
+            self.original_rate[AirFreightAction.standard_price.name]
+            - self.selected_rate[AirFreightAction.standard_price.name]
         )
 
     def set(self, request) -> None:
@@ -189,7 +189,7 @@ class RevenueDesk:
         if not (original_statistic or selected_statistic):
             return
         self.update_shipment(
-            request.shipment_Air_freight_service_id, selected_statistic
+            request.shipment_air_freight_service_id, selected_statistic
         )
         for key in RATE_KEYS:
             self.selected_rate[key] = getattr(selected_statistic, key)
@@ -200,7 +200,7 @@ class RevenueDesk:
                 AirFreightAction.selected_air_freight_rate_statistic_id.name: selected_statistic.id,
                 AirFreightAction.rate_id.name: selected_statistic.rate_id,
                 AirFreightAction.validity_id.name: selected_statistic.validity_id,
-                AirFreightAction.selected_bas_standard_price.name: selected_statistic.bas_standard_price,
+                AirFreightAction.selected_standard_price.name: selected_statistic.standard_price,
             }
         )
         self.update_foreign_reference(

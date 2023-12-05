@@ -1,10 +1,27 @@
 from services.bramhastra.client import ClickHouse
 from fastapi.encoders import jsonable_encoder
-from services.bramhastra.helpers.air_freight_filter_helper import (
-    get_direct_indirect_filters as get_direct_indirect_filters_for_rate,
-)
 from datetime import date, timedelta, datetime
 import math
+from services.bramhastra.models.air_freight_rate_statistic import (
+    AirFreightRateStatistic,
+)
+from services.bramhastra.models.air_freight_action import AirFreightAction
+from services.bramhastra.models.air_freight_rate_statistic import (
+    AirFreightRateStatistic,
+)
+from services.bramhastra.interactions.list_air_freight_rate_request_statistics import (
+    get_direct_indirect_filters as get_direct_indirect_filters_for_rate_request,
+)
+from services.bramhastra.config import LifeCycleConfig
+import concurrent.futures
+from services.bramhastra.enums import (
+    ShipmentState,
+    FeedbackType,
+    FeedbackState,
+    ShipmentServiceState,
+    RateRequestState,
+    RevenueDeskState,
+)
 
 POSSIBLE_DIRECT_FILTERS = {
     "origin_airport_id",
@@ -19,10 +36,10 @@ POSSIBLE_DIRECT_FILTERS = {
     "destination_region_id",
     "airline_id",
     "importer_exporter_id",
-    "container_size",
-    "commmodity_sub_type"
-    "container_type",
-    "commodity"
+    "commodity",
+    "commodity_type",
+    "commodity_subtype",
+    "rate_type",
 }
 
 POSSIBLE_INDIRECT_FILTERS = {}
@@ -33,16 +50,18 @@ REQUIRED_FILTERS = {
 }
 
 
-def get_direct_indirect_filters(filters):
+def get_direct_indirect_filters(filters, where):
     for k, v in REQUIRED_FILTERS.items():
         if k not in filters:
             filters[k] = v
-    where = []
-    get_date_range_filter(where)
+    get_date_range_filter(where, filters)
 
     for key, value in filters.items():
         if key in POSSIBLE_DIRECT_FILTERS and value:
-            where.append(f"{key} = %({key})s")
+            if isinstance(value, str):
+                where.append(f"{key} = %({key})s")
+            elif isinstance(value, list):
+                where.append(f"{key} IN %({key})s")
         if key in POSSIBLE_INDIRECT_FILTERS and value:
             eval(f"get_{key}_filter(where)")
 
@@ -50,98 +69,31 @@ def get_direct_indirect_filters(filters):
         return " AND ".join(where)
 
 
-def get_date_range_filter(where):
+def get_date_range_filter(where, filters):
     where.append(
-        "((" +
-        "updated_at <= %(end_date)s AND updated_at >= %(start_date)s) OR " +
-        "(created_at >= %(start_date)s AND created_at <= %(end_date)s))"
+        f" ((updated_at >= ('{filters['start_date']}') AND updated_at <= ('{filters['end_date']}')) OR (created_at >= ('{filters['start_date']}') AND created_at <= ('{filters['end_date']}')))"
     )
-
 
 
 def get_air_freight_rate_lifecycle(filters):
-    where = get_direct_indirect_filters_for_rate(filters)
+    where = []
+    get_direct_indirect_filters(filters, where)
 
-    search_to_book_statistics = get_search_to_book_and_feedback_statistics(
-        filters.copy(), where
+    lifecycle_statistics = get_lifecycle_statistics(filters, where)
+
+    graph = LifeCycleConfig(lifecycle_statistics).fill_flows()
+
+    return dict(
+        searches=lifecycle_statistics["spot_search_count"],
+        graph=graph,
     )
-
-    missing_rates_statistics = get_missing_rates(filters.copy(), where)
-
-    stale_rate_statistics = get_stale_rate_statistics(filters.copy(), where)
-
-    statistics = [
-        [
-            {
-                "action_type": "checkout",
-                "rates_count": search_to_book_statistics["checkout"],
-                "drop": search_to_book_statistics["checkout_percentage"],
-            },
-            {
-                "action_type": "booking_confirm",
-                "rates_count": search_to_book_statistics[
-                    "shipment_confirmed_by_service_provider"
-                ],
-                "drop": search_to_book_statistics["confirmed_booking_percentage"],
-            },
-            {
-                "action_type": "revenue_desk",
-                "rates_count": search_to_book_statistics["revenue_desk_visit"],
-                "drop": search_to_book_statistics["revenue_desk_visit_percentage"],
-            },
-            {
-                "action_type": "so1",
-                "rates_count": search_to_book_statistics["so1_visit"],
-                "drop": search_to_book_statistics["so1_visit_percentage"],
-            },
-        ],
-        [
-            {
-                "action_type": "missing_rates",
-                "rates_count": missing_rates_statistics["missing_rates"],
-                "drop": missing_rates_statistics["missing_rates_percentage"],
-            },
-            {
-                "action_type": "rates_triggered",
-                "rates_count": missing_rates_statistics["rate_reverted"],
-                "drop": 0
-                if math.isnan(missing_rates_statistics["rate_reverted_percentage"])
-                else missing_rates_statistics["rate_reverted_percentage"],
-            },
-        ],
-        [
-            {
-                "action_type": "disliked_rates",
-                "rates_count": search_to_book_statistics["dislikes"],
-                "drop": search_to_book_statistics["dislikes_percentage"],
-            },
-            {
-                "action_type": "feedback_received",
-                "rates_count": search_to_book_statistics["feedback_recieved"],
-                "drop": search_to_book_statistics["feedback_recieved_percentage"],
-            },
-            {
-                "action_type": "rates_reverted",
-                "rates_count": search_to_book_statistics["dislikes_rate_reverted"],
-                "drop": search_to_book_statistics["dislikes_rate_reverted_percentage"],
-            },
-        ],
-        [
-            {
-                "action_type": "stale_rates",
-                "rates_count": stale_rate_statistics["stale_rates"],
-            },
-        ],
-    ]
-
-    return dict(searches=search_to_book_statistics["spot_search"], cards=statistics)
 
 
 def get_stale_rate_statistics(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT count(id) as stale_rates FROM brahmastra.air_freight_rate_statistics WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""
+        f"""SELECT count(DISTINCT rate_id) as idle_rates FROM brahmastra.{AirFreightRateStatistic._meta.table_name} WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""
     ]
 
     if where:
@@ -152,64 +104,224 @@ def get_stale_rate_statistics(filters, where):
         return charts[0]
 
 
-def get_missing_rates(filters, rate_where):
-    clickhouse = ClickHouse()
+def get_lifecycle_statistics(filters, where):
+    # Business
+    spot_search_count = [distict_id_query("spot_search")]
 
-    where = get_direct_indirect_filters(filters)
+    checkout_count = [non_zero_distinct_id_query("checkout")]
 
-    query1 = [
-        """WITH spot_search AS (SELECT SUM(spot_search_count) AS count FROM brahmastra.air_freight_rate_statistics"""
+    shipments_received = [shipment_query(ShipmentState.shipment_received.name, "=")]
+    shipments_confirmed_by_importer_exporter = [
+        shipment_query(ShipmentState.confirmed_by_importer_exporter.name, "=")
+    ]
+    shipments_completed = [shipment_query(ShipmentState.completed.name, "=")]
+    shipments_cancelled = [shipment_query(ShipmentState.cancelled.name, "=")]
+    shipments_aborted = [shipment_query(ShipmentState.aborted.name, "=")]
+
+    revenue_desk_visited = [revenue_desk_query(RevenueDeskState.visited.name, "=")]
+    revenue_desk_selected_for_booking = [
+        revenue_desk_query(RevenueDeskState.selected_for_booking.name, "=")
     ]
 
-    query2 = [
-        """),missing_rates AS (SELECT count(id) AS count FROM brahmastra.air_freight_rate_request_statistics WHERE source = 'spot_search'"""
-    ]
-    query3 = [
-        """),rate_reverted AS (SELECT count(id) AS count FROM brahmastra.air_freight_rate_request_statistics WHERE is_rate_reverted = true """
-    ]
+    # Feedback
+    feedbacks_created = [feedback_query(FeedbackState.created.name, "=")]
+    feedbacks_closed = [feedback_query(FeedbackState.closed.name, ">=")]
+    feedbacks_rate_added = [feedback_query(FeedbackState.rate_added.name, "=")]
 
-    query4 = """) SELECT missing_rates.count as missing_rates,(1-missing_rates/spot_search.count)*100 as missing_rates_percentage,rate_reverted.count as rate_reverted,(1 - rate_reverted.count/missing_rates)*100 as rate_reverted_percentage FROM missing_rates, rate_reverted, spot_search"""
+    disliked = [count_boolean_query(FeedbackType.disliked.name)]
+    liked = [count_boolean_query(FeedbackType.liked.name)]
 
-    if where:
-        query1.append(f"WHERE {rate_where}")
-        query2.append(f"AND {where}")
-        query3.append(f"AND {where}")
-
-    if missing_rates := jsonable_encoder(
-        clickhouse.execute(
-            "".join([" ".join(query1), " ".join(query2), " ".join(query3), query4]),
-            filters,
-        )
-    ):
-        return missing_rates[0]
-
-
-def get_search_to_book_and_feedback_statistics(filters, where):
-    clickhouse = ClickHouse()
-    queries = [
-        """SELECT
-            SUM(spot_search_count) AS spot_search,
-            SUM(checkout_count) AS checkout,
-            FLOOR((1 - SUM(checkout_count) / COALESCE(NULLIF(spot_search, 0), 1), 2) * 100) AS checkout_percentage,
-            SUM(shipment_confirmed_by_service_provider_count) AS shipment_confirmed_by_service_provider,
-            FLOOR((1 - SUM(shipment_confirmed_by_service_provider_count) / COALESCE(NULLIF(checkout, 0), 1), 2) * 100) AS confirmed_booking_percentage,
-            SUM(revenue_desk_visit_count) AS revenue_desk_visit,
-            FLOOR((1 - SUM(revenue_desk_visit_count) / COALESCE(NULLIF(SUM(shipment_confirmed_by_service_provider_count), 0), 1), 2) * 100) AS revenue_desk_visit_percentage,
-            SUM(so1_visit_count) AS so1_visit,
-            FLOOR((1 - SUM(so1_visit_count) / COALESCE(NULLIF(revenue_desk_visit, 0), 1), 2) * 100) AS so1_visit_percentage,
-            SUM(dislikes_count) AS dislikes,
-            FLOOR((1 - SUM(dislikes_count) / COALESCE(NULLIF(spot_search, 0), 1), 2) * 100) AS dislikes_percentage,
-            SUM(feedback_received_count) AS feedback_received,
-            FLOOR((1 - SUM(feedback_received_count) / COALESCE(NULLIF(dislikes, 0), 1), 2) * 100) AS feedback_received_percentage,
-            SUM(dislikes_rate_reverted_count) AS dislikes_rate_reverted,
-            FLOOR((1 - SUM(dislikes_rate_reverted_count) / COALESCE(NULLIF(feedback_received, 0), 1), 2) * 100) AS dislikes_rate_reverted_percentage
-        FROM brahmastra.air_freight_rate_statistics;
+    rates_source_disliked = [
+        f"""
+        SELECT COUNT(DISTINCT rate_id) AS rates_source_disliked FROM brahmastra.{AirFreightRateStatistic._meta.table_name} WHERE source = 'disliked_rate'
         """
     ]
+    rate_requests_created = [rate_request_query(RateRequestState.created.name, "=")]
+    rate_requests_closed = [rate_request_query(RateRequestState.closed.name, ">=")]
+    rate_requests_rate_added = [
+        rate_request_query(RateRequestState.rate_added.name, "=")
+    ]
 
+    variables = [
+        spot_search_count,
+        feedbacks_created,
+        checkout_count,
+        shipments_received,
+        shipments_confirmed_by_importer_exporter,
+        shipments_completed,
+        shipments_cancelled,
+        shipments_aborted,
+        revenue_desk_visited,
+        revenue_desk_selected_for_booking,
+        disliked,
+        feedbacks_closed,
+        rates_source_disliked,
+        feedbacks_rate_added,
+        liked,
+        rate_requests_created,
+        rate_requests_closed,
+        rate_requests_rate_added,
+    ]
     if where:
-        queries.append(" WHERE ")
-        queries.append(where)
+        query = " AND ".join(where)
+        for var in variables:
+            if "where" in " ".join(var).lower():
+                var.append(f" AND {query} ")
+            else:
+                var.append(f" WHERE {query} ")
 
-    if charts := jsonable_encoder(clickhouse.execute(" ".join(queries), filters)):
-        return charts[0]
+    missing_rates_filter = filters.copy()
+
+    missing_rates_where = get_direct_indirect_filters_for_rate_request(
+        missing_rates_filter
+    )
+
+    if missing_rates_where:
+        rate_requests_created.append(f"AND {missing_rates_where}")
+
+    results = []
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = []
+        for var in variables:
+            futures.append(
+                executor.submit(ClickHouse().execute, " ".join(var), filters)
+            )
+
+    for i in range(0, len(futures)):
+        results.append(futures[i].result()[0])
+    result = {}
+    for count in results:
+        result.update(count)
+
+    lifecycle_statistics = {
+        # buisness flow
+        "spot_search_count": result["spot_search_count"],
+        "checkout_count": result["checkout_count"],
+        "checkout_dropoff": calculate_dropoff(
+            result["checkout_count"], result["spot_search_count"]
+        ),
+        "shipments_received": result["shipments_shipment_received"],
+        "shipment_dropoff": calculate_dropoff(
+            result["shipments_shipment_received"], result["checkout_count"]
+        ),
+        "confirmed_count": result["shipments_confirmed_by_importer_exporter"],
+        "confirmed_dropoff": calculate_dropoff(
+            result["shipments_confirmed_by_importer_exporter"],
+            result["shipments_shipment_received"],
+        ),
+        "completed_count": result["shipments_completed"],
+        "completed_dropoff": calculate_dropoff(
+            result["shipments_completed"],
+            result["shipments_confirmed_by_importer_exporter"],
+        ),
+        "aborted_count": result["shipments_aborted"],
+        "aborted_dropoff": calculate_dropoff(
+            result["shipments_aborted"],
+            result["shipments_confirmed_by_importer_exporter"],
+        ),
+        "cancelled_count": result["shipments_cancelled"],
+        "cancelled_dropoff": calculate_dropoff(
+            result["shipments_cancelled"],
+            result["shipments_confirmed_by_importer_exporter"],
+        ),
+        "revenue_desk_count": result["revenue_desk_visited"],
+        "revenue_desk_dropoff": calculate_dropoff(
+            result["revenue_desk_visited"],
+            result["shipments_confirmed_by_importer_exporter"],
+        ),
+        "so1_count": result["revenue_desk_selected_for_booking"],
+        "so1_dropoff": calculate_dropoff(
+            result["revenue_desk_selected_for_booking"],
+            result["revenue_desk_visited"],
+        ),
+        # Feedback
+        "feedbacks_created_count": result["feedbacks_created"],
+        "feedbacks_created_dropoff": calculate_dropoff(
+            result["feedbacks_created"], result["spot_search_count"]
+        ),
+        "disliked_count": result["disliked_count"],
+        "disliked_dropoff": calculate_dropoff(
+            result["disliked_count"], result["feedbacks_created"]
+        ),
+        "liked_count": result["liked_count"],
+        "liked_dropoff": calculate_dropoff(
+            result["liked_count"], result["spot_search_count"]
+        ),
+        "feedback_closed_count": result["feedbacks_closed"],
+        "feedback_closed_dropoff": calculate_dropoff(
+            result["feedbacks_closed"], result["disliked_count"]
+        ),
+        "rates_source_disliked_count": result["rates_source_disliked"],
+        "feedbacks_with_rate_added": result["feedbacks_rate_added"],
+        "feedbacks_with_rate_added_dropoff": calculate_dropoff(
+            result["feedbacks_rate_added"], result["feedbacks_closed"]
+        ),
+        # rate requests
+        "rates_requested_count": result["rate_requests_created"],
+        "rates_requested_dropoff": calculate_dropoff(
+            result["rate_requests_created"], result["spot_search_count"]
+        ),
+        "requests_closed_count": result["rate_requests_closed"],
+        "requests_closed_dropoff": calculate_dropoff(
+            result["rate_requests_closed"], result["rate_requests_created"]
+        ),
+        "rates_reverted_count": result["rate_requests_rate_added"],
+        "rates_reverted_dropoff": calculate_dropoff(
+            result["rate_requests_rate_added"], result["rate_requests_closed"]
+        ),
+    }
+    return lifecycle_statistics
+
+
+def filter_out_of_range_value(val):
+    if math.isinf(val) or math.isnan(val):
+        return 0
+    return val
+
+
+def distict_id_query(column):
+    return f"""
+        SELECT COUNT(DISTINCT {column}_id) AS {column}_count FROM brahmastra.{AirFreightAction._meta.table_name}
+        """
+
+
+def non_zero_distinct_id_query(column):
+    return f"""
+        {distict_id_query(column)} WHERE {column} > 0
+        """
+
+
+def revenue_desk_query(column, comparator):
+    return f"""
+        SELECT COUNT(DISTINCT shipment_id) AS revenue_desk_{column} FROM brahmastra.{AirFreightAction._meta.table_name} WHERE revenue_desk_state {comparator} '{column}'
+        """
+
+
+def count_boolean_query(column):
+    return f"""
+    SELECT COUNT(DISTINCT id) AS {column}_count FROM brahmastra.{AirFreightAction._meta.table_name} WHERE feedback_type = '{column}'
+    """
+
+
+def shipment_query(column, comparator):
+    return f"""
+    SELECT COUNT(DISTINCT shipment_id) AS shipments_{column} FROM brahmastra.{AirFreightAction._meta.table_name} WHERE shipment_state {comparator} '{column}'
+    """
+
+
+def rate_request_query(column, comparator):
+    return f"""
+    SELECT COUNT(DISTINCT id) AS rate_requests_{column} FROM brahmastra.{AirFreightAction._meta.table_name} WHERE rate_request_state {comparator} '{column}'
+    """
+
+
+def feedback_query(column, comparator):
+    return f"""
+    SELECT COUNT(DISTINCT rate_id) AS feedbacks_{column} FROM brahmastra.{AirFreightAction._meta.table_name} WHERE feedback_state {comparator} '{column}'
+    """
+
+
+def calculate_dropoff(numerator, denominator):
+    if (numerator - denominator) != 0:
+        return round((1 - (numerator / (denominator or 1))) * 100, 2)
+    return 0

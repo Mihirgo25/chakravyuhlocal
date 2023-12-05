@@ -418,7 +418,6 @@ def list_air_freight_rate_statistics_api(
     page_limit: int = 10,
     page: int = 1,
     is_service_object_required: bool = True,
-    pagination_data_required: bool = False,
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
@@ -430,8 +429,7 @@ def list_air_freight_rate_statistics_api(
             filters,
             page_limit,
             page,
-            is_service_object_required,
-            pagination_data_required,
+            is_service_object_required
         )
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
@@ -977,6 +975,8 @@ def get_air_freight_map_view_statistics_api(
     filters: Annotated[Json, Query()] = {
         "origin": {"type": "country", "id": INDIAN_LOCATION_ID}
     },
+    sort_by: str = None,
+    sort_type: str = None,
     page_limit: int = 30,
     page: int = 1,
     auth_response: dict = Depends(authorize_token),
@@ -988,7 +988,7 @@ def get_air_freight_map_view_statistics_api(
 
     try:
         response = get_air_freight_map_view_statistics(
-            filters, page_limit, page
+            filters,sort_by, sort_type, page_limit, page
         )
         return JSONResponse(status_code=200, content=response)
     except HTTPException as e:

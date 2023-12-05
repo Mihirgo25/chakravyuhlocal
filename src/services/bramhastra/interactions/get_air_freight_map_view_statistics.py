@@ -1,45 +1,82 @@
 from services.bramhastra.client import ClickHouse
-from services.bramhastra.helpers.air_freight_filter_helper import get_direct_indirect_filters
+from services.bramhastra.helpers.air_freight_filter_helper import (
+    get_direct_indirect_filters,
+)
 from fastapi.encoders import jsonable_encoder
 from math import ceil
 from micro_services.client import maps
+from services.bramhastra.enums import AirFilterTypes
+from services.bramhastra.constants import AGGREGATE_FILTER_MAPPING
+from services.bramhastra.models.air_freight_action import AirFreightAction
+from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 
-HEIRARCHY = ["continent", "country", "region", "port"]
+HEIRARCHY = ["continent", "country", "airport"]
 
 LOCATION_KEYS = {
     "destination_airport_id",
     "destination_country_id",
     "destination_continent_id",
-    "destination_region_id",
 }
 
-def get_air_freight_map_view_statistics(filters, page_limit, page):
+DEFAULT_AGGREGATE_SELECT = {"count": "average_standard_price"}
+
+
+def get_air_freight_map_view_statistics(filters, sort_by, sort_type, page_limit, page):
     clickhouse = ClickHouse()
+
+    select_aggregate = []
+    is_active_rate_query = False
+    for alias, agg_key in filters.get(
+        "select_aggregate", DEFAULT_AGGREGATE_SELECT
+    ).items():
+        if agg_key == 'active_rate_count':
+            is_active_rate_query = True
+        if agg_key not in AGGREGATE_FILTER_MAPPING:
+            continue
+        select_aggregate.append(
+            f"{AGGREGATE_FILTER_MAPPING[agg_key]['method']} AS {alias}"
+        )
+    select_aggregate = ",".join(select_aggregate)
 
     grouping = set()
 
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},floor(abs(AVG(accuracy)),2) as accuracy,count(rate_id) as total_rates FROM brahmastra.air_freight_rate_statistics'
+        f'SELECT {",".join(grouping)}, {select_aggregate} FROM brahmastra.{AirFreightAction._meta.table_name}'
     ]
 
-    if where := get_direct_indirect_filters(filters):
-        queries.append(" WHERE ")
+    if is_active_rate_query:
+        queries = [
+            f'''
+                SELECT {",".join(grouping)}, COUNT(distinct rate_id) AS count 
+                FROM brahmastra.{AirFreightRateStatistic._meta.table_name}
+                WHERE is_deleted = false AND sign = 1 AND
+            ''' 
+        ]
+
+    if where := get_direct_indirect_filters(
+        filters, date=AirFilterTypes.time_series.value
+    ):
+        if not is_active_rate_query:
+            queries.append(" WHERE ")
         queries.append(where)
 
-    get_add_group_and_order_by(queries, grouping)
+    filters.pop("select_aggregate", None)
+
+    add_group_by_and_order_by(queries, grouping, sort_by, sort_type)
 
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
     )
-    
+
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
-    
-    add_location_objects(statistics)
+
+    if statistics:
+        add_location_objects(statistics)
 
     return dict(
-        list = statistics,
+        list=statistics,
         page=page,
         page_limit=page_limit,
         total_pages=total_pages,
@@ -47,10 +84,11 @@ def get_air_freight_map_view_statistics(filters, page_limit, page):
     )
 
 
-def get_add_group_and_order_by(queries, grouping):
+def add_group_by_and_order_by(queries, grouping, sort_by, sort_type):
     queries.append("GROUP BY")
     queries.append(",".join(grouping))
-    queries.append("HAVING sum(sign) > 0 ORDER BY accuracy DESC")
+    if sort_by and sort_type:
+        queries.append(f"ORDER BY {sort_by} {sort_type}")
 
 
 def alter_filters_for_map_view(filters, grouping):
@@ -85,31 +123,50 @@ def add_pagination_data(clickhouse, queries, filters, page, page_limit):
 
 
 def add_location_objects(statistics):
-    
-    location_ids = list({v for statistic in statistics for k, v in statistic.items() if k in LOCATION_KEYS})
-    
+    location_ids = list(
+        {
+            v
+            for statistic in statistics
+            for k, v in statistic.items()
+            if k in LOCATION_KEYS
+        }
+    )
+
     if not location_ids:
         return
-    
+
     locations = {
         location["id"]: location
         for location in maps.list_locations(
             dict(
                 filters=dict(id=location_ids),
-                includes=dict(id=True, name=True,type = True,latitude = True,longitude = True),
+                includes=dict(
+                    id=True, name=True, type=True, latitude=True, longitude=True
+                ),
                 page_limit=len(location_ids),
             )
         )["list"]
     }
 
-    for statistic in statistics:
+    indices_to_remove = set()
+
+    for index, statistic in enumerate(statistics):
         update_statistic = dict()
         remove = None
+        if not statistic:
+            continue
         for k, v in statistic.items():
             if k in LOCATION_KEYS:
                 remove = k
                 location = locations.get(v)
-                for key,value in location.items():
+                if location is None:
+                    if k == "destination_region_id":
+                        indices_to_remove.add(index)
+                    continue
+                for key, value in location.items():
                     update_statistic[f"{k[:12]}{key}"] = value
         statistic.pop(remove)
         statistic.update(update_statistic)
+
+    for index in indices_to_remove:
+        del statistics[index]

@@ -9,7 +9,7 @@ from services.bramhastra.models.air_freight_rate_statistic import (
 
 ALLOWED_TIME_PERIOD = 6
 
-DEFAULT_AGGREGATE_SELECT = {"price": "AVG(abs(price))"}
+DEFAULT_AGGREGATE_SELECT = {"standard_price": "AVG(abs(standard_price))"}
 
 FREQUENCY_FUNCS = {"Month": "toYYYYMM", "Week": "toISOWeek"}
 
@@ -54,7 +54,7 @@ def generate_queries(filters, where):
 
 def get_query(time_unit, details, where):
     query = [
-        f"""SELECT {FREQUENCY_FUNCS.get(time_unit)}(rate_created_at) AS {time_unit},AVG(price) AS average_price FROM brahmastra.{AirFreightRateStatistic._meta.table_name} WHERE is_deleted = false"""
+        f"""SELECT {FREQUENCY_FUNCS.get(time_unit)}(rate_created_at) AS {time_unit},AVG(standard_price) AS average_standard_price FROM brahmastra.{AirFreightRateStatistic._meta.table_name} WHERE is_deleted = false"""
     ]
     if where:
         query.append(f"AND {where}")

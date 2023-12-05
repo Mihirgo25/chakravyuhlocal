@@ -229,3 +229,13 @@ class AirFeedbackClosingRemarks(Bramhastra):
 class AirFeedbackStatus(Bramhastra):
     active = "active"
     inactive = "inactive"
+
+class AirFilterTypes(Bramhastra):
+    validity_range = "validity_range"
+    time_series = "time_series"
+
+class AirParentMode(Bramhastra):
+    supply = "supply"
+    rate_extension = "rate_extension"
+    predicted = "predicted"
+    cluster_extension = "cluster_extension"

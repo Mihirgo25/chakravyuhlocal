@@ -26,6 +26,8 @@ EXCLUDE_UPDATE_KEYS = {
     AirFreightRateRequestStatistic.origin_pricing_zone_map_id.name,
     AirFreightRateRequestStatistic.destination_pricing_zone_map_id.name,
     AirFreightRateRequestStatistic.commodity.name,
+    AirFreightRateRequestStatistic.commodity_type.name,
+    AirFreightRateRequestStatistic.commodity_subtype.name,
 }
 
 
@@ -79,8 +81,8 @@ class Request:
 
     def set_pricing_map_zone_ids(self) -> list:
         ids = [
-            self.params.get("origin_port_id"),
-            self.params.get("destination_port_id"),
+            self.params.get("origin_airport_id"),
+            self.params.get("destination_airport_id"),
         ]
         query = (
             AirFreightLocationCluster.select(

@@ -523,5 +523,5 @@ CREATE TABLE brahmastra.air_freight_rate_statistics_temp
     is_deleted Bool DEFAULT false
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (is_deleted,container_size ,origin_country_id,origin_port_id,shipping_line_id,rate_id,validity_id, id, tag, price, bas_standard_price, version)
-ORDER BY (is_deleted,container_size ,origin_country_id,origin_port_id,shipping_line_id,rate_id,validity_id, id, tag, price, bas_standard_price, version);
+PRIMARY KEY (is_deleted,container_size ,origin_country_id,origin_port_id,shipping_line_id,rate_id,validity_id, id, tag, price, standard_price, version)
+ORDER BY (is_deleted,container_size ,origin_country_id,origin_port_id,shipping_line_id,rate_id,validity_id, id, tag, price, standard_price, version);
