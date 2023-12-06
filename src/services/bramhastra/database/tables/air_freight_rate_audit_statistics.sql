@@ -31,8 +31,10 @@ CREATE TABLE IF NOT EXISTS brahmastra.air_freight_rate_audit_statistics
     sourced_by_id UUID,
     procured_by_id UUID ,
     original_price Float32 DEFAULT 0,  
-    standard_price Float32 DEFAULT 0 
+    standard_price Float32 DEFAULT 0,
+    sign Int8 DEFAULT 1,
+    version Int8 DEFAULT 1
 )
-ENGINE = MergeTree()
+ENGINE = MergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,origin_country_id,origin_airport_id,airline_id)
 ORDER BY (origin_continent_id,origin_country_id,origin_airport_id,airline_id,standard_price);
