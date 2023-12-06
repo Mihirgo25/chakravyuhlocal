@@ -11,13 +11,17 @@ class BaseModel(Model):
 
 class CheckoutAirFreightRateStatistic(BaseModel):
     id = BigAutoField()
-    spot_search_id = UUIDField()
+    air_freight_rate_statistic_id = UUIDField()
+    source = CharField(index = True)
+    source_id = UUIDField(index = True)
     checkout_id = UUIDField()
     checkout_air_freight_rate_services_id = UUIDField(null=True)
     validity_id = UUIDField()
     rate_id = UUIDField()
     sell_quotation_id = UUIDField(null=True)
     buy_quotation_id = UUIDField(null=True)
+    rate_id = UUIDField(index = True)
+    currency = CharField(null=True)
     shipment_id = UUIDField(null=True)
     created_at = DateTimeTZField(default = datetime.utcnow())
     updated_at = DateTimeTZField(default = datetime.utcnow())
