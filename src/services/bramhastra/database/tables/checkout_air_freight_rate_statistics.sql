@@ -18,7 +18,9 @@ CREATE TABLE brahmastra.checkout_air_freight_rate_statistics
     importer_exporter_id UUID,
     status FixedString(10) DEFAULT 'active',
     sign Int8 DEFAULT 1,
-    version UInt64 DEFAULT 1
+    version UInt64 DEFAULT 1,
+    c_at DateTime DEFAULT now(),
+    u_at DateTime DEFAULT now()
 )
 
 ENGINE = VersionedCollapsingMergeTree(sign, version)

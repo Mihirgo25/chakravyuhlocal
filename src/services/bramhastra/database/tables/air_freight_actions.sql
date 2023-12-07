@@ -62,7 +62,7 @@ CREATE MATERIALIZED VIEW brahmastra.air_freight_before_action TO brahmastra.air_
     `operation_created_at` DateTime,
     `operation_updated_at` DateTime,
     `sign` Int8 DEFAULT 1,
-    `version` Int8 DEFAULT 1,
+    `version` UInt64 DEFAULT 1,
 ) AS
 SELECT
     JSONExtractInt(data, 'before', 'id') AS id,
@@ -183,7 +183,7 @@ CREATE MATERIALIZED VIEW brahmastra.air_freight_after_action TO brahmastra.air_f
     `operation_created_at` DateTime,
     `operation_updated_at` DateTime,
     `sign` Int8 DEFAULT 1,
-    `version` Int8 DEFAULT 1,
+    `version` UInt64 DEFAULT 1,
 ) AS
 SELECT
     JSONExtractInt(data, 'before', 'id') AS id,
@@ -302,6 +302,6 @@ CREAE TABLE brahmastra.air_freight_action
     operation_created_at DateTime,
     operation_updated_at DateTime,
     sign Int8 DEFAULT 1,
-    version Int8 DEFAULT 1,
+    version UInt64 DEFAULT 1,
 )ENGIE = MergeTree(sign, version)
 ORDE BY (container_size, origin_continent_id, origin_country_id, origin_airport_id, rate_id, validity_id);

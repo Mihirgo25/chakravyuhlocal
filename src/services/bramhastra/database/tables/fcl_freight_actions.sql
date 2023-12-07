@@ -277,7 +277,7 @@ CREATE MATERIALIZED VIEW brahmastra.fcl_freight_after_actions TO brahmastra.fcl_
     `operation_created_at` DateTime,
     `operation_updated_at` DateTime,
     `sign` Int8 DEFAULT 1,
-    `version` UInt8 DEFAULT 1
+    `version` UInt64 DEFAULT 1
 ) AS
     SELECT
     JSONExtractInt(data, 'after', 'id') AS id,

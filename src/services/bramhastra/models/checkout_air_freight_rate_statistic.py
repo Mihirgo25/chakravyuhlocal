@@ -28,6 +28,8 @@ class CheckoutAirFreightRateStatistic(BaseModel):
     status = CharField(default = 'active')
     sign = IntegerField(default=1)
     version = IntegerField(default=1)
+    c_at = DateTimeTZField(default=datetime.utcnow())
+    u_at = DateTimeTZField(default=datetime.utcnow())
 
     class Meta:
         table_name = "checkout_air_freight_rate_statistics"
