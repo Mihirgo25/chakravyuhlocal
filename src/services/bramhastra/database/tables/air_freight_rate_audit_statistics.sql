@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS brahmastra.air_freight_rate_audit_statistics
+CREATE TABLE brahmastra.air_freight_rate_audit_statistics
 (
     id UInt256,
     rate_id UUID,

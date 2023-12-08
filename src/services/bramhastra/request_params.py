@@ -470,7 +470,7 @@ class ApplyRevenueDeskFclFreightStatistics(BaseModel):
 
 class ApplyRevenueDeskAirFreightStatistics(BaseModel):
     shipment_id: str = None
-    shipment_air_freight_service_id: str = None
+    shipment_service_id: str = None
     rate_id: str = None
     validities: list[str] = None
     selected_for_booking: FclSelectedForBooking = None

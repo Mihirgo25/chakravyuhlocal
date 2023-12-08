@@ -66,7 +66,7 @@ class RevenueDesk:
                 AirFreightAction.select()
                 .where(
                     AirFreightAction.shipment_service_id
-                    == request.shipment_air_freight_service_id
+                    == request.shipment_service_id
                 )
                 .first()
             )
@@ -123,7 +123,7 @@ class RevenueDesk:
             AirFreightAction.select()
             .where(
                 AirFreightAction.shipment_service_id
-                == request.shipment_air_freight_service_id
+                == request.shipment_service_id
             )
             .first()
         )
@@ -172,7 +172,7 @@ class RevenueDesk:
             AirFreightAction.select()
             .where(
                 AirFreightAction.shipment_service_id
-                == request.shipment_air_freight_service_id
+                == request.shipment_service_id
             )
             .first()
         )
@@ -189,7 +189,7 @@ class RevenueDesk:
         if not (original_statistic or selected_statistic):
             return
         self.update_shipment(
-            request.shipment_air_freight_service_id, selected_statistic
+            request.shipment_service_id, selected_statistic
         )
         for key in RATE_KEYS:
             self.selected_rate[key] = getattr(selected_statistic, key)

@@ -1,4 +1,4 @@
-CREATE TABLE brahmastra.shipment_air_freight_rate_statistics
+CREATE TABLE brahmastra.shipment_air_freight_rate_statistic
 (
     id UInt256,
     air_freight_rate_statistic_id UInt256,
@@ -9,8 +9,9 @@ CREATE TABLE brahmastra.shipment_air_freight_rate_statistics
     shipment_source FixedString(256),
     containers_count Int32,
     cargo_weight_per_container Float32,
+    buy_quotation_id UUID,
+    sell_quotation_id UUID,
     shipment_state FixedString(256),
-    shipment_service_id UUID,
     shipment_cancelled Int32,
     shipment_cancellation_reason String,
     shipment_completed Int32,
@@ -21,6 +22,7 @@ CREATE TABLE brahmastra.shipment_air_freight_rate_statistics
     shipment_source_id UUID,
     shipment_created_at DateTime DEFAULT now(),
     shipment_updated_at DateTime DEFAULT now(),
+    shipment_service_id UUID,
     shipment_service_state FixedString(256),
     shipment_service_is_active FixedString(256),
     shipment_service_created_at DateTime DEFAULT now(),
@@ -37,7 +39,7 @@ PRIMARY KEY (id)
 ORDER BY (rate_id,id);
 
 
-CREATE TABLE brahmastra.stale_shipment_air_freight_rate_statistics
+CREATE TABLE brahmastra.stale_shipment_air_freight_rate_statistic
 (
     id UInt256,
     air_freight_rate_statistic_id UInt256,
@@ -48,8 +50,9 @@ CREATE TABLE brahmastra.stale_shipment_air_freight_rate_statistics
     shipment_source FixedString(256),
     containers_count Int32,
     cargo_weight_per_container Float32,
+    buy_quotation_id UUID,
+    sell_quotation_id UUID,
     shipment_state FixedString(256),
-    shipment_service_id UUID,
     shipment_cancelled Int32,
     shipment_cancellation_reason String,
     shipment_completed Int32,
@@ -60,6 +63,7 @@ CREATE TABLE brahmastra.stale_shipment_air_freight_rate_statistics
     shipment_source_id UUID,
     shipment_created_at DateTime DEFAULT now(),
     shipment_updated_at DateTime DEFAULT now(),
+    shipment_service_id UUID,
     shipment_service_state FixedString(256),
     shipment_service_is_active FixedString(256),
     shipment_service_created_at DateTime DEFAULT now(),

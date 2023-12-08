@@ -61,8 +61,8 @@ class Quotations:
                 ShipmentAirFreightRateStatistic.shipment_id == find.get("shipment_id"),
                 ShipmentAirFreightRateStatistic.buy_quotation_id
                 == find.get("buy_quotation_id"),
-                ShipmentAirFreightRateStatistic.shipment_air_freight_service_id
-                == find.get("shipment_air_freight_service_id"),
+                ShipmentAirFreightRateStatistic.shipment_service_id
+                == find.get("shipment_service_id"),
             )
             .first()
         )
@@ -101,7 +101,7 @@ class Statistics:
                 }
             ).get("price")
 
-            self.set_current_rate(param.get("shipment_air_freight_service_id"))
+            self.set_current_rate(param.get("shipment_service_id"))
 
             if (
                 self.rate["validity_id"] == self.original_booked_rate["validity_id"]

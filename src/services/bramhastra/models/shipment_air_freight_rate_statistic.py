@@ -22,7 +22,6 @@ class ShipmentAirFreightRateStatistic(BaseModel):
     cargo_weight_per_container = FloatField()
     buy_quotation_id = UUIDField()
     sell_quotation_id = UUIDField()
-    shipment_air_freight_service_id = UUIDField()
     shipment_state = CharField()
     shipment_cancelled = IntegerField()
     shipment_cancellation_reason = TextField()
@@ -46,4 +45,4 @@ class ShipmentAirFreightRateStatistic(BaseModel):
     operation_updated_at = DateTimeTZField(default=datetime.utcnow())
 
     class Meta:
-        table_name = "shipment_air_freight_rate_services_statistics"
+        table_name = "shipment_air_freight_rate_statistics"

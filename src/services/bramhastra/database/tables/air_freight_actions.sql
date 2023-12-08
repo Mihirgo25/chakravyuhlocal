@@ -1,4 +1,5 @@
 CREATE TABLE brahmastra.kafka_air_freight_action
+(
     `data` String
 )
 ENGINE = Kafka('127.0.0.1:29092', 'arc.public.air_freight_actions', '001','JSONAsString');
@@ -66,8 +67,8 @@ CREATE MATERIALIZED VIEW brahmastra.air_freight_before_action TO brahmastra.air_
 ) AS
 SELECT
     JSONExtractInt(data, 'before', 'id') AS id,
-    JSONExtractString(data, 'before', 'origin_airport_id') AS origin_port_id,
-    JSONExtractString(data, 'before', 'destination_airport_id') AS destination_port_id,
+    JSONExtractString(data, 'before', 'origin_airport_id') AS origin_airport_id,
+    JSONExtractString(data, 'before', 'destination_airport_id') AS destination_airport_id,
     JSONExtractString(data, 'before', 'origin_country_id') AS origin_country_id,
     JSONExtractString(data, 'before', 'destination_country_id') AS destination_country_id,
     JSONExtractString(data, 'before', 'origin_continent_id') AS origin_continent_id,
@@ -187,8 +188,8 @@ CREATE MATERIALIZED VIEW brahmastra.air_freight_after_action TO brahmastra.air_f
 ) AS
 SELECT
     JSONExtractInt(data, 'before', 'id') AS id,
-    JSONExtractString(data, 'before', 'origin_airport_id') AS origin_port_id,
-    JSONExtractString(data, 'before', 'destination_airport_id') AS destination_port_id,
+    JSONExtractString(data, 'before', 'origin_airport_id') AS origin_airport_id,
+    JSONExtractString(data, 'before', 'destination_airport_id') AS destination_airport_id,
     JSONExtractString(data, 'before', 'origin_country_id') AS origin_country_id,
     JSONExtractString(data, 'before', 'destination_country_id') AS destination_country_id,
     JSONExtractString(data, 'before', 'origin_continent_id') AS origin_continent_id,
