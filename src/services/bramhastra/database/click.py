@@ -120,13 +120,13 @@ class Click:
             dictionary().drop()
 
 
-from services.bramhastra.models.air_freight_action import AirFreightAction
-from services.bramhastra.models.air_freight_rate_audit_statistic import AirFreightRateAuditStatistic
-from services.bramhastra.models.air_freight_rate_request_statistics import AirFreightRateRequestStatistic
-from services.bramhastra.models.checkout_air_freight_rate_statistic import CheckoutAirFreightRateStatistic
-from services.bramhastra.models.feedback_air_freight_rate_statistic import FeedbackAirFreightRateStatistic
-from services.bramhastra.models.shipment_air_freight_rate_statistic import ShipmentAirFreightRateStatistic
-from services.bramhastra.models.spot_search_air_freight_rate_statistic import SpotSearchAirFreightRateStatistic
-models = [AirFreightRateRequestStatistic]
-click = Click()
-click.create_tables(models)
+# from services.bramhastra.models.air_freight_action import AirFreightAction
+# from services.bramhastra.models.air_freight_rate_audit_statistic import AirFreightRateAuditStatistic
+# from services.bramhastra.models.air_freight_rate_request_statistics import AirFreightRateRequestStatistic
+# from services.bramhastra.models.checkout_air_freight_rate_statistic import CheckoutAirFreightRateStatistic
+# from services.bramhastra.models.feedback_air_freight_rate_statistic import FeedbackAirFreightRateStatistic
+# from services.bramhastra.models.shipment_air_freight_rate_statistic import ShipmentAirFreightRateStatistic
+# from services.bramhastra.models.spot_search_air_freight_rate_statistic import SpotSearchAirFreightRateStatistic
+# models = [AirFreightRateRequestStatistic]
+# click = Click()
+# click.create_tables(models)
