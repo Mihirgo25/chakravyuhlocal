@@ -126,7 +126,7 @@ class AirFreightRateStatistic(BaseModel):
     rate_deviation_from_cluster_base_rate = FloatField(default=0)
     performed_by_id = UUIDField()
     performed_by_type = TextField()
-    operation_created_= DateTimeTZField()
+    operation_created_at= DateTimeTZField()
     operation_updated_at = DateTimeTZField()
     is_deleted = BooleanField(default=False)
     

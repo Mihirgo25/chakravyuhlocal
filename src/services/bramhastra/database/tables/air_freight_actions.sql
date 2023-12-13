@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS brahmastra.kafka_air_freight_action
+CREATE TABLE brahmastra.kafka_air_freight_action
 (
     `data` String
 )
