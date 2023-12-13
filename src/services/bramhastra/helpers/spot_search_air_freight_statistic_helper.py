@@ -20,8 +20,6 @@ COMMON_PARAMS = {
     AirFreightAction.destination_continent_id.name,
     AirFreightAction.origin_trade_id.name,
     AirFreightAction.destination_trade_id.name,
-    AirFreightAction.container_size.name,
-    AirFreightAction.container_type.name,
     AirFreightAction.commodity_type.name,
     AirFreightAction.commodity_subtype.name,
     AirFreightAction.created_at.name,
