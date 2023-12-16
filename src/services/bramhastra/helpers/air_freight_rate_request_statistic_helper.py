@@ -98,9 +98,9 @@ class Request:
 
         if len(map_zone_location_mapping) < 2:
             query = AirFreightLocationCluster.select(
-                AirFreightLocationCluster.base_port_id.alias("location_id"),
+                AirFreightLocationCluster.base_airport_id.alias("location_id"),
                 AirFreightLocationCluster.map_zone_id,
-            ).where(AirFreightLocationCluster.base_port_id.in_(ids))
+            ).where(AirFreightLocationCluster.base_airport_id.in_(ids))
             map_zone_location_mapping.update(
                 jsonable_encoder(
                     {item["location_id"]: item["map_zone_id"] for item in query.dicts()}
